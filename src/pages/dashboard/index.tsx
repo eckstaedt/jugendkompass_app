@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BarChart2Icon, BookIcon, FileTextIcon, PieChartIcon, UsersIcon, FileVideoIcon, CalendarIcon, BellIcon } from 'lucide-react';
 import { useActivities } from '@/hooks/use-activities';
 import { ActivityItem } from '@/components/dashboard/ActivityItem';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 // Dashboard-Karten-Typ
 type DashboardCardProps = {
@@ -30,56 +32,165 @@ const DashboardCard = ({ title, value, description, icon, className }: Dashboard
 
 const DashboardPage = () => {
   const { data: activities, isLoading: isLoadingActivities } = useActivities();
+  
+  // Fetch post statistics
+  const { data: postStats } = useQuery({
+    queryKey: ['dashboard-stats-posts'],
+    queryFn: async () => {
+      const { count: totalPosts } = await supabase
+        .from('posts')
+        .select('*', { count: 'exact' });
+        
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const { count: newPosts } = await supabase
+        .from('posts')
+        .select('*', { count: 'exact' })
+        .gte('created_at', thirtyDaysAgo.toISOString());
+        
+      return { total: totalPosts || 0, new: newPosts || 0 };
+    }
+  });
+
+  // Fetch poll statistics
+  const { data: pollStats } = useQuery({
+    queryKey: ['dashboard-stats-polls'],
+    queryFn: async () => {
+      const { count: totalPolls } = await supabase
+        .from('polls')
+        .select('*', { count: 'exact' });
+        
+      const { count: activePolls } = await supabase
+        .from('polls')
+        .select('*', { count: 'exact' })
+        .eq('is_active', true);
+        
+      return { total: totalPolls || 0, active: activePolls || 0 };
+    }
+  });
+
+  // Fetch video statistics
+  const { data: videoStats } = useQuery({
+    queryKey: ['dashboard-stats-videos'],
+    queryFn: async () => {
+      const { count: totalVideos } = await supabase
+        .from('videos')
+        .select('*', { count: 'exact' });
+        
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const { count: newVideos } = await supabase
+        .from('videos')
+        .select('*', { count: 'exact' })
+        .gte('created_at', thirtyDaysAgo.toISOString());
+        
+      return { total: totalVideos || 0, new: newVideos || 0 };
+    }
+  });
+
+  // Fetch verse statistics
+  const { data: verseStats } = useQuery({
+    queryKey: ['dashboard-stats-verses'],
+    queryFn: async () => {
+      const { count: totalVerses } = await supabase
+        .from('verse_of_the_day')
+        .select('*', { count: 'exact' });
+        
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const { count: newVerses } = await supabase
+        .from('verse_of_the_day')
+        .select('*', { count: 'exact' })
+        .gte('created_at', thirtyDaysAgo.toISOString());
+        
+      return { total: totalVerses || 0, new: newVerses || 0 };
+    }
+  });
+
+  // Fetch user statistics
+  const { data: userStats } = useQuery({
+    queryKey: ['dashboard-stats-users'],
+    queryFn: async () => {
+      const { count: totalUsers } = await supabase
+        .from('users')
+        .select('*', { count: 'exact' });
+        
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const { count: newUsers } = await supabase
+        .from('users')
+        .select('*', { count: 'exact' })
+        .gte('created_at', thirtyDaysAgo.toISOString());
+        
+      return { total: totalUsers || 0, new: newUsers || 0 };
+    }
+  });
+
+  // Fetch edition statistics
+  const { data: editionStats } = useQuery({
+    queryKey: ['dashboard-stats-editions'],
+    queryFn: async () => {
+      const { count: totalEditions } = await supabase
+        .from('editions')
+        .select('*', { count: 'exact' });
+        
+      return { total: totalEditions || 0 };
+    }
+  });
 
   return (
     <DashboardLayout title="Dashboard">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <DashboardCard 
           title="Beiträge" 
-          value="24" 
-          description="12 neue Beiträge im letzten Monat" 
+          value={postStats?.total || '...'} 
+          description={`${postStats?.new || 0} neue Beiträge im letzten Monat`} 
           icon={<FileTextIcon className="h-5 w-5 text-primary" />} 
         />
         <DashboardCard 
           title="Umfragen" 
-          value="8" 
-          description="2 aktive Umfragen" 
+          value={pollStats?.total || '...'} 
+          description={`${pollStats?.active || 0} aktive Umfragen`} 
           icon={<PieChartIcon className="h-5 w-5 text-primary" />} 
         />
         <DashboardCard 
           title="Videos" 
-          value="16" 
-          description="4 neue Videos im letzten Monat" 
+          value={videoStats?.total || '...'} 
+          description={`${videoStats?.new || 0} neue Videos im letzten Monat`} 
           icon={<FileVideoIcon className="h-5 w-5 text-primary" />} 
         />
         <DashboardCard 
           title="Tagesverse" 
-          value="365" 
-          description="30 neue Verse im letzten Monat" 
+          value={verseStats?.total || '...'} 
+          description={`${verseStats?.new || 0} neue Verse im letzten Monat`} 
           icon={<CalendarIcon className="h-5 w-5 text-primary" />} 
         />
         <DashboardCard 
           title="Benutzer" 
-          value="1.254" 
-          description="120 neue Benutzer im letzten Monat" 
+          value={userStats?.total || '...'} 
+          description={`${userStats?.new || 0} neue Benutzer im letzten Monat`} 
           icon={<UsersIcon className="h-5 w-5 text-primary" />} 
         />
         <DashboardCard 
           title="Statistiken" 
-          value="5.783" 
-          description="Aufrufe im letzten Monat" 
+          value={activities?.length || '...'} 
+          description="Aktivitäten im Dashboard" 
           icon={<BarChart2Icon className="h-5 w-5 text-primary" />} 
         />
         <DashboardCard 
           title="Benachrichtigungen" 
-          value="12" 
-          description="3 Benachrichtigungen im letzten Monat" 
+          value="~" 
+          description="Benachrichtigungen System in Entwicklung" 
           icon={<BellIcon className="h-5 w-5 text-primary" />} 
         />
         <DashboardCard 
           title="Editionen" 
-          value="4" 
-          description="Ausgaben des Jugendkompass im Jahr" 
+          value={editionStats?.total || '...'} 
+          description="Ausgaben des Jugendkompass" 
           icon={<BookIcon className="h-5 w-5 text-primary" />} 
         />
       </div>
