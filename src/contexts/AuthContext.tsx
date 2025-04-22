@@ -1,7 +1,8 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase, User } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
+import { User } from '@/lib/supabase';
 
 type AuthContextType = {
   user: User | null;
@@ -23,14 +24,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Überprüfe, ob ein Benutzer angemeldet ist, wenn die Anwendung geladen wird
     const checkUser = async () => {
       setLoading(true);
       
       const { data: { session }} = await supabase.auth.getSession();
       
       if (session?.user) {
-        // Benutzerrolle aus der users-Tabelle abrufen
         const { data: userData, error } = await supabase
           .from('users')
           .select('*')
@@ -41,7 +40,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(userData as User);
           setIsAdmin(true);
         } else {
-          // Wenn der Benutzer kein Admin ist, abmelden
           await supabase.auth.signOut();
           setUser(null);
           setIsAdmin(false);
@@ -56,10 +54,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     checkUser();
 
-    // Auth-Änderungen überwachen
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        // Benutzerrolle überprüfen
         const { data: userData, error } = await supabase
           .from('users')
           .select('*')
@@ -70,7 +66,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(userData as User);
           setIsAdmin(true);
         } else {
-          // Wenn der Benutzer kein Admin ist, abmelden
           await supabase.auth.signOut();
           setUser(null);
           setIsAdmin(false);
@@ -107,7 +102,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth muss innerhalb eines AuthProviders verwendet werden');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
