@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { logActivity } from '@/lib/activity-logger';
 
 export type DailyVerse = {
   id: string;
@@ -33,14 +34,27 @@ export function useDailyVerses() {
       // Remove any extra fields that might cause conflicts
       const { date, verse: verseText, reference } = verse;
       
-      const { data, error } = await supabase
-        .from('verse_of_the_day')
-        .insert([{ date, verse: verseText, reference }])
-        .select()
-        .single();
+      try {
+        // Log the activity first to avoid ambiguous user_id in the insert query
+        await logActivity({
+          action_type: 'create',
+          entity_type: 'verse',
+          description: `Tagesvers für ${date} erstellt`,
+        });
+        
+        // Now insert the verse without any ambiguous fields
+        const { data, error } = await supabase
+          .from('verse_of_the_day')
+          .insert([{ date, verse: verseText, reference }])
+          .select()
+          .single();
 
-      if (error) throw error;
-      return data;
+        if (error) throw error;
+        return data;
+      } catch (error) {
+        console.error('Error creating verse:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['daily-verses'] });
@@ -64,15 +78,29 @@ export function useDailyVerses() {
       // Remove any extra fields that might cause conflicts
       const { date, verse: verseText, reference } = verse;
       
-      const { data, error } = await supabase
-        .from('verse_of_the_day')
-        .update({ date, verse: verseText, reference })
-        .eq('id', id)
-        .select()
-        .single();
+      try {
+        // Log the activity first to avoid ambiguous user_id in the update query
+        await logActivity({
+          action_type: 'update',
+          entity_type: 'verse',
+          entity_id: id,
+          description: `Tagesvers für ${date} aktualisiert`,
+        });
+        
+        // Now update the verse without any ambiguous fields
+        const { data, error } = await supabase
+          .from('verse_of_the_day')
+          .update({ date, verse: verseText, reference })
+          .eq('id', id)
+          .select()
+          .single();
 
-      if (error) throw error;
-      return data;
+        if (error) throw error;
+        return data;
+      } catch (error) {
+        console.error('Error updating verse:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['daily-verses'] });
