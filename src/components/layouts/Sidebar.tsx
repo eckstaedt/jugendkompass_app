@@ -76,7 +76,7 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
       ],
     },
     {
-      label: 'Impulse des Tages',
+      label: 'Impuls',
       path: '/dashboard/impulses',
       icon: FileTextIcon,
     },
