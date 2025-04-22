@@ -4,17 +4,19 @@ import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { VerseDialog } from '@/components/verses/VerseDialog';
+import { VersesTable } from '@/components/verses/VersesTable';
 import { useDailyVerses, DailyVerse } from '@/hooks/use-daily-verses';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, isToday, isFuture } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { CalendarPlus } from 'lucide-react';
-import { cn } from '@/lib/utils'; // Add this import
+import { CalendarPlus, LayoutList, ViewIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const DailyVersesPage = () => {
   const { verses, isLoading, createVerse, updateVerse } = useDailyVerses();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedVerse, setSelectedVerse] = useState<DailyVerse | undefined>();
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const { isAdmin } = useAuth();
   
   const handleEdit = (verse: DailyVerse) => {
@@ -45,12 +47,28 @@ const DailyVersesPage = () => {
             Verwalte die täglichen Bibelverse für die App.
           </p>
         </div>
-        {isAdmin && (
-          <Button onClick={handleCreate}>
-            <CalendarPlus className="mr-2 h-4 w-4" />
-            Neuer Tagesvers
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setViewMode(viewMode === 'cards' ? 'table' : 'cards')}
+          >
+            {viewMode === 'cards' ? (
+              <LayoutList className="h-4 w-4" />
+            ) : (
+              <ViewIcon className="h-4 w-4" />
+            )}
+            <span className="sr-only">
+              Ansicht wechseln zu {viewMode === 'cards' ? 'Tabelle' : 'Karten'}
+            </span>
           </Button>
-        )}
+          {isAdmin && (
+            <Button onClick={handleCreate}>
+              <CalendarPlus className="mr-2 h-4 w-4" />
+              Neuer Tagesvers
+            </Button>
+          )}
+        </div>
       </div>
 
       {isLoading ? (
@@ -62,7 +80,7 @@ const DailyVersesPage = () => {
             </Card>
           ))}
         </div>
-      ) : (
+      ) : viewMode === 'cards' ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {verses.map((verse) => {
             const verseDate = new Date(verse.date);
@@ -99,6 +117,8 @@ const DailyVersesPage = () => {
             )
           })}
         </div>
+      ) : (
+        <VersesTable verses={verses} onEdit={handleEdit} />
       )}
 
       <VerseDialog
