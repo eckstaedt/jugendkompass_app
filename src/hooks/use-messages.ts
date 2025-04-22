@@ -1,15 +1,15 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 
 export type Message = {
   id: number;
+  content_id: number;
+  created_by: string | null;
+  created_at: string | null;
   message: string;
   image_url: string | null;
-  created_by: string | null;
-  created_at: string;
-}
+};
 
 export const useMessages = () => {
   return useQuery({

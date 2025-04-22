@@ -143,6 +143,7 @@ export type Database = {
       messages: {
         Row: {
           content_id: number
+          created_at: string | null
           created_by: string | null
           id: number
           image_url: string | null
@@ -150,6 +151,7 @@ export type Database = {
         }
         Insert: {
           content_id: number
+          created_at?: string | null
           created_by?: string | null
           id?: never
           image_url?: string | null
@@ -157,6 +159,7 @@ export type Database = {
         }
         Update: {
           content_id?: number
+          created_at?: string | null
           created_by?: string | null
           id?: never
           image_url?: string | null

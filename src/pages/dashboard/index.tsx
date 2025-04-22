@@ -1,7 +1,7 @@
 import React from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart2Icon, BookIcon, FileTextIcon, PieChartIcon, UsersIcon, FileVideoIcon, CalendarIcon } from 'lucide-react';
+import { BarChart2Icon, BookIcon, FileTextIcon, PieChartIcon, UsersIcon, FileVideoIcon, CalendarIcon, MessageSquareIcon } from 'lucide-react';
 import { useActivities } from '@/hooks/use-activities';
 import { ActivityItem } from '@/components/dashboard/ActivityItem';
 import { useQuery } from '@tanstack/react-query';
@@ -153,6 +153,25 @@ const DashboardPage = () => {
     }
   });
 
+  const { data: messageStats } = useQuery({
+    queryKey: ['dashboard-stats-messages'],
+    queryFn: async () => {
+      const { count: totalMessages } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact' });
+        
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const { count: newMessages } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact' })
+        .gte('created_at', thirtyDaysAgo.toISOString());
+        
+      return { total: totalMessages || 0, new: newMessages || 0 };
+    }
+  });
+
   return (
     <DashboardLayout title="Dashboard">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -175,7 +194,7 @@ const DashboardPage = () => {
           icon={<FileVideoIcon className="h-5 w-5 text-primary" />} 
         />
         <DashboardCard 
-          title="Tagesverse" 
+          title="Vers des Tages" 
           value={verseStats?.total || '...'} 
           description={`${verseStats?.new || 0} neue Verse im letzten Monat`} 
           icon={<CalendarIcon className="h-5 w-5 text-primary" />} 
@@ -197,6 +216,12 @@ const DashboardPage = () => {
           value={editionStats?.total || '...'} 
           description="Ausgaben des Jugendkompass" 
           icon={<BookIcon className="h-5 w-5 text-primary" />} 
+        />
+        <DashboardCard 
+          title="Kurznachrichten" 
+          value={messageStats?.total || '...'} 
+          description={`${messageStats?.new || 0} neue Nachrichten im letzten Monat`} 
+          icon={<MessageSquareIcon className="h-5 w-5 text-primary" />} 
         />
       </div>
       
