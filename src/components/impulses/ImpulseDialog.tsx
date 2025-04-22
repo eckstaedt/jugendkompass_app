@@ -20,17 +20,19 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Impulse } from '@/hooks/use-impulses';
+import RichTextEditor from '@/components/editor/RichTextEditor';
+import { LoaderCircle, Upload } from 'lucide-react';
 
 type ImpulseFormData = {
   date: string;
   impulse_text: string;
-  image_url?: string;
+  image: FileList;
 };
 
 type ImpulseDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: ImpulseFormData) => Promise<void>;
+  onSubmit: (data: { date: string; impulse_text: string; image: File }) => Promise<void>;
   defaultValues?: Partial<Impulse>;
   title: string;
 };
@@ -42,14 +44,26 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
     defaultValues: {
       date: defaultValues?.date || new Date().toISOString().split('T')[0],
       impulse_text: defaultValues?.impulse_text || '',
-      image_url: defaultValues?.image_url || '',
     },
   });
 
   const handleSubmit = async (data: ImpulseFormData) => {
+    if (!data.image?.[0]) {
+      toast({
+        title: "Error",
+        description: "Please select an image",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setIsLoading(true);
-      await onSubmit(data);
+      await onSubmit({
+        date: data.date,
+        impulse_text: data.impulse_text,
+        image: data.image[0]
+      });
       onOpenChange(false);
       toast({
         title: 'Success',
@@ -68,12 +82,12 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[750px]">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="date"
@@ -94,7 +108,7 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
                 <FormItem>
                   <FormLabel>Impulse Text</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <RichTextEditor content={field.value} onChange={field.onChange} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -102,12 +116,17 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
             />
             <FormField
               control={form.control}
-              name="image_url"
-              render={({ field }) => (
+              name="image"
+              render={({ field: { onChange, value, ...field } }) => (
                 <FormItem>
-                  <FormLabel>Image URL (optional)</FormLabel>
+                  <FormLabel>Image (required)</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={(e) => onChange(e.target.files)}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -115,7 +134,17 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
             />
             <DialogFooter>
               <Button type="submit" disabled={isLoading}>
-                Save Impulse
+                {isLoading ? (
+                  <>
+                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Save Impulse
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </form>

@@ -38,25 +38,30 @@ export default function ImpulsesPage() {
       </div>
 
       {isLoading ? (
-        <div>Loading...</div>
+        <div className="flex items-center justify-center h-32">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {impulses?.map((impulse) => (
-            <Card key={impulse.id} className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => {
-                    setEditingImpulse(impulse);
-                    setDialogOpen(true);
-                  }}>
+            <Card 
+              key={impulse.id} 
+              className="cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => {
+                setEditingImpulse(impulse);
+                setDialogOpen(true);
+              }}
+            >
               <CardHeader>
                 <CardTitle>{new Date(impulse.date).toLocaleDateString()}</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p>{impulse.impulse_text}</p>
+              <CardContent className="space-y-4">
+                <div dangerouslySetInnerHTML={{ __html: impulse.impulse_text }} />
                 {impulse.image_url && (
                   <img
                     src={impulse.image_url}
                     alt="Impulse"
-                    className="mt-2 rounded-md max-h-40 object-cover"
+                    className="w-full rounded-md max-h-40 object-cover"
                   />
                 )}
               </CardContent>
