@@ -1,8 +1,6 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from './use-toast';
-import { logActivity } from '@/lib/activity-logger';
+import { supabase } from '@/lib/supabase';
+import { useToast } from '@/hooks/use-toast';
 
 export type Post = {
   id: string;
@@ -107,6 +105,32 @@ export function usePosts() {
     }
   });
 
+  const { mutate: updatePost } = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { title: string; body: string } }) => {
+      const { error } = await supabase
+        .from('posts')
+        .update({ title: data.title, body: data.body })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      toast({
+        title: "Erfolg",
+        description: "Beitrag wurde aktualisiert",
+        variant: "success",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fehler",
+        description: "Beitrag konnte nicht aktualisiert werden",
+        variant: "destructive",
+      });
+    }
+  });
+
   const { mutate: updatePostStatus } = useMutation({
     mutationFn: async ({ contentId, status }: { contentId: string, status: 'draft' | 'published' }) => {
       console.log('Updating post status:', { contentId, status });
@@ -167,11 +191,12 @@ export function usePosts() {
     }
   });
 
-  return { 
+  return {
     posts, 
     isLoading, 
     deletePost,
     createPost,
+    updatePost,
     updatePostStatus
   };
 }

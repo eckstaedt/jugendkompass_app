@@ -10,9 +10,10 @@ import { PlusIcon, TrashIcon } from 'lucide-react';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { EditPostDialog } from '@/components/posts/EditPostDialog';
 
 const PostsPage = () => {
-  const { posts, isLoading, deletePost, updatePostStatus } = usePosts();
+  const { posts, isLoading, deletePost, updatePostStatus, updatePost } = usePosts();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -116,27 +117,33 @@ const PostsPage = () => {
                           )}
                         </TableCell>
                         <TableCell>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="outline" size="icon" className="text-destructive">
-                                <TrashIcon className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Beitrag löschen</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Möchten Sie diesen Beitrag wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(post.id)}>
-                                  Löschen
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                          <div className="flex items-center">
+                            <EditPostDialog 
+                              post={post} 
+                              onSave={(id, data) => updatePost({ id, data })} 
+                            />
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="outline" size="icon" className="text-destructive">
+                                  <TrashIcon className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Beitrag löschen</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Möchten Sie diesen Beitrag wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDelete(post.id)}>
+                                    Löschen
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
