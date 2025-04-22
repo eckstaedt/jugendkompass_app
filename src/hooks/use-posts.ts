@@ -115,6 +115,23 @@ export function usePosts() {
         throw new Error('Content ID is required to update post status');
       }
       
+      // Get current content record to verify it exists
+      const { data: existingContent, error: fetchError } = await supabase
+        .from('content')
+        .select('*')
+        .eq('id', contentId)
+        .single();
+        
+      if (fetchError) {
+        console.error('Error fetching content:', fetchError);
+        throw fetchError;
+      }
+      
+      if (!existingContent) {
+        throw new Error(`Content with ID ${contentId} not found`);
+      }
+      
+      // Now update the content status
       const { error } = await supabase
         .from('content')
         .update({ status })
@@ -144,7 +161,7 @@ export function usePosts() {
       console.error('Error in updatePostStatus mutation:', error);
       toast({
         title: "Fehler",
-        description: "Der Status konnte nicht aktualisiert werden",
+        description: "Der Status konnte nicht aktualisiert werden. Bitte überprüfen Sie die Konsole für Details.",
         variant: "destructive",
       });
     }
