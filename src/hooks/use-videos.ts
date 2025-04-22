@@ -23,9 +23,9 @@ export const useUploadVideo = () => {
 
   return useMutation({
     mutationFn: async ({ title, file, userId }: { title: string, file: File, userId: string }) => {
-      // Upload file to Supabase storage
+      // Upload file to Supabase storage using a unique filename
       const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/${Math.random()}.${fileExt}`;
+      const fileName = `${Math.random()}.${fileExt}`; // Remove userId subfolder
       const { error: storageError } = await supabase.storage
         .from('videos')
         .upload(fileName, file);
