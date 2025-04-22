@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { useForm } from 'react-hook-form';
@@ -11,7 +10,7 @@ import { useEditions } from '@/hooks/use-editions';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import RichTextEditor from '@/components/editor/RichTextEditor';
 import {
   Form,
   FormControl,
@@ -29,7 +28,6 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-// Form validation schema with all fields as required
 const formSchema = z.object({
   title: z.string().min(1, 'Der Titel ist erforderlich'),
   body: z.string().min(1, 'Der Inhalt ist erforderlich'),
@@ -59,7 +57,6 @@ const NewPostPage = () => {
   });
 
   const onSubmit = (data: FormValues) => {
-    // Explicitly cast data to CreatePostParams to ensure type safety
     const postData: CreatePostParams = {
       title: data.title,
       body: data.body,
@@ -120,10 +117,9 @@ const NewPostPage = () => {
                   <FormItem>
                     <FormLabel>Inhalt*</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        placeholder="Schreiben Sie den Inhalt des Beitrags" 
-                        className="min-h-[200px]" 
-                        {...field} 
+                      <RichTextEditor 
+                        content={field.value} 
+                        onChange={field.onChange}
                       />
                     </FormControl>
                     <FormMessage />
