@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -57,6 +58,8 @@ const LoginPage = () => {
           errorMessage = 'Deine E-Mail-Adresse wurde noch nicht bestätigt. Bitte prüfe deinen Posteingang.';
         } else if (error.message.includes('rate limit')) {
           errorMessage = 'Zu viele Anmeldeversuche. Bitte versuche es später erneut.';
+        } else if (error.message.includes('not an admin')) {
+          errorMessage = 'Du hast keine Administratorrechte für dieses Dashboard.';
         }
       }
       
@@ -71,26 +74,26 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 flex justify-center">
           <div className="flex items-center space-x-2">
-            <BookIcon className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold">Jugendkompass Admin</h1>
+            <BookIcon className="h-10 w-10 text-primary" />
+            <h1 className="text-3xl font-bold text-gray-800">Jugendkompass Admin</h1>
           </div>
         </div>
         
-        <Card>
-          <CardHeader>
-            <CardTitle>Anmelden</CardTitle>
-            <CardDescription>
+        <Card className="border-none shadow-lg">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl">Anmelden</CardTitle>
+            <CardDescription className="text-base">
               Gib deine Zugangsdaten ein, um auf das Admin-Dashboard zuzugreifen.
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleLogin}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">E-Mail</Label>
+                <Label htmlFor="email" className="text-base">E-Mail</Label>
                 <Input
                   id="email"
                   type="email"
@@ -98,12 +101,13 @@ const LoginPage = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
+                  className="h-12 text-base"
                   required
                 />
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password">Passwort</Label>
+                <Label htmlFor="password" className="text-base">Passwort</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -112,19 +116,20 @@ const LoginPage = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={loading}
+                    className="h-12 text-base pr-12"
                     required
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="absolute right-0 top-0"
+                    className="absolute right-0 top-0 h-12"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
-                      <EyeOffIcon className="h-4 w-4" />
+                      <EyeOffIcon className="h-5 w-5" />
                     ) : (
-                      <EyeIcon className="h-4 w-4" />
+                      <EyeIcon className="h-5 w-5" />
                     )}
                     <span className="sr-only">
                       {showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
@@ -134,21 +139,30 @@ const LoginPage = () => {
               </div>
             </CardContent>
             
-            <CardFooter>
+            <CardFooter className="flex flex-col space-y-4">
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full h-12 text-base font-semibold"
                 disabled={loading}
               >
                 {loading ? (
                   <div className="flex items-center justify-center space-x-2">
-                    <LoaderCircleIcon className="h-4 w-4 animate-spin" />
+                    <LoaderCircleIcon className="h-5 w-5 animate-spin" />
                     <span>Anmelden...</span>
                   </div>
                 ) : (
                   "Anmelden"
                 )}
               </Button>
+              
+              {loading && (
+                <div className="w-full">
+                  <Progress value={100} className="animate-pulse h-1" />
+                  <p className="text-sm text-center text-muted-foreground mt-1">
+                    Verbindung zum Authentifizierungsserver wird hergestellt...
+                  </p>
+                </div>
+              )}
             </CardFooter>
           </form>
         </Card>
