@@ -30,7 +30,16 @@ export const usePolls = (showAll = false) => {
     queryFn: async () => {
       const query = supabase
         .from('polls')
-        .select('*')
+        .select(`
+          *,
+          content!polls_content_id_fkey (
+            id,
+            content_type,
+            status,
+            created_at
+          ),
+          options:poll_options(*)
+        `)
         .order('created_at', { ascending: false });
 
       if (!showAll) {
@@ -40,23 +49,7 @@ export const usePolls = (showAll = false) => {
       const { data: polls, error } = await query;
       if (error) throw error;
       
-      const pollsWithOptions = await Promise.all(
-        (polls as Poll[]).map(async (poll) => {
-          const { data: options, error: optionsError } = await supabase
-            .from('poll_options')
-            .select('*')
-            .eq('poll_id', poll.id);
-          
-          if (optionsError) throw optionsError;
-          
-          return {
-            ...poll,
-            options: options || []
-          };
-        })
-      );
-      
-      return pollsWithOptions as Poll[];
+      return polls as Poll[];
     },
   });
 };
@@ -94,9 +87,22 @@ export const useCreatePoll = () => {
 
   return useMutation({
     mutationFn: async ({ question, expires_at, options }: CreatePollInput) => {
+      const { data: content, error: contentError } = await supabase
+        .from('content')
+        .insert([{ content_type: 'poll', status: 'published' }])
+        .select()
+        .single();
+
+      if (contentError) throw contentError;
+
       const { data: poll, error: pollError } = await supabase
         .from('polls')
-        .insert([{ question, expires_at }])
+        .insert([{ 
+          question, 
+          expires_at,
+          content_id: content.id,
+          created_by: (await supabase.auth.getUser()).data.user?.id
+        }])
         .select()
         .single();
 

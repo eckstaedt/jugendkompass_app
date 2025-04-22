@@ -225,6 +225,7 @@ export type Database = {
       }
       polls: {
         Row: {
+          content_id: string
           created_at: string | null
           created_by: string | null
           expires_at: string | null
@@ -233,6 +234,7 @@ export type Database = {
           question: string
         }
         Insert: {
+          content_id: string
           created_at?: string | null
           created_by?: string | null
           expires_at?: string | null
@@ -241,6 +243,7 @@ export type Database = {
           question: string
         }
         Update: {
+          content_id?: string
           created_at?: string | null
           created_by?: string | null
           expires_at?: string | null
@@ -248,7 +251,15 @@ export type Database = {
           is_active?: boolean | null
           question?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "polls_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       posts: {
         Row: {
