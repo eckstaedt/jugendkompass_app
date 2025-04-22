@@ -10,7 +10,8 @@ import {
   FileTextIcon, 
   PieChartIcon, 
   FileVideoIcon, 
-  UsersIcon
+  UsersIcon,
+  LogOut
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -181,7 +182,7 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
           )}
           onClick={logout}
         >
-          <LogOutIcon className="h-5 w-5" />
+          <LogOut className="h-5 w-5" />
           {!collapsed && <span className="ml-3">Abmelden</span>}
         </Button>
       </div>

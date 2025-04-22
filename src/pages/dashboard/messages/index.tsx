@@ -1,6 +1,6 @@
 
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
-import { useMessages, useCreateMessage, useUpdateMessage, useDeleteMessage } from '@/hooks/use-messages';
+import { useMessages, useCreateMessage, useUpdateMessage, useDeleteMessage, Message } from '@/hooks/use-messages';
 import { useToast } from '@/hooks/use-toast';
 import MessageForm from '@/components/messages/MessageForm';
 import MessageItem from '@/components/messages/MessageItem';
@@ -23,6 +23,22 @@ const MessagesPage = () => {
       toast({
         title: "Fehler",
         description: "Beim Löschen der Nachricht ist ein Fehler aufgetreten.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdate = async (data: { id: number; message: string; imageFile?: File }) => {
+    try {
+      await updateMessage.mutateAsync(data);
+      toast({
+        title: "Erfolg",
+        description: "Die Nachricht wurde aktualisiert.",
+      });
+    } catch (error) {
+      toast({
+        title: "Fehler",
+        description: "Beim Aktualisieren der Nachricht ist ein Fehler aufgetreten.",
         variant: "destructive",
       });
     }
@@ -61,7 +77,7 @@ const MessagesPage = () => {
               <MessageItem
                 key={message.id}
                 message={message}
-                onUpdate={updateMessage.mutateAsync}
+                onUpdate={handleUpdate}
                 onDelete={handleDelete}
               />
             ))}
