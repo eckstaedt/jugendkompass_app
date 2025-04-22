@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { User } from '@/lib/supabase';
+import { useToast } from '@/hooks/use-toast';
 
 type AuthContextType = {
   user: User | null;
@@ -22,51 +23,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
-    const checkUser = async () => {
-      setLoading(true);
-      
-      const { data: { session }} = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        try {
-          const { data: userData, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (error) {
-            console.error("Error fetching user data:", error);
-            await supabase.auth.signOut();
-            setUser(null);
-            setIsAdmin(false);
-          } else if (userData && userData.role === 'admin') {
-            setUser(userData as User);
-            setIsAdmin(true);
-          } else {
-            console.log("User exists but is not an admin:", userData);
-            await supabase.auth.signOut();
-            setUser(null);
-            setIsAdmin(false);
-          }
-        } catch (error) {
-          console.error("Unexpected error checking user:", error);
-          await supabase.auth.signOut();
-          setUser(null);
-          setIsAdmin(false);
-        }
-      } else {
-        setUser(null);
-        setIsAdmin(false);
-      }
-      
-      setLoading(false);
-    };
-
-    checkUser();
-
+    // Set up auth state listener first to avoid missing events
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session?.user?.id);
       
@@ -80,6 +40,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           if (error) {
             console.error("Error fetching user data after sign in:", error);
+            toast({
+              title: "Fehler beim Abrufen der Benutzerdaten",
+              description: "Bitte versuche es erneut oder kontaktiere den Administrator.",
+              variant: "destructive",
+            });
             await supabase.auth.signOut();
             setUser(null);
             setIsAdmin(false);
@@ -88,10 +53,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.log("Admin user signed in:", userData);
             setUser(userData as User);
             setIsAdmin(true);
+            toast({
+              title: "Erfolgreich angemeldet",
+              description: "Willkommen im Admin-Dashboard",
+              variant: "success",
+            });
           } else {
             console.log("User signed in but is not an admin:", userData);
-            const customError = new Error("User is not an admin");
-            customError.message = "not an admin";
+            toast({
+              title: "Zugriff verweigert",
+              description: "Du hast keine Administrator-Berechtigungen.",
+              variant: "destructive",
+            });
             await supabase.auth.signOut();
             setUser(null);
             setIsAdmin(false);
@@ -99,6 +72,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
         } catch (error) {
           console.error("Unexpected error during auth state change:", error);
+          toast({
+            title: "Unerwarteter Fehler",
+            description: "Bitte versuche es später erneut.",
+            variant: "destructive",
+          });
           await supabase.auth.signOut();
           setUser(null);
           setIsAdmin(false);
@@ -111,32 +89,75 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     });
 
+    // Then check for existing session
+    const checkUser = async () => {
+      setLoading(true);
+      
+      try {
+        const { data: { session }} = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          try {
+            const { data: userData, error } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+            
+            if (error) {
+              console.error("Error fetching user data:", error);
+              await supabase.auth.signOut();
+              setUser(null);
+              setIsAdmin(false);
+            } else if (userData && userData.role === 'admin') {
+              setUser(userData as User);
+              setIsAdmin(true);
+            } else {
+              console.log("User exists but is not an admin:", userData);
+              await supabase.auth.signOut();
+              setUser(null);
+              setIsAdmin(false);
+            }
+          } catch (error) {
+            console.error("Unexpected error checking user:", error);
+            await supabase.auth.signOut();
+            setUser(null);
+            setIsAdmin(false);
+          }
+        } else {
+          setUser(null);
+          setIsAdmin(false);
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+        setUser(null);
+        setIsAdmin(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkUser();
+
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, toast]);
 
   const login = async (email: string, password: string) => {
     try {
+      console.log("Logging in with email:", email);
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
+        console.error("Login error:", error);
         return { error, data: null };
       }
       
       if (data.user) {
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-        
-        if (userError || !userData || userData.role !== 'admin') {
-          const adminError = new Error("User is not an admin");
-          adminError.message = "not an admin";
-          await supabase.auth.signOut();
-          return { error: adminError, data: null };
-        }
+        console.log("User authenticated successfully:", data.user.id);
+        // The role check will be handled by the onAuthStateChange listener
+        return { data, error: null };
       }
       
       return { data, error: null };
@@ -148,6 +169,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logout = async () => {
     await supabase.auth.signOut();
+    toast({
+      title: "Abgemeldet",
+      description: "Du wurdest erfolgreich abgemeldet.",
+    });
     navigate('/login');
   };
 
