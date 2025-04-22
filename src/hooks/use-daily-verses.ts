@@ -31,25 +31,28 @@ export function useDailyVerses() {
 
   const createVerse = useMutation({
     mutationFn: async (verse: Omit<DailyVerse, 'id'>) => {
-      // Remove any extra fields that might cause conflicts
-      const { date, verse: verseText, reference } = verse;
-      
       try {
-        // Log the activity first to avoid ambiguous user_id in the insert query
-        await logActivity({
-          action_type: 'create',
-          entity_type: 'verse',
-          description: `Tagesvers für ${date} erstellt`,
-        });
-        
-        // Now insert the verse without any ambiguous fields
+        // First do the database insert with minimal fields
         const { data, error } = await supabase
           .from('verse_of_the_day')
-          .insert([{ date, verse: verseText, reference }])
+          .insert({
+            date: verse.date,
+            verse: verse.verse,
+            reference: verse.reference
+          })
           .select()
           .single();
 
         if (error) throw error;
+        
+        // Only log activity after the insert succeeds
+        await logActivity({
+          action_type: 'create',
+          entity_type: 'verse',
+          entity_id: data.id,
+          description: `Tagesvers für ${verse.date} erstellt`,
+        });
+        
         return data;
       } catch (error) {
         console.error('Error creating verse:', error);
@@ -75,27 +78,29 @@ export function useDailyVerses() {
 
   const updateVerse = useMutation({
     mutationFn: async ({ id, ...verse }: DailyVerse) => {
-      // Remove any extra fields that might cause conflicts
-      const { date, verse: verseText, reference } = verse;
-      
       try {
-        // Log the activity first to avoid ambiguous user_id in the update query
-        await logActivity({
-          action_type: 'update',
-          entity_type: 'verse',
-          entity_id: id,
-          description: `Tagesvers für ${date} aktualisiert`,
-        });
-        
-        // Now update the verse without any ambiguous fields
+        // First do the database update with minimal fields
         const { data, error } = await supabase
           .from('verse_of_the_day')
-          .update({ date, verse: verseText, reference })
+          .update({
+            date: verse.date,
+            verse: verse.verse,
+            reference: verse.reference
+          })
           .eq('id', id)
           .select()
           .single();
 
         if (error) throw error;
+        
+        // Only log activity after the update succeeds
+        await logActivity({
+          action_type: 'update',
+          entity_type: 'verse',
+          entity_id: id,
+          description: `Tagesvers für ${verse.date} aktualisiert`,
+        });
+        
         return data;
       } catch (error) {
         console.error('Error updating verse:', error);
