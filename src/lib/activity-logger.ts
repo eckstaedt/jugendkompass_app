@@ -1,41 +1,34 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from './supabase';
 
-type LogActivityParams = {
-  action_type: string;
-  entity_type: string;
-  entity_id?: string;
-  description: string;
-};
+type EntityType = 'post' | 'poll' | 'video' | 'daily_verse' | 'notification' | 'user';
+type ActionType = 'create' | 'update' | 'delete';
 
-export const logActivity = async ({
-  action_type,
-  entity_type,
-  entity_id,
-  description,
-}: LogActivityParams) => {
+export const logActivity = async (
+  userId: string,
+  entityType: EntityType,
+  actionType: ActionType,
+  entityId?: string,
+  description?: string
+) => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      console.error('No user found when trying to log activity');
+    // Only log important user actions (create, update, delete)
+    if (!['create', 'update', 'delete'].includes(actionType)) {
       return;
     }
-
-    const { error } = await supabase
-      .from('activities')
-      .insert({
-        user_id: user.id,
-        action_type,
-        entity_type,
-        entity_id,
-        description,
-      });
+    
+    const { error } = await supabase.from('activities').insert({
+      user_id: userId,
+      entity_type: entityType,
+      action_type: actionType,
+      entity_id: entityId,
+      description: description || `${actionType} ${entityType}`,
+    });
 
     if (error) {
       console.error('Error logging activity:', error);
     }
-  } catch (error) {
-    console.error('Unexpected error in logActivity:', error);
+  } catch (err) {
+    console.error('Error in activity logger:', err);
   }
 };

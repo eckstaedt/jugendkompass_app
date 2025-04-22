@@ -50,12 +50,12 @@ const NewVideoPage = () => {
         description: "Das Video wurde erfolgreich hochgeladen.",
       });
     } catch (error) {
+      console.error('Upload error:', error);
       toast({
         title: "Fehler",
-        description: "Es gab einen Fehler beim Hochladen des Videos.",
+        description: "Es gab einen Fehler beim Hochladen des Videos. Bitte prüfen Sie die Konsole für weitere Details.",
         variant: "destructive"
       });
-      console.error(error);
     } finally {
       setIsUploading(false);
     }

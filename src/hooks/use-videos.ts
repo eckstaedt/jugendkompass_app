@@ -23,44 +23,55 @@ export const useUploadVideo = () => {
 
   return useMutation({
     mutationFn: async ({ title, file, userId }: { title: string, file: File, userId: string }) => {
-      // Upload file to Supabase storage using a unique filename
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`; // Remove userId subfolder
-      const { error: storageError } = await supabase.storage
-        .from('videos')
-        .upload(fileName, file);
+      try {
+        // First create a content entry
+        const { data: contentData, error: contentError } = await supabase
+          .from('content')
+          .insert({ content_type: 'video', status: 'published' })
+          .select('id')
+          .single();
 
-      if (storageError) throw storageError;
+        if (contentError) throw contentError;
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('videos')
-        .getPublicUrl(fileName);
+        // Upload file to Supabase storage
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const { error: storageError, data } = await supabase.storage
+          .from('videos')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
 
-      // First create a content entry
-      const { data: contentData, error: contentError } = await supabase
-        .from('content')
-        .insert({ content_type: 'video', status: 'published' })
-        .select('id')
-        .single();
+        if (storageError) {
+          console.error('Storage error:', storageError);
+          throw storageError;
+        }
 
-      if (contentError) throw contentError;
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('videos')
+          .getPublicUrl(fileName);
 
-      // Then insert video record with the content_id
-      const { data: videoData, error: insertError } = await supabase
-        .from('videos')
-        .insert({ 
-          title, 
-          url: publicUrl, 
-          user_id: userId,
-          content_id: contentData.id
-        })
-        .select('*, content:content_id(*)')
-        .single();
+        // Insert video record with the content_id
+        const { data: videoData, error: insertError } = await supabase
+          .from('videos')
+          .insert({ 
+            title, 
+            url: publicUrl, 
+            user_id: userId,
+            content_id: contentData.id
+          })
+          .select('*, content:content_id(*)')
+          .single();
 
-      if (insertError) throw insertError;
+        if (insertError) throw insertError;
 
-      return videoData;
+        return videoData;
+      } catch (error) {
+        console.error('Error in upload process:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['videos'] });

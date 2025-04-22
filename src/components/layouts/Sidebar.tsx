@@ -55,7 +55,6 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
       subItems: [
         { label: 'Alle Umfragen', path: '/dashboard/polls' },
         { label: 'Neue Umfrage', path: '/dashboard/polls/new' },
-        { label: 'Statistiken', path: '/dashboard/polls/stats' },
       ],
     },
     {
