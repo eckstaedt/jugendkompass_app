@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { format, isToday, isFuture } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { CalendarPlus } from 'lucide-react';
+import { cn } from '@/lib/utils'; // Add this import
 
 const DailyVersesPage = () => {
   const { verses, isLoading, createVerse, updateVerse } = useDailyVerses();

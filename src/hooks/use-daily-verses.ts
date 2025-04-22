@@ -30,9 +30,12 @@ export function useDailyVerses() {
 
   const createVerse = useMutation({
     mutationFn: async (verse: Omit<DailyVerse, 'id'>) => {
+      // Remove any extra fields that might cause conflicts
+      const { date, verse: verseText, reference } = verse;
+      
       const { data, error } = await supabase
         .from('verse_of_the_day')
-        .insert([verse])
+        .insert([{ date, verse: verseText, reference }])
         .select()
         .single();
 
@@ -58,9 +61,12 @@ export function useDailyVerses() {
 
   const updateVerse = useMutation({
     mutationFn: async ({ id, ...verse }: DailyVerse) => {
+      // Remove any extra fields that might cause conflicts
+      const { date, verse: verseText, reference } = verse;
+      
       const { data, error } = await supabase
         .from('verse_of_the_day')
-        .update(verse)
+        .update({ date, verse: verseText, reference })
         .eq('id', id)
         .select()
         .single();
