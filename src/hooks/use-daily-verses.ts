@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -11,13 +12,16 @@ export function useDailyVerses() {
   const { data: verses = [], isLoading } = useQuery({
     queryKey: ['daily-verses'],
     queryFn: async () => {
+      // The issue is in this query - we need to specify the content relationship correctly
       const { data, error } = await supabase
         .from('verse_of_the_day')
         .select('*, content:content_id(*)')
         .order('date', { ascending: true });
       
       if (error) throw error;
-      return data as DailyVerse[];
+      
+      // Convert the response to match our DailyVerse type
+      return data as unknown as DailyVerse[];
     },
   });
 
@@ -35,7 +39,7 @@ export function useDailyVerses() {
   };
 
   const createVerse = useMutation({
-    mutationFn: async (verse: Omit<DailyVerse, 'id' | 'content_id' | 'created_at'>) => {
+    mutationFn: async (verse: Omit<DailyVerse, 'id' | 'content_id' | 'created_at' | 'content'>) => {
       try {
         // First create a content entry
         const { data: contentData, error: contentError } = await supabase
@@ -93,7 +97,7 @@ export function useDailyVerses() {
   });
 
   const updateVerse = useMutation({
-    mutationFn: async ({ id, ...verse }: DailyVerse) => {
+    mutationFn: async ({ id, content_id, ...verse }: DailyVerse) => {
       try {
         const { data, error } = await supabase
           .from('verse_of_the_day')
