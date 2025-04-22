@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
@@ -48,8 +49,9 @@ const App = () => (
               <Route path="/dashboard/posts/new" element={<NewPostPage />} />
               <Route path="/dashboard/posts/categories" element={<CategoriesPage />} />
               <Route path="/dashboard/posts/ausgaben" element={<EditionsPage />} />
-              <Route path="/dashboard/polls" element={<div>Umfragen verwalten</div>} />
-              <Route path="/dashboard/polls/new" element={<div>Neue Umfrage</div>} />
+              <Route path="/dashboard/polls" element={<PollsPage />} />
+              <Route path="/dashboard/polls/new" element={<NewPollPage />} />
+              <Route path="/dashboard/polls/:id" element={<PollDetailPage />} />
               <Route path="/dashboard/polls/stats" element={<div>Umfrage-Statistiken</div>} />
               <Route path="/dashboard/videos" element={<div>Videos verwalten</div>} />
               <Route path="/dashboard/videos/new" element={<div>Neues Video</div>} />
@@ -62,9 +64,6 @@ const App = () => (
               <Route path="/dashboard/settings" element={<div>Einstellungen</div>} />
               <Route path="/dashboard/posts/edit/:id" element={<EditPostPage />} />
               <Route path="*" element={<NotFound />} />
-              <Route path="/dashboard/polls" element={<PollsPage />} />
-              <Route path="/dashboard/polls/new" element={<NewPollPage />} />
-              <Route path="/dashboard/polls/:id" element={<PollDetailPage />} />
             </Routes>
           </Suspense>
         </TooltipProvider>
