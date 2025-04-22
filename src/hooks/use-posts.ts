@@ -15,7 +15,7 @@ export type Post = {
   image_url: string | null;
 };
 
-type CreatePostParams = {
+export type CreatePostParams = {
   title: string;
   body: string;
   category_id: string;
