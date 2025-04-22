@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DailyVerse } from '@/lib/supabase';
@@ -8,8 +7,7 @@ export const useDailyVerses = () => {
   const { data: verses = [], isLoading, error } = useQuery({
     queryKey: ['dailyVerses'],
     queryFn: async () => {
-      // Instead of using the implicit join with *, we'll be explicit about
-      // which relationship we want to use by specifying the foreign key
+      // Explicitly use the specific foreign key relationship
       const { data: dailyVerses, error } = await supabase
         .from('verse_of_the_day')
         .select(`
@@ -18,7 +16,7 @@ export const useDailyVerses = () => {
           reference, 
           date, 
           content_id,
-          content:content_id (
+          content!verse_of_the_day_content_id_fkey (
             id,
             content_type,
             status,
