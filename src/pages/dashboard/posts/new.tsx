@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { usePosts } from '@/hooks/use-posts';
+import { usePosts, CreatePostParams } from '@/hooks/use-posts';
 import { useCategories } from '@/hooks/use-categories';
 import { useEditions } from '@/hooks/use-editions';
 import { useToast } from '@/hooks/use-toast';
@@ -59,7 +59,16 @@ const NewPostPage = () => {
   });
 
   const onSubmit = (data: FormValues) => {
-    createPost(data, {
+    // Explicitly cast data to CreatePostParams to ensure type safety
+    const postData: CreatePostParams = {
+      title: data.title,
+      body: data.body,
+      category_id: data.category_id,
+      edition_id: data.edition_id,
+      status: data.status,
+    };
+    
+    createPost(postData, {
       onSuccess: () => {
         toast({
           title: 'Erfolg',
