@@ -18,6 +18,7 @@ const CategoriesPage = React.lazy(() => import('./pages/dashboard/posts/categori
 const EditionsPage = React.lazy(() => import('./pages/dashboard/posts/editions'));
 const UsersPage = React.lazy(() => import('./pages/dashboard/users'));
 const EditPostPage = React.lazy(() => import('./pages/dashboard/posts/edit'));
+const DailyVersesPage = React.lazy(() => import('./pages/dashboard/daily-verses'));
 
 // Loading fallback
 const PageLoading = () => (
@@ -49,8 +50,8 @@ const App = () => (
               <Route path="/dashboard/polls/stats" element={<div>Umfrage-Statistiken</div>} />
               <Route path="/dashboard/videos" element={<div>Videos verwalten</div>} />
               <Route path="/dashboard/videos/new" element={<div>Neues Video</div>} />
-              <Route path="/dashboard/daily-verses" element={<div>Tagesverse verwalten</div>} />
-              <Route path="/dashboard/daily-verses/new" element={<div>Neuer Tagesvers</div>} />
+              <Route path="/dashboard/daily-verses" element={<DailyVersesPage />} />
+              <Route path="/dashboard/daily-verses/new" element={<DailyVersesPage />} />
               <Route path="/dashboard/users" element={<UsersPage />} />
               <Route path="/dashboard/statistics" element={<div>App-Statistiken</div>} />
               <Route path="/dashboard/notifications" element={<div>Benachrichtigungen verwalten</div>} />

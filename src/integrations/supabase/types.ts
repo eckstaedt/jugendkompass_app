@@ -302,24 +302,35 @@ export type Database = {
       }
       verse_of_the_day: {
         Row: {
-          content_id: number | null
-          id: number
+          content_id: string | null
+          date: string
+          id: string
           reference: string
           verse: string
         }
         Insert: {
-          content_id?: number | null
-          id?: never
+          content_id?: string | null
+          date?: string
+          id?: string
           reference: string
           verse: string
         }
         Update: {
-          content_id?: number | null
-          id?: never
+          content_id?: string | null
+          date?: string
+          id?: string
           reference?: string
           verse?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "verse_of_the_day_new_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       videos: {
         Row: {

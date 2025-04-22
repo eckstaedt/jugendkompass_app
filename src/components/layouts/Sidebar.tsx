@@ -68,7 +68,7 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
       ],
     },
     {
-      label: 'Tagesverse',
+      label: 'Vers des Tages',
       path: '/dashboard/daily-verses',
       icon: CalendarIcon,
       subItems: [
