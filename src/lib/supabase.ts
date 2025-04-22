@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import { supabase as supabaseClient } from '@/integrations/supabase/client';
 
@@ -56,12 +55,12 @@ export type PollOption = {
 // Typen für Videos
 export type Video = {
   id: number;
-  content_id: string | null;
+  content_id: string;  // Now required (not nullable)
   title: string;
   url: string;
   user_id: string | null;
   created_at: string | null;
-  content?: {
+  content: {         // Now required since content_id is required
     content_type: string;
     created_at: string;
     id: string;
@@ -72,6 +71,7 @@ export type Video = {
 // Typen für tägliche Verse
 export type DailyVerse = {
   id: string;
+  content_id: string;  // Now required (not nullable)
   verse_text: string;
   verse_reference: string;
   date: string;

@@ -356,27 +356,34 @@ export type Database = {
       }
       verse_of_the_day: {
         Row: {
-          content_id: string | null
+          content_id: string
           date: string
           id: string
           reference: string
           verse: string
         }
         Insert: {
-          content_id?: string | null
+          content_id: string
           date?: string
           id?: string
           reference: string
           verse: string
         }
         Update: {
-          content_id?: string | null
+          content_id?: string
           date?: string
           id?: string
           reference?: string
           verse?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "verse_of_the_day_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "verse_of_the_day_new_content_id_fkey"
             columns: ["content_id"]
@@ -388,7 +395,7 @@ export type Database = {
       }
       videos: {
         Row: {
-          content_id: string | null
+          content_id: string
           created_at: string | null
           id: number
           title: string
@@ -396,7 +403,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          content_id?: string | null
+          content_id: string
           created_at?: string | null
           id?: never
           title: string
@@ -404,7 +411,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          content_id?: string | null
+          content_id?: string
           created_at?: string | null
           id?: never
           title?: string
