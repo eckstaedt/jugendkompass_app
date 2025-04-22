@@ -29,10 +29,25 @@ export function useDailyVerses() {
     },
   });
 
+  // Function to log activity separately from database operations
+  const logVerseActivity = async (action: 'create' | 'update', verseId: string | null, date: string) => {
+    try {
+      await logActivity({
+        action_type: action,
+        entity_type: 'verse',
+        entity_id: verseId,
+        description: `Tagesvers für ${date} ${action === 'create' ? 'erstellt' : 'aktualisiert'}`,
+      });
+    } catch (error) {
+      console.error(`Error logging ${action} activity:`, error);
+      // Don't throw here - we don't want activity logging failures to break the main operations
+    }
+  };
+
   const createVerse = useMutation({
     mutationFn: async (verse: Omit<DailyVerse, 'id'>) => {
       try {
-        // First do the database insert with minimal fields
+        // First perform database operation with only the essential fields
         const { data, error } = await supabase
           .from('verse_of_the_day')
           .insert({
@@ -45,13 +60,10 @@ export function useDailyVerses() {
 
         if (error) throw error;
         
-        // Only log activity after the insert succeeds
-        await logActivity({
-          action_type: 'create',
-          entity_type: 'verse',
-          entity_id: data.id,
-          description: `Tagesvers für ${verse.date} erstellt`,
-        });
+        // Only after successful insert, log the activity
+        if (data) {
+          await logVerseActivity('create', data.id, verse.date);
+        }
         
         return data;
       } catch (error) {
@@ -79,7 +91,7 @@ export function useDailyVerses() {
   const updateVerse = useMutation({
     mutationFn: async ({ id, ...verse }: DailyVerse) => {
       try {
-        // First do the database update with minimal fields
+        // First perform database operation with only the essential fields
         const { data, error } = await supabase
           .from('verse_of_the_day')
           .update({
@@ -93,13 +105,8 @@ export function useDailyVerses() {
 
         if (error) throw error;
         
-        // Only log activity after the update succeeds
-        await logActivity({
-          action_type: 'update',
-          entity_type: 'verse',
-          entity_id: id,
-          description: `Tagesvers für ${verse.date} aktualisiert`,
-        });
+        // Only after successful update, log the activity
+        await logVerseActivity('update', id, verse.date);
         
         return data;
       } catch (error) {

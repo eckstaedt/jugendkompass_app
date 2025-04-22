@@ -14,24 +14,28 @@ export const logActivity = async ({
   entity_id,
   description,
 }: LogActivityParams) => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    console.error('No user found when trying to log activity');
-    return;
-  }
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.error('No user found when trying to log activity');
+      return;
+    }
 
-  const { error } = await supabase
-    .from('activities')
-    .insert({
-      user_id: user.id,
-      action_type,
-      entity_type,
-      entity_id,
-      description,
-    });
+    const { error } = await supabase
+      .from('activities')
+      .insert({
+        user_id: user.id,
+        action_type,
+        entity_type,
+        entity_id,
+        description,
+      });
 
-  if (error) {
-    console.error('Error logging activity:', error);
+    if (error) {
+      console.error('Error logging activity:', error);
+    }
+  } catch (error) {
+    console.error('Unexpected error in logActivity:', error);
   }
 };
