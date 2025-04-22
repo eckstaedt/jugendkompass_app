@@ -39,23 +39,31 @@ export const ContentFeedItem = ({ item }: { item: FeedItem }) => {
           </p>
         </div>
       </CardHeader>
-      {(item.description || item.image_url) && (
-        <CardContent>
-          {item.description && (
-            <div 
-              className="prose prose-sm max-w-none text-muted-foreground mb-4"
-              dangerouslySetInnerHTML={{ __html: item.description }}
-            />
-          )}
-          {item.image_url && (
-            <img 
-              src={item.image_url} 
-              alt={item.title || 'Content image'} 
-              className="w-full h-48 object-cover rounded-md"
-            />
-          )}
-        </CardContent>
-      )}
+      <CardContent>
+        {item.description && (
+          <div 
+            className="prose prose-sm max-w-none text-muted-foreground mb-4"
+            dangerouslySetInnerHTML={{ __html: item.description }}
+          />
+        )}
+        {item.image_url && item.content_type !== 'video' && (
+          <img 
+            src={item.image_url} 
+            alt={item.title || 'Content image'} 
+            className="w-full h-48 object-cover rounded-md"
+          />
+        )}
+        {item.image_url && item.content_type === 'video' && (
+          <video 
+            src={item.image_url} 
+            controls
+            className="w-full h-auto rounded-md"
+            poster={item.image_url}
+          >
+            Your browser does not support the video tag.
+          </video>
+        )}
+      </CardContent>
     </Card>
   );
 };

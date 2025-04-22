@@ -193,7 +193,7 @@ const DashboardPage = () => {
           icon={<BookIcon className="h-5 w-5 text-primary" />} 
         />
         <DashboardCard 
-          title="Editionen" 
+          title="Ausgaben" 
           value={editionStats?.total || '...'} 
           description="Ausgaben des Jugendkompass" 
           icon={<BookIcon className="h-5 w-5 text-primary" />} 
