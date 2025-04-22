@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { User } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 
 type AuthContextType = {
   user: User | null;
@@ -25,54 +26,82 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Helper function to convert Supabase User to our custom User type
+  const convertSupabaseUser = (supabaseUser: SupabaseUser | null): User | null => {
+    if (!supabaseUser) return null;
+    return {
+      id: supabaseUser.id,
+      email: supabaseUser.email || '',
+      role: 'user', // Default role, will be updated after checking admin status
+      created_at: supabaseUser.created_at || new Date().toISOString()
+    };
+  };
+
   // Separate function to check admin status
   const checkAdminStatus = async (userId: string) => {
     try {
+      console.log("Checking admin status for user:", userId);
       const { data: userData, error } = await supabase
         .from('users')
         .select('role')
         .eq('id', userId)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error checking admin status:', error);
+        return false;
+      }
+      
+      console.log("Admin check result:", userData);
       return userData?.role === 'admin';
     } catch (error) {
-      console.error('Error checking admin status:', error);
+      console.error('Exception checking admin status:', error);
       return false;
     }
   };
 
   useEffect(() => {
+    // First set up the auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log("Auth state changed:", event, session?.user?.id);
         
         if (session?.user) {
-          // First set the basic user state
-          setUser(session.user);
+          // Convert the Supabase user to our custom User type
+          const customUser = convertSupabaseUser(session.user);
+          setUser(customUser);
           
-          // Then check admin status in a separate call
-          const isUserAdmin = await checkAdminStatus(session.user.id);
-          setIsAdmin(isUserAdmin);
-          
-          if (isUserAdmin) {
-            toast({
-              title: "Erfolgreich angemeldet",
-              description: "Willkommen im Admin-Dashboard",
-              variant: "success",
-            });
-            navigate('/dashboard');
-          } else {
-            toast({
-              title: "Zugriff verweigert",
-              description: "Du hast keine Administrator-Berechtigungen.",
-              variant: "destructive",
-            });
-            await supabase.auth.signOut();
-            setUser(null);
-            setIsAdmin(false);
-            navigate('/login');
-          }
+          // Check admin status in a separate timeout to avoid recursion
+          setTimeout(async () => {
+            try {
+              const isUserAdmin = await checkAdminStatus(session.user.id);
+              setIsAdmin(isUserAdmin);
+              
+              if (isUserAdmin) {
+                toast({
+                  title: "Erfolgreich angemeldet",
+                  description: "Willkommen im Admin-Dashboard",
+                  variant: "success",
+                });
+                navigate('/dashboard');
+              } else {
+                toast({
+                  title: "Zugriff verweigert",
+                  description: "Du hast keine Administrator-Berechtigungen.",
+                  variant: "destructive",
+                });
+                await supabase.auth.signOut();
+                setUser(null);
+                setIsAdmin(false);
+                navigate('/login');
+              }
+            } catch (error) {
+              console.error("Error in admin check:", error);
+              setUser(null);
+              setIsAdmin(false);
+              navigate('/login');
+            }
+          }, 0);
         } else {
           setUser(null);
           setIsAdmin(false);
@@ -86,14 +115,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Check initial session
     supabase.auth.getSession().then(async ({ data: { session }}) => {
       if (session?.user) {
-        setUser(session.user);
-        const isUserAdmin = await checkAdminStatus(session.user.id);
-        setIsAdmin(isUserAdmin);
-        if (!isUserAdmin) {
-          await supabase.auth.signOut();
+        const customUser = convertSupabaseUser(session.user);
+        setUser(customUser);
+        
+        try {
+          const isUserAdmin = await checkAdminStatus(session.user.id);
+          setIsAdmin(isUserAdmin);
+          if (!isUserAdmin) {
+            await supabase.auth.signOut();
+            setUser(null);
+            setIsAdmin(false);
+            navigate('/login');
+          }
+        } catch (error) {
+          console.error("Error checking admin status:", error);
           setUser(null);
           setIsAdmin(false);
-          navigate('/login');
         }
       }
       setLoading(false);
