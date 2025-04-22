@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
@@ -31,6 +30,8 @@ const PageLoading = () => (
   </div>
 );
 
+const StatsPage = React.lazy(() => import('./pages/dashboard/polls/stats'));
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -52,7 +53,7 @@ const App = () => (
               <Route path="/dashboard/polls" element={<PollsPage />} />
               <Route path="/dashboard/polls/new" element={<NewPollPage />} />
               <Route path="/dashboard/polls/:id" element={<PollDetailPage />} />
-              <Route path="/dashboard/polls/stats" element={<div>Umfrage-Statistiken</div>} />
+              <Route path="/dashboard/polls/stats" element={<StatsPage />} />
               <Route path="/dashboard/videos" element={<div>Videos verwalten</div>} />
               <Route path="/dashboard/videos/new" element={<div>Neues Video</div>} />
               <Route path="/dashboard/daily-verses" element={<DailyVersesPage />} />
