@@ -82,11 +82,6 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
       icon: UsersIcon,
     },
     {
-      label: 'Statistiken',
-      path: '/dashboard/statistics',
-      icon: BarChart2Icon,
-    },
-    {
       label: 'Benachrichtigungen',
       path: '/dashboard/notifications',
       icon: BellIcon,
