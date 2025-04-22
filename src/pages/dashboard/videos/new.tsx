@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { useUploadVideo } from '@/hooks/use-videos';
@@ -7,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileVideoIcon, Upload } from 'lucide-react';
+import { FileVideoIcon, LoaderCircle, Progress } from 'lucide-react';
 
 const NewVideoPage = () => {
   const { user } = useAuth();
@@ -17,6 +16,7 @@ const NewVideoPage = () => {
   const [title, setTitle] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
@@ -34,6 +34,18 @@ const NewVideoPage = () => {
     }
 
     setIsUploading(true);
+    setUploadProgress(0);
+
+    const simulateProgress = () => {
+      setUploadProgress(prev => {
+        if (prev < 90) {
+          return prev + 10;
+        }
+        return prev;
+      });
+    };
+
+    const progressInterval = setInterval(simulateProgress, 500);
 
     try {
       await uploadVideoMutation.mutateAsync({ 
@@ -42,6 +54,7 @@ const NewVideoPage = () => {
         userId: user.id 
       });
 
+      setUploadProgress(100);
       setTitle('');
       setFile(null);
 
@@ -57,7 +70,9 @@ const NewVideoPage = () => {
         variant: "destructive"
       });
     } finally {
+      clearInterval(progressInterval);
       setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -78,6 +93,7 @@ const NewVideoPage = () => {
                 placeholder="Geben Sie einen Titel ein" 
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                disabled={isUploading}
               />
             </div>
 
@@ -90,6 +106,7 @@ const NewVideoPage = () => {
                 type="file" 
                 accept="video/*"
                 onChange={handleFileChange}
+                disabled={isUploading}
               />
               {file && (
                 <p className="mt-2 text-sm text-muted-foreground">
@@ -98,6 +115,15 @@ const NewVideoPage = () => {
               )}
             </div>
 
+            {isUploading && (
+              <div className="space-y-2">
+                <Progress value={uploadProgress} className="w-full" />
+                <p className="text-sm text-muted-foreground text-center">
+                  Upload: {uploadProgress}%
+                </p>
+              </div>
+            )}
+
             <Button 
               onClick={handleUpload} 
               disabled={isUploading || uploadVideoMutation.isPending || !title || !file}
@@ -105,12 +131,12 @@ const NewVideoPage = () => {
             >
               {isUploading ? (
                 <>
-                  <span className="mr-2">Wird hochgeladen...</span>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                  Wird hochgeladen...
                 </>
               ) : (
                 <>
-                  <Upload className="mr-2 h-4 w-4" />
+                  <FileVideoIcon className="mr-2 h-4 w-4" />
                   Video hochladen
                 </>
               )}
