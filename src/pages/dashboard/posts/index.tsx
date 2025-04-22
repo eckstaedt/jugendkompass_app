@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { usePosts } from '@/hooks/use-posts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,37 +10,13 @@ import { Switch } from '@/components/ui/switch';
 import { PlusIcon, TrashIcon, PencilIcon } from 'lucide-react';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const PostsPage = () => {
   const { posts, isLoading, deletePost, updatePostStatus } = usePosts();
   const navigate = useNavigate();
-  const location = useLocation();
-
-  const currentTab = location.pathname === '/dashboard/posts' 
-    ? 'all'
-    : location.pathname === '/dashboard/posts/new'
-    ? 'new'
-    : location.pathname === '/dashboard/posts/categories'
-    ? 'categories'
-    : 'all';
 
   const handleCreatePost = () => {
     navigate('/dashboard/posts/new');
-  };
-
-  const handleTabChange = (value: string) => {
-    switch (value) {
-      case 'all':
-        navigate('/dashboard/posts');
-        break;
-      case 'new':
-        navigate('/dashboard/posts/new');
-        break;
-      case 'categories':
-        navigate('/dashboard/posts/categories');
-        break;
-    }
   };
 
   const handleDelete = (id: string) => {
@@ -52,7 +29,6 @@ const PostsPage = () => {
       return;
     }
     
-    // Default to 'draft' if status is undefined
     const status = currentStatus || 'draft';
     const newStatus = status === 'draft' ? 'published' : 'draft';
     
@@ -68,13 +44,7 @@ const PostsPage = () => {
     <DashboardLayout title="Beiträge">
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <Tabs value={currentTab} onValueChange={handleTabChange}>
-            <TabsList>
-              <TabsTrigger value="all">Alle Beiträge</TabsTrigger>
-              <TabsTrigger value="new">Neuer Beitrag</TabsTrigger>
-              <TabsTrigger value="categories">Kategorien</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <h2 className="text-2xl font-bold tracking-tight">Beiträge verwalten</h2>
           <Button onClick={handleCreatePost} className="bg-primary/10 text-primary hover:bg-primary/20">
             <PlusIcon className="mr-2 h-4 w-4" />
             Neuer Beitrag

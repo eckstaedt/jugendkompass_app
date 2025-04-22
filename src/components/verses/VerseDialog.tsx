@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { Calendar } from "@/components/ui/calendar";
@@ -40,12 +39,22 @@ interface VerseDialogProps {
 
 export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }: VerseDialogProps) {
   const form = useForm<FormData>({
-    defaultValues: initialData || {
-      verse: '',
-      reference: '',
-      date: format(new Date(), 'yyyy-MM-dd'),
+    defaultValues: {
+      verse: initialData?.verse || '',
+      reference: initialData?.reference || '',
+      date: initialData ? format(new Date(initialData.date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
     },
   });
+
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        verse: initialData.verse,
+        reference: initialData.reference,
+        date: format(new Date(initialData.date), 'yyyy-MM-dd'),
+      });
+    }
+  }, [initialData, form]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
