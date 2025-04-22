@@ -444,7 +444,20 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      content_feed: {
+        Row: {
+          content_id: string | null
+          content_type: string | null
+          created_at: string | null
+          description: string | null
+          entity_id: string | null
+          image_url: string | null
+          sort_order: number | null
+          specific_date: string | null
+          title: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_user_role: {

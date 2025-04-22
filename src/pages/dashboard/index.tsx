@@ -6,6 +6,8 @@ import { useActivities } from '@/hooks/use-activities';
 import { ActivityItem } from '@/components/dashboard/ActivityItem';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useContentFeed } from '@/hooks/use-content-feed';
+import { ContentFeedItem } from '@/components/dashboard/ContentFeedItem';
 
 type DashboardCardProps = {
   title: string;
@@ -134,6 +136,8 @@ const DashboardPage = () => {
     }
   });
 
+  const { data: feedItems, isLoading: isLoadingFeed } = useContentFeed();
+  
   return (
     <DashboardLayout title="Dashboard">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -187,7 +191,7 @@ const DashboardPage = () => {
         />
       </div>
       
-      <div className="mt-8">
+      <div className="mt-8 grid gap-8 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Neueste Aktivitäten</CardTitle>
@@ -210,6 +214,32 @@ const DashboardPage = () => {
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">Keine Aktivitäten gefunden.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Content Feed</CardTitle>
+            <CardDescription>
+              Alle veröffentlichten Inhalte in chronologischer Reihenfolge
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoadingFeed ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-[100px] animate-pulse rounded-md bg-muted" />
+                ))}
+              </div>
+            ) : feedItems && feedItems.length > 0 ? (
+              <div className="space-y-4">
+                {feedItems.map((item) => (
+                  <ContentFeedItem key={item.content_id} item={item} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Keine Inhalte gefunden.</p>
             )}
           </CardContent>
         </Card>
