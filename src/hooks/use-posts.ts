@@ -120,7 +120,7 @@ export function usePosts() {
         .from('content')
         .select('*')
         .eq('id', contentId)
-        .single();
+        .maybeSingle();
         
       if (fetchError) {
         console.error('Error fetching content:', fetchError);

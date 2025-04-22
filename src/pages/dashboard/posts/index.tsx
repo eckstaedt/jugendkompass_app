@@ -23,13 +23,16 @@ const PostsPage = () => {
     deletePost(id);
   };
 
-  const handleStatusChange = (contentId: string | null, currentStatus: 'draft' | 'published') => {
+  const handleStatusChange = (contentId: string | null, currentStatus: 'draft' | 'published' | undefined) => {
     if (!contentId) {
       console.error('Cannot update status: No content ID available');
       return;
     }
     
-    const newStatus = currentStatus === 'draft' ? 'published' : 'draft';
+    // Default to 'draft' if status is undefined
+    const status = currentStatus || 'draft';
+    const newStatus = status === 'draft' ? 'published' : 'draft';
+    
     console.log('Toggling status:', { contentId, currentStatus, newStatus });
     updatePostStatus({ contentId, status: newStatus });
   };
@@ -72,7 +75,7 @@ const PostsPage = () => {
                           <div className="flex items-center gap-3">
                             <Switch
                               checked={post.content?.status === 'published'}
-                              onCheckedChange={() => handleStatusChange(post.content_id, post.content?.status || 'draft')}
+                              onCheckedChange={() => handleStatusChange(post.content_id, post.content?.status)}
                             />
                             <Badge variant={post.content?.status === 'published' ? 'success' : 'secondary'}>
                               {post.content?.status === 'published' ? 'Veröffentlicht' : 'Entwurf'}
