@@ -37,13 +37,23 @@ export const useUploadVideo = () => {
         .from('videos')
         .getPublicUrl(fileName);
 
-      // Insert video record with content_id from trigger
+      // First create a content entry
+      const { data: contentData, error: contentError } = await supabase
+        .from('content')
+        .insert({ content_type: 'video', status: 'published' })
+        .select('id')
+        .single();
+
+      if (contentError) throw contentError;
+
+      // Then insert video record with the content_id
       const { data: videoData, error: insertError } = await supabase
         .from('videos')
         .insert({ 
           title, 
           url: publicUrl, 
-          user_id: userId 
+          user_id: userId,
+          content_id: contentData.id
         })
         .select('*, content:content_id(*)')
         .single();

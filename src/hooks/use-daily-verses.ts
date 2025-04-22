@@ -2,14 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { logActivity } from '@/lib/activity-logger';
-
-export type DailyVerse = {
-  id: string;
-  verse: string;
-  reference: string;
-  date: string;
-  content_id?: string;
-};
+import { DailyVerse } from '@/lib/supabase';
 
 export function useDailyVerses() {
   const queryClient = useQueryClient();
@@ -42,14 +35,25 @@ export function useDailyVerses() {
   };
 
   const createVerse = useMutation({
-    mutationFn: async (verse: Omit<DailyVerse, 'id'>) => {
+    mutationFn: async (verse: Omit<DailyVerse, 'id' | 'content_id' | 'created_at'>) => {
       try {
+        // First create a content entry
+        const { data: contentData, error: contentError } = await supabase
+          .from('content')
+          .insert({ content_type: 'verse', status: 'published' })
+          .select('id')
+          .single();
+
+        if (contentError) throw contentError;
+        
+        // Then create the verse with the content_id
         const { data, error } = await supabase
           .from('verse_of_the_day')
           .insert({
             date: verse.date,
             verse: verse.verse,
-            reference: verse.reference
+            reference: verse.reference,
+            content_id: contentData.id
           })
           .select('*, content:content_id(*)')
           .single();
@@ -93,7 +97,12 @@ export function useDailyVerses() {
       try {
         const { data, error } = await supabase
           .from('verse_of_the_day')
-          .update(verse)
+          .update({
+            verse: verse.verse,
+            reference: verse.reference,
+            date: verse.date
+            // We don't update content_id as it should remain the same
+          })
           .eq('id', id)
           .select('*, content:content_id(*)')
           .single();
