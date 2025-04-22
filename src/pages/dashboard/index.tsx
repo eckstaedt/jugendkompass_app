@@ -1,8 +1,9 @@
-
 import React from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart2Icon, BookIcon, FileTextIcon, PieChartIcon, UsersIcon, FileVideoIcon, CalendarIcon, BellIcon } from 'lucide-react';
+import { useActivities } from '@/hooks/use-activities';
+import { ActivityItem } from '@/components/dashboard/ActivityItem';
 
 // Dashboard-Karten-Typ
 type DashboardCardProps = {
@@ -28,6 +29,8 @@ const DashboardCard = ({ title, value, description, icon, className }: Dashboard
 );
 
 const DashboardPage = () => {
+  const { data: activities, isLoading: isLoadingActivities } = useActivities();
+
   return (
     <DashboardLayout title="Dashboard">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -90,52 +93,21 @@ const DashboardPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center gap-4 rounded-md border p-4">
-                <FileTextIcon className="h-5 w-5 text-primary" />
-                <div className="flex-1 space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    Neuer Beitrag erstellt
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    "Gottes Plan für dein Leben" in Kategorie "Glaube"
-                  </p>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Vor 35 Minuten
-                </div>
+            {isLoadingActivities ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-[76px] animate-pulse rounded-md bg-muted" />
+                ))}
               </div>
-              
-              <div className="flex items-center gap-4 rounded-md border p-4">
-                <PieChartIcon className="h-5 w-5 text-primary" />
-                <div className="flex-1 space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    Umfrage aktualisiert
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    "Wie oft liest du in der Bibel?" - Neue Antwortmöglichkeit hinzugefügt
-                  </p>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Vor 2 Stunden
-                </div>
+            ) : activities && activities.length > 0 ? (
+              <div className="space-y-4">
+                {activities.map((activity) => (
+                  <ActivityItem key={activity.id} activity={activity} />
+                ))}
               </div>
-              
-              <div className="flex items-center gap-4 rounded-md border p-4">
-                <BellIcon className="h-5 w-5 text-primary" />
-                <div className="flex-1 space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    Benachrichtigung gesendet
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    "Neue Ausgabe verfügbar" an alle Benutzer
-                  </p>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Vor 5 Stunden
-                </div>
-              </div>
-            </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Keine Aktivitäten gefunden.</p>
+            )}
           </CardContent>
         </Card>
         
