@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { BookIcon, EyeIcon, EyeOffIcon } from 'lucide-react';
+import { BookIcon, EyeIcon, EyeOffIcon, LoaderCircleIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -48,9 +48,21 @@ const LoginPage = () => {
       navigate('/dashboard');
     } catch (error: any) {
       console.error('Login error:', error);
+      let errorMessage = 'Bitte überprüfe deine Anmeldedaten und versuche es erneut.';
+      
+      if (error.message) {
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = 'Ungültige Anmeldedaten. Bitte überprüfe deine E-Mail und dein Passwort.';
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = 'Deine E-Mail-Adresse wurde noch nicht bestätigt. Bitte prüfe deinen Posteingang.';
+        } else if (error.message.includes('rate limit')) {
+          errorMessage = 'Zu viele Anmeldeversuche. Bitte versuche es später erneut.';
+        }
+      }
+      
       toast({
         title: 'Anmeldung fehlgeschlagen',
-        description: error.message || 'Bitte überprüfe deine Anmeldedaten und versuche es erneut.',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -129,10 +141,10 @@ const LoginPage = () => {
                 disabled={loading}
               >
                 {loading ? (
-                  <>
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                  <div className="flex items-center justify-center space-x-2">
+                    <LoaderCircleIcon className="h-4 w-4 animate-spin" />
                     <span>Anmelden...</span>
-                  </>
+                  </div>
                 ) : (
                   "Anmelden"
                 )}

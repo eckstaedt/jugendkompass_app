@@ -11,30 +11,30 @@ export type Database = {
     Tables: {
       audios: {
         Row: {
-          id: number
+          id: string
           url: string
         }
         Insert: {
-          id?: never
+          id?: string
           url: string
         }
         Update: {
-          id?: never
+          id?: string
           url?: string
         }
         Relationships: []
       }
       categories: {
         Row: {
-          id: number
+          id: string
           name: string
         }
         Insert: {
-          id?: never
+          id?: string
           name: string
         }
         Update: {
-          id?: never
+          id?: string
           name?: string
         }
         Relationships: []
@@ -43,33 +43,33 @@ export type Database = {
         Row: {
           content_type: string
           created_at: string | null
-          id: number
+          id: string
         }
         Insert: {
           content_type: string
           created_at?: string | null
-          id?: never
+          id?: string
         }
         Update: {
           content_type?: string
           created_at?: string | null
-          id?: never
+          id?: string
         }
         Relationships: []
       }
       editions: {
         Row: {
-          id: number
+          id: string
           name: string
           published_at: string | null
         }
         Insert: {
-          id?: never
+          id?: string
           name: string
           published_at?: string | null
         }
         Update: {
-          id?: never
+          id?: string
           name?: string
           published_at?: string | null
         }
@@ -77,18 +77,18 @@ export type Database = {
       }
       impulses: {
         Row: {
-          content_id: number | null
-          id: number
+          content_id: string | null
+          id: string
           impulse_text: string
         }
         Insert: {
-          content_id?: number | null
-          id?: never
+          content_id?: string | null
+          id?: string
           impulse_text: string
         }
         Update: {
-          content_id?: number | null
-          id?: never
+          content_id?: string | null
+          id?: string
           impulse_text?: string
         }
         Relationships: [
@@ -117,15 +117,7 @@ export type Database = {
           id?: never
           message?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "messages_content_id_fkey"
-            columns: ["content_id"]
-            isOneToOne: false
-            referencedRelation: "content"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       poll_options: {
         Row: {
@@ -169,44 +161,36 @@ export type Database = {
           id?: never
           question?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "polls_content_id_fkey"
-            columns: ["content_id"]
-            isOneToOne: false
-            referencedRelation: "content"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       posts: {
         Row: {
-          audio_id: number | null
+          audio_id: string | null
           body: string
-          category_id: number | null
-          content_id: number | null
-          edition_id: number | null
-          id: number
+          category_id: string | null
+          content_id: string | null
+          edition_id: string | null
+          id: string
           image_url: string | null
           title: string
         }
         Insert: {
-          audio_id?: number | null
+          audio_id?: string | null
           body: string
-          category_id?: number | null
-          content_id?: number | null
-          edition_id?: number | null
-          id?: never
+          category_id?: string | null
+          content_id?: string | null
+          edition_id?: string | null
+          id?: string
           image_url?: string | null
           title: string
         }
         Update: {
-          audio_id?: number | null
+          audio_id?: string | null
           body?: string
-          category_id?: number | null
-          content_id?: number | null
-          edition_id?: number | null
-          id?: never
+          category_id?: string | null
+          content_id?: string | null
+          edition_id?: string | null
+          id?: string
           image_url?: string | null
           title?: string
         }
@@ -281,15 +265,7 @@ export type Database = {
           reference?: string
           verse?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "verse_of_the_day_content_id_fkey"
-            columns: ["content_id"]
-            isOneToOne: false
-            referencedRelation: "content"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       videos: {
         Row: {
@@ -310,15 +286,7 @@ export type Database = {
           title?: string
           url?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "videos_content_id_fkey"
-            columns: ["content_id"]
-            isOneToOne: false
-            referencedRelation: "content"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
