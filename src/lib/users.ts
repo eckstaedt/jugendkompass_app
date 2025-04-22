@@ -20,7 +20,11 @@ export async function fetchUsers(): Promise<User[]> {
     throw error;
   }
 
-  return users || [];
+  // Ensure that the role is properly typed
+  return (users || []).map(user => ({
+    ...user,
+    role: (user.role === 'admin' ? 'admin' : 'user') as 'admin' | 'user'
+  }));
 }
 
 export async function updateUserRole(userId: string, role: 'admin' | 'user') {
