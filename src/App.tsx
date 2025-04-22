@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
@@ -13,6 +14,7 @@ import NotFound from "./pages/NotFound";
 const LoginPage = React.lazy(() => import('./pages/login/index'));
 const DashboardPage = React.lazy(() => import('./pages/dashboard'));
 const PostsPage = React.lazy(() => import('./pages/dashboard/posts'));
+const NewPostPage = React.lazy(() => import('./pages/dashboard/posts/new'));
 const CategoriesPage = React.lazy(() => import('./pages/dashboard/posts/categories'));
 const EditionsPage = React.lazy(() => import('./pages/dashboard/posts/editions'));
 const UsersPage = React.lazy(() => import('./pages/dashboard/users'));
@@ -39,6 +41,7 @@ const App = () => (
               <Route path="/login" element={<LoginPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/dashboard/posts" element={<PostsPage />} />
+              <Route path="/dashboard/posts/new" element={<NewPostPage />} />
               <Route path="/dashboard/posts/categories" element={<CategoriesPage />} />
               <Route path="/dashboard/posts/ausgaben" element={<EditionsPage />} />
               <Route path="/dashboard/polls" element={<div>Umfragen verwalten</div>} />

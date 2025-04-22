@@ -8,8 +8,8 @@ export type Post = {
   id: string;
   title: string;
   body: string;
-  category_id: string | null;
-  edition_id: string | null;
+  category_id: string;
+  edition_id: string;
   content_id: string | null;
   audio_id: string | null;
   image_url: string | null;
@@ -18,9 +18,9 @@ export type Post = {
 type CreatePostParams = {
   title: string;
   body: string;
-  category_id?: string | null;
-  edition_id?: string | null;
-  status?: string;
+  category_id: string;
+  edition_id: string;
+  status: 'active' | 'draft';
 };
 
 export function usePosts() {
@@ -73,7 +73,7 @@ export function usePosts() {
         .from('content')
         .insert({ 
           content_type: 'post', 
-          status: postData.status || 'draft' 
+          status: postData.status
         })
         .select('id')
         .single();
@@ -86,8 +86,8 @@ export function usePosts() {
         .insert({
           title: postData.title,
           body: postData.body,
-          category_id: postData.category_id || null,
-          edition_id: postData.edition_id || null,
+          category_id: postData.category_id,
+          edition_id: postData.edition_id,
           content_id: contentData.id
         })
         .select()

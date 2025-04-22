@@ -1,140 +1,95 @@
 
-import { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { PlusIcon, SearchIcon, Edit2Icon, Trash2Icon, EyeIcon } from 'lucide-react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { usePosts } from '@/hooks/use-posts';
-import { useCategories } from '@/hooks/use-categories';
-import { useEditions } from '@/hooks/use-editions';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { PlusIcon, TrashIcon } from 'lucide-react';
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 
 const PostsPage = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const { posts, isLoading, deletePost } = usePosts();
   const navigate = useNavigate();
-  const { posts, isLoading: isLoadingPosts, deletePost } = usePosts();
-  const { categories } = useCategories();
-  const { editions } = useEditions();
-  
-  // Filter posts based on search term
-  const filteredPosts = posts.filter(
-    (post) =>
-      post.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  
-  // Find category and edition names
-  const getCategoryName = (categoryId: string | null) => {
-    if (!categoryId) return '-';
-    return categories.find(cat => cat.id === categoryId)?.name || '-';
+
+  const handleCreatePost = () => {
+    navigate('/dashboard/posts/new');
   };
 
-  const getAusgabeName = (editionId: string | null) => {
-    if (!editionId) return '-';
-    return editions.find(ed => ed.id === editionId)?.name || '-';
+  const handleDelete = (id: string) => {
+    deletePost(id);
   };
-  
+
   return (
-    <DashboardLayout title="Beiträge verwalten">
-      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="relative w-full md:w-96">
-          <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Beiträge suchen..."
-            className="pl-9"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <Button onClick={() => navigate('/dashboard/posts/new')}>
+    <DashboardLayout title="Beiträge">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-semibold">Alle Beiträge</h2>
+        <Button onClick={handleCreatePost}>
           <PlusIcon className="mr-2 h-4 w-4" />
           Neuer Beitrag
         </Button>
       </div>
-      
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[300px]">Titel</TableHead>
-              <TableHead>Kategorie</TableHead>
-              <TableHead>Ausgabe</TableHead>
-              <TableHead className="text-right">Aktionen</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoadingPosts ? (
-              <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
-                  Lädt...
-                </TableCell>
-              </TableRow>
-            ) : filteredPosts.length > 0 ? (
-              filteredPosts.map((post) => (
-                <TableRow key={post.id}>
-                  <TableCell className="font-medium">{post.title}</TableCell>
-                  <TableCell>{getCategoryName(post.category_id)}</TableCell>
-                  <TableCell>{getAusgabeName(post.edition_id)}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <span className="sr-only">Menü öffnen</span>
-                          <EyeIcon className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => navigate(`/dashboard/posts/${post.id}`)}
-                        >
-                          <EyeIcon className="mr-2 h-4 w-4" />
-                          Ansehen
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => navigate(`/dashboard/posts/${post.id}/edit`)}
-                        >
-                          <Edit2Icon className="mr-2 h-4 w-4" />
-                          Bearbeiten
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive focus:bg-destructive focus:text-destructive-foreground"
-                          onClick={() => {
-                            if (confirm('Diesen Beitrag wirklich löschen?')) {
-                              deletePost(post.id);
-                            }
-                          }}
-                        >
-                          <Trash2Icon className="mr-2 h-4 w-4" />
-                          Löschen
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+
+      <Card className="shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle>Beitragsliste</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex justify-center p-8">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Titel</TableHead>
+                  <TableHead>Aktionen</TableHead>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
-                  Keine Beiträge gefunden.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              </TableHeader>
+              <TableBody>
+                {posts.length > 0 ? (
+                  posts.map((post) => (
+                    <TableRow key={post.id}>
+                      <TableCell className="font-medium">{post.title}</TableCell>
+                      <TableCell>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="icon" className="text-destructive">
+                              <TrashIcon className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Beitrag löschen</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Möchten Sie diesen Beitrag wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDelete(post.id)}>
+                                Löschen
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={2} className="text-center py-6 text-muted-foreground">
+                      Keine Beiträge gefunden
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </DashboardLayout>
   );
 };
