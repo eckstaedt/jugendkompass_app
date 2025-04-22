@@ -23,8 +23,14 @@ const PostsPage = () => {
     deletePost(id);
   };
 
-  const handleStatusChange = (contentId: string, currentStatus: 'draft' | 'published') => {
+  const handleStatusChange = (contentId: string | null, currentStatus: 'draft' | 'published') => {
+    if (!contentId) {
+      console.error('Cannot update status: No content ID available');
+      return;
+    }
+    
     const newStatus = currentStatus === 'draft' ? 'published' : 'draft';
+    console.log('Toggling status:', { contentId, currentStatus, newStatus });
     updatePostStatus({ contentId, status: newStatus });
   };
 
@@ -63,13 +69,19 @@ const PostsPage = () => {
                       <TableCell className="font-medium">{post.title}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <Switch
-                            checked={post.content.status === 'published'}
-                            onCheckedChange={() => handleStatusChange(post.content_id!, post.content.status)}
-                          />
-                          <Badge variant={post.content.status === 'published' ? 'success' : 'secondary'}>
-                            {post.content.status === 'published' ? 'Veröffentlicht' : 'Entwurf'}
-                          </Badge>
+                          {post.content_id ? (
+                            <>
+                              <Switch
+                                checked={post.content?.status === 'published'}
+                                onCheckedChange={() => handleStatusChange(post.content_id, post.content?.status)}
+                              />
+                              <Badge variant={post.content?.status === 'published' ? 'success' : 'secondary'}>
+                                {post.content?.status === 'published' ? 'Veröffentlicht' : 'Entwurf'}
+                              </Badge>
+                            </>
+                          ) : (
+                            <Badge variant="warning">Kein Content</Badge>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>

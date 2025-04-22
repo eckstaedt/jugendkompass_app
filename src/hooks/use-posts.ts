@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
@@ -19,7 +20,7 @@ export type CreatePostParams = {
   body: string;
   category_id: string;
   edition_id: string;
-  status: 'active' | 'draft';
+  status: 'draft' | 'published';
 };
 
 export function usePosts() {
@@ -108,12 +109,21 @@ export function usePosts() {
 
   const { mutate: updatePostStatus } = useMutation({
     mutationFn: async ({ contentId, status }: { contentId: string, status: 'draft' | 'published' }) => {
+      console.log('Updating post status:', { contentId, status });
+      
+      if (!contentId) {
+        throw new Error('Content ID is required to update post status');
+      }
+      
       const { error } = await supabase
         .from('content')
         .update({ status })
         .eq('id', contentId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating post status:', error);
+        throw error;
+      }
 
       await logActivity({
         action_type: 'update',
@@ -130,7 +140,8 @@ export function usePosts() {
         variant: "success",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error in updatePostStatus mutation:', error);
       toast({
         title: "Fehler",
         description: "Der Status konnte nicht aktualisiert werden",
