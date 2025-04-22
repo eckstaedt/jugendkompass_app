@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileVideoIcon, LoaderCircle, Progress } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { FileVideoIcon, LoaderCircle } from 'lucide-react';
 
 const NewVideoPage = () => {
   const { user } = useAuth();
