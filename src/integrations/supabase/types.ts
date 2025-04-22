@@ -386,21 +386,27 @@ export type Database = {
       videos: {
         Row: {
           content_id: number | null
+          created_at: string | null
           id: number
           title: string
           url: string
+          user_id: string | null
         }
         Insert: {
           content_id?: number | null
+          created_at?: string | null
           id?: never
           title: string
           url: string
+          user_id?: string | null
         }
         Update: {
           content_id?: number | null
+          created_at?: string | null
           id?: never
           title?: string
           url?: string
+          user_id?: string | null
         }
         Relationships: []
       }

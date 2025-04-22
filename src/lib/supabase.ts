@@ -54,14 +54,12 @@ export type PollOption = {
 
 // Typen für Videos
 export type Video = {
-  id: string;
+  id: number;
+  content_id: number | null;
   title: string;
-  description?: string;
   url: string;
-  thumbnail_url?: string;
-  edition_id: string;
-  created_at: string;
-  published: boolean;
+  user_id: string | null;
+  created_at: string | null;
 };
 
 // Typen für tägliche Verse

@@ -32,6 +32,9 @@ const PageLoading = () => (
 
 const StatsPage = React.lazy(() => import('./pages/dashboard/polls/stats'));
 
+const VideosPage = React.lazy(() => import('./pages/dashboard/videos'));
+const NewVideoPage = React.lazy(() => import('./pages/dashboard/videos/new'));
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -54,8 +57,8 @@ const App = () => (
               <Route path="/dashboard/polls/new" element={<NewPollPage />} />
               <Route path="/dashboard/polls/:id" element={<PollDetailPage />} />
               <Route path="/dashboard/polls/stats" element={<StatsPage />} />
-              <Route path="/dashboard/videos" element={<div>Videos verwalten</div>} />
-              <Route path="/dashboard/videos/new" element={<div>Neues Video</div>} />
+              <Route path="/dashboard/videos" element={<VideosPage />} />
+              <Route path="/dashboard/videos/new" element={<NewVideoPage />} />
               <Route path="/dashboard/daily-verses" element={<DailyVersesPage />} />
               <Route path="/dashboard/daily-verses/new" element={<DailyVersesPage />} />
               <Route path="/dashboard/users" element={<UsersPage />} />
