@@ -20,64 +20,24 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-
-// Beispieldaten für Beiträge
-const mockPosts = [
-  {
-    id: '1',
-    title: 'Gottes Plan für dein Leben',
-    category: 'Glaube',
-    edition: 'Jugendkompass 1/2023',
-    published: true,
-    created_at: '2023-01-15T10:30:00',
-  },
-  {
-    id: '2',
-    title: 'Wie du deinen Glauben im Alltag leben kannst',
-    category: 'Praxis',
-    edition: 'Jugendkompass 1/2023',
-    published: true,
-    created_at: '2023-01-20T14:45:00',
-  },
-  {
-    id: '3',
-    title: 'Die Kraft des Gebets',
-    category: 'Glaube',
-    edition: 'Jugendkompass 2/2023',
-    published: true,
-    created_at: '2023-04-10T09:15:00',
-  },
-  {
-    id: '4',
-    title: 'Gemeinschaft unter Christen',
-    category: 'Gemeinschaft',
-    edition: 'Jugendkompass 2/2023',
-    published: false,
-    created_at: '2023-04-18T16:20:00',
-  },
-  {
-    id: '5',
-    title: 'Bibelstudium für Anfänger',
-    category: 'Bibel',
-    edition: 'Jugendkompass 3/2023',
-    published: true,
-    created_at: '2023-07-05T11:10:00',
-  },
-];
+import { usePosts } from '@/hooks/use-posts';
+import { useCategories } from '@/hooks/use-categories';
+import { useEditions } from '@/hooks/use-editions';
 
 const PostsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+  const { posts, isLoading: isLoadingPosts, deletePost } = usePosts();
+  const { categories } = useCategories();
+  const { editions } = useEditions();
   
-  // Beiträge filtern basierend auf dem Suchbegriff
-  const filteredPosts = mockPosts.filter(
+  // Filter posts based on search term
+  const filteredPosts = posts.filter(
     (post) =>
-      post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      post.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      post.edition.toLowerCase().includes(searchTerm.toLowerCase())
+      post.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
-  // Datum formatieren
+  // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('de-DE', {
@@ -85,6 +45,17 @@ const PostsPage = () => {
       month: '2-digit',
       year: 'numeric',
     }).format(date);
+  };
+
+  // Find category and edition names
+  const getCategoryName = (categoryId: string | null) => {
+    if (!categoryId) return '-';
+    return categories.find(cat => cat.id === categoryId)?.name || '-';
+  };
+
+  const getEditionName = (editionId: string | null) => {
+    if (!editionId) return '-';
+    return editions.find(ed => ed.id === editionId)?.name || '-';
   };
   
   return (
@@ -112,26 +83,23 @@ const PostsPage = () => {
               <TableHead className="w-[300px]">Titel</TableHead>
               <TableHead>Kategorie</TableHead>
               <TableHead>Edition</TableHead>
-              <TableHead>Status</TableHead>
               <TableHead>Erstellt am</TableHead>
               <TableHead className="text-right">Aktionen</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredPosts.length > 0 ? (
+            {isLoadingPosts ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center">
+                  Lädt...
+                </TableCell>
+              </TableRow>
+            ) : filteredPosts.length > 0 ? (
               filteredPosts.map((post) => (
                 <TableRow key={post.id}>
                   <TableCell className="font-medium">{post.title}</TableCell>
-                  <TableCell>{post.category}</TableCell>
-                  <TableCell>{post.edition}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={post.published ? "success" : "warning"}
-                      className="capitalize"
-                    >
-                      {post.published ? "Veröffentlicht" : "Entwurf"}
-                    </Badge>
-                  </TableCell>
+                  <TableCell>{getCategoryName(post.category_id)}</TableCell>
+                  <TableCell>{getEditionName(post.edition_id)}</TableCell>
                   <TableCell>{formatDate(post.created_at)}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
@@ -158,8 +126,7 @@ const PostsPage = () => {
                           className="text-destructive focus:bg-destructive focus:text-destructive-foreground"
                           onClick={() => {
                             if (confirm('Diesen Beitrag wirklich löschen?')) {
-                              // Hier würde die Löschlogik implementiert werden
-                              console.log(`Beitrag ${post.id} löschen`);
+                              deletePost(post.id);
                             }
                           }}
                         >
@@ -173,7 +140,7 @@ const PostsPage = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={5} className="h-24 text-center">
                   Keine Beiträge gefunden.
                 </TableCell>
               </TableRow>

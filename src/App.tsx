@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
@@ -14,6 +13,8 @@ import NotFound from "./pages/NotFound";
 const LoginPage = React.lazy(() => import('./pages/login/index'));
 const DashboardPage = React.lazy(() => import('./pages/dashboard'));
 const PostsPage = React.lazy(() => import('./pages/dashboard/posts'));
+const CategoriesPage = React.lazy(() => import('./pages/dashboard/posts/categories'));
+const EditionsPage = React.lazy(() => import('./pages/dashboard/posts/editions'));
 const UsersPage = React.lazy(() => import('./pages/dashboard/users'));
 
 // Loading fallback
@@ -38,11 +39,8 @@ const App = () => (
               <Route path="/login" element={<LoginPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/dashboard/posts" element={<PostsPage />} />
-              <Route path="/dashboard/posts/new" element={<div>Neuer Beitrag</div>} />
-              <Route path="/dashboard/posts/:id" element={<div>Beitrag anzeigen</div>} />
-              <Route path="/dashboard/posts/:id/edit" element={<div>Beitrag bearbeiten</div>} />
-              <Route path="/dashboard/posts/categories" element={<div>Kategorien verwalten</div>} />
-              <Route path="/dashboard/posts/editions" element={<div>Editionen verwalten</div>} />
+              <Route path="/dashboard/posts/categories" element={<CategoriesPage />} />
+              <Route path="/dashboard/posts/editions" element={<EditionsPage />} />
               <Route path="/dashboard/polls" element={<div>Umfragen verwalten</div>} />
               <Route path="/dashboard/polls/new" element={<div>Neue Umfrage</div>} />
               <Route path="/dashboard/polls/stats" element={<div>Umfrage-Statistiken</div>} />
@@ -55,7 +53,6 @@ const App = () => (
               <Route path="/dashboard/notifications" element={<div>Benachrichtigungen verwalten</div>} />
               <Route path="/dashboard/notifications/new" element={<div>Neue Benachrichtigung</div>} />
               <Route path="/dashboard/settings" element={<div>Einstellungen</div>} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
