@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -77,7 +76,6 @@ export const useCreatePoll = () => {
 
   return useMutation({
     mutationFn: async ({ question, expires_at, options }: CreatePollInput) => {
-      // Insert the poll first
       const { data: poll, error: pollError } = await supabase
         .from('polls')
         .insert([{ question, expires_at }])
@@ -86,7 +84,6 @@ export const useCreatePoll = () => {
 
       if (pollError) throw pollError;
 
-      // Then insert all options
       const optionsToInsert = options.map(option_text => ({
         poll_id: poll.id,
         option_text,
@@ -111,15 +108,15 @@ export const useVote = () => {
 
   return useMutation({
     mutationFn: async ({ pollId, optionId }: { pollId: string; optionId: string }) => {
-      const { error } = await supabase
+      const { error: voteError } = await supabase
         .from('poll_votes')
-        .insert([{ poll_id: pollId, option_id: optionId }]);
+        .insert([{ poll_id: pollId, option_id: optionId, user_id: (await supabase.auth.getUser()).data.user?.id }]);
 
-      if (error) throw error;
+      if (voteError) throw voteError;
 
-      // Update the votes count
-      const { error: updateError } = await supabase.rpc('increment_poll_votes', { option_id: optionId });
-      if (updateError) throw updateError;
+      const { error: incrementError } = await supabase.rpc('increment_poll_votes', { option_id: optionId });
+      
+      if (incrementError) throw incrementError;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['poll', variables.pollId] });

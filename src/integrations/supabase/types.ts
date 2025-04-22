@@ -413,6 +413,10 @@ export type Database = {
         Args: Record<PropertyKey, never> | { user_id: string }
         Returns: string
       }
+      increment_poll_votes: {
+        Args: { option_id: string }
+        Returns: undefined
+      }
       is_admin: {
         Args: Record<PropertyKey, never> | { user_id: string }
         Returns: boolean
