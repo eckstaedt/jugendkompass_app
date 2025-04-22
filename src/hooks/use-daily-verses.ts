@@ -47,14 +47,17 @@ export function useDailyVerses() {
   const createVerse = useMutation({
     mutationFn: async (verse: Omit<DailyVerse, 'id'>) => {
       try {
-        // First perform database operation with only the essential fields
+        // Create a clean object with only the fields needed for the insert
+        // This avoids any field name conflicts with the activities table
+        const verseData = {
+          date: verse.date,
+          verse: verse.verse,
+          reference: verse.reference
+        };
+        
         const { data, error } = await supabase
           .from('verse_of_the_day')
-          .insert({
-            date: verse.date,
-            verse: verse.verse,
-            reference: verse.reference
-          })
+          .insert(verseData)
           .select()
           .single();
 
@@ -91,14 +94,17 @@ export function useDailyVerses() {
   const updateVerse = useMutation({
     mutationFn: async ({ id, ...verse }: DailyVerse) => {
       try {
-        // First perform database operation with only the essential fields
+        // Create a clean object with only the fields needed for the update
+        // This avoids any field name conflicts
+        const verseData = {
+          date: verse.date,
+          verse: verse.verse,
+          reference: verse.reference
+        };
+        
         const { data, error } = await supabase
           .from('verse_of_the_day')
-          .update({
-            date: verse.date,
-            verse: verse.verse,
-            reference: verse.reference
-          })
+          .update(verseData)
           .eq('id', id)
           .select()
           .single();
