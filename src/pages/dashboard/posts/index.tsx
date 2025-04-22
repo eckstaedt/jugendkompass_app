@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { usePosts } from '@/hooks/use-posts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,13 +9,37 @@ import { Switch } from '@/components/ui/switch';
 import { PlusIcon, TrashIcon } from 'lucide-react';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const PostsPage = () => {
   const { posts, isLoading, deletePost, updatePostStatus } = usePosts();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const currentTab = location.pathname === '/dashboard/posts' 
+    ? 'all'
+    : location.pathname === '/dashboard/posts/new'
+    ? 'new'
+    : location.pathname === '/dashboard/posts/categories'
+    ? 'categories'
+    : 'all';
 
   const handleCreatePost = () => {
     navigate('/dashboard/posts/new');
+  };
+
+  const handleTabChange = (value: string) => {
+    switch (value) {
+      case 'all':
+        navigate('/dashboard/posts');
+        break;
+      case 'new':
+        navigate('/dashboard/posts/new');
+        break;
+      case 'categories':
+        navigate('/dashboard/posts/categories');
+        break;
+    }
   };
 
   const handleDelete = (id: string) => {
@@ -39,89 +62,97 @@ const PostsPage = () => {
 
   return (
     <DashboardLayout title="Beiträge">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold">Alle Beiträge</h2>
-        <Button onClick={handleCreatePost}>
-          <PlusIcon className="mr-2 h-4 w-4" />
-          Neuer Beitrag
-        </Button>
-      </div>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <Tabs value={currentTab} onValueChange={handleTabChange}>
+            <TabsList>
+              <TabsTrigger value="all">Alle Beiträge</TabsTrigger>
+              <TabsTrigger value="new">Neuer Beitrag</TabsTrigger>
+              <TabsTrigger value="categories">Kategorien</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Button onClick={handleCreatePost} className="bg-primary/10 text-primary hover:bg-primary/20">
+            <PlusIcon className="mr-2 h-4 w-4" />
+            Neuer Beitrag
+          </Button>
+        </div>
 
-      <Card className="shadow-sm">
-        <CardHeader className="pb-2">
-          <CardTitle>Beitragsliste</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center p-8">
-              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Titel</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Aktionen</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {posts.length > 0 ? (
-                  posts.map((post) => (
-                    <TableRow key={post.id}>
-                      <TableCell className="font-medium">{post.title}</TableCell>
-                      <TableCell>
-                        {post.content_id ? (
-                          <div className="flex items-center gap-3">
-                            <Switch
-                              checked={post.content?.status === 'published'}
-                              onCheckedChange={() => handleStatusChange(post.content_id, post.content?.status)}
-                            />
-                            <Badge variant={post.content?.status === 'published' ? 'success' : 'secondary'}>
-                              {post.content?.status === 'published' ? 'Veröffentlicht' : 'Entwurf'}
-                            </Badge>
-                          </div>
-                        ) : (
-                          <Badge variant="warning">Kein Content</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="icon" className="text-destructive">
-                              <TrashIcon className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Beitrag löschen</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Möchten Sie diesen Beitrag wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(post.id)}>
-                                Löschen
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+        <Card className="shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle>Beitragsliste</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex justify-center p-8">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Titel</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Aktionen</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {posts.length > 0 ? (
+                    posts.map((post) => (
+                      <TableRow key={post.id}>
+                        <TableCell className="font-medium">{post.title}</TableCell>
+                        <TableCell>
+                          {post.content_id ? (
+                            <div className="flex items-center gap-3">
+                              <Switch
+                                checked={post.content?.status === 'published'}
+                                onCheckedChange={() => handleStatusChange(post.content_id, post.content?.status)}
+                              />
+                              <Badge variant={post.content?.status === 'published' ? 'success' : 'secondary'}>
+                                {post.content?.status === 'published' ? 'Veröffentlicht' : 'Entwurf'}
+                              </Badge>
+                            </div>
+                          ) : (
+                            <Badge variant="warning">Kein Content</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline" size="icon" className="text-destructive">
+                                <TrashIcon className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Beitrag löschen</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Möchten Sie diesen Beitrag wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(post.id)}>
+                                  Löschen
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center py-6 text-muted-foreground">
+                        Keine Beiträge gefunden
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center py-6 text-muted-foreground">
-                      Keine Beiträge gefunden
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                  )}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </DashboardLayout>
   );
 };
