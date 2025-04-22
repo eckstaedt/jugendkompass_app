@@ -2,10 +2,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchUsers, updateUserRole } from '@/lib/users';
 import { useToast } from './use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function useUsers() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const { data: users = [], isLoading, error } = useQuery({
     queryKey: ['users'],
@@ -14,7 +16,7 @@ export function useUsers() {
 
   const { mutate: updateRole } = useMutation({
     mutationFn: ({ userId, role }: { userId: string, role: 'admin' | 'user' }) =>
-      updateUserRole(userId, role),
+      updateUserRole(userId, role, user?.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       toast({

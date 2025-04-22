@@ -16,6 +16,8 @@ export type CreatePostParams = {
   category_id: string;
   edition_id: string;
   status: 'draft' | 'published';
+  author_id?: string;
+  image_url?: string | null;
 };
 
 export type UpdatePostParams = {
@@ -25,4 +27,10 @@ export type UpdatePostParams = {
     body: string;
     audio_id?: string | null;
   };
+};
+
+export type UpdatePostStatusParams = {
+  id: string; 
+  status: string;
+  userId: string;
 };

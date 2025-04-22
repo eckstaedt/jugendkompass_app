@@ -1,14 +1,15 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DailyVerse } from '@/lib/supabase';
 import { logActivity } from '@/lib/activity-logger';
 
 export const useDailyVerses = () => {
-  return useQuery({
+  const { data: verses = [], isLoading, error } = useQuery({
     queryKey: ['dailyVerses'],
     queryFn: async () => {
       const { data: dailyVerses, error } = await supabase
-        .from('daily_verses')
+        .from('verse_of_the_day')
         .select('*, content:content_id(*)')
         .order('date', { ascending: false });
 
@@ -19,12 +20,10 @@ export const useDailyVerses = () => {
       return dailyVerses as DailyVerse[];
     },
   });
-};
 
-export const useCreateDailyVerse = () => {
   const queryClient = useQueryClient();
   
-  return useMutation({
+  const createVerse = useMutation({
     mutationFn: async ({ verse, reference, date, userId }: { verse: string; reference: string; date: string; userId: string }) => {
       const { data: contentData, error: contentError } = await supabase
         .from('content')
@@ -35,7 +34,7 @@ export const useCreateDailyVerse = () => {
       if (contentError) throw contentError;
 
       const { data: result, error } = await supabase
-        .from('daily_verses')
+        .from('verse_of_the_day')
         .insert({ verse, reference, date, content_id: contentData.id })
         .select('*')
         .single();
@@ -59,4 +58,29 @@ export const useCreateDailyVerse = () => {
       queryClient.invalidateQueries({ queryKey: ['dailyVerses'] });
     }
   });
+
+  const updateVerse = useMutation({
+    mutationFn: async ({ id, content_id, verse, reference, date }: { id: string; content_id: string; verse: string; reference: string; date: string }) => {
+      const { data, error } = await supabase
+        .from('verse_of_the_day')
+        .update({ verse, reference, date })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dailyVerses'] });
+    }
+  });
+
+  return {
+    verses,
+    isLoading,
+    error,
+    createVerse,
+    updateVerse
+  };
 };

@@ -1,3 +1,4 @@
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { logActivity } from '@/lib/activity-logger';
@@ -8,41 +9,56 @@ export const useCreatePost = () => {
   
   return useMutation({
     mutationFn: async (params: CreatePostParams) => {
-      const { title, content, category, editionId, authorId, published, imageUrl } = params;
+      const { title, body, category_id, edition_id, status, author_id, image_url } = params;
       
-      const { data: result, error } = await supabase
+      // First create a content entry
+      const { data: contentData, error: contentError } = await supabase
+        .from('content')
+        .insert({ 
+          content_type: 'post',
+          status: status
+        })
+        .select()
+        .single();
+
+      if (contentError) {
+        console.error("Error creating content:", contentError);
+        throw contentError;
+      }
+
+      // Then create the post with reference to the content
+      const { data: postData, error: postError } = await supabase
         .from('posts')
         .insert([
           { 
             title, 
-            content, 
-            category,
-            edition_id: editionId,
-            author_id: authorId,
-            published,
-            image_url: imageUrl
+            body,
+            category_id,
+            edition_id,
+            content_id: contentData.id,
+            image_url
           }
         ])
         .select()
         .single();
 
-      if (error) {
-        console.error("Error creating post:", error);
-        throw error;
+      if (postError) {
+        console.error("Error creating post:", postError);
+        throw postError;
       }
 
-      // Update the logActivity call to use the correct parameters
-      if (result.data) {
+      // Log the activity if an author ID was provided
+      if (author_id) {
         await logActivity(
-          params.authorId,
+          author_id,
           'post',
           'create',
-          result.data.id,
-          `Post "${params.title}" created`
+          postData.id,
+          `Post "${title}" created`
         );
       }
       
-      return result;
+      return postData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });

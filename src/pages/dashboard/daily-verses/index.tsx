@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -18,7 +17,7 @@ const DailyVersesPage = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedVerse, setSelectedVerse] = useState<DailyVerse | undefined>();
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   
   const handleEdit = (verse: DailyVerse) => {
     setSelectedVerse(verse);
@@ -32,9 +31,16 @@ const DailyVersesPage = () => {
   
   const handleDialogSubmit = async (data: Omit<DailyVerse, 'id' | 'content_id' | 'created_at' | 'content'>) => {
     if (selectedVerse) {
-      await updateVerse.mutateAsync({ ...data, id: selectedVerse.id, content_id: selectedVerse.content_id });
-    } else {
-      await createVerse.mutateAsync(data);
+      await updateVerse.mutateAsync({ 
+        ...data, 
+        id: selectedVerse.id, 
+        content_id: selectedVerse.content_id 
+      });
+    } else if (user?.id) {
+      await createVerse.mutateAsync({
+        ...data,
+        userId: user.id
+      });
     }
     setDialogOpen(false);
   };

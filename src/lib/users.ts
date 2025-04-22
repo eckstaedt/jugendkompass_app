@@ -1,5 +1,25 @@
-import { supabase } from './supabase';
+
+import { supabase } from '@/integrations/supabase/client';
 import { logActivity } from './activity-logger';
+
+export const fetchUsers = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching users:', error);
+      throw error;
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error('Unexpected error fetching users:', err);
+    throw err;
+  }
+};
 
 export const createUser = async (email: string, password?: string) => {
   try {
@@ -41,7 +61,7 @@ export const deleteUser = async (userId: string) => {
   }
 };
 
-export const updateUserRole = async (userId: string, role: string, adminId: string) => {
+export const updateUserRole = async (userId: string, role: string, adminId?: string) => {
   try {
     const { data, error } = await supabase
       .from('users')
@@ -55,13 +75,15 @@ export const updateUserRole = async (userId: string, role: string, adminId: stri
       return { error: error.message };
     }
 
-    await logActivity(
-      adminId,
-      'user',
-      'update',
-      userId,
-      `User role updated to ${role}`
-    );
+    if (adminId) {
+      await logActivity(
+        adminId,
+        'user',
+        'update',
+        userId,
+        `User role updated to ${role}`
+      );
+    }
     
     return { data };
   } catch (error) {

@@ -10,10 +10,12 @@ import { Switch } from '@/components/ui/switch';
 import { PlusIcon, TrashIcon, PencilIcon } from 'lucide-react';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
 
 const PostsPage = () => {
   const { posts, isLoading, deletePost, updatePostStatus } = usePosts();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleCreatePost = () => {
     navigate('/dashboard/posts/new');
@@ -23,17 +25,20 @@ const PostsPage = () => {
     deletePost(id);
   };
 
-  const handleStatusChange = (contentId: string | null, currentStatus: 'draft' | 'published' | undefined) => {
-    if (!contentId) {
-      console.error('Cannot update status: No content ID available');
+  const handleStatusChange = (id: string, currentStatus: string | undefined) => {
+    if (!user?.id) {
+      console.error('Cannot update status: No user ID available');
       return;
     }
     
-    const status = currentStatus || 'draft';
-    const newStatus = status === 'draft' ? 'published' : 'draft';
+    const status = currentStatus === 'published' ? 'draft' : 'published';
     
-    console.log('Toggling status:', { contentId, currentStatus, newStatus });
-    updatePostStatus({ contentId, status: newStatus });
+    console.log('Toggling status:', { id, currentStatus, newStatus: status });
+    updatePostStatus({ 
+      id, 
+      status, 
+      userId: user.id 
+    });
   };
 
   const handleEditPost = (id: string) => {
