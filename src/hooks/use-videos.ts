@@ -68,14 +68,16 @@ export const useUploadVideo = () => {
 
         if (insertError) throw insertError;
 
-        // Log the activity
-        await logActivity(
-          userId,
-          'video',
-          'create',
-          videoData.id.toString(),
-          `Video '${title}' created`
-        );
+        // Log the activity - Make sure video ID is properly converted to string
+        if (videoData && videoData.id) {
+          await logActivity(
+            userId,
+            'video',
+            'create',
+            String(videoData.id), // Ensure ID is properly converted to string
+            `Video '${title}' created`
+          );
+        }
 
         return videoData;
       } catch (error) {

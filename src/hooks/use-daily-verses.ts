@@ -17,7 +17,9 @@ export const useDailyVerses = () => {
         console.error('Supabase error:', error);
         throw new Error(error.message);
       }
-      return dailyVerses as DailyVerse[];
+      
+      // Explicitly cast the data to resolve type issues
+      return dailyVerses as unknown as DailyVerse[];
     },
   });
 
