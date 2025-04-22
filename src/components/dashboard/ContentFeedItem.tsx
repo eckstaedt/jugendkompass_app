@@ -42,7 +42,10 @@ export const ContentFeedItem = ({ item }: { item: FeedItem }) => {
       {(item.description || item.image_url) && (
         <CardContent>
           {item.description && (
-            <p className="text-sm text-muted-foreground mb-4">{item.description}</p>
+            <div 
+              className="prose prose-sm max-w-none text-muted-foreground mb-4"
+              dangerouslySetInnerHTML={{ __html: item.description }}
+            />
           )}
           {item.image_url && (
             <img 
