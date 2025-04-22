@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './use-toast';
@@ -32,11 +31,11 @@ export function usePosts() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('posts')
-        .select('*')
+        .select('*, content(status)')
         .order('id');
 
       if (error) throw error;
-      return data as Post[];
+      return data as (Post & { content: { status: 'draft' | 'published' } })[];
     }
   });
 
@@ -68,7 +67,6 @@ export function usePosts() {
 
   const { mutate: createPost } = useMutation({
     mutationFn: async (postData: CreatePostParams) => {
-      // Create content first
       const { data: contentData, error: contentError } = await supabase
         .from('content')
         .insert({ 
@@ -80,7 +78,6 @@ export function usePosts() {
 
       if (contentError) throw contentError;
 
-      // Then create post with content_id
       const { data: postResult, error: postError } = await supabase
         .from('posts')
         .insert({
@@ -95,7 +92,6 @@ export function usePosts() {
 
       if (postError) throw postError;
 
-      // Log activity
       await logActivity({
         action_type: 'create',
         entity_type: 'post',
@@ -110,10 +106,44 @@ export function usePosts() {
     }
   });
 
+  const { mutate: updatePostStatus } = useMutation({
+    mutationFn: async ({ contentId, status }: { contentId: string, status: 'draft' | 'published' }) => {
+      const { error } = await supabase
+        .from('content')
+        .update({ status })
+        .eq('id', contentId);
+
+      if (error) throw error;
+
+      await logActivity({
+        action_type: 'update',
+        entity_type: 'post',
+        entity_id: contentId,
+        description: `Post status updated to ${status}`
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+      toast({
+        title: "Status aktualisiert",
+        description: "Der Status des Beitrags wurde erfolgreich aktualisiert",
+        variant: "success",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fehler",
+        description: "Der Status konnte nicht aktualisiert werden",
+        variant: "destructive",
+      });
+    }
+  });
+
   return { 
     posts, 
     isLoading, 
     deletePost,
-    createPost 
+    createPost,
+    updatePostStatus
   };
 }

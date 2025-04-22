@@ -6,11 +6,13 @@ import { usePosts } from '@/hooks/use-posts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { Switch } from '@/components/ui/switch';
 import { PlusIcon, TrashIcon } from 'lucide-react';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 
 const PostsPage = () => {
-  const { posts, isLoading, deletePost } = usePosts();
+  const { posts, isLoading, deletePost, updatePostStatus } = usePosts();
   const navigate = useNavigate();
 
   const handleCreatePost = () => {
@@ -19,6 +21,11 @@ const PostsPage = () => {
 
   const handleDelete = (id: string) => {
     deletePost(id);
+  };
+
+  const handleStatusChange = (contentId: string, currentStatus: 'draft' | 'published') => {
+    const newStatus = currentStatus === 'draft' ? 'published' : 'draft';
+    updatePostStatus({ contentId, status: newStatus });
   };
 
   return (
@@ -45,6 +52,7 @@ const PostsPage = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Titel</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Aktionen</TableHead>
                 </TableRow>
               </TableHeader>
@@ -53,6 +61,17 @@ const PostsPage = () => {
                   posts.map((post) => (
                     <TableRow key={post.id}>
                       <TableCell className="font-medium">{post.title}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Switch
+                            checked={post.content.status === 'published'}
+                            onCheckedChange={() => handleStatusChange(post.content_id!, post.content.status)}
+                          />
+                          <Badge variant={post.content.status === 'published' ? 'success' : 'secondary'}>
+                            {post.content.status === 'published' ? 'Veröffentlicht' : 'Entwurf'}
+                          </Badge>
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -80,7 +99,7 @@ const PostsPage = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={2} className="text-center py-6 text-muted-foreground">
+                    <TableCell colSpan={3} className="text-center py-6 text-muted-foreground">
                       Keine Beiträge gefunden
                     </TableCell>
                   </TableRow>
