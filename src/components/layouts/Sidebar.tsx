@@ -1,3 +1,4 @@
+
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -142,7 +143,7 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
                 className={cn(
                   "w-full justify-start",
                   active ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                  collapsed ? "h-10 w-10 p-0" : "px-3 py-2"
+                  collapsed ? "h-10 w-10 p-0 flex items-center justify-center" : "px-3 py-2" // Added centering for collapsed state
                 )}
                 onClick={() => handleNavigation(item.path)}
               >
@@ -184,7 +185,7 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
           variant="ghost"
           className={cn(
             "w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-            collapsed ? "h-10 w-10 p-0" : "px-3 py-2"
+            collapsed ? "h-10 w-10 p-0 flex items-center justify-center" : "px-3 py-2" // Added centering for collapsed state
           )}
           onClick={logout}
         >
