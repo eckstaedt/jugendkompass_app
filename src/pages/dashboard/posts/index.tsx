@@ -42,7 +42,7 @@ const PostsPage = () => {
     return categories.find(cat => cat.id === categoryId)?.name || '-';
   };
 
-  const getEditionName = (editionId: string | null) => {
+  const getAusgabeName = (editionId: string | null) => {
     if (!editionId) return '-';
     return editions.find(ed => ed.id === editionId)?.name || '-';
   };
@@ -71,7 +71,7 @@ const PostsPage = () => {
             <TableRow>
               <TableHead className="w-[300px]">Titel</TableHead>
               <TableHead>Kategorie</TableHead>
-              <TableHead>Edition</TableHead>
+              <TableHead>Ausgabe</TableHead>
               <TableHead className="text-right">Aktionen</TableHead>
             </TableRow>
           </TableHeader>
@@ -87,7 +87,7 @@ const PostsPage = () => {
                 <TableRow key={post.id}>
                   <TableCell className="font-medium">{post.title}</TableCell>
                   <TableCell>{getCategoryName(post.category_id)}</TableCell>
-                  <TableCell>{getEditionName(post.edition_id)}</TableCell>
+                  <TableCell>{getAusgabeName(post.edition_id)}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

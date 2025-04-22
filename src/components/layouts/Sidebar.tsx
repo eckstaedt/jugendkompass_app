@@ -1,4 +1,3 @@
-
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -46,7 +45,7 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
         { label: 'Alle Beiträge', path: '/dashboard/posts' },
         { label: 'Neuer Beitrag', path: '/dashboard/posts/new' },
         { label: 'Kategorien', path: '/dashboard/posts/categories' },
-        { label: 'Editionen', path: '/dashboard/posts/editions' },
+        { label: 'Ausgaben', path: '/dashboard/posts/ausgaben' },
       ],
     },
     {

@@ -40,7 +40,7 @@ const App = () => (
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/dashboard/posts" element={<PostsPage />} />
               <Route path="/dashboard/posts/categories" element={<CategoriesPage />} />
-              <Route path="/dashboard/posts/editions" element={<EditionsPage />} />
+              <Route path="/dashboard/posts/ausgaben" element={<EditionsPage />} />
               <Route path="/dashboard/polls" element={<div>Umfragen verwalten</div>} />
               <Route path="/dashboard/polls/new" element={<div>Neue Umfrage</div>} />
               <Route path="/dashboard/polls/stats" element={<div>Umfrage-Statistiken</div>} />
