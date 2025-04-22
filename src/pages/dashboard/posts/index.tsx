@@ -6,14 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
-import { PlusIcon, TrashIcon } from 'lucide-react';
+import { PlusIcon, TrashIcon, PencilIcon } from 'lucide-react';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { EditPostDialog } from '@/components/posts/EditPostDialog';
 
 const PostsPage = () => {
-  const { posts, isLoading, deletePost, updatePostStatus, updatePost } = usePosts();
+  const { posts, isLoading, deletePost, updatePostStatus } = usePosts();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -59,6 +58,10 @@ const PostsPage = () => {
     
     console.log('Toggling status:', { contentId, currentStatus, newStatus });
     updatePostStatus({ contentId, status: newStatus });
+  };
+
+  const handleEditPost = (id: string) => {
+    navigate(`/dashboard/posts/edit/${id}`);
   };
 
   return (
@@ -118,10 +121,13 @@ const PostsPage = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center">
-                            <EditPostDialog 
-                              post={post} 
-                              onSave={(id, data) => updatePost({ id, data })} 
-                            />
+                            <Button 
+                              variant="outline" 
+                              size="icon" 
+                              onClick={() => handleEditPost(post.id)}
+                            >
+                              <PencilIcon className="h-4 w-4" />
+                            </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="outline" size="icon" className="text-destructive">

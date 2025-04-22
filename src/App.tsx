@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
@@ -18,6 +17,7 @@ const NewPostPage = React.lazy(() => import('./pages/dashboard/posts/new'));
 const CategoriesPage = React.lazy(() => import('./pages/dashboard/posts/categories'));
 const EditionsPage = React.lazy(() => import('./pages/dashboard/posts/editions'));
 const UsersPage = React.lazy(() => import('./pages/dashboard/users'));
+const EditPostPage = React.lazy(() => import('./pages/dashboard/posts/edit'));
 
 // Loading fallback
 const PageLoading = () => (
@@ -56,6 +56,7 @@ const App = () => (
               <Route path="/dashboard/notifications" element={<div>Benachrichtigungen verwalten</div>} />
               <Route path="/dashboard/notifications/new" element={<div>Neue Benachrichtigung</div>} />
               <Route path="/dashboard/settings" element={<div>Einstellungen</div>} />
+              <Route path="/dashboard/posts/edit/:id" element={<EditPostPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

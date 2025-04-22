@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
@@ -21,6 +20,15 @@ export type CreatePostParams = {
   category_id: string;
   edition_id: string;
   status: 'draft' | 'published';
+};
+
+export type UpdatePostParams = {
+  id: string;
+  data: {
+    title: string;
+    body: string;
+    audio_id?: string | null;
+  };
 };
 
 export function usePosts() {
@@ -108,10 +116,14 @@ export function usePosts() {
   });
 
   const { mutate: updatePost } = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: { title: string; body: string } }) => {
+    mutationFn: async ({ id, data }: UpdatePostParams) => {
       const { error } = await supabase
         .from('posts')
-        .update({ title: data.title, body: data.body })
+        .update({ 
+          title: data.title, 
+          body: data.body,
+          audio_id: data.audio_id 
+        })
         .eq('id', id);
 
       if (error) throw error;
