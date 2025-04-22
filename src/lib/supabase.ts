@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import { supabase as supabaseClient } from '@/integrations/supabase/client';
 
@@ -68,14 +69,20 @@ export type Video = {
   };
 };
 
-// Typen für tägliche Verse
+// Typen für tägliche Verse - Updated to match database schema
 export type DailyVerse = {
   id: string;
-  content_id: string;  // Now required (not nullable)
-  verse_text: string;
-  verse_reference: string;
+  content_id: string;
+  verse: string;        // Changed from verse_text to match actual DB field
+  reference: string;    // Changed from verse_reference to match actual DB field
   date: string;
-  created_at: string;
+  created_at?: string;
+  content?: {
+    content_type: string;
+    created_at: string;
+    id: string;
+    status: string;
+  };
 };
 
 // Typen für Benachrichtigungen

@@ -5,12 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { VerseDialog } from '@/components/verses/VerseDialog';
 import { VersesTable } from '@/components/verses/VersesTable';
-import { useDailyVerses, DailyVerse } from '@/hooks/use-daily-verses';
+import { useDailyVerses } from '@/hooks/use-daily-verses';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, isToday, isFuture } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { CalendarPlus, LayoutList, ViewIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DailyVerse } from '@/lib/supabase';
 
 const DailyVersesPage = () => {
   const { verses, isLoading, createVerse, updateVerse } = useDailyVerses();
@@ -29,9 +30,9 @@ const DailyVersesPage = () => {
     setDialogOpen(true);
   };
   
-  const handleDialogSubmit = async (data: Omit<DailyVerse, 'id'>) => {
+  const handleDialogSubmit = async (data: Omit<DailyVerse, 'id' | 'content_id' | 'created_at' | 'content'>) => {
     if (selectedVerse) {
-      await updateVerse.mutateAsync({ ...data, id: selectedVerse.id });
+      await updateVerse.mutateAsync({ ...data, id: selectedVerse.id, content_id: selectedVerse.content_id });
     } else {
       await createVerse.mutateAsync(data);
     }

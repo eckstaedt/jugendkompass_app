@@ -1,7 +1,7 @@
 
 import * as React from "react";
 import { useForm } from "react-hook-form";
-import { useEffect } from "react"; // Added this import
+import { useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,9 +27,9 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
-import { DailyVerse } from "@/hooks/use-daily-verses";
+import { DailyVerse } from "@/lib/supabase";
 
-type FormData = Omit<DailyVerse, 'id' | 'content_id'>;
+type FormData = Omit<DailyVerse, 'id' | 'content_id' | 'created_at' | 'content'>;
 
 interface VerseDialogProps {
   open: boolean;
