@@ -1,12 +1,12 @@
+
 import * as React from "react";
 import { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from '@/contexts/AuthContext';
-import Index from "./pages/index";
 import NotFound from "./pages/NotFound";
 
 // Lazy load pages
@@ -49,7 +49,8 @@ const App = () => (
           <Sonner />
           <Suspense fallback={<PageLoading />}>
             <Routes>
-              <Route path="/" element={<Index />} />
+              {/* Redirect root to login page */}
+              <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/dashboard/posts" element={<PostsPage />} />
@@ -65,11 +66,6 @@ const App = () => (
               <Route path="/dashboard/daily-verses" element={<DailyVersesPage />} />
               <Route path="/dashboard/daily-verses/new" element={<DailyVersesPage />} />
               <Route path="/dashboard/users" element={<UsersPage />} />
-              <Route path="/dashboard/statistics" element={<div>App-Statistiken</div>} />
-              <Route path="/dashboard/notifications" element={<div>Benachrichtigungen verwalten</div>} />
-              <Route path="/dashboard/notifications/new" element={<div>Neue Benachrichtigung</div>} />
-              <Route path="/dashboard/settings" element={<div>Einstellungen</div>} />
-              <Route path="/dashboard/posts/edit/:id" element={<EditPostPage />} />
               <Route path="/dashboard/impulses" element={<ImpulsesPage />} />
               <Route path="/dashboard/feed" element={<FeedPage />} />
               <Route path="/dashboard/messages" element={<MessagesPage />} />

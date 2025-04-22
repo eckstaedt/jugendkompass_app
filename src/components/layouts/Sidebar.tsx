@@ -96,8 +96,15 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
     },
   ];
   
+  // Fix the isActive function to check exact path matches
   const isActive = (path: string) => {
-    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+    // Make sure dashboard is only active when it's exactly /dashboard
+    if (path === '/dashboard') {
+      return location.pathname === '/dashboard';
+    }
+    // For other paths, check if the current path starts with the nav item path
+    // but not if it's just the dashboard path
+    return location.pathname.startsWith(path) && path !== '/dashboard';
   };
   
   const handleNavigation = (path: string) => {
