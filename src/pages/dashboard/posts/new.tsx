@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { useForm } from 'react-hook-form';
@@ -33,7 +34,7 @@ const formSchema = z.object({
   body: z.string().min(1, 'Der Inhalt ist erforderlich'),
   category_id: z.string().min(1, 'Eine Kategorie ist erforderlich'),
   edition_id: z.string().min(1, 'Eine Ausgabe ist erforderlich'),
-  status: z.enum(['active', 'draft']),
+  status: z.enum(['published', 'draft']),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -201,7 +202,7 @@ const NewPostPage = () => {
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="draft">Entwurf</SelectItem>
-                        <SelectItem value="active">Aktiv</SelectItem>
+                        <SelectItem value="published">Veröffentlicht</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
