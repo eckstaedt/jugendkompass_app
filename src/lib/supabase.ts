@@ -1,12 +1,8 @@
-
 import { createClient } from '@supabase/supabase-js';
+import { supabase as supabaseClient } from '@/integrations/supabase/client';
 
-// Umgebungsvariablen für Supabase
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-
-// Supabase Client erstellen
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Re-export the client from the auto-generated file
+export const supabase = supabaseClient;
 
 // Typen für Auth
 export type User = {
