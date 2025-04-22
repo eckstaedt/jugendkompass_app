@@ -9,7 +9,7 @@ export const useVideos = () => {
     queryFn: async () => {
       const { data: videos, error } = await supabase
         .from('videos')
-        .select('*')
+        .select('*, content:content_id(*)')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -37,7 +37,7 @@ export const useUploadVideo = () => {
         .from('videos')
         .getPublicUrl(fileName);
 
-      // Insert video record
+      // Insert video record with content_id from trigger
       const { data: videoData, error: insertError } = await supabase
         .from('videos')
         .insert({ 
@@ -45,11 +45,12 @@ export const useUploadVideo = () => {
           url: publicUrl, 
           user_id: userId 
         })
-        .select();
+        .select('*, content:content_id(*)')
+        .single();
 
       if (insertError) throw insertError;
 
-      return videoData[0];
+      return videoData;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['videos'] });

@@ -112,16 +112,19 @@ export type Database = {
         Row: {
           content_id: string | null
           id: string
+          image_url: string | null
           impulse_text: string
         }
         Insert: {
           content_id?: string | null
           id?: string
+          image_url?: string | null
           impulse_text: string
         }
         Update: {
           content_id?: string | null
           id?: string
+          image_url?: string | null
           impulse_text?: string
         }
         Relationships: [
@@ -385,7 +388,7 @@ export type Database = {
       }
       videos: {
         Row: {
-          content_id: number | null
+          content_id: string | null
           created_at: string | null
           id: number
           title: string
@@ -393,7 +396,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          content_id?: number | null
+          content_id?: string | null
           created_at?: string | null
           id?: never
           title: string
@@ -401,14 +404,22 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          content_id?: number | null
+          content_id?: string | null
           created_at?: string | null
           id?: never
           title?: string
           url?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "videos_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
