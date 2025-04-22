@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeftIcon, MenuIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { logActivity } from '@/lib/activity-logger';
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
@@ -56,7 +57,16 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
         variant: "destructive"
       });
     }
-  }, [user, loading, isAdmin, navigate, toast]);
+
+    // Log page visit activity
+    if (!loading && user && isAdmin) {
+      logActivity({
+        action_type: 'visit',
+        entity_type: 'page',
+        description: `Besuch der Seite: ${title}`
+      }).catch(err => console.error('Failed to log activity:', err));
+    }
+  }, [user, loading, isAdmin, navigate, toast, title]);
   
   // Während des Ladens zeige einen Ladezustand an
   if (loading) {

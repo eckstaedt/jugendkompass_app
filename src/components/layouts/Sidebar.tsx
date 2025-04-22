@@ -9,12 +9,11 @@ import {
   BellIcon, 
   CalendarIcon, 
   FileTextIcon, 
-  PieChartIcon, Trash2Icon, 
+  PieChartIcon, 
   FileVideoIcon, 
   UsersIcon, 
   SettingsIcon,
-  LogOutIcon,
-  PlusIcon
+  LogOutIcon
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -108,6 +107,10 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
   
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
+  
   return (
     <div className={cn(
       "flex h-full flex-col border-r bg-sidebar text-sidebar-foreground",
@@ -142,7 +145,7 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
                   active ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                   collapsed ? "h-10 w-10 p-0" : "px-3 py-2"
                 )}
-                onClick={() => navigate(item.path)}
+                onClick={() => handleNavigation(item.path)}
               >
                 <item.icon className={cn("h-5 w-5", active ? "text-sidebar-primary" : "")} />
                 {!collapsed && <span className="ml-3">{item.label}</span>}
@@ -161,7 +164,7 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
                           ? "bg-sidebar-accent/50 text-sidebar-primary font-medium"
                           : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-primary"
                       )}
-                      onClick={() => navigate(subItem.path)}
+                      onClick={() => handleNavigation(subItem.path)}
                     >
                       {subItem.label}
                     </Button>
