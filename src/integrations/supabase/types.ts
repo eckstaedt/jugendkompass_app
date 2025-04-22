@@ -143,17 +143,23 @@ export type Database = {
       messages: {
         Row: {
           content_id: number
+          created_by: string | null
           id: number
+          image_url: string | null
           message: string
         }
         Insert: {
           content_id: number
+          created_by?: string | null
           id?: never
+          image_url?: string | null
           message: string
         }
         Update: {
           content_id?: number
+          created_by?: string | null
           id?: never
+          image_url?: string | null
           message?: string
         }
         Relationships: []

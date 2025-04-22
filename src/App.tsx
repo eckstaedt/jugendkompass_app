@@ -24,6 +24,7 @@ const NewPollPage = React.lazy(() => import('./pages/dashboard/polls/new'));
 const PollDetailPage = React.lazy(() => import('./pages/dashboard/polls/[id]'));
 const ImpulsesPage = React.lazy(() => import('./pages/dashboard/impulses'));
 const FeedPage = React.lazy(() => import('./pages/dashboard/feed'));
+const MessagesPage = React.lazy(() => import('./pages/dashboard/messages'));
 
 // Loading fallback
 const PageLoading = () => (
@@ -71,6 +72,7 @@ const App = () => (
               <Route path="/dashboard/posts/edit/:id" element={<EditPostPage />} />
               <Route path="/dashboard/impulses" element={<ImpulsesPage />} />
               <Route path="/dashboard/feed" element={<FeedPage />} />
+              <Route path="/dashboard/messages" element={<MessagesPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

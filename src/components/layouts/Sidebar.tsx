@@ -100,6 +100,11 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
       ],
     },
     {
+      label: 'Kurznachrichten',
+      path: '/dashboard/messages',
+      icon: FileTextIcon,
+    },
+    {
       label: 'Einstellungen',
       path: '/dashboard/settings',
       icon: SettingsIcon,
