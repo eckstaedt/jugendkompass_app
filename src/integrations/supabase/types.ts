@@ -110,19 +110,22 @@ export type Database = {
       }
       impulses: {
         Row: {
-          content_id: string | null
+          content_id: string
+          date: string
           id: string
           image_url: string | null
           impulse_text: string
         }
         Insert: {
-          content_id?: string | null
+          content_id: string
+          date: string
           id?: string
           image_url?: string | null
           impulse_text: string
         }
         Update: {
-          content_id?: string | null
+          content_id?: string
+          date?: string
           id?: string
           image_url?: string | null
           impulse_text?: string
@@ -139,17 +142,17 @@ export type Database = {
       }
       messages: {
         Row: {
-          content_id: number | null
+          content_id: number
           id: number
           message: string
         }
         Insert: {
-          content_id?: number | null
+          content_id: number
           id?: never
           message: string
         }
         Update: {
-          content_id?: number | null
+          content_id?: number
           id?: never
           message?: string
         }

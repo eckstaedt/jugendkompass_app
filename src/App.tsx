@@ -22,6 +22,7 @@ const DailyVersesPage = React.lazy(() => import('./pages/dashboard/daily-verses'
 const PollsPage = React.lazy(() => import('./pages/dashboard/polls'));
 const NewPollPage = React.lazy(() => import('./pages/dashboard/polls/new'));
 const PollDetailPage = React.lazy(() => import('./pages/dashboard/polls/[id]'));
+const ImpulsesPage = React.lazy(() => import('./pages/dashboard/impulses'));
 
 // Loading fallback
 const PageLoading = () => (
@@ -67,6 +68,7 @@ const App = () => (
               <Route path="/dashboard/notifications/new" element={<div>Neue Benachrichtigung</div>} />
               <Route path="/dashboard/settings" element={<div>Einstellungen</div>} />
               <Route path="/dashboard/posts/edit/:id" element={<EditPostPage />} />
+              <Route path="/dashboard/impulses" element={<ImpulsesPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
