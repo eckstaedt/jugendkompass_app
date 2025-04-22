@@ -2,8 +2,8 @@
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
-import { usePolls } from '@/hooks/use-polls';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { usePolls, type Poll } from '@/hooks/use-polls';
+import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 

@@ -6,8 +6,9 @@ export type Poll = {
   question: string;
   created_at: string;
   expires_at: string | null;
-  is_active: boolean;
+  is_active: boolean | null;
   created_by: string;
+  options?: PollOption[];
 };
 
 export type PollOption = {
@@ -36,9 +37,26 @@ export const usePolls = (showAll = false) => {
         query.eq('is_active', true);
       }
 
-      const { data, error } = await query;
+      const { data: polls, error } = await query;
       if (error) throw error;
-      return data as Poll[];
+      
+      const pollsWithOptions = await Promise.all(
+        (polls as Poll[]).map(async (poll) => {
+          const { data: options, error: optionsError } = await supabase
+            .from('poll_options')
+            .select('*')
+            .eq('poll_id', poll.id);
+          
+          if (optionsError) throw optionsError;
+          
+          return {
+            ...poll,
+            options: options || []
+          };
+        })
+      );
+      
+      return pollsWithOptions as Poll[];
     },
   });
 };
