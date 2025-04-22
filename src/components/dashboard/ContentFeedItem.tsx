@@ -1,9 +1,11 @@
-
 import { FeedItem } from '@/hooks/use-content-feed';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { FileTextIcon, PieChartIcon, FileVideoIcon, CalendarIcon, BookIcon } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { usePoll } from '@/hooks/use-polls';
+import { Label } from '@/components/ui/label';
 
 const getIconForContentType = (type: string) => {
   switch (type) {
@@ -20,6 +22,46 @@ const getIconForContentType = (type: string) => {
     default:
       return null;
   }
+};
+
+const PollResults = ({ pollId }: { pollId: string }) => {
+  const { data: pollData } = usePoll(pollId);
+  
+  if (!pollData) return null;
+  
+  const { options } = pollData;
+  const totalVotes = options?.reduce((sum, option) => sum + (option.votes || 0), 0) || 0;
+
+  return (
+    <div className="space-y-4">
+      <RadioGroup className="gap-3">
+        {options?.map((option) => {
+          const percentage = totalVotes > 0 ? ((option.votes || 0) / totalVotes) * 100 : 0;
+          
+          return (
+            <div key={option.id} className="flex items-center space-x-2">
+              <RadioGroupItem value={option.id} id={option.id} disabled />
+              <Label htmlFor={option.id} className="flex-1">
+                <div className="flex justify-between">
+                  <span>{option.option_text}</span>
+                  <span className="text-muted-foreground">{percentage.toFixed(1)}%</span>
+                </div>
+                <div className="w-full h-2 bg-muted rounded-full mt-1">
+                  <div 
+                    className="h-full bg-primary rounded-full" 
+                    style={{ width: `${percentage}%` }}
+                  />
+                </div>
+              </Label>
+            </div>
+          );
+        })}
+      </RadioGroup>
+      <p className="text-sm text-muted-foreground">
+        {totalVotes} {totalVotes === 1 ? 'Stimme' : 'Stimmen'} insgesamt
+      </p>
+    </div>
+  );
 };
 
 export const ContentFeedItem = ({ item }: { item: FeedItem }) => {
@@ -45,6 +87,9 @@ export const ContentFeedItem = ({ item }: { item: FeedItem }) => {
             className="prose prose-sm max-w-none text-muted-foreground mb-4"
             dangerouslySetInnerHTML={{ __html: item.description }}
           />
+        )}
+        {item.content_type === 'poll' && item.entity_id && (
+          <PollResults pollId={item.entity_id} />
         )}
         {item.image_url && item.content_type !== 'video' && (
           <img 
