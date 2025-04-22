@@ -1,7 +1,7 @@
 import React from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart2Icon, BookIcon, FileTextIcon, PieChartIcon, UsersIcon, FileVideoIcon, CalendarIcon, BellIcon } from 'lucide-react';
+import { BarChart2Icon, BookIcon, FileTextIcon, PieChartIcon, UsersIcon, FileVideoIcon, CalendarIcon } from 'lucide-react';
 import { useActivities } from '@/hooks/use-activities';
 import { ActivityItem } from '@/components/dashboard/ActivityItem';
 import { useQuery } from '@tanstack/react-query';
@@ -134,6 +134,25 @@ const DashboardPage = () => {
     }
   });
 
+  const { data: impulseStats } = useQuery({
+    queryKey: ['dashboard-stats-impulses'],
+    queryFn: async () => {
+      const { count: totalImpulses } = await supabase
+        .from('impulses')
+        .select('*', { count: 'exact' });
+        
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const { count: newImpulses } = await supabase
+        .from('impulses')
+        .select('*', { count: 'exact' })
+        .gte('created_at', thirtyDaysAgo.toISOString());
+        
+      return { total: totalImpulses || 0, new: newImpulses || 0 };
+    }
+  });
+
   return (
     <DashboardLayout title="Dashboard">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -168,16 +187,10 @@ const DashboardPage = () => {
           icon={<UsersIcon className="h-5 w-5 text-primary" />} 
         />
         <DashboardCard 
-          title="Aktivitäten" 
-          value={activities?.length || '...'} 
-          description="Kürzliche Aktivitäten" 
-          icon={<BarChart2Icon className="h-5 w-5 text-primary" />} 
-        />
-        <DashboardCard 
-          title="Benachrichtigungen" 
-          value="~" 
-          description="Benachrichtigungen System in Entwicklung" 
-          icon={<BellIcon className="h-5 w-5 text-primary" />} 
+          title="Impulse" 
+          value={impulseStats?.total || '...'} 
+          description={`${impulseStats?.new || 0} neue Impulse im letzten Monat`} 
+          icon={<BookIcon className="h-5 w-5 text-primary" />} 
         />
         <DashboardCard 
           title="Editionen" 

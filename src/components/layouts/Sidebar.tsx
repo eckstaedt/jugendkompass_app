@@ -81,7 +81,7 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
       ],
     },
     {
-      label: 'Impuls',
+      label: 'Impulse',
       path: '/dashboard/impulses',
       icon: FileTextIcon,
     },
