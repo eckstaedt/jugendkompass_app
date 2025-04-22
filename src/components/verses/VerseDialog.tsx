@@ -40,23 +40,34 @@ interface VerseDialogProps {
 }
 
 export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }: VerseDialogProps) {
+  const defaultValues = {
+    verse: '',
+    reference: '',
+    date: format(new Date(), 'yyyy-MM-dd'),
+  };
+
   const form = useForm<FormData>({
-    defaultValues: {
+    defaultValues: mode === 'create' ? defaultValues : {
       verse: initialData?.verse || '',
       reference: initialData?.reference || '',
-      date: initialData ? format(new Date(initialData.date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+      date: initialData?.date ? format(new Date(initialData.date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
     },
   });
 
+  // Reset form when dialog opens/closes or mode changes
   useEffect(() => {
-    if (initialData) {
-      form.reset({
-        verse: initialData.verse,
-        reference: initialData.reference,
-        date: format(new Date(initialData.date), 'yyyy-MM-dd'),
-      });
+    if (open) {
+      if (mode === 'create') {
+        form.reset(defaultValues);
+      } else if (initialData) {
+        form.reset({
+          verse: initialData.verse,
+          reference: initialData.reference,
+          date: format(new Date(initialData.date), 'yyyy-MM-dd'),
+        });
+      }
     }
-  }, [initialData, form]);
+  }, [open, mode, initialData, form]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -84,6 +95,7 @@ export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }:
                             "w-full pl-3 text-left font-normal",
                             !field.value && "text-muted-foreground"
                           )}
+                          disabled={mode === 'edit'} // Disable date button when editing
                         >
                           {field.value ? (
                             format(new Date(field.value), "PPP", { locale: de })
@@ -97,12 +109,13 @@ export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }:
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
-                        selected={new Date(field.value)}
+                        selected={field.value ? new Date(field.value) : undefined}
                         onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
                         disabled={(date) =>
                           date < new Date('1900-01-01')
                         }
                         locale={de}
+                        className="pointer-events-auto" // Added to make calendar interactive
                       />
                     </PopoverContent>
                   </Popover>
