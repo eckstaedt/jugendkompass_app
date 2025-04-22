@@ -1,46 +1,71 @@
+import { supabase } from './supabase';
+import { logActivity } from './activity-logger';
 
-import { supabase } from "@/integrations/supabase/client";
-import { logActivity } from "./activity-logger";
+export const createUser = async (email: string, password?: string) => {
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email: email,
+      password: password || 'changeme',
+      options: {
+        data: {
+          role: 'user',
+        }
+      }
+    });
 
-export type User = {
-  id: string;
-  email: string;
-  created_at: string;
-  role: 'admin' | 'user';
+    if (error) {
+      console.error('Error creating user:', error);
+      return { error: error.message };
+    }
+
+    return { data };
+  } catch (err) {
+    console.error('Unexpected error creating user:', err);
+    return { error: 'Unexpected error during user creation.' };
+  }
 };
 
-export async function fetchUsers(): Promise<User[]> {
-  const { data: users, error } = await supabase
-    .from('users')
-    .select('*')
-    .order('created_at', { ascending: false });
+export const deleteUser = async (userId: string) => {
+  try {
+    const { error } = await supabase.auth.admin.deleteUser(userId);
 
-  if (error) {
-    console.error('Error fetching users:', error);
-    throw error;
+    if (error) {
+      console.error('Error deleting user:', error);
+      return { error: error.message };
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error('Unexpected error deleting user:', err);
+    return { error: 'Unexpected error during user deletion.' };
   }
+};
 
-  // Ensure that the role is properly typed
-  return (users || []).map(user => ({
-    ...user,
-    role: (user.role === 'admin' ? 'admin' : 'user') as 'admin' | 'user'
-  }));
-}
+export const updateUserRole = async (userId: string, role: string, adminId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .update({ role })
+      .eq('id', userId)
+      .select()
+      .single();
 
-export async function updateUserRole(userId: string, role: 'admin' | 'user') {
-  const { error } = await supabase
-    .from('user_roles')
-    .upsert({ user_id: userId, role }, { onConflict: 'user_id' });
+    if (error) {
+      console.error('Error updating user role:', error);
+      return { error: error.message };
+    }
 
-  if (error) {
-    console.error('Error updating user role:', error);
-    throw error;
+    await logActivity(
+      adminId,
+      'user',
+      'update',
+      userId,
+      `User role updated to ${role}`
+    );
+    
+    return { data };
+  } catch (error) {
+    console.error('Unexpected error updating user role:', error);
+    return { error: 'Unexpected error during user role update.' };
   }
-
-  await logActivity({
-    action_type: 'update',
-    entity_type: 'user',
-    entity_id: userId,
-    description: `Benutzerrolle auf ${role} geändert`
-  });
-}
+};

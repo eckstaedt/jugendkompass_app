@@ -1,50 +1,54 @@
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { logActivity } from '@/lib/activity-logger';
-import { CreatePostParams } from '../use-posts';
+import { CreatePostParams } from './types';
 
-export function useCreatePost() {
+export const useCreatePost = () => {
   const queryClient = useQueryClient();
-
+  
   return useMutation({
-    mutationFn: async (postData: CreatePostParams) => {
-      const { data: contentData, error: contentError } = await supabase
-        .from('content')
-        .insert({ 
-          content_type: 'post', 
-          status: postData.status
-        })
-        .select('id')
-        .single();
-
-      if (contentError) throw contentError;
-
-      const { data: postResult, error: postError } = await supabase
+    mutationFn: async (params: CreatePostParams) => {
+      const { title, content, category, editionId, authorId, published, imageUrl } = params;
+      
+      const { data: result, error } = await supabase
         .from('posts')
-        .insert({
-          title: postData.title,
-          body: postData.body,
-          category_id: postData.category_id,
-          edition_id: postData.edition_id,
-          content_id: contentData.id
-        })
+        .insert([
+          { 
+            title, 
+            content, 
+            category,
+            edition_id: editionId,
+            author_id: authorId,
+            published,
+            image_url: imageUrl
+          }
+        ])
         .select()
         .single();
 
-      if (postError) throw postError;
+      if (error) {
+        console.error("Error creating post:", error);
+        throw error;
+      }
 
-      await logActivity({
-        action_type: 'create',
-        entity_type: 'post',
-        entity_id: postResult.id,
-        description: `Neuer Beitrag erstellt: ${postData.title}`
-      });
-
-      return postResult;
+      // Update the logActivity call to use the correct parameters
+      if (result.data) {
+        await logActivity(
+          params.authorId,
+          'post',
+          'create',
+          result.data.id,
+          `Post "${params.title}" created`
+        );
+      }
+      
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
+    },
+    onError: (error: any) => {
+      console.error("Error creating post:", error);
     }
   });
-}
+};

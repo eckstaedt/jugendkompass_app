@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Video } from '@/lib/supabase';
+import { logActivity } from '@/lib/activity-logger';
 
 export const useVideos = () => {
   return useQuery({
@@ -38,7 +39,7 @@ export const useUploadVideo = () => {
         const fileName = `${Math.random()}.${fileExt}`;
         const { error: storageError, data } = await supabase.storage
           .from('videos')
-          .upload(fileName, file, {
+          .upload(`public/${fileName}`, file, {
             cacheControl: '3600',
             upsert: false
           });
@@ -51,7 +52,7 @@ export const useUploadVideo = () => {
         // Get public URL
         const { data: { publicUrl } } = supabase.storage
           .from('videos')
-          .getPublicUrl(fileName);
+          .getPublicUrl(`public/${fileName}`);
 
         // Insert video record with the content_id
         const { data: videoData, error: insertError } = await supabase
@@ -66,6 +67,15 @@ export const useUploadVideo = () => {
           .single();
 
         if (insertError) throw insertError;
+
+        // Log the activity
+        await logActivity(
+          userId,
+          'video',
+          'create',
+          videoData.id.toString(),
+          `Video '${title}' created`
+        );
 
         return videoData;
       } catch (error) {

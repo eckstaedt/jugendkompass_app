@@ -1,147 +1,62 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { logActivity } from '@/lib/activity-logger';
 import { DailyVerse } from '@/lib/supabase';
+import { logActivity } from '@/lib/activity-logger';
 
-export function useDailyVerses() {
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  const { data: verses = [], isLoading } = useQuery({
-    queryKey: ['daily-verses'],
+export const useDailyVerses = () => {
+  return useQuery({
+    queryKey: ['dailyVerses'],
     queryFn: async () => {
-      // The issue is in this query - we need to specify the content relationship correctly
-      const { data, error } = await supabase
-        .from('verse_of_the_day')
+      const { data: dailyVerses, error } = await supabase
+        .from('daily_verses')
         .select('*, content:content_id(*)')
-        .order('date', { ascending: true });
-      
-      if (error) throw error;
-      
-      // Convert the response to match our DailyVerse type
-      return data as unknown as DailyVerse[];
+        .order('date', { ascending: false });
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw new Error(error.message);
+      }
+      return dailyVerses as DailyVerse[];
     },
   });
+};
 
-  const logVerseActivity = async (action: 'create' | 'update', verseId: string | null, date: string) => {
-    try {
-      await logActivity({
-        action_type: action,
-        entity_type: 'verse',
-        entity_id: verseId,
-        description: `Tagesvers für ${date} ${action === 'create' ? 'erstellt' : 'aktualisiert'}`,
-      });
-    } catch (error) {
-      console.error(`Error logging ${action} activity:`, error);
+export const useCreateDailyVerse = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ verse, reference, date, userId }: { verse: string; reference: string; date: string; userId: string }) => {
+      const { data: contentData, error: contentError } = await supabase
+        .from('content')
+        .insert({ content_type: 'daily_verse', status: 'published' })
+        .select('id')
+        .single();
+
+      if (contentError) throw contentError;
+
+      const { data: result, error } = await supabase
+        .from('daily_verses')
+        .insert({ verse, reference, date, content_id: contentData.id })
+        .select('*')
+        .single();
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw new Error(error.message);
+      }
+
+      await logActivity(
+        userId,
+        'daily_verse',
+        'create',
+        result.id,
+        `Daily verse for ${date} created`
+      );
+      
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dailyVerses'] });
     }
-  };
-
-  const createVerse = useMutation({
-    mutationFn: async (verse: Omit<DailyVerse, 'id' | 'content_id' | 'created_at' | 'content'>) => {
-      try {
-        // First create a content entry
-        const { data: contentData, error: contentError } = await supabase
-          .from('content')
-          .insert({ content_type: 'verse', status: 'published' })
-          .select('id')
-          .single();
-
-        if (contentError) throw contentError;
-        
-        // Then create the verse with the content_id
-        const { data, error } = await supabase
-          .from('verse_of_the_day')
-          .insert({
-            date: verse.date,
-            verse: verse.verse,
-            reference: verse.reference,
-            content_id: contentData.id
-          })
-          .select('*, content:content_id(*)')
-          .single();
-
-        if (error) {
-          if (error.code === '23505' && error.message.includes('verse_of_the_day_date_key')) {
-            throw new Error('Ein Vers für dieses Datum existiert bereits');
-          }
-          throw error;
-        }
-        
-        if (data) {
-          await logVerseActivity('create', data.id, verse.date);
-        }
-        
-        return data;
-      } catch (error) {
-        console.error('Error creating verse:', error);
-        throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['daily-verses'] });
-      toast({
-        title: "Vers hinzugefügt",
-        description: "Der Tagesvers wurde erfolgreich hinzugefügt.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Fehler",
-        description: error.message || "Der Tagesvers konnte nicht hinzugefügt werden.",
-        variant: "destructive",
-      });
-      console.error('Error creating verse:', error);
-    },
   });
-
-  const updateVerse = useMutation({
-    mutationFn: async ({ id, content_id, ...verse }: DailyVerse) => {
-      try {
-        const { data, error } = await supabase
-          .from('verse_of_the_day')
-          .update({
-            verse: verse.verse,
-            reference: verse.reference,
-            date: verse.date
-            // We don't update content_id as it should remain the same
-          })
-          .eq('id', id)
-          .select('*, content:content_id(*)')
-          .single();
-
-        if (error) throw error;
-        
-        await logVerseActivity('update', id, verse.date);
-        
-        return data;
-      } catch (error) {
-        console.error('Error updating verse:', error);
-        throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['daily-verses'] });
-      toast({
-        title: "Vers aktualisiert",
-        description: "Der Tagesvers wurde erfolgreich aktualisiert.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Fehler",
-        description: "Der Tagesvers konnte nicht aktualisiert werden.",
-        variant: "destructive",
-      });
-      console.error('Error updating verse:', error);
-    },
-  });
-
-  return {
-    verses,
-    isLoading,
-    createVerse,
-    updateVerse,
-  };
-}
+};
