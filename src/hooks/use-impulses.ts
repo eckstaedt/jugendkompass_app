@@ -40,6 +40,7 @@ export const useCreateImpulse = () => {
 
   return useMutation({
     mutationFn: async (impulse: { date: string; impulse_text: string; image_url?: string }) => {
+      // The trigger will create the content record and set content_id
       const { data, error } = await supabase
         .from('impulses')
         .insert([impulse])
