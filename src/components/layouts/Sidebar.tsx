@@ -1,3 +1,4 @@
+
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -5,14 +6,11 @@ import { Button } from '@/components/ui/button';
 import { 
   BookIcon, 
   BarChart2Icon, 
-  BellIcon, 
   CalendarIcon, 
   FileTextIcon, 
   PieChartIcon, 
   FileVideoIcon, 
-  UsersIcon, 
-  SettingsIcon,
-  LogOutIcon
+  UsersIcon
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -91,23 +89,9 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
       icon: UsersIcon,
     },
     {
-      label: 'Benachrichtigungen',
-      path: '/dashboard/notifications',
-      icon: BellIcon,
-      subItems: [
-        { label: 'Alle Benachrichtigungen', path: '/dashboard/notifications' },
-        { label: 'Neue Benachrichtigung', path: '/dashboard/notifications/new' },
-      ],
-    },
-    {
       label: 'Kurznachrichten',
       path: '/dashboard/messages',
       icon: FileTextIcon,
-    },
-    {
-      label: 'Einstellungen',
-      path: '/dashboard/settings',
-      icon: SettingsIcon,
     },
   ];
   

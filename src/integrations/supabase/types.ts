@@ -142,7 +142,7 @@ export type Database = {
       }
       messages: {
         Row: {
-          content_id: number
+          content_id: string | null
           created_at: string | null
           created_by: string | null
           id: number
@@ -150,7 +150,7 @@ export type Database = {
           message: string
         }
         Insert: {
-          content_id: number
+          content_id?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: never
@@ -158,14 +158,22 @@ export type Database = {
           message: string
         }
         Update: {
-          content_id?: number
+          content_id?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: never
           image_url?: string | null
           message?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "messages_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       poll_options: {
         Row: {
