@@ -19,7 +19,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Badge } from '@/components/ui/badge';
 import { usePosts } from '@/hooks/use-posts';
 import { useCategories } from '@/hooks/use-categories';
 import { useEditions } from '@/hooks/use-editions';
@@ -37,16 +36,6 @@ const PostsPage = () => {
       post.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
-  // Format date
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('de-DE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(date);
-  };
-
   // Find category and edition names
   const getCategoryName = (categoryId: string | null) => {
     if (!categoryId) return '-';
@@ -83,14 +72,13 @@ const PostsPage = () => {
               <TableHead className="w-[300px]">Titel</TableHead>
               <TableHead>Kategorie</TableHead>
               <TableHead>Edition</TableHead>
-              <TableHead>Erstellt am</TableHead>
               <TableHead className="text-right">Aktionen</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoadingPosts ? (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
+                <TableCell colSpan={4} className="h-24 text-center">
                   Lädt...
                 </TableCell>
               </TableRow>
@@ -100,7 +88,6 @@ const PostsPage = () => {
                   <TableCell className="font-medium">{post.title}</TableCell>
                   <TableCell>{getCategoryName(post.category_id)}</TableCell>
                   <TableCell>{getEditionName(post.edition_id)}</TableCell>
-                  <TableCell>{formatDate(post.created_at)}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -140,7 +127,7 @@ const PostsPage = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
+                <TableCell colSpan={4} className="h-24 text-center">
                   Keine Beiträge gefunden.
                 </TableCell>
               </TableRow>

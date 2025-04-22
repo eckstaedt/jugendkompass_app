@@ -9,7 +9,8 @@ export type Post = {
   body: string;
   category_id: string | null;
   edition_id: string | null;
-  created_at: string;
+  content_id: string | null;
+  audio_id: string | null;
   image_url: string | null;
 };
 
@@ -23,7 +24,7 @@ export function usePosts() {
       const { data, error } = await supabase
         .from('posts')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('id');
 
       if (error) throw error;
       return data as Post[];
