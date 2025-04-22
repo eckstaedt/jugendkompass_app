@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 const LoginPage = React.lazy(() => import('./pages/login/index'));
 const DashboardPage = React.lazy(() => import('./pages/dashboard'));
 const PostsPage = React.lazy(() => import('./pages/dashboard/posts'));
+const UsersPage = React.lazy(() => import('./pages/dashboard/users'));
 
 // Loading fallback
 const PageLoading = () => (
@@ -49,7 +50,7 @@ const App = () => (
               <Route path="/dashboard/videos/new" element={<div>Neues Video</div>} />
               <Route path="/dashboard/daily-verses" element={<div>Tagesverse verwalten</div>} />
               <Route path="/dashboard/daily-verses/new" element={<div>Neuer Tagesvers</div>} />
-              <Route path="/dashboard/users" element={<div>Benutzer verwalten</div>} />
+              <Route path="/dashboard/users" element={<UsersPage />} />
               <Route path="/dashboard/statistics" element={<div>App-Statistiken</div>} />
               <Route path="/dashboard/notifications" element={<div>Benachrichtigungen verwalten</div>} />
               <Route path="/dashboard/notifications/new" element={<div>Neue Benachrichtigung</div>} />
