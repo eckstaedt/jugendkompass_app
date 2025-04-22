@@ -44,18 +44,35 @@ export const useCreateImpulse = () => {
       // First upload the image
       const fileExt = image.name.split('.').pop();
       const fileName = `${uuidv4()}.${fileExt}`;
-      const { error: uploadError, data: uploadData } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('impulses')
         .upload(fileName, image);
 
       if (uploadError) throw uploadError;
 
-      const image_url = `${supabase.storageUrl}/object/public/impulses/${fileName}`;
+      // Get the public URL for the uploaded image
+      const { data: { publicUrl } } = supabase.storage
+        .from('impulses')
+        .getPublicUrl(fileName);
 
-      // Then create the impulse
+      // First, create a content record to get the content_id
+      const { data: contentData, error: contentError } = await supabase
+        .from('content')
+        .insert([{ content_type: 'impulse', status: 'published' }])
+        .select()
+        .single();
+      
+      if (contentError) throw contentError;
+      
+      // Then create the impulse with the generated content_id
       const { data, error } = await supabase
         .from('impulses')
-        .insert([{ date, impulse_text, image_url }])
+        .insert([{ 
+          content_id: contentData.id,
+          date, 
+          impulse_text, 
+          image_url: publicUrl 
+        }])
         .select()
         .single();
 

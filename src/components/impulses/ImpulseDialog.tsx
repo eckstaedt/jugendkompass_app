@@ -70,6 +70,7 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
         description: 'Impulse has been saved.',
       });
     } catch (error) {
+      console.error("Failed to save impulse:", error);
       toast({
         title: 'Error',
         description: 'Failed to save impulse.',

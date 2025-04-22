@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { ImpulseDialog } from '@/components/impulses/ImpulseDialog';
 import { useImpulses, useCreateImpulse, useUpdateImpulse } from '@/hooks/use-impulses';
 import { Plus } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ImpulsesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -14,12 +15,23 @@ export default function ImpulsesPage() {
   const { data: impulses, isLoading } = useImpulses();
   const createImpulse = useCreateImpulse();
   const updateImpulse = useUpdateImpulse();
+  const { toast } = useToast();
 
   const handleSubmit = async (data: any) => {
-    if (editingImpulse) {
-      await updateImpulse.mutateAsync({ id: editingImpulse.id, ...data });
-    } else {
-      await createImpulse.mutateAsync(data);
+    try {
+      if (editingImpulse) {
+        await updateImpulse.mutateAsync({ id: editingImpulse.id, ...data });
+      } else {
+        await createImpulse.mutateAsync(data);
+      }
+    } catch (error) {
+      console.error("Error saving impulse:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save impulse. Please try again.",
+        variant: "destructive",
+      });
+      throw error; // re-throw to allow dialog to handle the error
     }
   };
 
