@@ -8,9 +8,23 @@ export const useDailyVerses = () => {
   const { data: verses = [], isLoading, error } = useQuery({
     queryKey: ['dailyVerses'],
     queryFn: async () => {
+      // Instead of using the implicit join with *, we'll be explicit about
+      // which relationship we want to use by specifying the foreign key
       const { data: dailyVerses, error } = await supabase
         .from('verse_of_the_day')
-        .select('*, content:content_id(*)')
+        .select(`
+          id, 
+          verse, 
+          reference, 
+          date, 
+          content_id,
+          content:content_id (
+            id,
+            content_type,
+            status,
+            created_at
+          )
+        `)
         .order('date', { ascending: false });
 
       if (error) {
