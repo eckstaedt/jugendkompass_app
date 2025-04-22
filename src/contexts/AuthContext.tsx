@@ -31,38 +31,57 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.log("Auth state changed:", event, session?.user?.id);
       
       if (event === 'SIGNED_IN' && session?.user) {
-        try {
-          const { data: userData, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (error) {
-            console.error("Error fetching user data after sign in:", error);
+        // When signed in, use a setTimeout to avoid recursive policy issues
+        // We need to delay our query to the database
+        setTimeout(async () => {
+          try {
+            const { data: userData, error } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', session.user.id)
+              .maybeSingle();
+            
+            if (error) {
+              console.error("Error fetching user data after sign in:", error);
+              toast({
+                title: "Fehler beim Abrufen der Benutzerdaten",
+                description: "Bitte versuche es erneut oder kontaktiere den Administrator.",
+                variant: "destructive",
+              });
+              await supabase.auth.signOut();
+              setUser(null);
+              setIsAdmin(false);
+              navigate('/login');
+              return;
+            }
+            
+            if (userData && userData.role === 'admin') {
+              console.log("Admin user signed in:", userData);
+              setUser(userData as User);
+              setIsAdmin(true);
+              toast({
+                title: "Erfolgreich angemeldet",
+                description: "Willkommen im Admin-Dashboard",
+                variant: "success",
+              });
+              navigate('/dashboard');
+            } else {
+              console.log("User signed in but is not an admin:", userData);
+              toast({
+                title: "Zugriff verweigert",
+                description: "Du hast keine Administrator-Berechtigungen.",
+                variant: "destructive",
+              });
+              await supabase.auth.signOut();
+              setUser(null);
+              setIsAdmin(false);
+              navigate('/login');
+            }
+          } catch (error) {
+            console.error("Unexpected error during auth state change:", error);
             toast({
-              title: "Fehler beim Abrufen der Benutzerdaten",
-              description: "Bitte versuche es erneut oder kontaktiere den Administrator.",
-              variant: "destructive",
-            });
-            await supabase.auth.signOut();
-            setUser(null);
-            setIsAdmin(false);
-            navigate('/login');
-          } else if (userData && userData.role === 'admin') {
-            console.log("Admin user signed in:", userData);
-            setUser(userData as User);
-            setIsAdmin(true);
-            toast({
-              title: "Erfolgreich angemeldet",
-              description: "Willkommen im Admin-Dashboard",
-              variant: "success",
-            });
-          } else {
-            console.log("User signed in but is not an admin:", userData);
-            toast({
-              title: "Zugriff verweigert",
-              description: "Du hast keine Administrator-Berechtigungen.",
+              title: "Unerwarteter Fehler",
+              description: "Bitte versuche es später erneut.",
               variant: "destructive",
             });
             await supabase.auth.signOut();
@@ -70,18 +89,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setIsAdmin(false);
             navigate('/login');
           }
-        } catch (error) {
-          console.error("Unexpected error during auth state change:", error);
-          toast({
-            title: "Unerwarteter Fehler",
-            description: "Bitte versuche es später erneut.",
-            variant: "destructive",
-          });
-          await supabase.auth.signOut();
-          setUser(null);
-          setIsAdmin(false);
-          navigate('/login');
-        }
+        }, 0);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setIsAdmin(false);
@@ -98,41 +106,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (session?.user) {
           try {
-            const { data: userData, error } = await supabase
-              .from('users')
-              .select('*')
-              .eq('id', session.user.id)
-              .single();
-            
-            if (error) {
-              console.error("Error fetching user data:", error);
-              await supabase.auth.signOut();
-              setUser(null);
-              setIsAdmin(false);
-            } else if (userData && userData.role === 'admin') {
-              setUser(userData as User);
-              setIsAdmin(true);
-            } else {
-              console.log("User exists but is not an admin:", userData);
-              await supabase.auth.signOut();
-              setUser(null);
-              setIsAdmin(false);
-            }
+            // Use setTimeout to avoid recursion issues
+            setTimeout(async () => {
+              const { data: userData, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', session.user.id)
+                .maybeSingle();
+              
+              if (error) {
+                console.error("Error fetching user data:", error);
+                await supabase.auth.signOut();
+                setUser(null);
+                setIsAdmin(false);
+              } else if (userData && userData.role === 'admin') {
+                setUser(userData as User);
+                setIsAdmin(true);
+              } else {
+                console.log("User exists but is not an admin:", userData);
+                await supabase.auth.signOut();
+                setUser(null);
+                setIsAdmin(false);
+              }
+              setLoading(false);
+            }, 0);
           } catch (error) {
             console.error("Unexpected error checking user:", error);
             await supabase.auth.signOut();
             setUser(null);
             setIsAdmin(false);
+            setLoading(false);
           }
         } else {
           setUser(null);
           setIsAdmin(false);
+          setLoading(false);
         }
       } catch (error) {
         console.error("Error checking session:", error);
         setUser(null);
         setIsAdmin(false);
-      } finally {
         setLoading(false);
       }
     };
