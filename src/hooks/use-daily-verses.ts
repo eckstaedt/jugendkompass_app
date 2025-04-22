@@ -61,7 +61,13 @@ export function useDailyVerses() {
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) {
+          // Specifically handle the duplicate date error
+          if (error.code === '23505' && error.message.includes('verse_of_the_day_date_key')) {
+            throw new Error('Ein Vers für dieses Datum existiert bereits');
+          }
+          throw error;
+        }
         
         // Only after successful insert, log the activity
         if (data) {
@@ -84,7 +90,7 @@ export function useDailyVerses() {
     onError: (error) => {
       toast({
         title: "Fehler",
-        description: "Der Tagesvers konnte nicht hinzugefügt werden.",
+        description: error.message || "Der Tagesvers konnte nicht hinzugefügt werden.",
         variant: "destructive",
       });
       console.error('Error creating verse:', error);
