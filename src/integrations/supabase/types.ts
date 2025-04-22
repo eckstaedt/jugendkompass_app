@@ -154,19 +154,22 @@ export type Database = {
       }
       poll_options: {
         Row: {
-          id: number
+          id: string
           option_text: string
-          poll_id: number | null
+          poll_id: string | null
+          votes: number | null
         }
         Insert: {
-          id?: never
+          id?: string
           option_text: string
-          poll_id?: number | null
+          poll_id?: string | null
+          votes?: number | null
         }
         Update: {
-          id?: never
+          id?: string
           option_text?: string
-          poll_id?: number | null
+          poll_id?: string | null
+          votes?: number | null
         }
         Relationships: [
           {
@@ -178,20 +181,68 @@ export type Database = {
           },
         ]
       }
+      poll_votes: {
+        Row: {
+          created_at: string | null
+          id: string
+          option_id: string | null
+          poll_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          option_id?: string | null
+          poll_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          option_id?: string | null
+          poll_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_votes_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "poll_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       polls: {
         Row: {
-          content_id: number | null
-          id: number
+          created_at: string | null
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
           question: string
         }
         Insert: {
-          content_id?: number | null
-          id?: never
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
           question: string
         }
         Update: {
-          content_id?: number | null
-          id?: never
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
           question?: string
         }
         Relationships: []

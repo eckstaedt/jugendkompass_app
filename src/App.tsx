@@ -19,6 +19,9 @@ const EditionsPage = React.lazy(() => import('./pages/dashboard/posts/editions')
 const UsersPage = React.lazy(() => import('./pages/dashboard/users'));
 const EditPostPage = React.lazy(() => import('./pages/dashboard/posts/edit'));
 const DailyVersesPage = React.lazy(() => import('./pages/dashboard/daily-verses'));
+const PollsPage = React.lazy(() => import('./pages/dashboard/polls'));
+const NewPollPage = React.lazy(() => import('./pages/dashboard/polls/new'));
+const PollDetailPage = React.lazy(() => import('./pages/dashboard/polls/[id]'));
 
 // Loading fallback
 const PageLoading = () => (
@@ -59,6 +62,9 @@ const App = () => (
               <Route path="/dashboard/settings" element={<div>Einstellungen</div>} />
               <Route path="/dashboard/posts/edit/:id" element={<EditPostPage />} />
               <Route path="*" element={<NotFound />} />
+              <Route path="/dashboard/polls" element={<PollsPage />} />
+              <Route path="/dashboard/polls/new" element={<NewPollPage />} />
+              <Route path="/dashboard/polls/:id" element={<PollDetailPage />} />
             </Routes>
           </Suspense>
         </TooltipProvider>
