@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { 
-  BookIcon, 
   BarChart2Icon, 
   CalendarIcon, 
   FileTextIcon, 
@@ -123,11 +122,23 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
       )}>
         {!collapsed ? (
           <div className="flex items-center">
-            <BookIcon className="h-6 w-6 text-sidebar-primary" />
+            {/* Custom Logo */}
+            <img
+              src="/lovable-uploads/df7fceef-ebc5-46a5-aff3-fbe34d02dc9d.png"
+              alt="App Logo"
+              className="h-8 w-8"
+              style={{ borderRadius: '0.25rem', background: 'none' }}
+            />
             <h1 className="ml-2 text-xl font-bold">Jugendkompass</h1>
           </div>
         ) : (
-          <BookIcon className="h-6 w-6 text-sidebar-primary" />
+          /* Show logo only for collapsed sidebar */
+          <img
+            src="/lovable-uploads/df7fceef-ebc5-46a5-aff3-fbe34d02dc9d.png"
+            alt="App Logo"
+            className="h-8 w-8"
+            style={{ borderRadius: '0.25rem', background: 'none' }}
+          />
         )}
       </div>
       
