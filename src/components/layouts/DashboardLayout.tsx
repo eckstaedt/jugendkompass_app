@@ -60,13 +60,14 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
     );
   }
 
+  // Adjusted header height to h-20 for all dashboard pages for consistency
   return (
     <div className="flex h-screen overflow-hidden">
       <div className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-200 ease-in-out bg-sidebar md:relative ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0 md:w-16'}`}>
         <Sidebar collapsed={!sidebarOpen} />
       </div>
       <div className="flex flex-1 flex-col overflow-y-auto">
-        <header className="sticky top-0 z-10 flex h-16 items-center border-b bg-white dark:bg-background px-4 shadow-sm">
+        <header className="sticky top-0 z-10 flex h-20 items-center border-b bg-white dark:bg-background px-4 shadow-sm">
           <Button
             variant="ghost"
             size="icon"
@@ -100,3 +101,4 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
     </div>
   );
 };
+

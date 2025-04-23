@@ -43,11 +43,8 @@ export const ActivityItem = ({ activity }: { activity: Activity }) => {
     <div className="flex items-center gap-4 rounded-md border p-4">
       {getIconForEntityType(activity.entity_type)}
       <div className="flex-1 space-y-1">
-        <p className="text-sm font-medium leading-none">
+        <p className="text-sm font-semibold leading-none">
           {getGermanActivityDescription(activity)}
-        </p>
-        <p className="text-sm text-muted-foreground">
-          {activity.description}
         </p>
       </div>
       <div className="text-sm text-muted-foreground">
