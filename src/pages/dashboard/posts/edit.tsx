@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
@@ -38,6 +39,7 @@ const EditPostPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [currentAudio, setCurrentAudio] = useState<AudioRecord | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const post = posts.find(p => p.id === id);
 
@@ -49,6 +51,15 @@ const EditPostPage = () => {
       image_url: post?.image_url || '',
     },
   });
+
+  useEffect(() => {
+    if (post) {
+      // Update form values when post data is available
+      form.setValue('title', post.title || '');
+      form.setValue('body', post.body || '');
+      form.setValue('image_url', post.image_url || '');
+    }
+  }, [post, form]);
 
   useEffect(() => {
     if (!post) {
@@ -81,6 +92,7 @@ const EditPostPage = () => {
     }
 
     try {
+      setIsLoading(true);
       let audioId = post.audio_id;
 
       if (data.audio_file) {
@@ -136,6 +148,8 @@ const EditPostPage = () => {
         description: "Beitrag konnte nicht aktualisiert werden",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -190,7 +204,11 @@ const EditPostPage = () => {
                     <FormControl>
                       <ImageUploader
                         value={field.value}
-                        onChange={field.onChange}
+                        onChange={(url) => {
+                          console.log("Image URL updated:", url);
+                          field.onChange(url);
+                          form.setValue('image_url', url);
+                        }}
                         required
                         label="Bild (JPEG, PNG, max. 3MB)*"
                       />
@@ -223,10 +241,13 @@ const EditPostPage = () => {
                   type="button" 
                   variant="outline"
                   onClick={() => navigate('/dashboard/posts')}
+                  disabled={isLoading}
                 >
                   Abbrechen
                 </Button>
-                <Button type="submit">Speichern</Button>
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? 'Wird gespeichert...' : 'Speichern'}
+                </Button>
               </div>
             </form>
           </Form>

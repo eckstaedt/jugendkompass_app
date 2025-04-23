@@ -2,10 +2,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { logActivity } from '@/lib/activity-logger';
+import { useToast } from '@/hooks/use-toast';
 import { UpdatePostStatusParams } from './types';
 
 export const useUpdatePostStatus = () => {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   
   return useMutation({
     mutationFn: async ({ id, status, userId }: UpdatePostStatusParams) => {
@@ -52,6 +54,19 @@ export const useUpdatePostStatus = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
+      toast({
+        title: "Erfolg",
+        description: "Beitragsstatus wurde aktualisiert",
+        variant: "success",
+      });
     },
+    onError: (error) => {
+      console.error("Status update error:", error);
+      toast({
+        title: "Fehler",
+        description: "Status konnte nicht aktualisiert werden",
+        variant: "destructive",
+      });
+    }
   });
 };

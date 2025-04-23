@@ -25,7 +25,7 @@ const PostsPage = () => {
     deletePost(id);
   };
 
-  const handleStatusChange = (id: string, currentStatus: string | undefined) => {
+  const handleStatusChange = (postId: string, contentId: string, currentStatus: string | undefined) => {
     if (!user?.id) {
       console.error('Cannot update status: No user ID available');
       return;
@@ -33,16 +33,15 @@ const PostsPage = () => {
     
     const status = currentStatus === 'published' ? 'draft' : 'published';
     
-    console.log('Toggling status:', { id, currentStatus, newStatus: status });
+    console.log('Toggling status:', { postId, currentStatus, newStatus: status });
     updatePostStatus({ 
-      id, 
+      id: postId, 
       status, 
       userId: user.id 
     });
   };
 
   const handleEditPost = (id: string) => {
-    // Correct navigation to the edit page by using /dashboard/posts/edit/:id
     navigate(`/dashboard/posts/edit/${id}`);
   };
 
@@ -85,7 +84,7 @@ const PostsPage = () => {
                             <div className="flex items-center gap-3">
                               <Switch
                                 checked={post.content?.status === 'published'}
-                                onCheckedChange={() => handleStatusChange(post.content_id, post.content?.status)}
+                                onCheckedChange={() => handleStatusChange(post.id, post.content_id, post.content?.status)}
                               />
                               <Badge variant={post.content?.status === 'published' ? 'success' : 'secondary'}>
                                 {post.content?.status === 'published' ? 'Veröffentlicht' : 'Entwurf'}
@@ -147,4 +146,3 @@ const PostsPage = () => {
 };
 
 export default PostsPage;
-
