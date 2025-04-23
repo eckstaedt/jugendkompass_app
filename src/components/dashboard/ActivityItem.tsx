@@ -2,7 +2,7 @@
 import { Activity } from "@/hooks/use-activities";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
-import { FileTextIcon, PieChartIcon, FileVideoIcon, BellIcon } from "lucide-react";
+import { FileTextIcon, PieChartIcon, FileVideoIcon, BellIcon, UserIcon } from "lucide-react";
 
 const getIconForEntityType = (type: string) => {
   switch (type) {
@@ -41,6 +41,11 @@ const getGermanActivityDescription = (activity: Activity): string => {
 };
 
 export const ActivityItem = ({ activity }: { activity: Activity }) => {
+  // Format user name - show both first and last name if available
+  const userName = activity.user_first_name || activity.user_last_name 
+    ? `${activity.user_first_name || ''} ${activity.user_last_name || ''}`.trim()
+    : 'Unbekannter Benutzer';
+
   return (
     <div className="flex items-center gap-4 rounded-md border p-4">
       {getIconForEntityType(activity.entity_type)}
@@ -49,6 +54,10 @@ export const ActivityItem = ({ activity }: { activity: Activity }) => {
           {getGermanActivityDescription(activity)}
         </p>
         <p className="text-xs text-muted-foreground">{activity.description}</p>
+        <div className="flex items-center gap-1 mt-1">
+          <UserIcon className="h-3 w-3 text-muted-foreground" />
+          <p className="text-xs text-muted-foreground">{userName}</p>
+        </div>
       </div>
       <div className="text-sm text-muted-foreground">
         {formatDistanceToNow(new Date(activity.created_at), { 

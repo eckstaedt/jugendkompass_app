@@ -25,7 +25,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const hasShownWelcomeToast = useRef(false);
 
   // Helper function to convert Supabase User to our custom User type
   const convertSupabaseUser = (supabaseUser: SupabaseUser | null): User | null => {
@@ -78,13 +77,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               const isUserAdmin = await checkAdminStatus(session.user.id);
               setIsAdmin(isUserAdmin);
               
-              if (isUserAdmin && !hasShownWelcomeToast.current && event === 'SIGNED_IN') {
-                toast({
-                  title: "Erfolgreich angemeldet",
-                  description: "Willkommen im Admin-Dashboard",
-                  variant: "success",
-                });
-                hasShownWelcomeToast.current = true;
+              if (isUserAdmin && event === 'SIGNED_IN') {
+                // Removed the success toast message here
                 navigate('/dashboard');
               } else if (!isUserAdmin) {
                 toast({
@@ -109,7 +103,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setIsAdmin(false);
           if (event === 'SIGNED_OUT') {
             navigate('/login');
-            hasShownWelcomeToast.current = false;
           }
         }
       }
@@ -157,7 +150,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return { error, data: null };
       }
       
-      hasShownWelcomeToast.current = false;
       return { data, error: null };
     } catch (error: any) {
       console.error("Unexpected error during login:", error);
@@ -171,7 +163,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       title: "Abgemeldet",
       description: "Du wurdest erfolgreich abgemeldet.",
     });
-    hasShownWelcomeToast.current = false;
     navigate('/login');
   };
 

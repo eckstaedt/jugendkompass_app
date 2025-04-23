@@ -343,27 +343,6 @@ export type Database = {
           },
         ]
       }
-      user_roles: {
-        Row: {
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
-        }
-        Relationships: []
-      }
       users: {
         Row: {
           created_at: string
@@ -483,8 +462,8 @@ export type Database = {
       }
     }
     Functions: {
-      get_user_role: {
-        Args: Record<PropertyKey, never> | { user_id: string }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
         Returns: string
       }
       increment_poll_votes: {
