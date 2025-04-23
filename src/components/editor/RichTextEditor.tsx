@@ -58,6 +58,7 @@ const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
     return null;
   }
 
+  // Fix the setColor function to use the editor's chain API correctly
   function setColor(color: string) {
     editor.chain().focus().setColor(color).run();
   }
