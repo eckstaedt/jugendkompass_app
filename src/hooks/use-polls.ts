@@ -1,5 +1,7 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { logActivity } from '@/lib/activity-logger';
 
 export type Poll = {
   id: string;
@@ -22,6 +24,7 @@ export type CreatePollInput = {
   question: string;
   expires_at?: string;
   options: string[];
+  userId?: string;
 };
 
 export const usePolls = (showAll = false) => {
@@ -86,7 +89,7 @@ export const useCreatePoll = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ question, expires_at, options }: CreatePollInput) => {
+    mutationFn: async ({ question, expires_at, options, userId }: CreatePollInput) => {
       const { data: content, error: contentError } = await supabase
         .from('content')
         .insert([{ content_type: 'poll', status: 'published' }])
@@ -95,13 +98,15 @@ export const useCreatePoll = () => {
 
       if (contentError) throw contentError;
 
+      const currentUserId = userId || (await supabase.auth.getUser()).data.user?.id;
+
       const { data: poll, error: pollError } = await supabase
         .from('polls')
         .insert([{ 
           question, 
           expires_at,
           content_id: content.id,
-          created_by: (await supabase.auth.getUser()).data.user?.id
+          created_by: currentUserId
         }])
         .select()
         .single();
@@ -119,6 +124,16 @@ export const useCreatePoll = () => {
 
       if (optionsError) throw optionsError;
 
+      if (currentUserId && poll?.id) {
+        await logActivity(
+          currentUserId,
+          'poll',
+          'create',
+          String(poll.id),
+          'Umfrage erstellt'
+        );
+      }
+
       return poll;
     },
     onSuccess: () => {
@@ -127,23 +142,64 @@ export const useCreatePoll = () => {
   });
 };
 
-export const useVote = () => {
+export const useUpdatePoll = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ pollId, optionId }: { pollId: string; optionId: string }) => {
-      const { error: voteError } = await supabase
-        .from('poll_votes')
-        .insert([{ poll_id: pollId, option_id: optionId, user_id: (await supabase.auth.getUser()).data.user?.id }]);
+    mutationFn: async ({ id, question, expires_at, is_active, userId }: { id: string, question: string, expires_at?: string, is_active?: boolean, userId?: string }) => {
+      const { data, error } = await supabase
+        .from('polls')
+        .update({ question, expires_at, is_active })
+        .eq('id', id)
+        .select()
+        .single();
 
-      if (voteError) throw voteError;
+      if (error) throw error;
 
-      const { error: incrementError } = await supabase.rpc('increment_poll_votes', { option_id: optionId });
-      
-      if (incrementError) throw incrementError;
+      const currentUserId = userId || (await supabase.auth.getUser()).data.user?.id;
+      if (currentUserId) {
+        await logActivity(
+          currentUserId,
+          'poll',
+          'update',
+          String(id),
+          'Umfrage bearbeitet'
+        );
+      }
+
+      return data;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['poll', variables.pollId] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['polls'] });
+    },
+  });
+};
+
+export const useDeletePoll = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, userId }: { id: string, userId?: string }) => {
+      const { error } = await supabase
+        .from('polls')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      const currentUserId = userId || (await supabase.auth.getUser()).data.user?.id;
+      if (currentUserId) {
+        await logActivity(
+          currentUserId,
+          'poll',
+          'delete',
+          String(id),
+          'Umfrage gelöscht'
+        );
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['polls'] });
     },
   });
 };

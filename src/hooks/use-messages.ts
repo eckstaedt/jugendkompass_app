@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
+import { logActivity } from '@/lib/activity-logger';
 
 export type Message = {
   id: number;
@@ -31,7 +32,7 @@ export const useCreateMessage = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ message, imageFile }: { message: string; imageFile?: File }) => {
+    mutationFn: async ({ message, imageFile, userId }: { message: string; imageFile?: File; userId?: string }) => {
       let image_url = null;
 
       if (imageFile) {
@@ -57,6 +58,17 @@ export const useCreateMessage = () => {
         .single();
 
       if (error) throw error;
+
+      if (userId && data?.id) {
+        await logActivity(
+          userId,
+          'message',
+          'create',
+          String(data.id),
+          'Nachricht erstellt'
+        );
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -69,7 +81,7 @@ export const useUpdateMessage = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, message, imageFile }: { id: number; message: string; imageFile?: File }) => {
+    mutationFn: async ({ id, message, imageFile, userId }: { id: number; message: string; imageFile?: File; userId?: string }) => {
       let image_url = undefined;
 
       if (imageFile) {
@@ -96,6 +108,17 @@ export const useUpdateMessage = () => {
         .single();
 
       if (error) throw error;
+
+      if (userId) {
+        await logActivity(
+          userId,
+          'message',
+          'update',
+          String(id),
+          'Nachricht bearbeitet'
+        );
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -108,13 +131,23 @@ export const useDeleteMessage = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async ({ id, userId }: { id: number; userId?: string }) => {
       const { error } = await supabase
         .from('messages')
         .delete()
         .eq('id', id);
 
       if (error) throw error;
+
+      if (userId) {
+        await logActivity(
+          userId,
+          'message',
+          'delete',
+          String(id),
+          'Nachricht gelöscht'
+        );
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['messages'] });
