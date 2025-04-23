@@ -20,9 +20,15 @@ export function useContentFeed() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('content_feed')
-        .select('*');
+        .select('*')
+        .order('sort_order', { ascending: true })
+        .order('specific_date', { ascending: true })
+        .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching content feed:', error);
+        throw error;
+      }
       return data as FeedItem[];
     }
   });
