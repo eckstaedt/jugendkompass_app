@@ -2,6 +2,7 @@
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
+import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import Image from '@tiptap/extension-image';
 import React, { useRef } from 'react';
@@ -9,15 +10,11 @@ import { Button } from '@/components/ui/button';
 import {
   Bold,
   Italic,
-  // List,
   AlignLeft,
   AlignCenter,
   AlignRight,
-  // Link,
-  PencilIcon,
-  // "underline" icon for color (pick closest),
   Image as ImageIcon,
-  ColorPicker,
+  Palette,
 } from 'lucide-react';
 
 // A simple color palette
@@ -39,6 +36,7 @@ const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
   const editor = useEditor({
     extensions: [
       StarterKit,
+      TextStyle,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
         alignments: ['left', 'center', 'right'],
@@ -108,7 +106,7 @@ const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
         </Button>
         {/* Color Picker */}
         <div className="flex items-center gap-1">
-          <ColorPicker className="h-4 w-4 text-primary" />
+          <Palette className="h-4 w-4 text-primary" />
           <div className="flex gap-0.5">
             {COLORS.map((color) => (
               <button
@@ -179,4 +177,3 @@ const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
 };
 
 export default RichTextEditor;
-
