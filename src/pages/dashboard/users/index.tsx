@@ -39,6 +39,8 @@ export default function UsersPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Email</TableHead>
+              <TableHead>Vorname</TableHead>
+              <TableHead>Nachname</TableHead>
               <TableHead>Rolle</TableHead>
               <TableHead>Erstellt am</TableHead>
               <TableHead>Aktionen</TableHead>
@@ -48,6 +50,8 @@ export default function UsersPage() {
             {users.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>{user.email}</TableCell>
+                <TableCell>{user.firstName || ""}</TableCell>
+                <TableCell>{user.lastName || ""}</TableCell>
                 <TableCell>{user.role}</TableCell>
                 <TableCell>
                   {format(new Date(user.created_at), 'PPp', { locale: de })}

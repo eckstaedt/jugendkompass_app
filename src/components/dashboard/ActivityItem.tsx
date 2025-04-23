@@ -1,3 +1,4 @@
+
 import { Activity } from "@/hooks/use-activities";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
@@ -30,6 +31,7 @@ const getGermanActivityDescription = (activity: Activity): string => {
     daily_verse: 'Tagesvers',
     impulse: 'Impuls',
     notification: 'Benachrichtigung',
+    user: 'Benutzer',
   };
 
   const action = actionMap[activity.action_type as keyof typeof actionMap] || activity.action_type;
@@ -46,6 +48,7 @@ export const ActivityItem = ({ activity }: { activity: Activity }) => {
         <p className="text-sm font-semibold leading-none">
           {getGermanActivityDescription(activity)}
         </p>
+        <p className="text-xs text-muted-foreground">{activity.description}</p>
       </div>
       <div className="text-sm text-muted-foreground">
         {formatDistanceToNow(new Date(activity.created_at), { 
