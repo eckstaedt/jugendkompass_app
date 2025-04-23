@@ -57,6 +57,7 @@ const App = () => (
               <Route path="/dashboard/posts/new" element={<NewPostPage />} />
               <Route path="/dashboard/posts/categories" element={<CategoriesPage />} />
               <Route path="/dashboard/posts/ausgaben" element={<EditionsPage />} />
+              <Route path="/dashboard/posts/edit/:id" element={<EditPostPage />} />
               <Route path="/dashboard/polls" element={<PollsPage />} />
               <Route path="/dashboard/polls/new" element={<NewPollPage />} />
               <Route path="/dashboard/polls/:id" element={<PollDetailPage />} />
