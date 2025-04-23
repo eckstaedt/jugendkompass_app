@@ -81,7 +81,7 @@ export const updateUserRole = async (userId: string, role: string, adminId?: str
         'user',
         'update',
         userId,
-        `User role updated to ${role}`
+        `Benutzerrolle auf "${role}" geändert`
       );
     }
     

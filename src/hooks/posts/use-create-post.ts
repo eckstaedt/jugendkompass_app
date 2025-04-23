@@ -54,7 +54,7 @@ export const useCreatePost = () => {
           'post',
           'create',
           postData.id,
-          `Post "${title}" created`
+          `Beitrag "${title}" erstellt`
         );
       }
       

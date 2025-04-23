@@ -20,11 +20,12 @@ export const useActivities = () => {
     queryKey: ['activities'],
     queryFn: async () => {
       // Join with users table to get first and last names
+      // Specify the foreign key relationship to use
       const { data, error } = await supabase
         .from('activities')
         .select(`
           *,
-          users (
+          users!activities_user_id_fkey (
             firstName,
             lastName
           )

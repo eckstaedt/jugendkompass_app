@@ -4,6 +4,38 @@ import { supabase } from '@/integrations/supabase/client';
 type EntityType = 'post' | 'poll' | 'video' | 'daily_verse' | 'notification' | 'user';
 type ActionType = 'create' | 'update' | 'delete';
 
+// Translation maps for German descriptions
+const entityTypeTranslations: Record<EntityType, string> = {
+  post: 'Beitrag',
+  poll: 'Umfrage',
+  video: 'Video',
+  daily_verse: 'Tagesvers',
+  notification: 'Benachrichtigung',
+  user: 'Benutzer'
+};
+
+const actionTypeTranslations: Record<ActionType, string> = {
+  create: 'erstellt',
+  update: 'aktualisiert',
+  delete: 'gelöscht'
+};
+
+/**
+ * Generates a German description for the activity
+ */
+const generateGermanDescription = (
+  entityType: EntityType,
+  actionType: ActionType,
+  customDescription?: string
+): string => {
+  if (customDescription) return customDescription;
+  
+  const entityName = entityTypeTranslations[entityType] || entityType;
+  const actionName = actionTypeTranslations[actionType] || actionType;
+  
+  return `${entityName} wurde ${actionName}`;
+};
+
 export const logActivity = async (
   userId: string,
   entityType: EntityType,
@@ -27,12 +59,19 @@ export const logActivity = async (
       finalEntityId = null; // Set to null if not a valid UUID
     }
     
+    // Generate German description
+    const germanDescription = generateGermanDescription(
+      entityType as EntityType, 
+      actionType as ActionType, 
+      description
+    );
+    
     const { error } = await supabase.from('activities').insert({
       user_id: userId,
       entity_type: entityType,
       action_type: actionType,
       entity_id: finalEntityId,
-      description: description || `${actionType} ${entityType}`,
+      description: germanDescription,
     });
 
     if (error) {

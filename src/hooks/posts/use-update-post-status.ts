@@ -39,13 +39,13 @@ export const useUpdatePostStatus = () => {
         throw error;
       }
 
-      // Log the activity
+      // Log the activity with German description
       await logActivity(
         userId,
         'post',
         'update',
         id,
-        `Post status set to ${status}`
+        `Beitragsstatus auf "${status}" geändert`
       );
       
       return data;
