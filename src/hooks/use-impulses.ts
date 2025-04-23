@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
+import { logActivity } from '@/lib/activity-logger';
 
 export type Impulse = {
   id: string;
@@ -13,6 +14,21 @@ export type Impulse = {
     status: string;
     created_at: string;
   };
+};
+
+type CreateImpulseArgs = {
+  date: string;
+  impulse_text: string;
+  image: File;
+  user_id: string;
+};
+
+type UpdateImpulseArgs = {
+  id: string;
+  date: string;
+  impulse_text: string;
+  image_url?: string;
+  user_id: string;
 };
 
 export const useImpulses = () => {
@@ -40,7 +56,7 @@ export const useCreateImpulse = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ date, impulse_text, image }: { date: string; impulse_text: string; image: File }) => {
+    mutationFn: async ({ date, impulse_text, image, user_id }: CreateImpulseArgs) => {
       // First upload the image
       const fileExt = image.name.split('.').pop();
       const fileName = `${uuidv4()}.${fileExt}`;
@@ -77,6 +93,17 @@ export const useCreateImpulse = () => {
         .single();
 
       if (error) throw error;
+
+      // Log the creation of a new impulse
+      if (user_id && data?.id) {
+        await logActivity(
+          user_id,
+          'impulse',
+          'create',
+          data.id,
+          `Impuls erstellt`
+        );
+      }
       return data;
     },
     onSuccess: () => {
@@ -89,7 +116,7 @@ export const useUpdateImpulse = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, ...impulse }: { id: string; date: string; impulse_text: string; image_url?: string }) => {
+    mutationFn: async ({ id, user_id, ...impulse }: UpdateImpulseArgs) => {
       const { data, error } = await supabase
         .from('impulses')
         .update(impulse)
@@ -98,6 +125,18 @@ export const useUpdateImpulse = () => {
         .single();
 
       if (error) throw error;
+
+      // Log the update of an impulse
+      if (user_id) {
+        await logActivity(
+          user_id,
+          'impulse',
+          'update',
+          id,
+          `Impuls bearbeitet`
+        );
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -105,3 +144,4 @@ export const useUpdateImpulse = () => {
     },
   });
 };
+
