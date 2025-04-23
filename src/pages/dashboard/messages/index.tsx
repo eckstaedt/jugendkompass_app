@@ -4,6 +4,7 @@ import { useMessages, useCreateMessage, useUpdateMessage, useDeleteMessage, Mess
 import { useToast } from '@/hooks/use-toast';
 import MessageForm from '@/components/messages/MessageForm';
 import MessageItem from '@/components/messages/MessageItem';
+import { useAuth } from '@/contexts/AuthContext';
 
 const MessagesPage = () => {
   const { data: messages, isLoading } = useMessages();
@@ -11,10 +12,11 @@ const MessagesPage = () => {
   const updateMessage = useUpdateMessage();
   const deleteMessage = useDeleteMessage();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleDelete = async (id: number) => {
     try {
-      await deleteMessage.mutateAsync(id);
+      await deleteMessage.mutateAsync({ id, userId: user?.id });
       toast({
         title: "Erfolg",
         description: "Die Nachricht wurde gelöscht.",
@@ -30,7 +32,7 @@ const MessagesPage = () => {
 
   const handleUpdate = async (data: { id: number; message: string; imageFile?: File }) => {
     try {
-      await updateMessage.mutateAsync(data);
+      await updateMessage.mutateAsync({ ...data, userId: user?.id });
       toast({
         title: "Erfolg",
         description: "Die Nachricht wurde aktualisiert.",
@@ -52,7 +54,7 @@ const MessagesPage = () => {
           <MessageForm
             onSubmit={async (data) => {
               try {
-                await createMessage.mutateAsync(data);
+                await createMessage.mutateAsync({ ...data, userId: user?.id });
                 toast({
                   title: "Erfolg",
                   description: "Die Nachricht wurde erstellt.",

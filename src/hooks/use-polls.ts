@@ -203,3 +203,47 @@ export const useDeletePoll = () => {
     },
   });
 };
+
+// Add the missing useVote hook
+export const useVote = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ pollId, optionId }: { pollId: string; optionId: string }) => {
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      
+      // Check if user has already voted
+      const { data: existingVote, error: checkError } = await supabase
+        .from('poll_votes')
+        .select()
+        .eq('poll_id', pollId)
+        .eq('user_id', userId);
+      
+      if (checkError) throw checkError;
+      
+      if (existingVote && existingVote.length > 0) {
+        throw new Error('User has already voted on this poll');
+      }
+      
+      // Record the vote
+      const { error: voteError } = await supabase
+        .from('poll_votes')
+        .insert([{ poll_id: pollId, option_id: optionId, user_id: userId }]);
+      
+      if (voteError) throw voteError;
+      
+      // Increment vote count
+      const { error: incrementError } = await supabase.rpc(
+        'increment_poll_votes', 
+        { option_id: optionId }
+      );
+      
+      if (incrementError) throw incrementError;
+      
+      return true;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['poll', variables.pollId] });
+    },
+  });
+};
