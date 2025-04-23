@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { useForm } from 'react-hook-form';
@@ -11,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import RichTextEditor from '@/components/editor/RichTextEditor';
-import ImageUploader from '@/components/posts/ImageUploader';
+import { ImageUploader } from '@/components/posts/ImageUploader';
 import {
   Form,
   FormControl,

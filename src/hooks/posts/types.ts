@@ -26,6 +26,7 @@ export type UpdatePostParams = {
     title: string;
     body: string;
     audio_id?: string | null;
+    image_url?: string | null;
   };
 };
 

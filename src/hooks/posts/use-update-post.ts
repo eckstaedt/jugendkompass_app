@@ -15,7 +15,8 @@ export function useUpdatePost() {
         .update({ 
           title: data.title, 
           body: data.body,
-          audio_id: data.audio_id 
+          audio_id: data.audio_id,
+          image_url: data.image_url
         })
         .eq('id', id);
 
