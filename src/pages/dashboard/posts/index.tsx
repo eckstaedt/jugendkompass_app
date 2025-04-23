@@ -42,6 +42,7 @@ const PostsPage = () => {
   };
 
   const handleEditPost = (id: string) => {
+    // Correct navigation to the edit page by using /dashboard/posts/edit/:id
     navigate(`/dashboard/posts/edit/${id}`);
   };
 
@@ -146,3 +147,4 @@ const PostsPage = () => {
 };
 
 export default PostsPage;
+

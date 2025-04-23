@@ -2,17 +2,31 @@
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
-import React from 'react';
+import Color from '@tiptap/extension-color';
+import Image from '@tiptap/extension-image';
+import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Bold,
   Italic,
-  List,
+  // List,
   AlignLeft,
   AlignCenter,
   AlignRight,
-  Link,
+  // Link,
+  PencilIcon,
+  // "underline" icon for color (pick closest),
+  Image as ImageIcon,
+  ColorPicker,
 } from 'lucide-react';
+
+// A simple color palette
+const COLORS = [
+  "#221F26", "#6E59A5", "#D946EF", "#F97316",
+  "#0EA5E9", "#8B5CF6", "#403E43", "#8E9196",
+  "#F2FCE2", "#FEF7CD", "#FEC6A1", "#E5DEFF",
+  "#FFDEE2", "#FDE1D3", "#D3E4FD", "#F1F0FB"
+];
 
 interface RichTextEditorProps {
   content: string;
@@ -20,6 +34,8 @@ interface RichTextEditorProps {
 }
 
 const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -27,6 +43,11 @@ const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
         types: ['heading', 'paragraph'],
         alignments: ['left', 'center', 'right'],
         defaultAlignment: 'left',
+      }),
+      Color.configure({ types: ['textStyle'] }),
+      Image.configure({
+        inline: false,
+        allowBase64: true,
       }),
     ],
     content,
@@ -39,15 +60,39 @@ const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
     return null;
   }
 
+  function setColor(color: string) {
+    editor.chain().focus().setColor(color).run();
+  }
+
+  function handleImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (readerEvent) => {
+      const base64 = readerEvent.target?.result as string;
+      if (base64) {
+        editor.chain().focus().setImage({ src: base64 }).run();
+      }
+    };
+    reader.readAsDataURL(file);
+    // Reset input so you can add the same image again if needed
+    event.target.value = "";
+  }
+
+  function handleImageButtonClick() {
+    fileInputRef.current?.click();
+  }
+
   return (
     <div className="border rounded-md">
-      <div className="border-b p-2 flex gap-2 flex-wrap bg-muted/50">
+      <div className="border-b p-2 flex gap-2 flex-wrap bg-muted/50 items-center">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => editor.chain().focus().toggleBold().run()}
           data-active={editor.isActive('bold')}
           className={`${editor.isActive('bold') ? 'bg-muted' : ''}`}
+          type="button"
         >
           <Bold className="h-4 w-4" />
         </Button>
@@ -57,17 +102,42 @@ const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
           onClick={() => editor.chain().focus().toggleItalic().run()}
           data-active={editor.isActive('italic')}
           className={`${editor.isActive('italic') ? 'bg-muted' : ''}`}
+          type="button"
         >
           <Italic className="h-4 w-4" />
         </Button>
+        {/* Color Picker */}
+        <div className="flex items-center gap-1">
+          <ColorPicker className="h-4 w-4 text-primary" />
+          <div className="flex gap-0.5">
+            {COLORS.map((color) => (
+              <button
+                key={color}
+                type="button"
+                className="w-4 h-4 rounded-full border border-gray-200 hover:border-black"
+                style={{ background: color }}
+                onClick={() => setColor(color)}
+                aria-label={`Farbe ${color}`}
+              />
+            ))}
+          </div>
+        </div>
+        {/* Image Upload */}
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-          data-active={editor.isActive('bulletList')}
-          className={`${editor.isActive('bulletList') ? 'bg-muted' : ''}`}
+          onClick={handleImageButtonClick}
+          type="button"
         >
-          <List className="h-4 w-4" />
+          <ImageIcon className="h-4 w-4" />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageUpload}
+            tabIndex={-1}
+          />
         </Button>
         <Button
           variant="ghost"
@@ -75,6 +145,7 @@ const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
           onClick={() => editor.chain().focus().setTextAlign('left').run()}
           data-active={editor.isActive({ textAlign: 'left' })}
           className={`${editor.isActive({ textAlign: 'left' }) ? 'bg-muted' : ''}`}
+          type="button"
         >
           <AlignLeft className="h-4 w-4" />
         </Button>
@@ -84,6 +155,7 @@ const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
           onClick={() => editor.chain().focus().setTextAlign('center').run()}
           data-active={editor.isActive({ textAlign: 'center' })}
           className={`${editor.isActive({ textAlign: 'center' }) ? 'bg-muted' : ''}`}
+          type="button"
         >
           <AlignCenter className="h-4 w-4" />
         </Button>
@@ -93,6 +165,7 @@ const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
           onClick={() => editor.chain().focus().setTextAlign('right').run()}
           data-active={editor.isActive({ textAlign: 'right' })}
           className={`${editor.isActive({ textAlign: 'right' }) ? 'bg-muted' : ''}`}
+          type="button"
         >
           <AlignRight className="h-4 w-4" />
         </Button>
@@ -106,3 +179,4 @@ const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
 };
 
 export default RichTextEditor;
+
