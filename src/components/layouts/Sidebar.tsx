@@ -1,4 +1,3 @@
-
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -10,8 +9,12 @@ import {
   PieChartIcon, 
   FileVideoIcon, 
   UsersIcon,
-  LogOut
+  LogOut,
+  Moon,
+  Sun
 } from 'lucide-react';
+import { useTheme } from '@/hooks/use-theme';
+import { useEffect } from 'react';
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -28,6 +31,7 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
   
   const navItems: NavItem[] = [
     {
@@ -95,34 +99,32 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
     },
   ];
   
-  // Fix the isActive function to check exact path matches
   const isActive = (path: string) => {
-    // Make sure dashboard is only active when it's exactly /dashboard
     if (path === '/dashboard') {
       return location.pathname === '/dashboard';
     }
-    // For other paths, check if the current path starts with the nav item path
-    // but not if it's just the dashboard path
     return location.pathname.startsWith(path) && path !== '/dashboard';
   };
   
   const handleNavigation = (path: string) => {
     navigate(path);
   };
-  
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }, [theme]);
+
   return (
     <div className={cn(
       "flex h-full flex-col border-r bg-sidebar text-sidebar-foreground",
       collapsed ? "items-center py-4" : "w-64 p-4"
     )}>
-      {/* Logo und Titelbereich */}
       <div className={cn(
-        "flex items-center",
+        "flex items-center h-16",
         collapsed ? "justify-center pb-4" : "mb-6 pl-2"
       )}>
         {!collapsed ? (
           <div className="flex items-center">
-            {/* Custom Logo */}
             <img
               src="/lovable-uploads/df7fceef-ebc5-46a5-aff3-fbe34d02dc9d.png"
               alt="App Logo"
@@ -132,7 +134,6 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
             <h1 className="ml-2 text-xl font-bold">Jugendkompass</h1>
           </div>
         ) : (
-          /* Show logo only for collapsed sidebar */
           <img
             src="/lovable-uploads/df7fceef-ebc5-46a5-aff3-fbe34d02dc9d.png"
             alt="App Logo"
@@ -142,11 +143,9 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
         )}
       </div>
       
-      {/* Navigationsmenü */}
       <nav className="flex-1 space-y-1">
         {navItems.map((item) => {
           const active = isActive(item.path);
-          
           return (
             <div key={item.path} className="mb-2">
               <Button
@@ -161,8 +160,6 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
                 <item.icon className={cn("h-5 w-5", active ? "text-sidebar-primary" : "")} />
                 {!collapsed && <span className="ml-3">{item.label}</span>}
               </Button>
-              
-              {/* Untermenüpunkte, nur anzeigen wenn erweitert und aktiv */}
               {!collapsed && item.subItems && active && (
                 <div className="mt-1 ml-9 space-y-1">
                   {item.subItems.map((subItem) => (
@@ -187,11 +184,26 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
         })}
       </nav>
       
-      {/* Benutzerbereich und Abmelden-Knopf */}
       <div className={cn(
-        "mt-auto pt-4 border-t border-sidebar-border",
-        collapsed ? "w-full flex justify-center" : ""
+        "mt-auto pt-4 border-t border-sidebar-border flex flex-col gap-2",
+        collapsed ? "w-full items-center" : ""
       )}>
+        <Button
+          variant="ghost"
+          className={cn(
+            "w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground mb-2",
+            collapsed ? "h-10 w-10 p-0 flex items-center justify-center" : "px-3 py-2"
+          )}
+          aria-label="Dark Mode umschalten"
+          onClick={toggleTheme}
+        >
+          {theme === "dark" ? (
+            <Sun className="h-5 w-5 text-yellow-500" />
+          ) : (
+            <Moon className="h-5 w-5 text-gray-700" />
+          )}
+          {!collapsed && <span className="ml-3">{theme === "dark" ? "Helles Design" : "Dunkles Design"}</span>}
+        </Button>
         <Button
           variant="ghost"
           className={cn(

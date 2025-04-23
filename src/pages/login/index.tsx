@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { 
-  BookIcon, 
   EyeIcon, 
   EyeOffIcon, 
   LoaderCircleIcon, 
@@ -13,7 +12,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { 
   Card, 
   CardContent, 
@@ -107,11 +105,13 @@ const LoginPage = () => {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-white p-4">
       <div className="w-full max-w-md">
-        <div className="mb-8 flex justify-center">
-          <div className="flex items-center space-x-2">
-            <BookIcon className="h-10 w-10 text-primary" />
-            <h1 className="text-3xl font-bold text-gray-800">Jugendkompass Admin</h1>
-          </div>
+        <div className="mb-8 flex justify-center h-16 items-center">
+          <img
+            src="/lovable-uploads/df7fceef-ebc5-46a5-aff3-fbe34d02dc9d.png"
+            alt="Logo Jugendkompass"
+            className="h-10 w-10 rounded bg-none"
+          />
+          <h1 className="ml-2 text-3xl font-bold text-gray-800">Jugendkompass Admin</h1>
         </div>
         
         <Card className="border-none shadow-lg">

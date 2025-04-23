@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
@@ -5,7 +6,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeftIcon, MenuIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { logActivity } from '@/lib/activity-logger';
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
@@ -17,7 +17,7 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
   const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   useEffect(() => {
     const checkMobile = () => {
       if (window.innerWidth < 768) {
@@ -26,15 +26,13 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
         setSidebarOpen(true);
       }
     };
-    
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    
     return () => {
       window.removeEventListener('resize', checkMobile);
     };
   }, []);
-  
+
   useEffect(() => {
     if (!loading && !user) {
       navigate('/login');
@@ -44,7 +42,6 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
         variant: "destructive"
       });
     }
-    
     if (!loading && user && !isAdmin) {
       navigate('/login');
       toast({
@@ -54,7 +51,7 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
       });
     }
   }, [user, loading, isAdmin, navigate, toast, title]);
-  
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -62,15 +59,14 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
       </div>
     );
   }
-  
+
   return (
     <div className="flex h-screen overflow-hidden">
       <div className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-200 ease-in-out bg-sidebar md:relative ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0 md:w-16'}`}>
         <Sidebar collapsed={!sidebarOpen} />
       </div>
-      
       <div className="flex flex-1 flex-col overflow-y-auto">
-        <header className="sticky top-0 z-10 flex h-16 items-center border-b bg-white px-4 shadow-sm">
+        <header className="sticky top-0 z-10 flex h-16 items-center border-b bg-white dark:bg-background px-4 shadow-sm">
           <Button
             variant="ghost"
             size="icon"
@@ -80,7 +76,6 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
             <MenuIcon className="h-5 w-5" />
             <span className="sr-only">Menü öffnen</span>
           </Button>
-          
           <Button
             variant="ghost"
             size="icon"
@@ -96,10 +91,8 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
               Seitenleiste {sidebarOpen ? 'einklappen' : 'ausklappen'}
             </span>
           </Button>
-          
           <h1 className="text-xl font-semibold">{title}</h1>
         </header>
-        
         <main className="flex-1 p-6">
           {children}
         </main>
