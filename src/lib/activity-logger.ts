@@ -1,7 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-type EntityType = 'post' | 'poll' | 'video' | 'daily_verse' | 'notification' | 'user';
+type EntityType = 'post' | 'poll' | 'video' | 'daily_verse' | 'notification' | 'user' | 'impulse';
 type ActionType = 'create' | 'update' | 'delete';
 
 // Translation maps for German descriptions
@@ -11,7 +11,8 @@ const entityTypeTranslations: Record<EntityType, string> = {
   video: 'Video',
   daily_verse: 'Tagesvers',
   notification: 'Benachrichtigung',
-  user: 'Benutzer'
+  user: 'Benutzer',
+  impulse: 'Impuls'
 };
 
 const actionTypeTranslations: Record<ActionType, string> = {

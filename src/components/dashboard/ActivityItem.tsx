@@ -2,7 +2,7 @@
 import { Activity } from "@/hooks/use-activities";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
-import { FileTextIcon, PieChartIcon, FileVideoIcon, BellIcon, UserIcon } from "lucide-react";
+import { FileTextIcon, PieChartIcon, FileVideoIcon, BellIcon, UserIcon, SparklesIcon } from "lucide-react";
 
 const getIconForEntityType = (type: string) => {
   switch (type) {
@@ -12,6 +12,8 @@ const getIconForEntityType = (type: string) => {
       return <PieChartIcon className="h-5 w-5 text-primary" />;
     case 'video':
       return <FileVideoIcon className="h-5 w-5 text-primary" />;
+    case 'impulse':
+      return <SparklesIcon className="h-5 w-5 text-primary" />;
     default:
       return <BellIcon className="h-5 w-5 text-primary" />;
   }
