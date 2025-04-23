@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
@@ -20,6 +19,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { AudioUploader } from '@/components/posts/AudioUploader';
+import { ImageUploader } from '@/components/posts/ImageUploader';
 import { supabase } from '@/integrations/supabase/client';
 import { AudioRecord } from '@/types/audio';
 
@@ -27,6 +27,7 @@ const formSchema = z.object({
   title: z.string().min(1, 'Der Titel ist erforderlich'),
   body: z.string().min(1, 'Der Inhalt ist erforderlich'),
   audio_file: z.any().optional(),
+  image_url: z.string().min(1, 'Ein Bild ist erforderlich'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -45,6 +46,7 @@ const EditPostPage = () => {
     defaultValues: {
       title: post?.title || '',
       body: post?.body || '',
+      image_url: post?.image_url || '',
     },
   });
 
@@ -55,7 +57,6 @@ const EditPostPage = () => {
     }
 
     if (post.audio_id) {
-      // Fetch audio details
       const fetchAudio = async () => {
         const { data: audio } = await supabase
           .from('audios')
@@ -74,30 +75,30 @@ const EditPostPage = () => {
 
   const onSubmit = async (data: FormValues) => {
     if (!post) return;
+    if (!data.image_url) {
+      form.setError("image_url", { message: "Ein Bild ist erforderlich" });
+      return;
+    }
 
     try {
       let audioId = post.audio_id;
 
-      // Handle audio upload if new file is selected
       if (data.audio_file) {
         const file = data.audio_file;
         const fileExt = file.name.split('.').pop();
         const fileName = `${Math.random()}.${fileExt}`;
         const filePath = `${fileName}`;
 
-        // Upload to storage
         const { error: uploadError } = await supabase.storage
           .from('audios')
           .upload(filePath, file);
 
         if (uploadError) throw uploadError;
 
-        // Get public URL
         const { data: publicUrlData } = supabase.storage
           .from('audios')
           .getPublicUrl(filePath);
 
-        // Create audio record
         const { data: audioData, error: audioError } = await supabase
           .from('audios')
           .insert([
@@ -111,13 +112,13 @@ const EditPostPage = () => {
         audioId = audioData.id;
       }
 
-      // Update post with new data
       await updatePost({
         id: post.id,
         data: {
           title: data.title,
           body: data.body,
-          audio_id: audioId
+          audio_id: audioId,
+          image_url: data.image_url,
         }
       });
 
@@ -173,6 +174,25 @@ const EditPostPage = () => {
                       <RichTextEditor 
                         content={field.value} 
                         onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="image_url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bild*</FormLabel>
+                    <FormControl>
+                      <ImageUploader
+                        value={field.value}
+                        onChange={field.onChange}
+                        required
+                        label="Bild (JPEG, PNG, max. 3MB)*"
                       />
                     </FormControl>
                     <FormMessage />

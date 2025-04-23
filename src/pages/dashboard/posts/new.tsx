@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { useForm } from 'react-hook-form';
@@ -12,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import RichTextEditor from '@/components/editor/RichTextEditor';
+import ImageUploader from '@/components/posts/ImageUploader';
 import {
   Form,
   FormControl,
@@ -35,6 +35,7 @@ const formSchema = z.object({
   category_id: z.string().min(1, 'Eine Kategorie ist erforderlich'),
   edition_id: z.string().min(1, 'Eine Ausgabe ist erforderlich'),
   status: z.enum(['published', 'draft']),
+  image_url: z.string().min(1, 'Ein Bild ist erforderlich'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -54,16 +55,23 @@ const NewPostPage = () => {
       category_id: '',
       edition_id: '',
       status: 'draft',
+      image_url: '',
     },
   });
 
   const onSubmit = (data: FormValues) => {
+    if (!data.image_url) {
+      form.setError("image_url", { message: "Ein Bild ist erforderlich" });
+      return;
+    }
+
     const postData: CreatePostParams = {
       title: data.title,
       body: data.body,
       category_id: data.category_id,
       edition_id: data.edition_id,
       status: data.status,
+      image_url: data.image_url,
     };
     
     createPost(postData, {
@@ -121,6 +129,25 @@ const NewPostPage = () => {
                       <RichTextEditor 
                         content={field.value} 
                         onChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="image_url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bild*</FormLabel>
+                    <FormControl>
+                      <ImageUploader
+                        value={field.value}
+                        onChange={field.onChange}
+                        required
+                        label="Bild (JPEG, PNG, max. 3MB)*"
                       />
                     </FormControl>
                     <FormMessage />
