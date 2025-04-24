@@ -1,3 +1,4 @@
+
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -88,14 +89,14 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
       icon: FileTextIcon,
     },
     {
-      label: 'Benutzer',
-      path: '/dashboard/users',
-      icon: UsersIcon,
-    },
-    {
       label: 'Kurznachrichten',
       path: '/dashboard/messages',
       icon: FileTextIcon,
+    },
+    {
+      label: 'Benutzer',
+      path: '/dashboard/users',
+      icon: UsersIcon,
     },
   ];
   

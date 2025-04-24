@@ -41,9 +41,8 @@ export default function UsersPage() {
               <TableHead>Email</TableHead>
               <TableHead>Vorname</TableHead>
               <TableHead>Nachname</TableHead>
-              <TableHead>Rolle</TableHead>
               <TableHead>Erstellt am</TableHead>
-              <TableHead>Aktionen</TableHead>
+              <TableHead>Rolle</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -52,7 +51,6 @@ export default function UsersPage() {
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{user.firstName || ""}</TableCell>
                 <TableCell>{user.lastName || ""}</TableCell>
-                <TableCell>{user.role}</TableCell>
                 <TableCell>
                   {format(new Date(user.created_at), 'PPp', { locale: de })}
                 </TableCell>
