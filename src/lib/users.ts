@@ -36,10 +36,6 @@ export const createUser = async ({ email, password, firstName, lastName, role }:
       password: password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
-        data: {
-          first_name: firstName,
-          last_name: lastName,
-        }
       }
     });
 
@@ -48,19 +44,21 @@ export const createUser = async ({ email, password, firstName, lastName, role }:
       return { error: error.message };
     }
 
-    // Update the users table with role, firstName, and lastName
+    // Insert user data directly into users table
     if (data.user) {
-      const { error: updateError } = await supabase
+      const { error: insertError } = await supabase
         .from('users')
-        .update({ 
+        .insert({ 
+          id: data.user.id,
+          email: email,
           role,
           firstName,
           lastName
-        })
-        .eq('id', data.user.id);
+        });
 
-      if (updateError) {
-        console.error('Error updating user data:', updateError);
+      if (insertError) {
+        console.error('Error inserting user data:', insertError);
+        return { error: insertError.message };
       }
     }
 
