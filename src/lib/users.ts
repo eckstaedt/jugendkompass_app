@@ -71,17 +71,24 @@ export const createUser = async ({ email, password, firstName, lastName, role }:
 
 export const deleteUser = async (userId: string) => {
   try {
-    const { error } = await supabase.auth.admin.deleteUser(userId);
+    const { data, error } = await supabase.functions.invoke('delete-user', {
+      body: { userId }
+    });
 
     if (error) {
       console.error('Error deleting user:', error);
       return { error: error.message };
     }
 
+    if (data?.error) {
+      console.error('Error from delete-user function:', data.error);
+      return { error: data.error };
+    }
+
     return { success: true };
   } catch (err) {
     console.error('Unexpected error deleting user:', err);
-    return { error: 'Unexpected error during user deletion.' };
+    return { error: 'Unerwarteter Fehler beim Löschen des Benutzers.' };
   }
 };
 
