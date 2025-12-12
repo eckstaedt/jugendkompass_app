@@ -21,14 +21,24 @@ export const fetchUsers = async () => {
   }
 };
 
-export const createUser = async (email: string, password?: string) => {
+interface CreateUserParams {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  role: 'admin' | 'user';
+}
+
+export const createUser = async ({ email, password, firstName, lastName, role }: CreateUserParams) => {
   try {
     const { data, error } = await supabase.auth.signUp({
       email: email,
-      password: password || 'changeme',
+      password: password,
       options: {
+        emailRedirectTo: `${window.location.origin}/`,
         data: {
-          role: 'user',
+          first_name: firstName,
+          last_name: lastName,
         }
       }
     });
@@ -36,6 +46,22 @@ export const createUser = async (email: string, password?: string) => {
     if (error) {
       console.error('Error creating user:', error);
       return { error: error.message };
+    }
+
+    // Update the users table with role, firstName, and lastName
+    if (data.user) {
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ 
+          role,
+          firstName,
+          lastName
+        })
+        .eq('id', data.user.id);
+
+      if (updateError) {
+        console.error('Error updating user data:', updateError);
+      }
     }
 
     return { data };
