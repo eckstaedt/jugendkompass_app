@@ -145,3 +145,34 @@ export const useUpdateImpulse = () => {
   });
 };
 
+export const useDeleteImpulse = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, content_id, user_id }: { id: string; content_id: string; user_id: string }) => {
+      // Delete the impulse first (will cascade from content)
+      const { error: contentError } = await supabase
+        .from('content')
+        .delete()
+        .eq('id', content_id);
+
+      if (contentError) throw contentError;
+
+      // Log the deletion
+      if (user_id) {
+        await logActivity(
+          user_id,
+          'impulse',
+          'delete',
+          id,
+          `Impuls gelöscht`
+        );
+      }
+
+      return { id };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['impulses'] });
+    },
+  });
+};
