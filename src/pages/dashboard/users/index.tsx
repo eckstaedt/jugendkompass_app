@@ -1,4 +1,3 @@
-
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useUsers } from "@/hooks/use-users";
 import {
@@ -18,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { AddUserDialog } from "@/components/users/AddUserDialog";
 
 export default function UsersPage() {
   const { users, isLoading, updateRole } = useUsers();
@@ -34,6 +34,9 @@ export default function UsersPage() {
 
   return (
     <DashboardLayout title="Benutzer">
+      <div className="flex justify-end mb-4">
+        <AddUserDialog />
+      </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
