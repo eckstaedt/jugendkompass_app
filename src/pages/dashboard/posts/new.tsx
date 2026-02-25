@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import RichTextEditor from '@/components/editor/RichTextEditor';
 import { ImageUploader } from '@/components/posts/ImageUploader';
+import { AudioUploader } from '@/components/posts/AudioUploader';
 import {
   Form,
   FormControl,
@@ -47,6 +48,7 @@ const NewPostPage = () => {
   const { editions, isLoading: editionsLoading } = useEditions();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [audioFile, setAudioFile] = React.useState<File | null>(null);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -73,6 +75,7 @@ const NewPostPage = () => {
       edition_id: data.edition_id,
       status: data.status,
       image_url: data.image_url,
+      audioFile: audioFile,
     };
     
     createPost(postData, {
@@ -155,6 +158,19 @@ const NewPostPage = () => {
                   </FormItem>
                 )}
               />
+
+              <div className="space-y-2">
+                <FormLabel>Audio (optional)</FormLabel>
+                <AudioUploader
+                  currentAudio={null}
+                  onFileSelected={(file) => setAudioFile(file)}
+                />
+                {audioFile && (
+                  <p className="text-sm text-muted-foreground">
+                    Ausgewählt: {audioFile.name}
+                  </p>
+                )}
+              </div>
 
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <FormField
