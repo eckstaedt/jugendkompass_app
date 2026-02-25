@@ -61,14 +61,17 @@ export type Database = {
       }
       audios: {
         Row: {
+          created_at: string
           id: string
           url: string
         }
         Insert: {
+          created_at?: string
           id?: string
           url: string
         }
         Update: {
+          created_at?: string
           id?: string
           url?: string
         }
@@ -76,14 +79,17 @@ export type Database = {
       }
       categories: {
         Row: {
+          created_at: string
           id: string
           name: string
         }
         Insert: {
+          created_at?: string
           id?: string
           name: string
         }
         Update: {
+          created_at?: string
           id?: string
           name?: string
         }
@@ -152,6 +158,7 @@ export type Database = {
       impulses: {
         Row: {
           content_id: string
+          created_at: string
           date: string
           id: string
           image_url: string | null
@@ -159,6 +166,7 @@ export type Database = {
         }
         Insert: {
           content_id: string
+          created_at?: string
           date: string
           id?: string
           image_url?: string | null
@@ -166,6 +174,7 @@ export type Database = {
         }
         Update: {
           content_id?: string
+          created_at?: string
           date?: string
           id?: string
           image_url?: string | null
@@ -232,18 +241,21 @@ export type Database = {
       }
       poll_options: {
         Row: {
+          created_at: string
           id: string
           option_text: string
           poll_id: string | null
           votes: number | null
         }
         Insert: {
+          created_at?: string
           id?: string
           option_text: string
           poll_id?: string | null
           votes?: number | null
         }
         Update: {
+          created_at?: string
           id?: string
           option_text?: string
           poll_id?: string | null
@@ -349,6 +361,7 @@ export type Database = {
           body: string
           category_id: string | null
           content_id: string | null
+          created_at: string
           edition_id: string | null
           id: string
           image_url: string | null
@@ -359,6 +372,7 @@ export type Database = {
           body: string
           category_id?: string | null
           content_id?: string | null
+          created_at?: string
           edition_id?: string | null
           id?: string
           image_url?: string | null
@@ -369,6 +383,7 @@ export type Database = {
           body?: string
           category_id?: string | null
           content_id?: string | null
+          created_at?: string
           edition_id?: string | null
           id?: string
           image_url?: string | null
