@@ -128,6 +128,27 @@ export type Database = {
         }
         Relationships: []
       }
+      favorites: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          verse_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          verse_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          verse_id?: string
+        }
+        Relationships: []
+      }
       impulses: {
         Row: {
           content_id: string
@@ -153,41 +174,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "impulses_content_id_fkey"
-            columns: ["content_id"]
-            isOneToOne: false
-            referencedRelation: "content"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      messages: {
-        Row: {
-          content_id: string | null
-          created_at: string | null
-          created_by: string | null
-          id: number
-          image_url: string | null
-          message: string
-        }
-        Insert: {
-          content_id?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          id?: never
-          image_url?: string | null
-          message: string
-        }
-        Update: {
-          content_id?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          id?: never
-          image_url?: string | null
-          message?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "messages_content_id_fkey"
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
@@ -363,6 +349,27 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string
@@ -429,34 +436,111 @@ export type Database = {
           },
         ]
       }
-      videos: {
+    }
+    Views: {
+      current_verse: {
         Row: {
-          content_id: string
+          content_id: string | null
+          date: string | null
+          id: string | null
+          reference: string | null
+          verse: string | null
+        }
+        Relationships: []
+      }
+      current_verse_v: {
+        Row: {
+          content_id: string | null
+          date: string | null
+          id: string | null
+          reference: string | null
+          verse: string | null
+        }
+        Relationships: []
+      }
+      favorites_with_verse: {
+        Row: {
           created_at: string | null
-          id: number
-          title: string
-          url: string
+          date: string | null
+          favorite_id: string | null
+          reference: string | null
           user_id: string | null
+          verse: string | null
+          verse_id: string | null
+        }
+        Relationships: []
+      }
+      vers_archiv: {
+        Row: {
+          content_id: string | null
+          date: string | null
+          id: string | null
+          reference: string | null
+          verse: string | null
         }
         Insert: {
-          content_id: string
-          created_at?: string | null
-          id?: never
-          title: string
-          url: string
-          user_id?: string | null
+          content_id?: string | null
+          date?: string | null
+          id?: string | null
+          reference?: string | null
+          verse?: string | null
         }
         Update: {
-          content_id?: string
-          created_at?: string | null
-          id?: never
-          title?: string
-          url?: string
-          user_id?: string | null
+          content_id?: string | null
+          date?: string | null
+          id?: string | null
+          reference?: string | null
+          verse?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "videos_content_id_fkey"
+            foreignKeyName: "verse_of_the_day_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verse_of_the_day_new_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vers_archiv_v: {
+        Row: {
+          content_id: string | null
+          date: string | null
+          id: string | null
+          reference: string | null
+          verse: string | null
+        }
+        Insert: {
+          content_id?: string | null
+          date?: string | null
+          id?: string | null
+          reference?: string | null
+          verse?: string | null
+        }
+        Update: {
+          content_id?: string | null
+          date?: string | null
+          id?: string | null
+          reference?: string | null
+          verse?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verse_of_the_day_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verse_of_the_day_new_content_id_fkey"
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
@@ -465,24 +549,9 @@ export type Database = {
         ]
       }
     }
-    Views: {
-      content_feed: {
-        Row: {
-          content_id: string | null
-          content_type: string | null
-          created_at: string | null
-          description: string | null
-          entity_id: string | null
-          image_url: string | null
-          sort_order: number | null
-          specific_date: string | null
-          title: string | null
-        }
-        Relationships: []
-      }
-    }
     Functions: {
       get_current_user_role: { Args: never; Returns: string }
+      get_vers_des_tages_today_json: { Args: never; Returns: Json }
       increment_poll_votes: { Args: { option_id: string }; Returns: undefined }
       is_admin:
         | { Args: never; Returns: boolean }
