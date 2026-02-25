@@ -179,6 +179,55 @@ export type Database = {
             referencedRelation: "content"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "impulses_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content_feed"
+            referencedColumns: ["content_id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content_id: string | null
+          created_at: string | null
+          created_by: string | null
+          id: number
+          image_url: string | null
+          message: string
+        }
+        Insert: {
+          content_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: number
+          image_url?: string | null
+          message: string
+        }
+        Update: {
+          content_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: number
+          image_url?: string | null
+          message?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content_feed"
+            referencedColumns: ["content_id"]
+          },
         ]
       }
       poll_options: {
@@ -285,6 +334,13 @@ export type Database = {
             referencedRelation: "content"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "polls_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content_feed"
+            referencedColumns: ["content_id"]
+          },
         ]
       }
       posts: {
@@ -339,6 +395,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "content"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content_feed"
+            referencedColumns: ["content_id"]
           },
           {
             foreignKeyName: "posts_edition_id_fkey"
@@ -428,16 +491,86 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "verse_of_the_day_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content_feed"
+            referencedColumns: ["content_id"]
+          },
+          {
             foreignKeyName: "verse_of_the_day_new_content_id_fkey"
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "verse_of_the_day_new_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content_feed"
+            referencedColumns: ["content_id"]
+          },
+        ]
+      }
+      videos: {
+        Row: {
+          content_id: string
+          created_at: string | null
+          id: number
+          title: string
+          url: string
+          user_id: string | null
+        }
+        Insert: {
+          content_id: string
+          created_at?: string | null
+          id?: number
+          title: string
+          url: string
+          user_id?: string | null
+        }
+        Update: {
+          content_id?: string
+          created_at?: string | null
+          id?: number
+          title?: string
+          url?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "videos_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "videos_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content_feed"
+            referencedColumns: ["content_id"]
+          },
         ]
       }
     }
     Views: {
+      content_feed: {
+        Row: {
+          content_id: string | null
+          content_type: string | null
+          created_at: string | null
+          description: string | null
+          entity_id: string | null
+          image_url: string | null
+          sort_order: number | null
+          specific_date: string | null
+          title: string | null
+        }
+        Relationships: []
+      }
       current_verse: {
         Row: {
           content_id: string | null
@@ -501,11 +634,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "verse_of_the_day_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content_feed"
+            referencedColumns: ["content_id"]
+          },
+          {
             foreignKeyName: "verse_of_the_day_new_content_id_fkey"
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verse_of_the_day_new_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content_feed"
+            referencedColumns: ["content_id"]
           },
         ]
       }
@@ -540,11 +687,25 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "verse_of_the_day_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content_feed"
+            referencedColumns: ["content_id"]
+          },
+          {
             foreignKeyName: "verse_of_the_day_new_content_id_fkey"
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verse_of_the_day_new_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content_feed"
+            referencedColumns: ["content_id"]
           },
         ]
       }
