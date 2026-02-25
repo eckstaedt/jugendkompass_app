@@ -9,8 +9,31 @@ export const useCreatePost = () => {
   
   return useMutation({
     mutationFn: async (params: CreatePostParams) => {
-      const { title, body, category_id, edition_id, status, author_id, image_url } = params;
+      const { title, body, category_id, edition_id, status, author_id, image_url, audioFile } = params;
       
+      // Upload audio if provided
+      let audio_id: string | null = null;
+      if (audioFile) {
+        const fileExt = audioFile.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('audios')
+          .upload(fileName, audioFile);
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('audios')
+          .getPublicUrl(fileName);
+
+        const { data: audioData, error: audioError } = await supabase
+          .from('audios')
+          .insert({ url: publicUrl })
+          .select('id')
+          .single();
+        if (audioError) throw audioError;
+        audio_id = audioData.id;
+      }
+
       // First create a content entry
       const { data: contentData, error: contentError } = await supabase
         .from('content')
@@ -36,7 +59,8 @@ export const useCreatePost = () => {
             category_id,
             edition_id,
             content_id: contentData.id,
-            image_url
+            image_url,
+            audio_id
           }
         ])
         .select()

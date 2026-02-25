@@ -18,6 +18,7 @@ export type CreatePostParams = {
   status: 'draft' | 'published';
   author_id?: string;
   image_url?: string | null;
+  audioFile?: File | null;
 };
 
 export type UpdatePostParams = {
