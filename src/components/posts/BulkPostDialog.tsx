@@ -16,6 +16,7 @@ type BulkPostEntry = {
   title: string;
   body: string;
   image_url?: string | null;
+  audio_id?: string | null;
   category_id: string;
   edition_id: string;
 };
@@ -86,7 +87,7 @@ export function BulkPostDialog({ open, onOpenChange, onSubmit }: BulkPostDialogP
         <Textarea
           value={jsonInput}
           onChange={(e) => setJsonInput(e.target.value)}
-          placeholder={`[{\n  "title": "Titel",\n  "body": "<p>Text...</p>",\n  "image_url": "https://...",\n  "category_id": "uuid",\n  "edition_id": "uuid"\n}]`}
+          placeholder={`[{\n  "title": "Titel",\n  "body": "<p>Text...</p>",\n  "image_url": "https://...",\n  "audio_id": "uuid (optional)",\n  "category_id": "uuid",\n  "edition_id": "uuid"\n}]`}
           className="min-h-[250px] font-mono text-sm"
         />
         <DialogFooter>

@@ -5,6 +5,7 @@ type BulkPostEntry = {
   title: string;
   body: string;
   image_url?: string | null;
+  audio_id?: string | null;
   category_id: string;
   edition_id: string;
 };
@@ -35,6 +36,7 @@ export const useBulkCreatePosts = () => {
         title: entry.title,
         body: entry.body,
         image_url: entry.image_url || null,
+        audio_id: entry.audio_id || null,
         category_id: entry.category_id,
         edition_id: entry.edition_id,
         content_id: contentData[i].id,
