@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl:*)",
+      "Bash(echo $APPDATA)",
+      "Bash(echo $USERPROFILE)",
+      "WebSearch",
+      "Bash(flutter pub get:*)",
+      "Bash(flutter analyze:*)",
+      "Bash(flutter run:*)",
+      "Bash(find /c/Users/D062831/projects/jugendkompass_app -name \"pubspec.yaml\" -exec cat {} ;)",
+      "Bash(flutter pub run build_runner build --delete-conflicting-outputs)",
+      "Bash(dart analyze)",
+      "Bash(test:*)",
+      "Bash(dart analyze:*)",
+      "Bash(dart format:*)"
+    ]
+  }
+}
