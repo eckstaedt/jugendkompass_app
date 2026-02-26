@@ -8,13 +8,15 @@ import { useDailyVerses } from '@/hooks/use-daily-verses';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, isToday, isFuture } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { CalendarPlus, LayoutList, ViewIcon } from 'lucide-react';
+import { CalendarPlus, LayoutList, ViewIcon, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DailyVerse } from '@/lib/supabase';
+import { BulkVerseDialog } from '@/components/verses/BulkVerseDialog';
 
 const DailyVersesPage = () => {
-  const { verses, isLoading, createVerse, updateVerse } = useDailyVerses();
+  const { verses, isLoading, createVerse, updateVerse, bulkCreateVerses } = useDailyVerses();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [selectedVerse, setSelectedVerse] = useState<DailyVerse | undefined>();
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const { isAdmin, user } = useAuth();
@@ -45,6 +47,11 @@ const DailyVersesPage = () => {
     setDialogOpen(false);
   };
 
+  const handleBulkSubmit = async (versesData: { verse: string; reference: string; date: string }[]) => {
+    if (!user?.id) return;
+    await bulkCreateVerses.mutateAsync({ verses: versesData, userId: user.id });
+  };
+
   return (
     <DashboardLayout title="Vers des Tages">
       <div className="mb-6 flex items-center justify-between">
@@ -70,10 +77,16 @@ const DailyVersesPage = () => {
             </span>
           </Button>
           {isAdmin && (
-            <Button onClick={handleCreate}>
-              <CalendarPlus className="mr-2 h-4 w-4" />
-              Neuer Tagesvers
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => setBulkDialogOpen(true)}>
+                <Upload className="mr-2 h-4 w-4" />
+                JSON Import
+              </Button>
+              <Button onClick={handleCreate}>
+                <CalendarPlus className="mr-2 h-4 w-4" />
+                Neuer Tagesvers
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -134,6 +147,11 @@ const DailyVersesPage = () => {
         onSubmit={handleDialogSubmit}
         initialData={selectedVerse}
         mode={selectedVerse ? 'edit' : 'create'}
+      />
+      <BulkVerseDialog
+        open={bulkDialogOpen}
+        onOpenChange={setBulkDialogOpen}
+        onSubmit={handleBulkSubmit}
       />
     </DashboardLayout>
   );
