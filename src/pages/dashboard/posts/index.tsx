@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
-import { PlusIcon, TrashIcon, PencilIcon, Upload } from 'lucide-react';
+import { PlusIcon, TrashIcon, PencilIcon, Upload, SearchIcon } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,6 +18,7 @@ import { useBulkCreatePosts } from '@/hooks/posts/use-bulk-create-posts';
 const PostsPage = () => {
   const { posts, isLoading, deletePost, updatePostStatus } = usePosts();
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const bulkCreate = useBulkCreatePosts();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -66,6 +68,16 @@ const PostsPage = () => {
           </div>
         </div>
 
+        <div className="relative">
+          <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Beitrag suchen..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
         <Card className="shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle>Beitragsliste</CardTitle>
@@ -85,8 +97,12 @@ const PostsPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {posts.length > 0 ? (
-                    posts.map((post) => (
+                  {(() => {
+                    const filtered = posts.filter(p => 
+                      p.title.toLowerCase().includes(searchQuery.toLowerCase())
+                    );
+                    return filtered.length > 0 ? (
+                    filtered.map((post) => (
                       <TableRow key={post.id}>
                         <TableCell className="font-medium">{post.title}</TableCell>
                         <TableCell>
@@ -141,10 +157,11 @@ const PostsPage = () => {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={3} className="text-center py-6 text-muted-foreground">
-                        Keine Beiträge gefunden
+                        {searchQuery ? 'Keine Beiträge gefunden' : 'Keine Beiträge vorhanden'}
                       </TableCell>
                     </TableRow>
-                  )}
+                  );
+                  })()}
                 </TableBody>
               </Table>
             )}
