@@ -60,7 +60,7 @@ export function BulkPostDialog({ open, onOpenChange, onSubmit }: BulkPostDialogP
       if (e instanceof SyntaxError) {
         toast({
           title: 'JSON-Fehler',
-          description: 'Ungültiges JSON-Format. Bitte überprüfe die Eingabe.',
+          description: `Ungültiges JSON-Format: ${e.message}`,
           variant: 'destructive',
         });
       } else {
