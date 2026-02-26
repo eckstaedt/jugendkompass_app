@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useEffect, useState, useRef } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { User } from '@/lib/supabase';
@@ -25,6 +25,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const navigateRef = useRef(navigate);
+  const toastRef = useRef(toast);
+  
+  // Keep refs up to date
+  useEffect(() => {
+    navigateRef.current = navigate;
+    toastRef.current = toast;
+  });
 
   // Helper function to convert Supabase User to our custom User type
   const convertSupabaseUser = (supabaseUser: SupabaseUser | null): User | null => {
@@ -67,21 +75,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("Auth state changed:", event, session?.user?.id);
         
         if (session?.user) {
-          // Convert the Supabase user to our custom User type
           const customUser = convertSupabaseUser(session.user);
           setUser(customUser);
           
-          // Check admin status in a separate timeout to avoid recursion
           setTimeout(async () => {
             try {
               const isUserAdmin = await checkAdminStatus(session.user.id);
               setIsAdmin(isUserAdmin);
               
               if (isUserAdmin && event === 'SIGNED_IN') {
-                // Removed the success toast message here
-                navigate('/dashboard');
+                navigateRef.current('/dashboard');
               } else if (!isUserAdmin) {
-                toast({
+                toastRef.current({
                   title: "Zugriff verweigert",
                   description: "Du hast keine Administrator-Berechtigungen.",
                   variant: "destructive",
@@ -89,20 +94,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 await supabase.auth.signOut();
                 setUser(null);
                 setIsAdmin(false);
-                navigate('/login');
+                navigateRef.current('/login');
               }
             } catch (error) {
               console.error("Error in admin check:", error);
               setUser(null);
               setIsAdmin(false);
-              navigate('/login');
+              navigateRef.current('/login');
             }
           }, 0);
         } else {
           setUser(null);
           setIsAdmin(false);
           if (event === 'SIGNED_OUT') {
-            navigate('/login');
+            navigateRef.current('/login');
           }
         }
       }
@@ -121,7 +126,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             await supabase.auth.signOut();
             setUser(null);
             setIsAdmin(false);
-            navigate('/login');
+            navigateRef.current('/login');
           }
         } catch (error) {
           console.error("Error checking admin status:", error);
@@ -135,7 +140,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, toast]);
+  }, []);
 
   const login = async (email: string, password: string) => {
     try {
