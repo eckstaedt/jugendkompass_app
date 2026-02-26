@@ -9,6 +9,7 @@ import { Session, User as SupabaseUser } from '@supabase/supabase-js';
 type AuthContextType = {
   user: User | null;
   loading: boolean;
+  adminChecked: boolean;
   login: (email: string, password: string) => Promise<{
     error: Error | null;
     data: any | null;
@@ -23,6 +24,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminChecked, setAdminChecked] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const navigateRef = useRef(navigate);
@@ -78,11 +80,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (session?.user) {
           const customUser = convertSupabaseUser(session.user);
           setUser(customUser);
+          setAdminChecked(false);
           
           setTimeout(async () => {
             try {
               const isUserAdmin = await checkAdminStatus(session.user.id);
               setIsAdmin(isUserAdmin);
+              setAdminChecked(true);
               
               // Only navigate on actual login, not session restore or token refresh
               const isActualLogin = event === 'SIGNED_IN' && !isInitialSessionRef.current;
@@ -104,12 +108,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               console.error("Error in admin check:", error);
               setUser(null);
               setIsAdmin(false);
+              setAdminChecked(true);
               navigateRef.current('/login');
             }
           }, 0);
         } else {
           setUser(null);
           setIsAdmin(false);
+          setAdminChecked(true);
           if (event === 'SIGNED_OUT') {
             navigateRef.current('/login');
           }
@@ -126,6 +132,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         try {
           const isUserAdmin = await checkAdminStatus(session.user.id);
           setIsAdmin(isUserAdmin);
+          setAdminChecked(true);
           if (!isUserAdmin) {
             await supabase.auth.signOut();
             setUser(null);
@@ -134,8 +141,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
         } catch (error) {
           console.error("Error checking admin status:", error);
-          setUser(null);
+        setUser(null);
           setIsAdmin(false);
+          setAdminChecked(true);
         }
       }
       setLoading(false);
@@ -178,7 +186,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, isAdmin }}>
+    <AuthContext.Provider value={{ user, loading, adminChecked, login, logout, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );
