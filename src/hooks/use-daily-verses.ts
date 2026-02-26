@@ -90,11 +90,46 @@ export const useDailyVerses = () => {
     }
   });
 
+  const bulkCreateVerses = useMutation({
+    mutationFn: async ({ verses, userId }: { verses: { verse: string; reference: string; date: string }[]; userId: string }) => {
+      // Create content entries for each verse
+      const contentInserts = verses.map(() => ({ content_type: 'daily_verse', status: 'published' }));
+      const { data: contentData, error: contentError } = await supabase
+        .from('content')
+        .insert(contentInserts)
+        .select('id');
+
+      if (contentError) throw contentError;
+      if (!contentData || contentData.length !== verses.length) throw new Error('Content creation mismatch');
+
+      const verseInserts = verses.map((v, i) => ({
+        verse: v.verse,
+        reference: v.reference,
+        date: v.date,
+        content_id: contentData[i].id,
+      }));
+
+      const { data, error } = await supabase
+        .from('verse_of_the_day')
+        .insert(verseInserts)
+        .select('*');
+
+      if (error) throw error;
+
+      await logActivity(userId, 'daily_verse', 'create', null as any, `${verses.length} Verse per Bulk-Import erstellt`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dailyVerses'] });
+    }
+  });
+
   return {
     verses,
     isLoading,
     error,
     createVerse,
-    updateVerse
+    updateVerse,
+    bulkCreateVerses
   };
 };
