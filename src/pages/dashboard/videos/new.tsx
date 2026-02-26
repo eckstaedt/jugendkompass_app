@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { FileVideoIcon, LoaderCircle } from 'lucide-react';
+import { FileVideoIcon, LinkIcon, LoaderCircle, UploadIcon } from 'lucide-react';
 import RichTextEditor from '@/components/editor/RichTextEditor';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const NewVideoPage = () => {
   const { user } = useAuth();
@@ -18,6 +19,8 @@ const NewVideoPage = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [url, setUrl] = useState('');
+  const [mode, setMode] = useState<'upload' | 'url'>('upload');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
@@ -26,11 +29,13 @@ const NewVideoPage = () => {
     setFile(selectedFile || null);
   };
 
-  const handleUpload = async () => {
-    if (!user || !file || !title) {
+  const isValid = title && (mode === 'upload' ? !!file : !!url);
+
+  const handleSubmit = async () => {
+    if (!user || !isValid) {
       toast({
         title: "Fehler",
-        description: "Bitte geben Sie einen Titel und wählen Sie eine Datei aus.",
+        description: "Bitte füllen Sie alle Pflichtfelder aus.",
         variant: "destructive"
       });
       return;
@@ -39,50 +44,48 @@ const NewVideoPage = () => {
     setIsUploading(true);
     setUploadProgress(0);
 
-    const simulateProgress = () => {
-      setUploadProgress(prev => {
-        if (prev < 90) {
-          return prev + 10;
-        }
-        return prev;
-      });
-    };
-
-    const progressInterval = setInterval(simulateProgress, 500);
+    const progressInterval = mode === 'upload'
+      ? setInterval(() => {
+          setUploadProgress(prev => (prev < 90 ? prev + 10 : prev));
+        }, 500)
+      : null;
 
     try {
-      await uploadVideoMutation.mutateAsync({ 
+      await uploadVideoMutation.mutateAsync({
         title,
         description,
-        file, 
-        userId: user.id 
+        ...(mode === 'upload' ? { file: file! } : { url }),
+        userId: user.id
       });
 
       setUploadProgress(100);
       setTitle('');
       setDescription('');
       setFile(null);
+      setUrl('');
 
       toast({
-        title: "Video hochgeladen",
-        description: "Das Video wurde erfolgreich hochgeladen.",
+        title: "Video hinzugefügt",
+        description: mode === 'upload'
+          ? "Das Video wurde erfolgreich hochgeladen."
+          : "Das Video wurde erfolgreich verlinkt.",
       });
     } catch (error) {
       console.error('Upload error:', error);
       toast({
         title: "Fehler",
-        description: "Es gab einen Fehler beim Hochladen des Videos. Bitte prüfen Sie die Konsole für weitere Details.",
+        description: "Es gab einen Fehler beim Hinzufügen des Videos.",
         variant: "destructive"
       });
     } finally {
-      clearInterval(progressInterval);
+      if (progressInterval) clearInterval(progressInterval);
       setIsUploading(false);
       setUploadProgress(0);
     }
   };
 
   return (
-    <DashboardLayout title="Neues Video hochladen">
+    <DashboardLayout title="Neues Video hinzufügen">
       <div className="max-w-3xl mx-auto">
         <Card>
           <CardHeader>
@@ -93,9 +96,9 @@ const NewVideoPage = () => {
               <label htmlFor="title" className="block text-sm font-medium mb-1">
                 Video-Titel
               </label>
-              <Input 
+              <Input
                 id="title"
-                placeholder="Geben Sie einen Titel ein" 
+                placeholder="Geben Sie einen Titel ein"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 disabled={isUploading}
@@ -107,25 +110,41 @@ const NewVideoPage = () => {
               <RichTextEditor content={description} onChange={setDescription} />
             </div>
 
-            <div>
-              <label htmlFor="video-file" className="block text-sm font-medium mb-1">
-                Video-Datei
-              </label>
-              <Input 
-                id="video-file"
-                type="file" 
-                accept="video/*"
-                onChange={handleFileChange}
-                disabled={isUploading}
-              />
-              {file && (
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Ausgewählte Datei: {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
-                </p>
-              )}
-            </div>
+            <Tabs value={mode} onValueChange={(v) => setMode(v as 'upload' | 'url')}>
+              <TabsList className="w-full">
+                <TabsTrigger value="upload" className="flex-1 gap-2">
+                  <UploadIcon className="h-4 w-4" />
+                  Datei hochladen
+                </TabsTrigger>
+                <TabsTrigger value="url" className="flex-1 gap-2">
+                  <LinkIcon className="h-4 w-4" />
+                  URL angeben
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="upload" className="space-y-2 mt-4">
+                <Input
+                  type="file"
+                  accept="video/*"
+                  onChange={handleFileChange}
+                  disabled={isUploading}
+                />
+                {file && (
+                  <p className="text-sm text-muted-foreground">
+                    Ausgewählte Datei: {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+                  </p>
+                )}
+              </TabsContent>
+              <TabsContent value="url" className="mt-4">
+                <Input
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  disabled={isUploading}
+                />
+              </TabsContent>
+            </Tabs>
 
-            {isUploading && (
+            {isUploading && mode === 'upload' && (
               <div className="space-y-2">
                 <Progress value={uploadProgress} className="w-full" />
                 <p className="text-sm text-muted-foreground text-center">
@@ -134,20 +153,20 @@ const NewVideoPage = () => {
               </div>
             )}
 
-            <Button 
-              onClick={handleUpload} 
-              disabled={isUploading || uploadVideoMutation.isPending || !title || !file}
+            <Button
+              onClick={handleSubmit}
+              disabled={isUploading || uploadVideoMutation.isPending || !isValid}
               className="w-full md:w-auto"
             >
               {isUploading ? (
                 <>
                   <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                  Wird hochgeladen...
+                  {mode === 'upload' ? 'Wird hochgeladen...' : 'Wird gespeichert...'}
                 </>
               ) : (
                 <>
                   <FileVideoIcon className="mr-2 h-4 w-4" />
-                  Video hochladen
+                  Video hinzufügen
                 </>
               )}
             </Button>

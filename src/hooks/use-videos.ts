@@ -23,7 +23,7 @@ export const useUploadVideo = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ title, description, file, userId }: { title: string, description?: string, file: File, userId: string }) => {
+    mutationFn: async ({ title, description, file, url, userId }: { title: string, description?: string, file?: File, url?: string, userId: string }) => {
       try {
         // First create a content entry
         const { data: contentData, error: contentError } = await supabase
@@ -34,25 +34,34 @@ export const useUploadVideo = () => {
 
         if (contentError) throw contentError;
 
-        // Upload file to Supabase storage
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const { error: storageError, data } = await supabase.storage
-          .from('videos')
-          .upload(`public/${fileName}`, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
+        let videoUrl: string;
 
-        if (storageError) {
-          console.error('Storage error:', storageError);
-          throw storageError;
+        if (file) {
+          // Upload file to Supabase storage
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${Math.random()}.${fileExt}`;
+          const { error: storageError } = await supabase.storage
+            .from('videos')
+            .upload(`public/${fileName}`, file, {
+              cacheControl: '3600',
+              upsert: false
+            });
+
+          if (storageError) {
+            console.error('Storage error:', storageError);
+            throw storageError;
+          }
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('videos')
+            .getPublicUrl(`public/${fileName}`);
+
+          videoUrl = publicUrl;
+        } else if (url) {
+          videoUrl = url;
+        } else {
+          throw new Error('Either file or url must be provided');
         }
-
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('videos')
-          .getPublicUrl(`public/${fileName}`);
 
         // Insert video record with the content_id
         const { data: videoData, error: insertError } = await supabase
@@ -60,7 +69,7 @@ export const useUploadVideo = () => {
           .insert({ 
             title, 
             description: description || null,
-            url: publicUrl, 
+            url: videoUrl, 
             user_id: userId,
             content_id: contentData.id
           })
@@ -69,13 +78,12 @@ export const useUploadVideo = () => {
 
         if (insertError) throw insertError;
 
-        // Log the activity - Make sure video ID is properly converted to string
         if (videoData && videoData.id) {
           await logActivity(
             userId,
             'video',
             'create',
-            String(videoData.id), // Ensure ID is properly converted to string
+            String(videoData.id),
             `Video '${title}' created`
           );
         }
