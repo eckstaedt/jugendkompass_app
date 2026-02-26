@@ -109,6 +109,7 @@ export default function ImpulsesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Datum</TableHead>
+                <TableHead>Titel</TableHead>
                 <TableHead>Text</TableHead>
                 <TableHead>Bild</TableHead>
                 <TableHead className="w-16">Aktionen</TableHead>
@@ -125,6 +126,7 @@ export default function ImpulsesPage() {
                   }}
                 >
                   <TableCell>{format(new Date(impulse.date), "dd. MMMM yyyy", { locale: de })}</TableCell>
+                  <TableCell className="font-medium">{impulse.title || '—'}</TableCell>
                   <TableCell>
                     <div className="max-w-md overflow-hidden text-ellipsis">
                       <div dangerouslySetInnerHTML={{ __html: impulse.impulse_text.substring(0, 150) + '...' }} />
