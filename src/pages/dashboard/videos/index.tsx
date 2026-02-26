@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { useVideos, useUploadVideo } from '@/hooks/use-videos';
@@ -7,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileVideoIcon, LoaderCircle } from 'lucide-react';
+import { FileVideoIcon, LinkIcon, LoaderCircle, UploadIcon } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import RichTextEditor from '@/components/editor/RichTextEditor';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const VideosPage = () => {
   const { user } = useAuth();
@@ -22,6 +22,8 @@ const VideosPage = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [url, setUrl] = useState('');
+  const [mode, setMode] = useState<'upload' | 'url'>('upload');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -37,11 +39,13 @@ const VideosPage = () => {
     setFile(selectedFile || null);
   };
 
-  const handleUpload = async () => {
-    if (!user || !file || !title) {
+  const isValid = title && (mode === 'upload' ? !!file : !!url);
+
+  const handleSubmit = async () => {
+    if (!user || !isValid) {
       toast({
         title: "Fehler",
-        description: "Bitte geben Sie einen Titel und wählen Sie eine Datei aus.",
+        description: "Bitte füllen Sie alle Pflichtfelder aus.",
         variant: "destructive"
       });
       return;
@@ -50,31 +54,36 @@ const VideosPage = () => {
     setIsUploading(true);
     setUploadProgress(0);
 
-    progressRef.current = setInterval(() => {
-      setUploadProgress(prev => (prev < 90 ? prev + 10 : prev));
-    }, 500);
+    if (mode === 'upload') {
+      progressRef.current = setInterval(() => {
+        setUploadProgress(prev => (prev < 90 ? prev + 10 : prev));
+      }, 500);
+    }
 
     try {
-      await uploadVideoMutation.mutateAsync({ 
+      await uploadVideoMutation.mutateAsync({
         title,
         description,
-        file, 
-        userId: user.id 
+        ...(mode === 'upload' ? { file: file! } : { url }),
+        userId: user.id
       });
 
       setUploadProgress(100);
       setTitle('');
       setDescription('');
       setFile(null);
+      setUrl('');
 
       toast({
-        title: "Video hochgeladen",
-        description: "Das Video wurde erfolgreich hochgeladen.",
+        title: "Video hinzugefügt",
+        description: mode === 'upload'
+          ? "Das Video wurde erfolgreich hochgeladen."
+          : "Das Video wurde erfolgreich verlinkt.",
       });
     } catch (error) {
       toast({
         title: "Fehler",
-        description: "Es gab einen Fehler beim Hochladen des Videos.",
+        description: "Es gab einen Fehler beim Hinzufügen des Videos.",
         variant: "destructive"
       });
     } finally {
@@ -87,14 +96,13 @@ const VideosPage = () => {
   return (
     <DashboardLayout title="Videos">
       <div className="space-y-6">
-        {/* Video Upload Section */}
         <Card>
           <CardHeader>
-            <CardTitle>Neues Video hochladen</CardTitle>
+            <CardTitle>Neues Video hinzufügen</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Input 
-              placeholder="Video-Titel" 
+            <Input
+              placeholder="Video-Titel"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               disabled={isUploading}
@@ -103,18 +111,42 @@ const VideosPage = () => {
               <label className="block text-sm font-medium mb-1">Beschreibung</label>
               <RichTextEditor content={description} onChange={setDescription} />
             </div>
-            <Input
-              type="file" 
-              accept="video/*"
-              onChange={handleFileChange}
-              disabled={isUploading}
-            />
-            {file && !isUploading && (
-              <p className="text-sm text-muted-foreground">
-                Ausgewählt: {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
-              </p>
-            )}
-            {isUploading && (
+
+            <Tabs value={mode} onValueChange={(v) => setMode(v as 'upload' | 'url')}>
+              <TabsList className="w-full">
+                <TabsTrigger value="upload" className="flex-1 gap-2">
+                  <UploadIcon className="h-4 w-4" />
+                  Datei hochladen
+                </TabsTrigger>
+                <TabsTrigger value="url" className="flex-1 gap-2">
+                  <LinkIcon className="h-4 w-4" />
+                  URL angeben
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="upload" className="space-y-2 mt-4">
+                <Input
+                  type="file"
+                  accept="video/*"
+                  onChange={handleFileChange}
+                  disabled={isUploading}
+                />
+                {file && !isUploading && (
+                  <p className="text-sm text-muted-foreground">
+                    Ausgewählt: {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+                  </p>
+                )}
+              </TabsContent>
+              <TabsContent value="url" className="mt-4">
+                <Input
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  disabled={isUploading}
+                />
+              </TabsContent>
+            </Tabs>
+
+            {isUploading && mode === 'upload' && (
               <div className="space-y-2">
                 <Progress value={uploadProgress} className="w-full" />
                 <p className="text-sm text-muted-foreground text-center">
@@ -122,16 +154,17 @@ const VideosPage = () => {
                 </p>
               </div>
             )}
-            <Button onClick={handleUpload} disabled={isUploading || !title || !file}>
+
+            <Button onClick={handleSubmit} disabled={isUploading || !isValid}>
               {isUploading ? (
                 <>
                   <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                  Wird hochgeladen...
+                  {mode === 'upload' ? 'Wird hochgeladen...' : 'Wird gespeichert...'}
                 </>
               ) : (
                 <>
                   <FileVideoIcon className="mr-2 h-4 w-4" />
-                  Video hochladen
+                  Video hinzufügen
                 </>
               )}
             </Button>
@@ -151,8 +184,8 @@ const VideosPage = () => {
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {videos?.map((video) => (
-                  <div 
-                    key={video.id} 
+                  <div
+                    key={video.id}
                     className="border rounded-lg overflow-hidden shadow-sm"
                   >
                     <div className="p-4 flex items-center space-x-4">
@@ -160,8 +193,8 @@ const VideosPage = () => {
                       <div>
                         <h3 className="font-semibold">{video.title}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {video.created_at 
-                            ? format(new Date(video.created_at), 'dd. MMMM yyyy', { locale: de }) 
+                          {video.created_at
+                            ? format(new Date(video.created_at), 'dd. MMMM yyyy', { locale: de })
                             : 'Datum unbekannt'}
                         </p>
                       </div>
