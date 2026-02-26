@@ -1,13 +1,24 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { DailyVerse } from '@/lib/supabase';
 import { logActivity } from '@/lib/activity-logger';
 
+const PAGE_SIZE = 20;
+
 export const useDailyVerses = () => {
-  const { data: verses = [], isLoading, error } = useQuery({
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ['dailyVerses'],
-    queryFn: async () => {
-      // Explicitly use the specific foreign key relationship
+    queryFn: async ({ pageParam = 0 }) => {
+      const from = pageParam * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
       const { data: dailyVerses, error } = await supabase
         .from('verse_of_the_day')
         .select(`
@@ -23,17 +34,23 @@ export const useDailyVerses = () => {
             created_at
           )
         `)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false })
+        .range(from, to);
 
       if (error) {
         console.error('Supabase error:', error);
         throw new Error(error.message);
       }
       
-      // Explicitly cast the data to resolve type issues
       return dailyVerses as unknown as DailyVerse[];
     },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      return lastPage.length === PAGE_SIZE ? allPages.length : undefined;
+    },
   });
+
+  const verses = data?.pages.flat() ?? [];
 
   const queryClient = useQueryClient();
   
@@ -128,6 +145,9 @@ export const useDailyVerses = () => {
     verses,
     isLoading,
     error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     createVerse,
     updateVerse,
     bulkCreateVerses

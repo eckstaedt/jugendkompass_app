@@ -469,6 +469,7 @@ export type Database = {
       verse_of_the_day: {
         Row: {
           content_id: string
+          created_at: string
           date: string
           id: string
           reference: string
@@ -476,6 +477,7 @@ export type Database = {
         }
         Insert: {
           content_id: string
+          created_at?: string
           date?: string
           id?: string
           reference: string
@@ -483,6 +485,7 @@ export type Database = {
         }
         Update: {
           content_id?: string
+          created_at?: string
           date?: string
           id?: string
           reference?: string

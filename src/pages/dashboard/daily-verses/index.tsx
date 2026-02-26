@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,18 +8,30 @@ import { useDailyVerses } from '@/hooks/use-daily-verses';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, isToday, isFuture } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { CalendarPlus, LayoutList, ViewIcon, Upload } from 'lucide-react';
+import { CalendarPlus, LayoutList, ViewIcon, Upload, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DailyVerse } from '@/lib/supabase';
 import { BulkVerseDialog } from '@/components/verses/BulkVerseDialog';
 
 const DailyVersesPage = () => {
-  const { verses, isLoading, createVerse, updateVerse, bulkCreateVerses } = useDailyVerses();
+  const { verses, isLoading, createVerse, updateVerse, bulkCreateVerses, fetchNextPage, hasNextPage, isFetchingNextPage } = useDailyVerses();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [selectedVerse, setSelectedVerse] = useState<DailyVerse | undefined>();
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const { isAdmin, user } = useAuth();
+  
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useCallback((node: HTMLDivElement | null) => {
+    if (isFetchingNextPage) return;
+    if (observerRef.current) observerRef.current.disconnect();
+    observerRef.current = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasNextPage) {
+        fetchNextPage();
+      }
+    });
+    if (node) observerRef.current.observe(node);
+  }, [isFetchingNextPage, hasNextPage, fetchNextPage]);
   
   const handleEdit = (verse: DailyVerse) => {
     setSelectedVerse(verse);
@@ -101,42 +113,49 @@ const DailyVersesPage = () => {
           ))}
         </div>
       ) : viewMode === 'cards' ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {verses.map((verse) => {
-            const verseDate = new Date(verse.date);
-            const isCurrentOrFuture = isToday(verseDate) || isFuture(verseDate);
-            
-            return (
-              <Card 
-                key={verse.id}
-                className={cn(
-                  "relative overflow-hidden transition-colors",
-                  isCurrentOrFuture && "border-primary",
-                  isToday(verseDate) && "bg-primary/5"
-                )}
-              >
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{format(verseDate, "EEEE, dd. MMMM yyyy", { locale: de })}</span>
-                  </CardTitle>
-                  <CardDescription>{verse.reference}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-pretty">{verse.verse}</p>
-                  {isAdmin && (
-                    <Button
-                      variant="outline"
-                      className="mt-4"
-                      onClick={() => handleEdit(verse)}
-                    >
-                      Bearbeiten
-                    </Button>
+        <>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {verses.map((verse) => {
+              const verseDate = new Date(verse.date);
+              const isCurrentOrFuture = isToday(verseDate) || isFuture(verseDate);
+              
+              return (
+                <Card 
+                  key={verse.id}
+                  className={cn(
+                    "relative overflow-hidden transition-colors",
+                    isCurrentOrFuture && "border-primary",
+                    isToday(verseDate) && "bg-primary/5"
                   )}
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
+                >
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>{format(verseDate, "EEEE, dd. MMMM yyyy", { locale: de })}</span>
+                    </CardTitle>
+                    <CardDescription>{verse.reference}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-pretty">{verse.verse}</p>
+                    {isAdmin && (
+                      <Button
+                        variant="outline"
+                        className="mt-4"
+                        onClick={() => handleEdit(verse)}
+                      >
+                        Bearbeiten
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+          <div ref={loadMoreRef} className="flex justify-center py-6">
+            {isFetchingNextPage && (
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            )}
+          </div>
+        </>
       ) : (
         <VersesTable verses={verses} onEdit={handleEdit} />
       )}
