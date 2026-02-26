@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { usePosts } from '@/hooks/use-posts';
 import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import RichTextEditor from '@/components/editor/RichTextEditor';
@@ -35,9 +36,10 @@ type FormValues = z.infer<typeof formSchema>;
 
 const EditPostPage = () => {
   const { id } = useParams<{ id: string }>();
-  const { posts, updatePost } = usePosts();
+  const { posts } = usePosts();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [currentAudio, setCurrentAudio] = useState<AudioRecord | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -135,6 +137,8 @@ const EditPostPage = () => {
         .eq('id', post.id);
 
       if (updateError) throw updateError;
+
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
 
       toast({
         title: "Erfolg",
