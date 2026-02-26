@@ -14,7 +14,7 @@ type DashboardLayoutProps = {
 
 export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { user, loading, isAdmin } = useAuth();
+  const { user, loading, isAdmin, adminChecked } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -34,15 +34,15 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
   }, []);
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading || !adminChecked) return;
+    if (!user) {
       navigate('/login');
       toast({
         title: "Zugang verweigert",
         description: "Bitte melde dich an, um auf das Dashboard zuzugreifen.",
         variant: "destructive"
       });
-    }
-    if (!loading && user && !isAdmin) {
+    } else if (!isAdmin) {
       navigate('/login');
       toast({
         title: "Zugang verweigert",
@@ -50,9 +50,9 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
         variant: "destructive"
       });
     }
-  }, [user, loading, isAdmin, navigate, toast, title]);
+  }, [user, loading, isAdmin, adminChecked, navigate, toast]);
 
-  const contentToRender = loading ? (
+  const contentToRender = (loading || !adminChecked) ? (
     <div className="flex flex-1 items-center justify-center">
       <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
     </div>
