@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { logActivity } from '@/lib/activity-logger';
 
 type BulkPostEntry = {
   title: string;
@@ -14,7 +15,7 @@ export const useBulkCreatePosts = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (entries: BulkPostEntry[]) => {
+    mutationFn: async ({ entries, userId }: { entries: BulkPostEntry[]; userId?: string }) => {
       // Create content entries for all posts
       const contentInserts = entries.map(() => ({
         content_type: 'post',
@@ -48,6 +49,18 @@ export const useBulkCreatePosts = () => {
         .select();
 
       if (postError) throw postError;
+
+      // Log activity for bulk import
+      if (userId && postData) {
+        await logActivity(
+          userId,
+          'post',
+          'create',
+          undefined,
+          `${postData.length} Beiträge per Bulk-Import erstellt`
+        );
+      }
+
       return postData;
     },
     onSuccess: () => {

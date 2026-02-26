@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { usePosts, CreatePostParams } from '@/hooks/use-posts';
+import { useAuth } from '@/contexts/AuthContext';
 import { useCategories } from '@/hooks/use-categories';
 import { useEditions } from '@/hooks/use-editions';
 import { useToast } from '@/hooks/use-toast';
@@ -44,6 +45,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 const NewPostPage = () => {
   const { createPost } = usePosts();
+  const { user } = useAuth();
   const { categories, isLoading: categoriesLoading } = useCategories();
   const { editions, isLoading: editionsLoading } = useEditions();
   const { toast } = useToast();
@@ -76,6 +78,7 @@ const NewPostPage = () => {
       status: data.status,
       image_url: data.image_url,
       audioFile: audioFile,
+      author_id: user?.id,
     };
     
     createPost(postData, {
