@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart2Icon, BookIcon, FileTextIcon, PieChartIcon, UsersIcon, FileVideoIcon, CalendarIcon, MessageSquareIcon } from 'lucide-react';
@@ -13,20 +14,27 @@ type DashboardCardProps = {
   description: string;
   icon: React.ReactNode;
   className?: string;
+  href?: string;
 };
 
-const DashboardCard = ({ title, value, description, icon, className }: DashboardCardProps) => (
-  <Card className={className}>
-    <CardHeader className="flex flex-row items-center justify-between pb-2">
-      <CardTitle className="text-sm font-medium">{title}</CardTitle>
-      {icon}
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-bold">{value}</div>
-      <p className="text-xs text-muted-foreground">{description}</p>
-    </CardContent>
-  </Card>
-);
+const DashboardCard = ({ title, value, description, icon, className, href }: DashboardCardProps) => {
+  const navigate = useNavigate();
+  return (
+    <Card 
+      className={`${className} ${href ? 'cursor-pointer transition-colors hover:bg-muted/50' : ''}`}
+      onClick={() => href && navigate(href)}
+    >
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        {icon}
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </CardContent>
+    </Card>
+  );
+};
 
 const DashboardPage = () => {
   const { data: activities, isLoading: isLoadingActivities } = useActivities();
@@ -179,49 +187,57 @@ const DashboardPage = () => {
           title="Beiträge" 
           value={postStats?.total || '...'} 
           description={`${postStats?.new || 0} neue Beiträge im letzten Monat`} 
-          icon={<FileTextIcon className="h-5 w-5 text-primary" />} 
+          icon={<FileTextIcon className="h-5 w-5 text-primary" />}
+          href="/dashboard/posts"
         />
         <DashboardCard 
           title="Umfragen" 
           value={pollStats?.total || '...'} 
           description={`${pollStats?.active || 0} aktive Umfragen`} 
-          icon={<PieChartIcon className="h-5 w-5 text-primary" />} 
+          icon={<PieChartIcon className="h-5 w-5 text-primary" />}
+          href="/dashboard/polls"
         />
         <DashboardCard 
           title="Videos" 
           value={videoStats?.total || '...'} 
           description={`${videoStats?.new || 0} neue Videos im letzten Monat`} 
-          icon={<FileVideoIcon className="h-5 w-5 text-primary" />} 
+          icon={<FileVideoIcon className="h-5 w-5 text-primary" />}
+          href="/dashboard/videos"
         />
         <DashboardCard 
           title="Vers des Tages" 
           value={verseStats?.total || '...'} 
           description={`${verseStats?.new || 0} neue Verse im letzten Monat`} 
-          icon={<CalendarIcon className="h-5 w-5 text-primary" />} 
+          icon={<CalendarIcon className="h-5 w-5 text-primary" />}
+          href="/dashboard/daily-verses"
         />
         <DashboardCard 
           title="Benutzer" 
           value={userStats?.total || '...'} 
           description={`${userStats?.new || 0} neue Benutzer im letzten Monat`} 
-          icon={<UsersIcon className="h-5 w-5 text-primary" />} 
+          icon={<UsersIcon className="h-5 w-5 text-primary" />}
+          href="/dashboard/users"
         />
         <DashboardCard 
           title="Impulse" 
           value={impulseStats?.total || '...'} 
           description={`${impulseStats?.new || 0} neue Impulse im letzten Monat`} 
-          icon={<BookIcon className="h-5 w-5 text-primary" />} 
+          icon={<BookIcon className="h-5 w-5 text-primary" />}
+          href="/dashboard/impulses"
         />
         <DashboardCard 
           title="Ausgaben" 
           value={editionStats?.total || '...'} 
           description="Ausgaben des Jugendkompass" 
-          icon={<BookIcon className="h-5 w-5 text-primary" />} 
+          icon={<BookIcon className="h-5 w-5 text-primary" />}
+          href="/dashboard/posts/editions"
         />
         <DashboardCard 
           title="Kurznachrichten" 
           value={messageStats?.total || '...'} 
           description={`${messageStats?.new || 0} neue Nachrichten im letzten Monat`} 
-          icon={<MessageSquareIcon className="h-5 w-5 text-primary" />} 
+          icon={<MessageSquareIcon className="h-5 w-5 text-primary" />}
+          href="/dashboard/messages"
         />
       </div>
       
