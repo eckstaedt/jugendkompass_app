@@ -529,6 +529,7 @@ export type Database = {
         Row: {
           content_id: string
           created_at: string | null
+          description: string | null
           id: number
           title: string
           url: string
@@ -537,6 +538,7 @@ export type Database = {
         Insert: {
           content_id: string
           created_at?: string | null
+          description?: string | null
           id?: number
           title: string
           url: string
@@ -545,6 +547,7 @@ export type Database = {
         Update: {
           content_id?: string
           created_at?: string | null
+          description?: string | null
           id?: number
           title?: string
           url?: string
