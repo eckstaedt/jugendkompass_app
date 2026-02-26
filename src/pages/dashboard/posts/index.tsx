@@ -155,7 +155,7 @@ const PostsPage = () => {
         open={bulkOpen}
         onOpenChange={setBulkOpen}
         onSubmit={async (entries) => {
-          await bulkCreate.mutateAsync(entries);
+          await bulkCreate.mutateAsync({ entries, userId: user?.id });
         }}
       />
     </DashboardLayout>
