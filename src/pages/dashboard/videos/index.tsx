@@ -11,6 +11,7 @@ import { FileVideoIcon, LoaderCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import RichTextEditor from '@/components/editor/RichTextEditor';
 
 const VideosPage = () => {
   const { user } = useAuth();
@@ -19,6 +20,7 @@ const VideosPage = () => {
   const { toast } = useToast();
 
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -54,13 +56,15 @@ const VideosPage = () => {
 
     try {
       await uploadVideoMutation.mutateAsync({ 
-        title, 
+        title,
+        description,
         file, 
         userId: user.id 
       });
 
       setUploadProgress(100);
       setTitle('');
+      setDescription('');
       setFile(null);
 
       toast({
@@ -95,7 +99,11 @@ const VideosPage = () => {
               onChange={(e) => setTitle(e.target.value)}
               disabled={isUploading}
             />
-            <Input 
+            <div>
+              <label className="block text-sm font-medium mb-1">Beschreibung</label>
+              <RichTextEditor content={description} onChange={setDescription} />
+            </div>
+            <Input
               type="file" 
               accept="video/*"
               onChange={handleFileChange}

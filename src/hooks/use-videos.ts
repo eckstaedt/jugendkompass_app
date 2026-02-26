@@ -23,7 +23,7 @@ export const useUploadVideo = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ title, file, userId }: { title: string, file: File, userId: string }) => {
+    mutationFn: async ({ title, description, file, userId }: { title: string, description?: string, file: File, userId: string }) => {
       try {
         // First create a content entry
         const { data: contentData, error: contentError } = await supabase
@@ -59,6 +59,7 @@ export const useUploadVideo = () => {
           .from('videos')
           .insert({ 
             title, 
+            description: description || null,
             url: publicUrl, 
             user_id: userId,
             content_id: contentData.id

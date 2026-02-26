@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { FileVideoIcon, LoaderCircle } from 'lucide-react';
+import RichTextEditor from '@/components/editor/RichTextEditor';
 
 const NewVideoPage = () => {
   const { user } = useAuth();
@@ -15,6 +16,7 @@ const NewVideoPage = () => {
   const { toast } = useToast();
 
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -50,13 +52,15 @@ const NewVideoPage = () => {
 
     try {
       await uploadVideoMutation.mutateAsync({ 
-        title, 
+        title,
+        description,
         file, 
         userId: user.id 
       });
 
       setUploadProgress(100);
       setTitle('');
+      setDescription('');
       setFile(null);
 
       toast({
@@ -96,6 +100,11 @@ const NewVideoPage = () => {
                 onChange={(e) => setTitle(e.target.value)}
                 disabled={isUploading}
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Beschreibung</label>
+              <RichTextEditor content={description} onChange={setDescription} />
             </div>
 
             <div>
