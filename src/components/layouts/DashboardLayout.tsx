@@ -52,13 +52,11 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
     }
   }, [user, loading, isAdmin, navigate, toast, title]);
 
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-      </div>
-    );
-  }
+  const contentToRender = loading ? (
+    <div className="flex flex-1 items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+    </div>
+  ) : children;
 
   // Adjusted header height to h-20 for all dashboard pages for consistency
   return (
@@ -95,7 +93,7 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
           <h1 className="text-xl font-semibold">{title}</h1>
         </header>
         <main className="flex-1 p-6">
-          {children}
+          {contentToRender}
         </main>
       </div>
     </div>
