@@ -56,12 +56,13 @@ export type PollOption = {
 // Typen für Videos
 export type Video = {
   id: number;
-  content_id: string;  // Now required (not nullable)
+  content_id: string;
   title: string;
+  description: string | null;
   url: string;
   user_id: string | null;
   created_at: string | null;
-  content: {         // Now required since content_id is required
+  content: {
     content_type: string;
     created_at: string;
     id: string;

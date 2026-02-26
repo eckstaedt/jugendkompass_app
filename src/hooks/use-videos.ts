@@ -99,3 +99,45 @@ export const useUploadVideo = () => {
     }
   });
 };
+
+export const useUpdateVideo = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, title, description, url }: { id: number, title: string, description?: string, url?: string }) => {
+      const updateData: Record<string, any> = { title, description: description || null };
+      if (url) updateData.url = url;
+
+      const { data, error } = await supabase
+        .from('videos')
+        .update(updateData)
+        .eq('id', id)
+        .select('*, content:content_id(*)')
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['videos'] });
+    }
+  });
+};
+
+export const useDeleteVideo = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { error } = await supabase
+        .from('videos')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['videos'] });
+    }
+  });
+};

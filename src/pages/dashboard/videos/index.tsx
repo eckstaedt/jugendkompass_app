@@ -1,22 +1,35 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
-import { useVideos, useUploadVideo } from '@/hooks/use-videos';
+import { useVideos, useUploadVideo, useDeleteVideo } from '@/hooks/use-videos';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileVideoIcon, LinkIcon, LoaderCircle, UploadIcon } from 'lucide-react';
+import { FileVideoIcon, LinkIcon, LoaderCircle, PencilIcon, Trash2Icon, UploadIcon } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import RichTextEditor from '@/components/editor/RichTextEditor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Video } from '@/lib/supabase';
+import EditVideoDialog from '@/components/videos/EditVideoDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const VideosPage = () => {
   const { user } = useAuth();
   const { data: videos, isLoading } = useVideos();
   const uploadVideoMutation = useUploadVideo();
+  const deleteVideoMutation = useDeleteVideo();
   const { toast } = useToast();
 
   const [title, setTitle] = useState('');
@@ -27,6 +40,10 @@ const VideosPage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const [editVideo, setEditVideo] = useState<Video | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteVideoId, setDeleteVideoId] = useState<number | null>(null);
 
   useEffect(() => {
     return () => {
@@ -91,6 +108,24 @@ const VideosPage = () => {
       setIsUploading(false);
       setUploadProgress(0);
     }
+  };
+
+  const handleDelete = async () => {
+    if (deleteVideoId === null) return;
+    try {
+      await deleteVideoMutation.mutateAsync(deleteVideoId);
+      toast({
+        title: "Video gelöscht",
+        description: "Das Video wurde erfolgreich gelöscht.",
+      });
+    } catch (error) {
+      toast({
+        title: "Fehler",
+        description: "Das Video konnte nicht gelöscht werden.",
+        variant: "destructive",
+      });
+    }
+    setDeleteVideoId(null);
   };
 
   return (
@@ -174,7 +209,7 @@ const VideosPage = () => {
         {/* Video List */}
         <Card>
           <CardHeader>
-            <CardTitle>Hochgeladene Videos</CardTitle>
+            <CardTitle>Videos</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -188,16 +223,45 @@ const VideosPage = () => {
                     key={video.id}
                     className="border rounded-lg overflow-hidden shadow-sm"
                   >
-                    <div className="p-4 flex items-center space-x-4">
-                      <FileVideoIcon className="h-8 w-8 text-muted-foreground" />
-                      <div>
-                        <h3 className="font-semibold">{video.title}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {video.created_at
-                            ? format(new Date(video.created_at), 'dd. MMMM yyyy', { locale: de })
-                            : 'Datum unbekannt'}
-                        </p>
+                    <div className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center space-x-3 min-w-0">
+                          <FileVideoIcon className="h-6 w-6 text-muted-foreground shrink-0" />
+                          <div className="min-w-0">
+                            <h3 className="font-semibold truncate">{video.title}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {video.created_at
+                                ? format(new Date(video.created_at), 'dd. MMMM yyyy', { locale: de })
+                                : 'Datum unbekannt'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setEditVideo(video);
+                              setEditDialogOpen(true);
+                            }}
+                          >
+                            <PencilIcon className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setDeleteVideoId(video.id)}
+                          >
+                            <Trash2Icon className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
                       </div>
+                      {video.description && (
+                        <div
+                          className="text-sm text-muted-foreground line-clamp-2 prose prose-sm max-w-none"
+                          dangerouslySetInnerHTML={{ __html: video.description }}
+                        />
+                      )}
                     </div>
                   </div>
                 ))}
@@ -206,6 +270,27 @@ const VideosPage = () => {
           </CardContent>
         </Card>
       </div>
+
+      <EditVideoDialog
+        video={editVideo}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+      />
+
+      <AlertDialog open={deleteVideoId !== null} onOpenChange={(open) => !open && setDeleteVideoId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Video löschen</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchtest du dieses Video wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Löschen</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 };
