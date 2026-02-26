@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { usePosts } from '@/hooks/use-posts';
@@ -7,13 +7,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
-import { PlusIcon, TrashIcon, PencilIcon } from 'lucide-react';
+import { PlusIcon, TrashIcon, PencilIcon, Upload } from 'lucide-react';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
+import { BulkPostDialog } from '@/components/posts/BulkPostDialog';
+import { useBulkCreatePosts } from '@/hooks/posts/use-bulk-create-posts';
 
 const PostsPage = () => {
   const { posts, isLoading, deletePost, updatePostStatus } = usePosts();
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const bulkCreate = useBulkCreatePosts();
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -50,10 +54,16 @@ const PostsPage = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold tracking-tight">Beiträge verwalten</h2>
-          <Button onClick={handleCreatePost} className="bg-primary/10 text-primary hover:bg-primary/20">
-            <PlusIcon className="mr-2 h-4 w-4" />
-            Neuer Beitrag
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setBulkOpen(true)}>
+              <Upload className="mr-2 h-4 w-4" />
+              JSON Import
+            </Button>
+            <Button onClick={handleCreatePost} className="bg-primary/10 text-primary hover:bg-primary/20">
+              <PlusIcon className="mr-2 h-4 w-4" />
+              Neuer Beitrag
+            </Button>
+          </div>
         </div>
 
         <Card className="shadow-sm">
@@ -141,6 +151,13 @@ const PostsPage = () => {
           </CardContent>
         </Card>
       </div>
+      <BulkPostDialog
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        onSubmit={async (entries) => {
+          await bulkCreate.mutateAsync(entries);
+        }}
+      />
     </DashboardLayout>
   );
 };
