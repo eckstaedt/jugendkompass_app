@@ -154,6 +154,7 @@ export type Database = {
           id: string
           image_url: string | null
           impulse_text: string
+          title: string
         }
         Insert: {
           content_id: string
@@ -162,6 +163,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           impulse_text: string
+          title: string
         }
         Update: {
           content_id?: string
@@ -170,6 +172,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           impulse_text?: string
+          title?: string
         }
         Relationships: [
           {

@@ -25,6 +25,7 @@ import { LoaderCircle, Upload } from 'lucide-react';
 
 type ImpulseFormData = {
   date: string;
+  title: string;
   impulse_text: string;
   image: FileList;
 };
@@ -32,7 +33,7 @@ type ImpulseFormData = {
 type ImpulseDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: { date: string; impulse_text: string; image: File }) => Promise<void>;
+  onSubmit: (data: { date: string; title: string; impulse_text: string; image: File }) => Promise<void>;
   defaultValues?: Partial<Impulse>;
   title: string;
 };
@@ -43,6 +44,7 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
   const form = useForm<ImpulseFormData>({
     defaultValues: {
       date: defaultValues?.date || new Date().toISOString().split('T')[0],
+      title: defaultValues?.title || '',
       impulse_text: defaultValues?.impulse_text || '',
     },
   });
@@ -61,6 +63,7 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
       setIsLoading(true);
       await onSubmit({
         date: data.date,
+        title: data.title,
         impulse_text: data.impulse_text,
         image: data.image[0]
       });
@@ -97,6 +100,19 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
                   <FormLabel>Date</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Titel</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Titel des Impulses" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

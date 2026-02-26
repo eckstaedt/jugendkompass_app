@@ -8,6 +8,7 @@ export type Impulse = {
   id: string;
   content_id: string;
   date: string;
+  title: string;
   impulse_text: string;
   image_url: string;
   content?: {
@@ -18,6 +19,7 @@ export type Impulse = {
 
 type CreateImpulseArgs = {
   date: string;
+  title: string;
   impulse_text: string;
   image: File;
   user_id: string;
@@ -26,6 +28,7 @@ type CreateImpulseArgs = {
 type UpdateImpulseArgs = {
   id: string;
   date: string;
+  title: string;
   impulse_text: string;
   image_url?: string;
   user_id: string;
@@ -56,7 +59,7 @@ export const useCreateImpulse = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ date, impulse_text, image, user_id }: CreateImpulseArgs) => {
+    mutationFn: async ({ date, title, impulse_text, image, user_id }: CreateImpulseArgs) => {
       // First upload the image
       const fileExt = image.name.split('.').pop();
       const fileName = `${uuidv4()}.${fileExt}`;
@@ -86,6 +89,7 @@ export const useCreateImpulse = () => {
         .insert([{ 
           content_id: contentData.id,
           date, 
+          title,
           impulse_text, 
           image_url: publicUrl 
         }])
