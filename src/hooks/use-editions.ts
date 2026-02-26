@@ -7,6 +7,18 @@ export type Edition = {
   id: string;
   name: string;
   published_at: string | null;
+  title: string | null;
+  body: string | null;
+  image_url: string | null;
+  pdf_url: string | null;
+};
+
+export type CreateEditionParams = {
+  name: string;
+  title?: string;
+  body?: string;
+  image_url?: string | null;
+  pdfFile?: File | null;
 };
 
 export function useEditions() {
@@ -26,11 +38,28 @@ export function useEditions() {
     }
   });
 
-  const { mutate: createEdition } = useMutation({
-    mutationFn: async (name: string) => {
+  const { mutate: createEdition, isPending: isCreating } = useMutation({
+    mutationFn: async (params: CreateEditionParams) => {
+      let pdf_url: string | null = null;
+
+      if (params.pdfFile) {
+        const ext = params.pdfFile.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${ext}`;
+        const { error } = await supabase.storage.from('pdfs').upload(fileName, params.pdfFile);
+        if (error) throw error;
+        const { data } = supabase.storage.from('pdfs').getPublicUrl(fileName);
+        pdf_url = data.publicUrl;
+      }
+
       const { error } = await supabase
         .from('editions')
-        .insert([{ name }]);
+        .insert([{
+          name: params.name,
+          title: params.title || null,
+          body: params.body || null,
+          image_url: params.image_url || null,
+          pdf_url,
+        }]);
       
       if (error) throw error;
     },
@@ -38,18 +67,18 @@ export function useEditions() {
       queryClient.invalidateQueries({ queryKey: ['editions'] });
       toast({
         title: "Erfolg",
-        description: "Edition wurde erstellt",
+        description: "Ausgabe wurde erstellt",
         variant: "success",
       });
     },
     onError: () => {
       toast({
         title: "Fehler",
-        description: "Edition konnte nicht erstellt werden",
+        description: "Ausgabe konnte nicht erstellt werden",
         variant: "destructive",
       });
     }
   });
 
-  return { editions, isLoading, createEdition };
+  return { editions, isLoading, createEdition, isCreating };
 }

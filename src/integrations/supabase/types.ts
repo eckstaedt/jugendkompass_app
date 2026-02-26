@@ -118,19 +118,31 @@ export type Database = {
       }
       editions: {
         Row: {
+          body: string | null
           id: string
+          image_url: string | null
           name: string
+          pdf_url: string | null
           published_at: string | null
+          title: string | null
         }
         Insert: {
+          body?: string | null
           id?: string
+          image_url?: string | null
           name: string
+          pdf_url?: string | null
           published_at?: string | null
+          title?: string | null
         }
         Update: {
+          body?: string | null
           id?: string
+          image_url?: string | null
           name?: string
+          pdf_url?: string | null
           published_at?: string | null
+          title?: string | null
         }
         Relationships: []
       }
