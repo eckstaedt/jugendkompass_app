@@ -27,6 +27,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
   const navigateRef = useRef(navigate);
   const toastRef = useRef(toast);
+  const isInitialSessionRef = useRef(true);
   
   // Keep refs up to date
   useEffect(() => {
@@ -83,7 +84,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               const isUserAdmin = await checkAdminStatus(session.user.id);
               setIsAdmin(isUserAdmin);
               
-              if (isUserAdmin && event === 'SIGNED_IN') {
+              // Only navigate on actual login, not session restore or token refresh
+              const isActualLogin = event === 'SIGNED_IN' && !isInitialSessionRef.current;
+              
+              if (isUserAdmin && isActualLogin) {
                 navigateRef.current('/dashboard');
               } else if (!isUserAdmin) {
                 toastRef.current({
@@ -135,6 +139,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }
       setLoading(false);
+      // Mark initial session check as done so subsequent SIGNED_IN events from the listener are treated as actual logins
+      isInitialSessionRef.current = false;
     });
 
     return () => {
