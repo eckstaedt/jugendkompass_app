@@ -60,6 +60,7 @@ Zentrale Tabelle für alle Inhaltstypen. Wird als FK von Posts, Impulsen, Versen
 | content_id | uuid | Ja | – |
 | audio_id | uuid | Ja | – |
 | image_url | text | Ja | – |
+| created_at | timestamptz | Nein | `now()` |
 
 **FK:** `category_id` → `categories.id`, `edition_id` → `editions.id`, `content_id` → `content.id`, `audio_id` → `audios.id`
 
@@ -72,6 +73,7 @@ Zentrale Tabelle für alle Inhaltstypen. Wird als FK von Posts, Impulsen, Versen
 |--------|-----|----------|---------|
 | id | uuid | Nein | `uuid_generate_v4()` |
 | name | text | Nein | – |
+| created_at | timestamptz | Nein | `now()` |
 
 **RLS:** Jeder kann lesen, nur Admins können verwalten.
 
@@ -82,6 +84,10 @@ Zentrale Tabelle für alle Inhaltstypen. Wird als FK von Posts, Impulsen, Versen
 |--------|-----|----------|---------|
 | id | uuid | Nein | `uuid_generate_v4()` |
 | name | text | Nein | – |
+| title | text | Ja | – |
+| body | text | Ja | – |
+| image_url | text | Ja | – |
+| pdf_url | text | Ja | – |
 | published_at | timestamptz | Ja | – |
 
 **RLS:** Jeder kann lesen, nur Admins können verwalten.
@@ -93,6 +99,7 @@ Zentrale Tabelle für alle Inhaltstypen. Wird als FK von Posts, Impulsen, Versen
 |--------|-----|----------|---------|
 | id | uuid | Nein | `uuid_generate_v4()` |
 | url | text | Nein | – |
+| created_at | timestamptz | Nein | `now()` |
 
 **RLS:** Jeder kann lesen, authentifizierte User können CRUD.
 
@@ -103,11 +110,15 @@ Zentrale Tabelle für alle Inhaltstypen. Wird als FK von Posts, Impulsen, Versen
 |--------|-----|----------|---------|
 | id | uuid | Nein | `uuid_generate_v4()` |
 | content_id | uuid | Nein | – |
+| title | text | Nein | – |
 | date | date | Nein | – |
 | impulse_text | text | Nein | – |
 | image_url | text | Ja | – |
+| created_at | timestamptz | Nein | `now()` |
 
 **FK:** `content_id` → `content.id`
+
+**Trigger:** `BEFORE INSERT` → `handle_impulse_content()` (erstellt automatisch Content-Eintrag)
 
 **RLS:** Admins können alles, jeder kann veröffentlichte Impulse sehen.
 
@@ -121,8 +132,11 @@ Zentrale Tabelle für alle Inhaltstypen. Wird als FK von Posts, Impulsen, Versen
 | verse | text | Nein | – |
 | reference | text | Nein | – |
 | date | date | Nein | `CURRENT_DATE` |
+| created_at | timestamptz | Nein | `now()` |
 
 **FK:** `content_id` → `content.id`
+
+**Trigger:** `BEFORE INSERT` → `handle_verse_content()` (erstellt automatisch Content-Eintrag)
 
 **RLS:** Jeder kann lesen, nur Admins können erstellen/bearbeiten/löschen.
 
@@ -152,6 +166,7 @@ Zentrale Tabelle für alle Inhaltstypen. Wird als FK von Posts, Impulsen, Versen
 | poll_id | uuid | Ja | – |
 | option_text | text | Nein | – |
 | votes | integer | Ja | `0` |
+| created_at | timestamptz | Nein | `now()` |
 
 **FK:** `poll_id` → `polls.id`
 
@@ -174,15 +189,40 @@ Zentrale Tabelle für alle Inhaltstypen. Wird als FK von Posts, Impulsen, Versen
 
 ---
 
-### `favorites`
+### `messages`
 | Spalte | Typ | Nullable | Default |
 |--------|-----|----------|---------|
-| id | uuid | Nein | `gen_random_uuid()` |
-| user_id | uuid | Nein | – |
-| verse_id | uuid | Nein | – |
-| created_at | timestamptz | Nein | `now()` |
+| id | integer | Nein | `nextval(...)` |
+| message | text | Nein | – |
+| content_id | uuid | Ja | – |
+| image_url | text | Ja | – |
+| created_by | uuid | Ja | – |
+| created_at | timestamptz | Ja | `now()` |
 
-**RLS:** User können nur eigene Favoriten lesen, erstellen und löschen.
+**FK:** `content_id` → `content.id`
+
+**Trigger:** `BEFORE INSERT` → `handle_message_content()` (erstellt automatisch Content-Eintrag)
+
+**RLS:** Admins können alles, jeder kann lesen.
+
+---
+
+### `videos`
+| Spalte | Typ | Nullable | Default |
+|--------|-----|----------|---------|
+| id | integer | Nein | `nextval(...)` |
+| title | text | Nein | – |
+| description | text | Ja | – |
+| url | text | Nein | – |
+| content_id | uuid | Nein | – |
+| user_id | uuid | Ja | – |
+| created_at | timestamptz | Ja | `now()` |
+
+**FK:** `content_id` → `content.id`
+
+**Trigger:** `BEFORE INSERT` → `handle_video_content()` (erstellt automatisch Content-Eintrag)
+
+**RLS:** Admins können alles, jeder kann lesen.
 
 ---
 
@@ -205,11 +245,6 @@ Zentrale Tabelle für alle Inhaltstypen. Wird als FK von Posts, Impulsen, Versen
 
 | View | Beschreibung |
 |------|-------------|
-| `current_verse` | Aktueller Vers des Tages |
-| `current_verse_v` | Aktueller Vers (alternative View) |
-| `vers_archiv` | Archiv vergangener Verse |
-| `vers_archiv_v` | Archiv (alternative View) |
-| `favorites_with_verse` | Favoriten mit Vers-Details gejoined |
 | `content_feed` | Aggregierter Content-Feed aller Inhaltstypen |
 
 ---
@@ -227,6 +262,7 @@ Zentrale Tabelle für alle Inhaltstypen. Wird als FK von Posts, Impulsen, Versen
 | `handle_verse_content()` | trigger | Erstellt Content-Eintrag für neuen Vers |
 | `handle_message_content()` | trigger | Erstellt Content-Eintrag für neue Nachricht |
 | `handle_video_content()` | trigger | Erstellt Content-Eintrag für neues Video |
+| `handle_new_user_role()` | trigger | Backward-Compatibility Trigger für User-Rollen |
 
 ---
 
