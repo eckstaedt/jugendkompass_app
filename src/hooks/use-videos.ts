@@ -25,15 +25,6 @@ export const useUploadVideo = () => {
   return useMutation({
     mutationFn: async ({ title, description, file, url, userId }: { title: string, description?: string, file?: File, url?: string, userId: string }) => {
       try {
-        // First create a content entry
-        const { data: contentData, error: contentError } = await supabase
-          .from('content')
-          .insert({ content_type: 'video', status: 'published' })
-          .select('id')
-          .single();
-
-        if (contentError) throw contentError;
-
         let videoUrl: string;
 
         if (file) {
@@ -63,7 +54,7 @@ export const useUploadVideo = () => {
           throw new Error('Either file or url must be provided');
         }
 
-        // Insert video record with the content_id
+        // Insert video record — the DB trigger handle_video_content() creates the content entry automatically
         const { data: videoData, error: insertError } = await supabase
           .from('videos')
           .insert({ 
@@ -71,8 +62,8 @@ export const useUploadVideo = () => {
             description: description || null,
             url: videoUrl, 
             user_id: userId,
-            content_id: contentData.id
-          })
+            content_id: '00000000-0000-0000-0000-000000000000' // placeholder, overwritten by trigger
+          } as any)
           .select('*, content:content_id(*)')
           .single();
 
