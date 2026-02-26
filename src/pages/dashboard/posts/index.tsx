@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { usePosts } from '@/hooks/use-posts';
@@ -16,12 +16,28 @@ import { BulkPostDialog } from '@/components/posts/BulkPostDialog';
 import { useBulkCreatePosts } from '@/hooks/posts/use-bulk-create-posts';
 
 const PostsPage = () => {
-  const { posts, isLoading, deletePost, updatePostStatus } = usePosts();
+  const { posts, isLoading, deletePost, updatePostStatus, fetchNextPage, hasNextPage, isFetchingNextPage } = usePosts();
   const [bulkOpen, setBulkOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const bulkCreate = useBulkCreatePosts();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const handleCreatePost = () => {
     navigate('/dashboard/posts/new');
@@ -167,6 +183,12 @@ const PostsPage = () => {
             )}
           </CardContent>
         </Card>
+
+        <div ref={loadMoreRef} className="flex justify-center py-4">
+          {isFetchingNextPage && (
+            <div className="h-6 w-6 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          )}
+        </div>
       </div>
       <BulkPostDialog
         open={bulkOpen}
