@@ -3,8 +3,9 @@ import { useState } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { ImpulseDialog } from '@/components/impulses/ImpulseDialog';
-import { useImpulses, useCreateImpulse, useUpdateImpulse, useDeleteImpulse } from '@/hooks/use-impulses';
-import { Plus, Trash2 } from 'lucide-react';
+import { BulkImpulseDialog } from '@/components/impulses/BulkImpulseDialog';
+import { useImpulses, useCreateImpulse, useUpdateImpulse, useDeleteImpulse, useBulkCreateImpulses } from '@/hooks/use-impulses';
+import { Plus, Trash2, Upload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -30,6 +31,7 @@ import { de } from 'date-fns/locale';
 
 export default function ImpulsesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [editingImpulse, setEditingImpulse] = useState<null | any>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [impulseToDelete, setImpulseToDelete] = useState<null | any>(null);
@@ -38,6 +40,7 @@ export default function ImpulsesPage() {
   const createImpulse = useCreateImpulse();
   const updateImpulse = useUpdateImpulse();
   const deleteImpulse = useDeleteImpulse();
+  const bulkCreateImpulses = useBulkCreateImpulses();
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -57,6 +60,11 @@ export default function ImpulsesPage() {
       });
       throw error;
     }
+  };
+
+  const handleBulkSubmit = async (impulses: { title: string; impulse_text: string; image_url: string; date: string }[]) => {
+    if (!user?.id) return;
+    await bulkCreateImpulses.mutateAsync({ impulses, userId: user.id });
   };
 
   const handleDelete = async () => {
@@ -87,7 +95,7 @@ export default function ImpulsesPage() {
 
   return (
     <DashboardLayout title="Impuls">
-      <div className="mb-4">
+      <div className="mb-4 flex gap-2">
         <Button
           onClick={() => {
             setEditingImpulse(null);
@@ -96,6 +104,10 @@ export default function ImpulsesPage() {
         >
           <Plus className="mr-2 h-4 w-4" />
           Neuer Impuls
+        </Button>
+        <Button variant="outline" onClick={() => setBulkDialogOpen(true)}>
+          <Upload className="mr-2 h-4 w-4" />
+          JSON Import
         </Button>
       </div>
 
@@ -184,6 +196,11 @@ export default function ImpulsesPage() {
         onSubmit={handleSubmit}
         defaultValues={editingImpulse}
         title={editingImpulse ? 'Impuls bearbeiten' : 'Neuer Impuls'}
+      />
+      <BulkImpulseDialog
+        open={bulkDialogOpen}
+        onOpenChange={setBulkDialogOpen}
+        onSubmit={handleBulkSubmit}
       />
     </DashboardLayout>
   );

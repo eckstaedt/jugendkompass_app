@@ -154,7 +154,6 @@ export const useDeleteImpulse = () => {
 
   return useMutation({
     mutationFn: async ({ id, content_id, user_id }: { id: string; content_id: string; user_id: string }) => {
-      // Delete the impulse first (will cascade from content)
       const { error: contentError } = await supabase
         .from('content')
         .delete()
@@ -162,18 +161,49 @@ export const useDeleteImpulse = () => {
 
       if (contentError) throw contentError;
 
-      // Log the deletion
       if (user_id) {
-        await logActivity(
-          user_id,
-          'impulse',
-          'delete',
-          id,
-          `Impuls gelöscht`
-        );
+        await logActivity(user_id, 'impulse', 'delete', id, `Impuls gelöscht`);
       }
 
       return { id };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['impulses'] });
+    },
+  });
+};
+
+export const useBulkCreateImpulses = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ impulses, userId }: { impulses: { title: string; impulse_text: string; image_url: string; date: string }[]; userId: string }) => {
+      const contentInserts = impulses.map(() => ({ content_type: 'impulse', status: 'published' }));
+      const { data: contentData, error: contentError } = await supabase
+        .from('content')
+        .insert(contentInserts)
+        .select('id');
+
+      if (contentError) throw contentError;
+      if (!contentData || contentData.length !== impulses.length) throw new Error('Content creation mismatch');
+
+      const impulseInserts = impulses.map((imp, i) => ({
+        content_id: contentData[i].id,
+        title: imp.title,
+        impulse_text: imp.impulse_text,
+        image_url: imp.image_url || null,
+        date: imp.date,
+      }));
+
+      const { data, error } = await supabase
+        .from('impulses')
+        .insert(impulseInserts)
+        .select('*');
+
+      if (error) throw error;
+
+      await logActivity(userId, 'impulse', 'create', null as any, `${impulses.length} Impulse per Bulk-Import erstellt`);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['impulses'] });
