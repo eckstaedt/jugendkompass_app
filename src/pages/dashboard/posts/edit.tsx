@@ -124,15 +124,17 @@ const EditPostPage = () => {
         audioId = audioData.id;
       }
 
-      await updatePost({
-        id: post.id,
-        data: {
-          title: data.title,
+      const { error: updateError } = await supabase
+        .from('posts')
+        .update({ 
+          title: data.title, 
           body: data.body,
           audio_id: audioId,
-          image_url: data.image_url,
-        }
-      });
+          image_url: data.image_url
+        })
+        .eq('id', post.id);
+
+      if (updateError) throw updateError;
 
       toast({
         title: "Erfolg",
@@ -145,7 +147,7 @@ const EditPostPage = () => {
       console.error('Error updating post:', error);
       toast({
         title: "Fehler",
-        description: "Beitrag konnte nicht aktualisiert werden",
+        description: `Beitrag konnte nicht aktualisiert werden: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
         variant: "destructive",
       });
     } finally {
