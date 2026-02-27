@@ -5,6 +5,7 @@ import 'package:jugendkompass_app/presentation/screens/kiosk/widgets/edition_car
 import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
+import 'package:jugendkompass_app/core/config/app_theme.dart';
 
 class KioskScreen extends ConsumerWidget {
   const KioskScreen({super.key});
@@ -15,7 +16,7 @@ class KioskScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF3F0), // Beige background
+      backgroundColor: AppTheme.backgroundBeige,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -44,14 +45,14 @@ class KioskScreen extends ConsumerWidget {
                             'Kiosk',
                             style: theme.textTheme.displaySmall?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFF1A1A2E),
+                              color: AppTheme.textDark,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'Alle Ausgaben',
                             style: theme.textTheme.titleMedium?.copyWith(
-                              color: const Color(0xFF6B7280),
+                              color: AppTheme.textGray,
                             ),
                           ),
                         ],

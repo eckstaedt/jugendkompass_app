@@ -7,6 +7,7 @@ import 'package:jugendkompass_app/presentation/screens/search/search_screen.dart
 import 'package:jugendkompass_app/presentation/screens/profile/profile_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/podcast/widgets/mini_player_bar.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
+import 'package:jugendkompass_app/core/config/app_theme.dart';
 
 class BottomNavScreen extends ConsumerStatefulWidget {
   const BottomNavScreen({super.key});
@@ -37,67 +38,76 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
     final currentAudio = ref.watch(currentAudioProvider);
 
     return Scaffold(
+      backgroundColor: AppTheme.backgroundBeige,
       body: _screens[_selectedIndex],
+      extendBody: true, // Extend body behind bottom nav
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Mini Player Bar (shown when audio is playing)
           if (currentAudio != null) MiniPlayerBar(audio: currentAudio),
 
-          // Navigation Bar with custom styling
+          // Navigation Bar with custom rounded styling
           Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
+            color: Colors.transparent,
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildNavItem(
-                      context: context,
-                      icon: Icons.home_outlined,
-                      selectedIcon: Icons.home,
-                      label: 'Home',
-                      index: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildNavItem(
+                          context: context,
+                          icon: Icons.home_outlined,
+                          selectedIcon: Icons.home,
+                          label: 'Home',
+                          index: 0,
+                        ),
+                        _buildNavItem(
+                          context: context,
+                          icon: Icons.auto_stories_outlined,
+                          selectedIcon: Icons.auto_stories,
+                          label: 'Kiosk',
+                          index: 1,
+                        ),
+                        _buildNavItem(
+                          context: context,
+                          icon: Icons.mic_outlined,
+                          selectedIcon: Icons.mic,
+                          label: 'Podcast',
+                          index: 2,
+                        ),
+                        _buildNavItem(
+                          context: context,
+                          icon: Icons.search_outlined,
+                          selectedIcon: Icons.search,
+                          label: 'Suche',
+                          index: 3,
+                        ),
+                        _buildNavItem(
+                          context: context,
+                          icon: Icons.menu,
+                          selectedIcon: Icons.menu,
+                          label: 'Menü',
+                          index: 4,
+                        ),
+                      ],
                     ),
-                    _buildNavItem(
-                      context: context,
-                      icon: Icons.auto_stories_outlined,
-                      selectedIcon: Icons.auto_stories,
-                      label: 'Kiosk',
-                      index: 1,
-                    ),
-                    _buildNavItem(
-                      context: context,
-                      icon: Icons.mic_outlined,
-                      selectedIcon: Icons.mic,
-                      label: 'Podcast',
-                      index: 2,
-                    ),
-                    _buildNavItem(
-                      context: context,
-                      icon: Icons.search_outlined,
-                      selectedIcon: Icons.search,
-                      label: 'Suche',
-                      index: 3,
-                    ),
-                    _buildNavItem(
-                      context: context,
-                      icon: Icons.menu,
-                      selectedIcon: Icons.menu,
-                      label: 'Menü',
-                      index: 4,
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -115,24 +125,33 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
     required int index,
   }) {
     final isSelected = _selectedIndex == index;
-    const primaryColor = Color(0xFF8B3A3A);
-    const textGray = Color(0xFF6B7280);
 
     return Expanded(
       child: InkWell(
         onTap: () => _onItemTapped(index),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+        borderRadius: BorderRadius.circular(16),
+        splashColor: AppTheme.primaryColor.withValues(alpha: 0.1),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 isSelected ? selectedIcon : icon,
-                color: isSelected ? primaryColor : textGray,
-                size: 26,
+                color: isSelected ? AppTheme.primaryColor : AppTheme.textGray,
+                size: 30,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
+              // Dot indicator for selected item
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: isSelected ? 6 : 0,
+                height: isSelected ? 6 : 0,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
             ],
           ),
         ),

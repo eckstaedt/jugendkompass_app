@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:jugendkompass_app/data/models/edition_model.dart';
 import 'package:jugendkompass_app/presentation/screens/kiosk/edition_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
+import 'package:jugendkompass_app/core/config/app_theme.dart';
 
 class EditionCard extends StatelessWidget {
   final EditionModel edition;
@@ -105,7 +106,7 @@ class EditionCard extends StatelessWidget {
           Text(
             edition.displayTitle,
             style: const TextStyle(
-              color: Color(0xFF1A1A2E),
+              color: AppTheme.textDark,
               fontWeight: FontWeight.bold,
               fontSize: 15,
             ),

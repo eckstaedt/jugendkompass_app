@@ -28,7 +28,11 @@ class AudioRepository {
               image_url,
               category_id,
               content_id,
-              edition_id
+              edition_id,
+              categories(
+                id,
+                name
+              )
             )
           ''')
           .range(offset, offset + limit - 1);
@@ -72,7 +76,11 @@ class AudioRepository {
               image_url,
               category_id,
               content_id,
-              edition_id
+              edition_id,
+              categories(
+                id,
+                name
+              )
             )
           ''')
           .eq('id', id)

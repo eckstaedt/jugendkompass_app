@@ -1,30 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_html/flutter_html.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/podcast_provider.dart';
+import 'package:jugendkompass_app/domain/providers/category_provider.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
+import 'package:jugendkompass_app/core/config/app_theme.dart';
 import 'widgets/featured_episode_card.dart';
 import 'full_player_screen.dart';
 
 class PodcastScreen extends ConsumerWidget {
   const PodcastScreen({super.key});
 
-  // Podcast categories for filtering
-  static const List<Map<String, String>> categories = [
-    {'id': 'all', 'label': 'Alle'},
-    {'id': 'glaube', 'label': 'Glaube'},
-    {'id': 'deep_dive', 'label': 'Deep Dive'},
-    {'id': 'lifestyle', 'label': 'Lifestyle'},
-  ];
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final audioListAsync = ref.watch(audioListProvider);
+    final categoriesAsync = ref.watch(categoriesProvider);
     final selectedCategory = ref.watch(selectedPodcastCategoryProvider);
 
     return Scaffold(
@@ -46,11 +40,20 @@ class PodcastScreen extends ConsumerWidget {
             }
 
             // Filter audio list based on selected category
-            final filteredList = selectedCategory == null || selectedCategory == 'all'
+            final filteredList = selectedCategory == null
                 ? audioList
                 : audioList.where((audio) {
-                    // TODO: Implement proper category filtering based on your data
-                    return true; // For now, show all
+                    // Get category name from the linked post
+                    final categoryName = audio.post?.categoryName;
+
+                    if (categoryName == null) return false;
+
+                    // Normalize both for comparison
+                    final normalizedPostCategory = categoryName.toLowerCase().replaceAll(' ', '_');
+                    final normalizedSelectedCategory = selectedCategory.toLowerCase().replaceAll(' ', '_');
+
+                    // Match with selected category
+                    return normalizedPostCategory == normalizedSelectedCategory;
                   }).toList();
 
             // Get featured episode (first in list)
@@ -60,51 +63,95 @@ class PodcastScreen extends ConsumerWidget {
             return CustomScrollView(
               slivers: [
                 // Filter Chips
-                SliverToBoxAdapter(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    child: Row(
-                      children: categories.map((category) {
-                        final isSelected = selectedCategory == category['id'] ||
-                            (selectedCategory == null && category['id'] == 'all');
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: FilterChip(
-                            label: Text(category['label']!),
-                            selected: isSelected,
-                            onSelected: (_) {
-                              ref.read(selectedPodcastCategoryProvider.notifier).state =
-                                  category['id'] == 'all' ? null : category['id'];
-                            },
-                            backgroundColor: Colors.white,
-                            selectedColor: const Color(0xFF8B3A3A),
-                            labelStyle: TextStyle(
-                              color: isSelected ? Colors.white : const Color(0xFF6B7280),
-                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                categoriesAsync.when(
+                  data: (categories) {
+                    return SliverToBoxAdapter(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        child: Row(
+                          children: [
+                            // "Alle" chip
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: FilterChip(
+                                label: const Text('Alle'),
+                                selected: selectedCategory == null,
+                                onSelected: (_) {
+                                  ref.read(selectedPodcastCategoryProvider.notifier).state = null;
+                                },
+                                backgroundColor: Colors.white,
+                                selectedColor: AppTheme.primaryColor,
+                                labelStyle: TextStyle(
+                                  color: selectedCategory == null ? Colors.white : AppTheme.textGray,
+                                  fontWeight: selectedCategory == null ? FontWeight.w600 : FontWeight.normal,
+                                ),
+                                side: BorderSide(
+                                  color: selectedCategory == null
+                                      ? AppTheme.primaryColor
+                                      : const Color(0xFFE5E7EB),
+                                  width: 1.5,
+                                ),
+                                checkmarkColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                              ),
                             ),
-                            side: BorderSide(
-                              color: isSelected
-                                  ? const Color(0xFF8B3A3A)
-                                  : const Color(0xFFE5E7EB),
-                              width: 1.5,
-                            ),
-                            checkmarkColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                          ),
-                        );
-                      }).toList(),
+                            // Category chips from database
+                            ...categories.map((category) {
+                              final categoryKey = category.name.toLowerCase().replaceAll(' ', '_');
+                              final isSelected = selectedCategory == categoryKey;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: FilterChip(
+                                  label: Text(category.name),
+                                  selected: isSelected,
+                                  onSelected: (_) {
+                                    ref.read(selectedPodcastCategoryProvider.notifier).state = categoryKey;
+                                  },
+                                  backgroundColor: Colors.white,
+                                  selectedColor: AppTheme.primaryColor,
+                                  labelStyle: TextStyle(
+                                    color: isSelected ? Colors.white : AppTheme.textGray,
+                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                  ),
+                                  side: BorderSide(
+                                    color: isSelected
+                                        ? AppTheme.primaryColor
+                                        : const Color(0xFFE5E7EB),
+                                    width: 1.5,
+                                  ),
+                                  checkmarkColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                ),
+                              );
+                            }),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                  loading: () => const SliverToBoxAdapter(
+                    child: SizedBox(
+                      height: 60,
+                      child: Center(child: CircularProgressIndicator()),
                     ),
                   ),
+                  error: (error, stack) => const SliverToBoxAdapter(child: SizedBox.shrink()),
                 ),
 
                 // Featured Episode
@@ -122,12 +169,7 @@ class PodcastScreen extends ConsumerWidget {
                     padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
                     child: Text(
                       'ALLE FOLGEN',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.5,
-                        color: Color(0xFF8B3A3A),
-                      ),
+                      style: AppTheme.sectionHeaderStyle,
                     ),
                   ),
                 ),
@@ -224,30 +266,26 @@ class PodcastScreen extends ConsumerWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (audio.description != null || audio.post?.body != null) ...[
-              const SizedBox(height: 4),
-              Html(
-                data: audio.description ?? audio.post?.body ?? '',
-                style: {
-                  "body": Style(
-                    margin: Margins.zero,
-                    padding: HtmlPaddings.zero,
-                    fontSize: FontSize(theme.textTheme.bodySmall?.fontSize ?? 12),
-                    maxLines: 2,
-                    textOverflow: TextOverflow.ellipsis,
+            const SizedBox(height: 4),
+            // Category badge
+            if (audio.post?.categoryName != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  audio.post!.categoryName!,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: AppTheme.primaryColor,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
                   ),
-                  "p": Style(
-                    margin: Margins.zero,
-                    padding: HtmlPaddings.zero,
-                    fontSize: FontSize(theme.textTheme.bodySmall?.fontSize ?? 12),
-                    maxLines: 2,
-                    textOverflow: TextOverflow.ellipsis,
-                  ),
-                },
+                ),
               ),
-            ],
             if (audio.durationSeconds != null) ...[
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
                 _formatDuration(audio.durationSeconds!),
                 style: theme.textTheme.labelSmall?.copyWith(
@@ -260,23 +298,6 @@ class PodcastScreen extends ConsumerWidget {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Show info icon if post is accessible
-            if (audio.post != null)
-              IconButton(
-                icon: const Icon(Icons.info_outline),
-                iconSize: 20,
-                onPressed: () {
-                  // Access the linked post directly
-                  final post = audio.post!;
-                  // TODO: Navigate to post detail screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Post: ${post.title}\nID: ${post.id}'),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                },
-              ),
             // Play button or playing indicator
             if (isPlaying)
               Icon(
@@ -286,6 +307,7 @@ class PodcastScreen extends ConsumerWidget {
             else
               IconButton(
                 icon: const Icon(Icons.play_circle_outline),
+                iconSize: 32,
                 onPressed: () => _playAudio(context, ref, audio),
               ),
           ],

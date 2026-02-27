@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jugendkompass_app/domain/providers/profile_provider.dart';
 import 'package:jugendkompass_app/domain/providers/theme_provider.dart';
 import 'package:jugendkompass_app/domain/providers/favorites_provider.dart';
@@ -20,6 +21,13 @@ class ProfileScreen extends ConsumerWidget {
     final favoritesCount = ref.watch(favoritesProvider).length;
     final theme = Theme.of(context);
 
+    // Get avatar URL from Supabase profile
+    final profileAsync = ref.watch(currentUserProfileProvider);
+    final avatarUrl = profileAsync.maybeWhen(
+      data: (profile) => profile?.avatarUrl,
+      orElse: () => null,
+    );
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profil'),
@@ -29,7 +37,7 @@ class ProfileScreen extends ConsumerWidget {
           // Profile Header
           ProfileHeaderWidget(
             userName: userName,
-            avatarUrl: null, // TODO: Implement avatar URL from Supabase
+            avatarUrl: avatarUrl,
             onEditPressed: () {
               Navigator.push(
                 context,
@@ -63,21 +71,6 @@ class ProfileScreen extends ConsumerWidget {
               ref.read(notificationsProvider.notifier).update(value);
             },
             secondary: const Icon(Icons.notifications_outlined),
-          ),
-
-          ListTile(
-            leading: const Icon(Icons.account_circle_outlined),
-            title: const Text('Account'),
-            subtitle: const Text('Account-Einstellungen'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              // TODO: Navigate to account settings
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Account-Einstellungen kommen bald'),
-                ),
-              );
-            },
           ),
 
           SwitchListTile(
@@ -232,11 +225,16 @@ class ProfileScreen extends ConsumerWidget {
       await UserPreferencesService.instance.clearAll();
       await FavoritesService.instance.clearAllFavorites();
 
-      // TODO: Delete Supabase data if authenticated
-      // final userId = Supabase.instance.client.auth.currentUser?.id;
-      // if (userId != null) {
-      //   await ref.read(profileRepositoryProvider).deleteUserData(userId);
-      // }
+      // Delete Supabase data if authenticated
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId != null) {
+        try {
+          await ref.read(profileRepositoryProvider).deleteUserData(userId);
+        } catch (e) {
+          // Log error but continue with local deletion
+          debugPrint('Failed to delete Supabase data: $e');
+        }
+      }
 
       // Reset providers
       ref.invalidate(userNameProvider);

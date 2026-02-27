@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
+import 'package:jugendkompass_app/core/config/app_theme.dart';
 
 class FeaturedEpisodeCard extends StatelessWidget {
   final AudioModel audio;
@@ -87,7 +88,7 @@ class FeaturedEpisodeCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF8B3A3A),
+                        color: AppTheme.primaryColor,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: const Text(
@@ -144,7 +145,7 @@ class FeaturedEpisodeCard extends StatelessWidget {
                       icon: const Icon(Icons.play_arrow, size: 20),
                       label: const Text('Abspielen'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B3A3A),
+                        backgroundColor: AppTheme.primaryColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 20,

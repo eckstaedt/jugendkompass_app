@@ -1,75 +1,91 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:jugendkompass_app/data/models/content_model.dart';
-import 'package:jugendkompass_app/data/models/audio_model.dart';
-import 'package:jugendkompass_app/domain/providers/content_provider.dart';
-import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
+import 'package:jugendkompass_app/data/models/post_model.dart';
+import 'package:jugendkompass_app/data/models/video_model.dart';
+import 'package:jugendkompass_app/domain/providers/post_provider.dart';
+import 'package:jugendkompass_app/domain/providers/video_provider.dart';
 
-// Model to unify content and audio for recommendations
+// Model for recommended content items (Posts = Artikel with/without Audio, Videos)
 class RecommendedItem {
-  final String id;
-  final String title;
-  final String contentType; // 'post', 'audio', 'video', etc.
-  final String? imageUrl;
-  final String? audioId;
-  final AudioModel? audioModel; // If this is an audio item
+  final dynamic data; // PostModel or VideoModel
+  final String contentType; // 'post' or 'video'
 
   RecommendedItem({
-    required this.id,
-    required this.title,
+    required this.data,
     required this.contentType,
-    this.imageUrl,
-    this.audioId,
-    this.audioModel,
   });
 
-  factory RecommendedItem.fromContent(ContentModel content) {
+  factory RecommendedItem.fromPost(PostModel post) {
     return RecommendedItem(
-      id: content.id,
-      title: content.displayTitle,
-      contentType: content.contentType,
-      imageUrl: content.imageUrl,
-      audioId: content.audioId,
+      data: post,
+      contentType: 'post',
     );
   }
 
-  factory RecommendedItem.fromAudio(AudioModel audio) {
+  factory RecommendedItem.fromVideo(VideoModel video) {
     return RecommendedItem(
-      id: audio.id,
-      title: audio.title ?? 'Audio',
-      contentType: 'audio',
-      imageUrl: audio.thumbnailUrl,
-      audioId: audio.id,
-      audioModel: audio,
+      data: video,
+      contentType: 'video',
     );
   }
 
-  bool get isAudio => contentType.toLowerCase() == 'audio' || audioId != null;
-  bool get isVideo => contentType.toLowerCase() == 'video';
-  bool get isPost => contentType.toLowerCase() == 'post';
+  String get id {
+    if (contentType == 'video') {
+      return (data as VideoModel).id;
+    }
+    return (data as PostModel).id;
+  }
+
+  String get title {
+    if (contentType == 'video') {
+      return (data as VideoModel).title;
+    }
+    return (data as PostModel).title;
+  }
+
+  String? get imageUrl {
+    if (contentType == 'video') {
+      return (data as VideoModel).thumbnailUrl;
+    }
+    return (data as PostModel).imageUrl;
+  }
+
+  String? get audioId {
+    if (contentType == 'video') return null;
+    return (data as PostModel).audioId;
+  }
+
+  String? get categoryName {
+    if (contentType == 'video') return null;
+    return (data as PostModel).categoryName;
+  }
+
+  // Getter to get the actual model
+  PostModel? get post => contentType == 'post' ? data as PostModel : null;
+  VideoModel? get video => contentType == 'video' ? data as VideoModel : null;
+
+  bool get hasAudio => contentType == 'post' && (data as PostModel).audioId != null;
+  bool get isVideo => contentType == 'video';
+  bool get isArticle => contentType == 'post' && !hasAudio;
 }
 
 final recommendedContentProvider = FutureProvider<List<RecommendedItem>>((ref) async {
   try {
-    // Fetch random posts (excluding impulses and verses)
-    final contentRepository = ref.watch(contentRepositoryProvider);
-    final posts = await contentRepository.getContentList(
-      contentType: 'post',
-      limit: 5,
-    );
+    // Fetch posts (articles with and without audio)
+    final postRepository = ref.watch(postRepositoryProvider);
+    final posts = await postRepository.getPostList(limit: 8);
 
-    // Fetch random audios
-    final audioRepository = ref.watch(audioRepositoryProvider);
-    final audios = await audioRepository.getAudioList(limit: 5);
+    // Fetch videos
+    final videoRepository = ref.watch(videoRepositoryProvider);
+    final videos = await videoRepository.getVideoList(limit: 100);
 
     // Convert to RecommendedItems
-    final postItems = posts.map((post) => RecommendedItem.fromContent(post)).toList();
-    final audioItems = audios.map((audio) => RecommendedItem.fromAudio(audio)).toList();
+    final postItems = posts.map((post) => RecommendedItem.fromPost(post)).toList();
+    final videoItems = videos.take(2).map((video) => RecommendedItem.fromVideo(video)).toList();
 
     // Combine and shuffle
-    final combined = [...postItems, ...audioItems];
+    final combined = [...postItems, ...videoItems];
     combined.shuffle();
 
-    // Return first 10 items
     return combined.take(10).toList();
   } catch (e) {
     throw Exception('Fehler beim Laden der Empfehlungen: $e');

@@ -1,9 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/domain/providers/profile_provider.dart';
+import 'package:jugendkompass_app/domain/providers/supabase_provider.dart';
+import 'package:jugendkompass_app/data/models/profile_model.dart';
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
   const ProfileEditScreen({super.key});
@@ -41,14 +44,66 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       );
 
       if (image != null) {
-        // TODO: Upload image to Supabase Storage
-        // For now, just show a message
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Bild-Upload kommt bald'),
-          ),
-        );
+        // Upload image to Supabase Storage
+        final user = ref.read(supabaseProvider).auth.currentUser;
+
+        if (user != null) {
+          setState(() {
+            _isSaving = true;
+          });
+
+          try {
+            final profileRepo = ref.read(profileRepositoryProvider);
+            final imageFile = File(image.path);
+
+            // Delete old avatar if exists
+            if (_avatarUrl != null) {
+              try {
+                await profileRepo.deleteAvatar(_avatarUrl!);
+              } catch (_) {
+                // Ignore if old avatar doesn't exist
+              }
+            }
+
+            // Upload new avatar
+            final newAvatarUrl = await profileRepo.uploadAvatar(user.id, imageFile);
+
+            setState(() {
+              _avatarUrl = newAvatarUrl;
+            });
+
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Bild erfolgreich hochgeladen'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          } catch (e) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Fehler beim Hochladen: $e'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          } finally {
+            if (mounted) {
+              setState(() {
+                _isSaving = false;
+              });
+            }
+          }
+        } else {
+          // User not authenticated - show message
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Bitte melde dich an, um ein Profilbild hochzuladen'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -85,7 +140,36 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       // Update provider
       ref.read(userNameProvider.notifier).state = name;
 
-      // TODO: Save to Supabase if authenticated
+      // Save to Supabase if authenticated
+      final user = ref.read(supabaseProvider).auth.currentUser;
+
+      if (user != null) {
+        try {
+          final profileRepo = ref.read(profileRepositoryProvider);
+
+          // Get existing profile or create new one
+          ProfileModel? existingProfile;
+          try {
+            existingProfile = await profileRepo.getProfile(user.id);
+          } catch (_) {
+            // Profile doesn't exist yet
+          }
+
+          // Create or update profile
+          final profile = ProfileModel(
+            id: existingProfile?.id ?? user.id,
+            userId: user.id,
+            name: name,
+            avatarUrl: _avatarUrl ?? existingProfile?.avatarUrl,
+            createdAt: existingProfile?.createdAt ?? DateTime.now(),
+          );
+
+          await profileRepo.updateProfile(profile);
+        } catch (e) {
+          // Log error but don't fail the save
+          debugPrint('Failed to save to Supabase: $e');
+        }
+      }
 
       if (!mounted) return;
 

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/profile_model.dart';
 import '../../core/constants/supabase_constants.dart';
@@ -32,6 +33,53 @@ class ProfileRepository {
           .upsert(profile.toJson());
     } catch (e) {
       throw Exception('Failed to update profile: $e');
+    }
+  }
+
+  /// Upload avatar image to Supabase Storage
+  /// Returns the public URL of the uploaded image
+  Future<String> uploadAvatar(String userId, File imageFile) async {
+    try {
+      final fileExt = imageFile.path.split('.').last;
+      final fileName = '${userId}_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+      final filePath = 'avatars/$fileName';
+
+      // Upload to Supabase Storage
+      await _supabaseClient.storage
+          .from('profiles')
+          .upload(filePath, imageFile);
+
+      // Get public URL
+      final publicUrl = _supabaseClient.storage
+          .from('profiles')
+          .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (e) {
+      throw Exception('Failed to upload avatar: $e');
+    }
+  }
+
+  /// Delete avatar image from Supabase Storage
+  Future<void> deleteAvatar(String avatarUrl) async {
+    try {
+      // Extract file path from URL
+      final uri = Uri.parse(avatarUrl);
+      final pathSegments = uri.pathSegments;
+      final bucketIndex = pathSegments.indexOf('profiles');
+
+      if (bucketIndex == -1 || bucketIndex >= pathSegments.length - 1) {
+        throw Exception('Invalid avatar URL');
+      }
+
+      final filePath = pathSegments.sublist(bucketIndex + 1).join('/');
+
+      // Delete from storage
+      await _supabaseClient.storage
+          .from('profiles')
+          .remove([filePath]);
+    } catch (e) {
+      throw Exception('Failed to delete avatar: $e');
     }
   }
 

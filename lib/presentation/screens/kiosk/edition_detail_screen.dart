@@ -9,6 +9,7 @@ import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/screens/podcast/full_player_screen.dart';
+import 'package:jugendkompass_app/core/config/app_theme.dart';
 
 class EditionDetailScreen extends ConsumerWidget {
   final EditionModel edition;
@@ -108,7 +109,7 @@ class EditionDetailScreen extends ConsumerWidget {
             builder: (context, scrollController) {
               return Container(
                 decoration: const BoxDecoration(
-                  color: Color(0xFFFAF3F0),
+                  color: AppTheme.backgroundBeige,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
                 child: Column(
@@ -192,7 +193,7 @@ class EditionDetailScreen extends ConsumerWidget {
             fontSize: 12,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.5,
-            color: Color(0xFF8B3A3A),
+            color: AppTheme.primaryColor,
           ),
         ),
         const SizedBox(height: 8),
@@ -202,7 +203,7 @@ class EditionDetailScreen extends ConsumerWidget {
           edition.displayTitle,
           style: theme.textTheme.displaySmall?.copyWith(
             fontWeight: FontWeight.bold,
-            color: const Color(0xFF1A1A2E),
+            color: AppTheme.textDark,
             height: 1.1,
           ),
         ),
@@ -218,7 +219,7 @@ class EditionDetailScreen extends ConsumerWidget {
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF8B3A3A),
+              backgroundColor: AppTheme.primaryColor,
               foregroundColor: Colors.white,
               minimumSize: const Size(double.infinity, 56),
               shape: RoundedRectangleBorder(
@@ -239,34 +240,34 @@ class EditionDetailScreen extends ConsumerWidget {
                 padding: HtmlPaddings.zero,
                 fontSize: FontSize(16),
                 lineHeight: const LineHeight(1.6),
-                color: const Color(0xFF6B7280),
+                color: AppTheme.textGray,
               ),
               "p": Style(
                 margin: Margins.only(bottom: 12),
                 fontSize: FontSize(16),
                 lineHeight: const LineHeight(1.6),
-                color: const Color(0xFF6B7280),
+                color: AppTheme.textGray,
               ),
               "h1": Style(
                 fontSize: FontSize(24),
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF1A1A2E),
+                color: AppTheme.textDark,
                 margin: Margins.only(bottom: 8, top: 16),
               ),
               "h2": Style(
                 fontSize: FontSize(20),
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF1A1A2E),
+                color: AppTheme.textDark,
                 margin: Margins.only(bottom: 8, top: 16),
               ),
               "h3": Style(
                 fontSize: FontSize(18),
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF1A1A2E),
+                color: AppTheme.textDark,
                 margin: Margins.only(bottom: 8, top: 12),
               ),
               "a": Style(
-                color: const Color(0xFF8B3A3A),
+                color: AppTheme.primaryColor,
                 textDecoration: TextDecoration.underline,
               ),
               "ul": Style(
@@ -295,14 +296,14 @@ class EditionDetailScreen extends ConsumerWidget {
             const Icon(
               Icons.article,
               size: 20,
-              color: Color(0xFF1A1A2E),
+              color: AppTheme.textDark,
             ),
             const SizedBox(width: 8),
             Text(
               'Artikel in dieser Ausgabe',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFF1A1A2E),
+                color: AppTheme.textDark,
               ),
             ),
           ],
@@ -371,14 +372,14 @@ class EditionDetailScreen extends ConsumerWidget {
                     placeholder: Container(
                       width: 60,
                       height: 60,
-                      color: const Color(0xFFFAF3F0),
+                      color: AppTheme.backgroundBeige,
                       child: Center(
                         child: Text(
                           '$index',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF8B3A3A),
+                            color: AppTheme.primaryColor,
                           ),
                         ),
                       ),
@@ -386,14 +387,14 @@ class EditionDetailScreen extends ConsumerWidget {
                     errorWidget: Container(
                       width: 60,
                       height: 60,
-                      color: const Color(0xFFFAF3F0),
+                      color: AppTheme.backgroundBeige,
                       child: Center(
                         child: Text(
                           '$index',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF8B3A3A),
+                            color: AppTheme.primaryColor,
                           ),
                         ),
                       ),
@@ -403,7 +404,7 @@ class EditionDetailScreen extends ConsumerWidget {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFAF3F0),
+                      color: AppTheme.backgroundBeige,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
@@ -412,7 +413,7 @@ class EditionDetailScreen extends ConsumerWidget {
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF8B3A3A),
+                          color: AppTheme.primaryColor,
                         ),
                       ),
                     ),
@@ -430,7 +431,7 @@ class EditionDetailScreen extends ConsumerWidget {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A1A2E),
+                    color: AppTheme.textDark,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -451,7 +452,7 @@ class EditionDetailScreen extends ConsumerWidget {
                       style: TextStyle(color: Colors.grey.shade400),
                     ),
                     Text(
-                      '3 MIN', // TODO: Calculate from word count
+                      _calculateReadingTime(post.body),
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
@@ -470,7 +471,7 @@ class EditionDetailScreen extends ConsumerWidget {
               icon: const Icon(
                 Icons.play_circle,
                 size: 40,
-                color: Color(0xFF8B3A3A),
+                color: AppTheme.primaryColor,
               ),
             ),
         ],
@@ -582,6 +583,28 @@ class EditionDetailScreen extends ConsumerWidget {
           ),
         );
       }
+    }
+  }
+
+  /// Calculate reading time from HTML content
+  /// Assumes average reading speed of 200 words per minute
+  String _calculateReadingTime(String htmlContent) {
+    // Remove HTML tags
+    final text = htmlContent.replaceAll(RegExp(r'<[^>]*>'), ' ');
+
+    // Count words (split by whitespace and filter empty strings)
+    final words = text.split(RegExp(r'\s+')).where((word) => word.isNotEmpty).length;
+
+    // Calculate reading time (200 words per minute)
+    final minutes = (words / 200).ceil();
+
+    // Return formatted string
+    if (minutes < 1) {
+      return '< 1 MIN';
+    } else if (minutes == 1) {
+      return '1 MIN';
+    } else {
+      return '$minutes MIN';
     }
   }
 }

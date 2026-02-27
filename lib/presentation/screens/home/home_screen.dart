@@ -4,11 +4,14 @@ import 'package:jugendkompass_app/domain/providers/verse_provider.dart';
 import 'package:jugendkompass_app/domain/providers/profile_provider.dart';
 import 'package:jugendkompass_app/domain/providers/impulse_provider.dart';
 import 'package:jugendkompass_app/domain/providers/recommendation_provider.dart';
-import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/home/widgets/verse_card.dart';
 import 'package:jugendkompass_app/presentation/screens/home/widgets/impulse_card.dart';
 import 'package:jugendkompass_app/presentation/screens/home/widgets/recommended_content_tile.dart';
 import 'package:jugendkompass_app/presentation/screens/home/widgets/section_header.dart';
+import 'package:jugendkompass_app/presentation/screens/impulse/impulse_detail_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/impulse/impulse_list_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -113,13 +116,18 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
 
-            // Daily Impulses Section
+            // Impulses Section
             SliverToBoxAdapter(
               child: SectionHeader(
                 title: 'Impulse',
                 actionText: 'Alle anzeigen',
                 onActionTap: () {
-                  // TODO: Navigate to impulses list screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ImpulseListScreen(),
+                    ),
+                  );
                 },
               ),
             ),
@@ -137,7 +145,7 @@ class HomeScreen extends ConsumerWidget {
                     );
                   }
                   return SizedBox(
-                    height: 300,
+                    height: 250,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -147,7 +155,12 @@ class HomeScreen extends ConsumerWidget {
                         return ImpulseCard(
                           impulse: impulse,
                           onTap: () {
-                            // TODO: Navigate to impulse detail screen
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ImpulseDetailScreen(impulse: impulse),
+                              ),
+                            );
                           },
                         );
                       },
@@ -155,7 +168,7 @@ class HomeScreen extends ConsumerWidget {
                   );
                 },
                 loading: () => const SizedBox(
-                  height: 300,
+                  height: 250,
                   child: Center(
                     child: CircularProgressIndicator(),
                   ),
@@ -195,13 +208,26 @@ class HomeScreen extends ConsumerWidget {
                       return RecommendedContentTile(
                         item: item,
                         onTap: () {
-                          if (item.isAudio && item.audioModel != null) {
-                            // Play audio directly
-                            final audioService = ref.read(audioServiceProvider);
-                            audioService.playAudio(item.audioModel!.audioUrl);
-                            ref.read(currentAudioProvider.notifier).state = item.audioModel;
-                          } else {
-                            // TODO: Navigate to content detail screen
+                          // Navigate to appropriate screen based on content type
+                          if (item.isVideo && item.video != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => VideoPlayerScreen(
+                                  videoUrl: item.video!.videoUrl,
+                                  title: item.video!.displayTitle,
+                                ),
+                              ),
+                            );
+                          } else if (item.post != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PostDetailScreen(
+                                  post: item.post!,
+                                ),
+                              ),
+                            );
                           }
                         },
                       );

@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 
-/// A network image widget that handles CORS issues on web
-/// For web: uses a CORS proxy for problematic domains
-/// For mobile: uses CachedNetworkImage for better performance
+/// A network image widget that works across all platforms
+/// Uses CachedNetworkImage for mobile and Image.network for web
 class CorsNetworkImage extends StatelessWidget {
   final String imageUrl;
   final BoxFit? fit;
@@ -23,27 +22,12 @@ class CorsNetworkImage extends StatelessWidget {
     this.errorWidget,
   });
 
-  /// Get CORS-safe URL for web
-  String _getCorsProxyUrl(String url) {
-    if (!kIsWeb) return url;
-
-    // If the URL is from wp.jugendkompass.com, use a CORS proxy
-    if (url.contains('wp.jugendkompass.com')) {
-      // Use corsproxy.io as CORS proxy
-      return 'https://corsproxy.io/?${Uri.encodeComponent(imageUrl)}';
-    }
-
-    return url;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final processedUrl = _getCorsProxyUrl(imageUrl);
-
-    // For web, use Image.network with proxied URL
+    // For web, use Image.network
     if (kIsWeb) {
       return Image.network(
-        processedUrl,
+        imageUrl,
         width: width,
         height: height,
         fit: fit ?? BoxFit.cover,
@@ -60,7 +44,6 @@ class CorsNetworkImage extends StatelessWidget {
               );
         },
         errorBuilder: (context, error, stackTrace) {
-          debugPrint('Image loading error for $imageUrl: $error');
           return errorWidget ??
               Container(
                 width: width,
@@ -80,11 +63,10 @@ class CorsNetworkImage extends StatelessWidget {
       fit: fit ?? BoxFit.cover,
       placeholder: (context, url) =>
           placeholder ??
-          Center(
+          const Center(
             child: CircularProgressIndicator(),
           ),
       errorWidget: (context, url, error) {
-        debugPrint('Image loading error for $url: $error');
         return errorWidget ??
             Container(
               width: width,

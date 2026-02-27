@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/data/models/verse_model.dart';
 import 'package:jugendkompass_app/domain/providers/favorites_provider.dart';
+import 'package:jugendkompass_app/core/config/app_theme.dart';
 
 class VerseCard extends ConsumerWidget {
   final VerseModel verse;
@@ -15,7 +16,6 @@ class VerseCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isFavorite = ref.watch(favoritesProvider.notifier).isFavorite(verse.id);
-    const pinkColor = Color(0xFFEC4899);
 
     return Card(
       margin: const EdgeInsets.all(16),
@@ -40,13 +40,13 @@ class VerseCard extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: pinkColor.withValues(alpha: 0.1),
+                    color: AppTheme.primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     'VERS DES TAGES',
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: pinkColor,
+                      color: AppTheme.primaryColor,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.5,
                     ),
@@ -56,7 +56,7 @@ class VerseCard extends ConsumerWidget {
                 IconButton(
                   icon: Icon(
                     isFavorite ? Icons.favorite : Icons.favorite_border,
-                    color: pinkColor,
+                    color: AppTheme.primaryColor,
                   ),
                   onPressed: () {
                     ref.read(favoritesProvider.notifier).toggleFavorite(verse.id);

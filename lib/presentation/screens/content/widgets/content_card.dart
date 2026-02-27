@@ -78,7 +78,7 @@ class ContentCard extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              content.contentType?.toUpperCase() ?? 'ARTIKEL',
+                              content.contentType.toUpperCase(),
                               style: theme.textTheme.labelSmall?.copyWith(
                                 color: colorScheme.onPrimaryContainer,
                                 fontWeight: FontWeight.bold,
