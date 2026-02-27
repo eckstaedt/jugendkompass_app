@@ -214,6 +214,7 @@ Zentrale Tabelle für alle Inhaltstypen. Wird als FK von Posts, Impulsen, Versen
 | title | text | Nein | – |
 | description | text | Ja | – |
 | url | text | Nein | – |
+| image_url | text | Ja | – |
 | content_id | uuid | Nein | – |
 | user_id | uuid | Ja | – |
 | created_at | timestamptz | Ja | `now()` |

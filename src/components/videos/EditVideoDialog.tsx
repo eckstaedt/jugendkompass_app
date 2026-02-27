@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Video } from '@/lib/supabase';
 import RichTextEditor from '@/components/editor/RichTextEditor';
 import { LoaderCircle } from 'lucide-react';
+import { ImageUploader } from '@/components/posts/ImageUploader';
 
 type EditVideoDialogProps = {
   video: Video | null;
@@ -18,6 +19,7 @@ const EditVideoDialog = ({ video, open, onOpenChange }: EditVideoDialogProps) =>
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [url, setUrl] = useState('');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const updateVideoMutation = useUpdateVideo();
   const { toast } = useToast();
 
@@ -26,11 +28,12 @@ const EditVideoDialog = ({ video, open, onOpenChange }: EditVideoDialogProps) =>
       setTitle(video.title);
       setDescription(video.description || '');
       setUrl(video.url);
+      setImageUrl(video.image_url || null);
     }
   }, [video]);
 
   const handleSave = async () => {
-    if (!video || !title) return;
+    if (!video || !title || !imageUrl) return;
 
     try {
       await updateVideoMutation.mutateAsync({
@@ -38,6 +41,7 @@ const EditVideoDialog = ({ video, open, onOpenChange }: EditVideoDialogProps) =>
         title,
         description,
         url,
+        imageUrl: imageUrl!,
       });
 
       toast({
@@ -81,6 +85,12 @@ const EditVideoDialog = ({ video, open, onOpenChange }: EditVideoDialogProps) =>
               placeholder="Video-URL"
             />
           </div>
+          <ImageUploader
+            value={imageUrl}
+            onChange={setImageUrl}
+            required
+            label="Thumbnail (JPEG, PNG, max. 3MB)*"
+          />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -88,7 +98,7 @@ const EditVideoDialog = ({ video, open, onOpenChange }: EditVideoDialogProps) =>
           </Button>
           <Button
             onClick={handleSave}
-            disabled={!title || updateVideoMutation.isPending}
+            disabled={!title || !imageUrl || updateVideoMutation.isPending}
           >
             {updateVideoMutation.isPending ? (
               <>

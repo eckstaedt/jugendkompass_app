@@ -60,6 +60,7 @@ export type Video = {
   title: string;
   description: string | null;
   url: string;
+  image_url: string | null;
   user_id: string | null;
   created_at: string | null;
   content: {

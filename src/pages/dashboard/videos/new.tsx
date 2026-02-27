@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { FileVideoIcon, LinkIcon, LoaderCircle, UploadIcon } from 'lucide-react';
+import { ImageUploader } from '@/components/posts/ImageUploader';
 import RichTextEditor from '@/components/editor/RichTextEditor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -20,6 +21,7 @@ const NewVideoPage = () => {
   const [description, setDescription] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [url, setUrl] = useState('');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [mode, setMode] = useState<'upload' | 'url'>('upload');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -29,7 +31,7 @@ const NewVideoPage = () => {
     setFile(selectedFile || null);
   };
 
-  const isValid = title && (mode === 'upload' ? !!file : !!url);
+  const isValid = title && !!imageUrl && (mode === 'upload' ? !!file : !!url);
 
   const handleSubmit = async () => {
     if (!user || !isValid) {
@@ -54,6 +56,7 @@ const NewVideoPage = () => {
       await uploadVideoMutation.mutateAsync({
         title,
         description,
+        imageUrl: imageUrl!,
         ...(mode === 'upload' ? { file: file! } : { url }),
         userId: user.id
       });
@@ -63,7 +66,7 @@ const NewVideoPage = () => {
       setDescription('');
       setFile(null);
       setUrl('');
-
+      setImageUrl(null);
       toast({
         title: "Video hinzugefügt",
         description: mode === 'upload'
@@ -109,6 +112,13 @@ const NewVideoPage = () => {
               <label className="block text-sm font-medium mb-1">Beschreibung</label>
               <RichTextEditor content={description} onChange={setDescription} />
             </div>
+
+            <ImageUploader
+              value={imageUrl}
+              onChange={setImageUrl}
+              required
+              label="Thumbnail (JPEG, PNG, max. 3MB)*"
+            />
 
             <Tabs value={mode} onValueChange={(v) => setMode(v as 'upload' | 'url')}>
               <TabsList className="w-full">
