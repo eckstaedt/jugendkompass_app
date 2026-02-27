@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigateRef = useRef(navigate);
   const toastRef = useRef(toast);
   const isInitialSessionRef = useRef(true);
-  
+  const hasAuthenticatedRef = useRef(false);
   // Keep refs up to date
   useEffect(() => {
     navigateRef.current = navigate;
@@ -88,8 +88,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               setIsAdmin(isUserAdmin);
               setAdminChecked(true);
               
-              // Only navigate on actual login, not session restore or token refresh
-              const isActualLogin = event === 'SIGNED_IN' && !isInitialSessionRef.current;
+              // Only navigate on actual login, not session restore, token refresh, or tab focus
+              const isActualLogin = event === 'SIGNED_IN' && !isInitialSessionRef.current && !hasAuthenticatedRef.current;
+              
+              hasAuthenticatedRef.current = true;
               
               if (isUserAdmin && isActualLogin) {
                 navigateRef.current('/dashboard');
@@ -116,6 +118,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(null);
           setIsAdmin(false);
           setAdminChecked(true);
+          hasAuthenticatedRef.current = false;
           if (event === 'SIGNED_OUT') {
             navigateRef.current('/login');
           }
