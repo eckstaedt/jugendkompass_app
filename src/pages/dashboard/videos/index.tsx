@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileVideoIcon, LinkIcon, LoaderCircle, PencilIcon, Trash2Icon, UploadIcon } from 'lucide-react';
+import { ImageUploader } from '@/components/posts/ImageUploader';
 import { Progress } from '@/components/ui/progress';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -36,6 +37,7 @@ const VideosPage = () => {
   const [description, setDescription] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [url, setUrl] = useState('');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [mode, setMode] = useState<'upload' | 'url'>('upload');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -56,7 +58,7 @@ const VideosPage = () => {
     setFile(selectedFile || null);
   };
 
-  const isValid = title && (mode === 'upload' ? !!file : !!url);
+  const isValid = title && !!imageUrl && (mode === 'upload' ? !!file : !!url);
 
   const handleSubmit = async () => {
     if (!user || !isValid) {
@@ -81,6 +83,7 @@ const VideosPage = () => {
       await uploadVideoMutation.mutateAsync({
         title,
         description,
+        imageUrl: imageUrl!,
         ...(mode === 'upload' ? { file: file! } : { url }),
         userId: user.id
       });
@@ -90,7 +93,7 @@ const VideosPage = () => {
       setDescription('');
       setFile(null);
       setUrl('');
-
+      setImageUrl(null);
       toast({
         title: "Video hinzugefügt",
         description: mode === 'upload'
@@ -146,6 +149,13 @@ const VideosPage = () => {
               <label className="block text-sm font-medium mb-1">Beschreibung</label>
               <RichTextEditor content={description} onChange={setDescription} />
             </div>
+
+            <ImageUploader
+              value={imageUrl}
+              onChange={setImageUrl}
+              required
+              label="Thumbnail (JPEG, PNG, max. 3MB)*"
+            />
 
             <Tabs value={mode} onValueChange={(v) => setMode(v as 'upload' | 'url')}>
               <TabsList className="w-full">
@@ -223,6 +233,13 @@ const VideosPage = () => {
                     key={video.id}
                     className="border rounded-lg overflow-hidden shadow-sm"
                   >
+                    {video.image_url && (
+                      <img
+                        src={video.image_url}
+                        alt={video.title}
+                        className="w-full h-40 object-cover"
+                      />
+                    )}
                     <div className="p-4 space-y-3">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center space-x-3 min-w-0">

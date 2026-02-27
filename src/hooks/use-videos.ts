@@ -23,7 +23,7 @@ export const useUploadVideo = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ title, description, file, url, userId }: { title: string, description?: string, file?: File, url?: string, userId: string }) => {
+    mutationFn: async ({ title, description, file, url, imageUrl, userId }: { title: string, description?: string, file?: File, url?: string, imageUrl: string, userId: string }) => {
       try {
         let videoUrl: string;
 
@@ -60,7 +60,8 @@ export const useUploadVideo = () => {
           .insert({ 
             title, 
             description: description || null,
-            url: videoUrl, 
+            url: videoUrl,
+            image_url: imageUrl,
             user_id: userId,
             content_id: '00000000-0000-0000-0000-000000000000' // placeholder, overwritten by trigger
           } as any)
@@ -95,9 +96,10 @@ export const useUpdateVideo = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, title, description, url }: { id: number, title: string, description?: string, url?: string }) => {
+    mutationFn: async ({ id, title, description, url, imageUrl }: { id: number, title: string, description?: string, url?: string, imageUrl?: string }) => {
       const updateData: Record<string, any> = { title, description: description || null };
       if (url) updateData.url = url;
+      if (imageUrl !== undefined) updateData.image_url = imageUrl;
 
       const { data, error } = await supabase
         .from('videos')
