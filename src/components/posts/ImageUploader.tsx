@@ -22,6 +22,10 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   const [preview, setPreview] = useState(value || "");
   const fileInput = useRef<HTMLInputElement>(null);
 
+  React.useEffect(() => {
+    setPreview(value || "");
+  }, [value]);
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
