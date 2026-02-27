@@ -25,6 +25,7 @@ dependencies:
   flutter_svg: ^2.0.10
   shimmer: ^3.0.0
 
+
   # Audio Playback
   just_audio: ^0.9.38
   audio_video_progress_bar: ^2.0.2

@@ -12,6 +12,7 @@ import 'package:jugendkompass_app/presentation/screens/impulse/impulse_detail_sc
 import 'package:jugendkompass_app/presentation/screens/impulse/impulse_list_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
+import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -38,34 +39,33 @@ class HomeScreen extends ConsumerWidget {
             // Custom Header
             SliverToBoxAdapter(
               child: Container(
-                padding: const EdgeInsets.fromLTRB(16, 48, 16, 24),
+                padding: const EdgeInsets.fromLTRB(
+                  DesignTokens.paddingHorizontal,
+                  48,
+                  DesignTokens.paddingHorizontal,
+                  DesignTokens.spacingMedium,
+                ),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      colorScheme.primary,
-                      colorScheme.secondary,
-                    ],
-                  ),
+                  color: DesignTokens.primaryRed,
+                  boxShadow: [DesignTokens.shadowSubtle],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'WILLKOMMEN ZURÜCK',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.9),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: Colors.white.withOpacity(0.9),
                         letterSpacing: 1.2,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
                     Text(
                       'Hi ${userName ?? "User"}',
-                      style: theme.textTheme.headlineMedium?.copyWith(
+                      style: theme.textTheme.displaySmall?.copyWith(
                         color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ],

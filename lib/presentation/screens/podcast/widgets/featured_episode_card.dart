@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
-import 'package:jugendkompass_app/core/config/app_theme.dart';
+import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
 class FeaturedEpisodeCard extends StatelessWidget {
   final AudioModel audio;
@@ -20,16 +20,10 @@ class FeaturedEpisodeCard extends StatelessWidget {
 
     return Container(
       height: 220,
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(DesignTokens.spacingMedium),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
+        boxShadow: [DesignTokens.shadowLargeCard],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
@@ -61,8 +55,8 @@ class FeaturedEpisodeCard extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withValues(alpha: 0.7),
-                      Colors.black.withValues(alpha: 0.9),
+                      Colors.black.withOpacity(0.7),
+                      Colors.black.withOpacity(0.9),
                     ],
                     stops: const [0.0, 0.5, 1.0],
                   ),
@@ -88,10 +82,10 @@ class FeaturedEpisodeCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryColor,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
+                          color: DesignTokens.primaryRed,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                          child: const Text(
                         'FEATURED',
                         style: TextStyle(
                           color: Colors.white,
@@ -107,9 +101,9 @@ class FeaturedEpisodeCard extends StatelessWidget {
                     Text(
                       audio.title ?? 'Unbekannter Titel',
                       style: theme.textTheme.titleLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -121,7 +115,7 @@ class FeaturedEpisodeCard extends StatelessWidget {
                           "body": Style(
                             margin: Margins.zero,
                             padding: HtmlPaddings.zero,
-                            color: Colors.white.withValues(alpha: 0.9),
+                            color: Colors.white.withOpacity(0.9),
                             fontSize: FontSize(theme.textTheme.bodyMedium?.fontSize ?? 14),
                             maxLines: 2,
                             textOverflow: TextOverflow.ellipsis,
@@ -129,7 +123,7 @@ class FeaturedEpisodeCard extends StatelessWidget {
                           "p": Style(
                             margin: Margins.zero,
                             padding: HtmlPaddings.zero,
-                            color: Colors.white.withValues(alpha: 0.9),
+                            color: Colors.white.withOpacity(0.9),
                             fontSize: FontSize(theme.textTheme.bodyMedium?.fontSize ?? 14),
                             maxLines: 2,
                             textOverflow: TextOverflow.ellipsis,
@@ -137,7 +131,7 @@ class FeaturedEpisodeCard extends StatelessWidget {
                         },
                       ),
                     ],
-                    const SizedBox(height: 12),
+                    const SizedBox(height: DesignTokens.spacingMedium),
 
                     // Play Button
                     ElevatedButton.icon(
@@ -145,16 +139,16 @@ class FeaturedEpisodeCard extends StatelessWidget {
                       icon: const Icon(Icons.play_arrow, size: 20),
                       label: const Text('Abspielen'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 10,
+                          backgroundColor: DesignTokens.primaryRed,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
+                          ),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
                     ),
                   ],
                 ),

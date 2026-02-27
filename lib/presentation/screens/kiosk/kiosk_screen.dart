@@ -5,7 +5,7 @@ import 'package:jugendkompass_app/presentation/screens/kiosk/widgets/edition_car
 import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
-import 'package:jugendkompass_app/core/config/app_theme.dart';
+import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
 class KioskScreen extends ConsumerWidget {
   const KioskScreen({super.key});
@@ -16,7 +16,7 @@ class KioskScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundBeige,
+      backgroundColor: DesignTokens.appBackground,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -37,22 +37,26 @@ class KioskScreen extends ConsumerWidget {
                   // Header
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 8),
+                      padding: const EdgeInsets.fromLTRB(
+                        DesignTokens.paddingHorizontal,
+                        40,
+                        DesignTokens.paddingHorizontal,
+                        16,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Kiosk',
                             style: theme.textTheme.displaySmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.textDark,
+                              fontWeight: FontWeight.w800,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 8),
                           Text(
                             'Alle Ausgaben',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: AppTheme.textGray,
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: DesignTokens.textSecondary,
                             ),
                           ),
                         ],
@@ -62,13 +66,18 @@ class KioskScreen extends ConsumerWidget {
 
                   // Magazine Grid
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 80),
+                    padding: const EdgeInsets.fromLTRB(
+                      DesignTokens.paddingHorizontal,
+                      DesignTokens.spacingMedium,
+                      DesignTokens.paddingHorizontal,
+                      80,
+                    ),
                     sliver: SliverGrid(
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        childAspectRatio: 0.65, // Portrait covers
-                        mainAxisSpacing: 20,
-                        crossAxisSpacing: 16,
+                        childAspectRatio: 0.65,
+                        mainAxisSpacing: DesignTokens.spacingLarge,
+                        crossAxisSpacing: DesignTokens.paddingHorizontal,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {

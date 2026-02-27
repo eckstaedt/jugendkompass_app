@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:jugendkompass_app/core/config/app_theme.dart';
+import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
 class SectionHeader extends StatelessWidget {
   final String title;
@@ -18,14 +18,19 @@ class SectionHeader extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: DesignTokens.paddingHorizontal,
+        vertical: DesignTokens.spacingSmall,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            title,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
+            title.toUpperCase(),
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontSize: 12,
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.w600,
             ),
           ),
           if (actionText != null && onActionTap != null)
@@ -37,7 +42,7 @@ class SectionHeader extends StatelessWidget {
                   Text(
                     actionText!,
                     style: theme.textTheme.labelLarge?.copyWith(
-                      color: AppTheme.primaryColor,
+                      color: DesignTokens.primaryRed,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -45,7 +50,7 @@ class SectionHeader extends StatelessWidget {
                   const Icon(
                     Icons.arrow_forward,
                     size: 16,
-                    color: AppTheme.primaryColor,
+                    color: DesignTokens.primaryRed,
                   ),
                 ],
               ),

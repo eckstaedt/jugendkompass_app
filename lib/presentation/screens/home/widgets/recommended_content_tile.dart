@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/domain/providers/recommendation_provider.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
-import 'package:jugendkompass_app/core/config/app_theme.dart';
+import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 
 class RecommendedContentTile extends ConsumerWidget {
   final RecommendedItem item;
@@ -18,113 +19,52 @@ class RecommendedContentTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: DesignTokens.paddingHorizontal, vertical: 8),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+          boxShadow: [DesignTokens.shadowSubtle],
         ),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(DesignTokens.spacingSmall),
           child: Row(
             children: [
               // Image/Icon container (left)
               Container(
-                width: 64,
-                height: 64,
+                width: 80,
+                height: 80,
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
+                  color: DesignTokens.appBackground,
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
+                  boxShadow: [DesignTokens.shadowSubtle],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
                   child: item.imageUrl != null && item.imageUrl!.isNotEmpty
-                      ? CorsNetworkImage(
-                          imageUrl: item.imageUrl!,
-                          width: 64,
-                          height: 64,
-                          fit: BoxFit.cover,
-                        )
-                      : Icon(
-                          item.isVideo ? Icons.play_circle_outline : Icons.article_outlined,
-                          size: 32,
-                          color: AppTheme.primaryColor,
-                        ),
+                      ? CorsNetworkImage(imageUrl: item.imageUrl!, width: 80, height: 80, fit: BoxFit.cover)
+                      : Icon(item.isVideo ? Icons.play_circle_outline : Icons.article_outlined, size: 32, color: DesignTokens.primaryRed),
                 ),
               ),
 
-              const SizedBox(width: 16),
+              const SizedBox(width: DesignTokens.spacingMedium),
 
               // Title and badges (center)
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      item.title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    // Badges row
+                    Text(item.title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
-                        // Content type badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            item.isVideo ? 'VIDEO' : 'ARTIKEL',
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: AppTheme.primaryColor,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                        // Audio badge if available
+                        BadgeWidget(label: item.isVideo ? 'VIDEO' : 'ARTIKEL', backgroundColor: DesignTokens.redBackground, textColor: DesignTokens.primaryRed),
                         if (item.hasAudio) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppTheme.successGreen.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.headphones,
-                                  size: 12,
-                                  color: AppTheme.successGreen,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'AUDIO',
-                                  style: theme.textTheme.labelSmall?.copyWith(
-                                    color: AppTheme.successGreen,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          const SizedBox(width: 8),
+                          BadgeWidget(label: 'AUDIO', backgroundColor: DesignTokens.successGreen.withOpacity(0.12), textColor: DesignTokens.successGreen, icon: Icons.headphones),
                         ],
                       ],
                     ),
@@ -134,17 +74,9 @@ class RecommendedContentTile extends ConsumerWidget {
 
               // Play button (if audio available) or chevron
               if (item.hasAudio)
-                IconButton(
-                  onPressed: () => _playAudio(context, ref),
-                  icon: const Icon(Icons.play_circle_filled),
-                  color: AppTheme.primaryColor,
-                  iconSize: 32,
-                )
+                GestureDetector(onTap: () => _playAudio(context, ref), child: Icon(Icons.play_circle_filled, color: DesignTokens.primaryRed, size: 40))
               else
-                Icon(
-                  Icons.chevron_right,
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                Icon(Icons.chevron_right, color: DesignTokens.textSecondary, size: 28),
             ],
           ),
         ),

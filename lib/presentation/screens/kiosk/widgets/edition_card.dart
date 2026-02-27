@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:jugendkompass_app/data/models/edition_model.dart';
 import 'package:jugendkompass_app/presentation/screens/kiosk/edition_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
-import 'package:jugendkompass_app/core/config/app_theme.dart';
+import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
 class EditionCard extends StatelessWidget {
   final EditionModel edition;
@@ -14,6 +14,8 @@ class EditionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -26,89 +28,80 @@ class EditionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Cover Image with rounded corners
+          // Cover Image with rounded corners - LARGE BORDER RADIUS
           Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: edition.coverImageUrl != null
-                  ? CorsNetworkImage(
-                      imageUrl: edition.coverImageUrl!,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      placeholder: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Colors.blue.shade400,
-                              Colors.purple.shade600,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
+                boxShadow: [DesignTokens.shadowLargeCard],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
+                child: edition.coverImageUrl != null
+                    ? CorsNetworkImage(
+                        imageUrl: edition.coverImageUrl!,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        placeholder: Container(
+                          color: DesignTokens.appBackground,
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: DesignTokens.primaryRed,
+                            ),
+                          ),
+                        ),
+                        errorWidget: Container(
+                          color: DesignTokens.appBackground,
+                          child: const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.library_books,
+                                size: 48,
+                                color: DesignTokens.textSecondary,
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Cover nicht verfügbar',
+                                style: TextStyle(
+                                  color: DesignTokens.textSecondary,
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                        child: const Center(
-                          child: CircularProgressIndicator(color: Colors.white),
-                        ),
-                      ),
-                      errorWidget: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Colors.blue.shade400,
-                              Colors.purple.shade600,
-                            ],
-                          ),
-                        ),
+                      )
+                    : Container(
+                        color: DesignTokens.appBackground,
                         child: const Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.library_books, size: 48, color: Colors.white),
+                            Icon(
+                              Icons.library_books,
+                              size: 48,
+                              color: DesignTokens.textSecondary,
+                            ),
                             SizedBox(height: 8),
                             Text(
                               'Cover nicht verfügbar',
-                              style: TextStyle(color: Colors.white),
+                              style: TextStyle(
+                                color: DesignTokens.textSecondary,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    )
-                  : Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Colors.blue.shade400,
-                            Colors.purple.shade600,
-                          ],
-                        ),
-                      ),
-                      child: const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.library_books, size: 48, color: Colors.white),
-                          SizedBox(height: 8),
-                          Text(
-                            'Cover nicht verfügbar',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ],
-                      ),
-                    ),
+              ),
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: DesignTokens.spacingSmall),
 
           // Title
           Text(
             edition.displayTitle,
-            style: const TextStyle(
-              color: AppTheme.textDark,
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,

@@ -4,7 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/presentation/screens/podcast/full_player_screen.dart';
-import 'package:jugendkompass_app/core/config/app_theme.dart';
+import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
 class MiniPlayerBar extends ConsumerWidget {
   final AudioModel audio;
@@ -38,14 +38,8 @@ class MiniPlayerBar extends ConsumerWidget {
               height: 72,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 12,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
+                borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
+                boxShadow: [DesignTokens.shadowSubtle],
               ),
               child: Column(
                 children: [
@@ -67,14 +61,14 @@ class MiniPlayerBar extends ConsumerWidget {
                             value: progress,
                             backgroundColor: Colors.grey.shade200,
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              AppTheme.primaryColor,
+                              DesignTokens.primaryRed,
                             ),
                           );
                         },
                         loading: () => LinearProgressIndicator(
                           backgroundColor: Colors.grey.shade200,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            AppTheme.primaryColor,
+                            DesignTokens.primaryRed,
                           ),
                         ),
                         error: (_, _) => const SizedBox.shrink(),
@@ -93,7 +87,7 @@ class MiniPlayerBar extends ConsumerWidget {
                         children: [
                           // Thumbnail
                           ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers / 3),
                             child: audio.imageUrl != null
                                 ? CachedNetworkImage(
                                     imageUrl: audio.imageUrl!,

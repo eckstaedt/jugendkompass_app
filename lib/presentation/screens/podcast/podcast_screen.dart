@@ -8,7 +8,7 @@ import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
-import 'package:jugendkompass_app/core/config/app_theme.dart';
+import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'widgets/featured_episode_card.dart';
 import 'full_player_screen.dart';
 
@@ -23,7 +23,7 @@ class PodcastScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundBeige,
+      backgroundColor: DesignTokens.appBackground,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -78,15 +78,15 @@ class PodcastScreen extends ConsumerWidget {
                           Text(
                             'Podcast',
                             style: theme.textTheme.displaySmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.textDark,
+                              fontWeight: FontWeight.w700,
+                              color: DesignTokens.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             'Alle Episoden',
                             style: theme.textTheme.titleMedium?.copyWith(
-                              color: AppTheme.textGray,
+                              color: DesignTokens.textSecondary,
                             ),
                           ),
                         ],
@@ -122,19 +122,19 @@ class PodcastScreen extends ConsumerWidget {
                                         null;
                                   },
                                   backgroundColor: Colors.white,
-                                  selectedColor: AppTheme.primaryColor,
+                                  selectedColor: DesignTokens.primaryRed,
                                   labelStyle: TextStyle(
                                     color: selectedCategory == null
-                                        ? Colors.white
-                                        : AppTheme.textGray,
+                                      ? Colors.white
+                                      : DesignTokens.textSecondary,
                                     fontWeight: selectedCategory == null
                                         ? FontWeight.w600
                                         : FontWeight.normal,
                                   ),
                                   side: BorderSide(
                                     color: selectedCategory == null
-                                        ? AppTheme.primaryColor
-                                        : const Color(0xFFE5E7EB),
+                                      ? DesignTokens.primaryRed
+                                      : const Color(0xFFE5E7EB),
                                     width: 1.5,
                                   ),
                                   checkmarkColor: Colors.white,
@@ -169,18 +169,18 @@ class PodcastScreen extends ConsumerWidget {
                                           categoryKey;
                                     },
                                     backgroundColor: Colors.white,
-                                    selectedColor: AppTheme.primaryColor,
+                                    selectedColor: DesignTokens.primaryRed,
                                     labelStyle: TextStyle(
                                       color: isSelected
                                           ? Colors.white
-                                          : AppTheme.textGray,
+                                          : DesignTokens.textSecondary,
                                       fontWeight: isSelected
                                           ? FontWeight.w600
                                           : FontWeight.normal,
                                     ),
                                     side: BorderSide(
                                       color: isSelected
-                                          ? AppTheme.primaryColor
+                                          ? DesignTokens.primaryRed
                                           : const Color(0xFFE5E7EB),
                                       width: 1.5,
                                     ),
@@ -225,7 +225,12 @@ class PodcastScreen extends ConsumerWidget {
                       padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
                       child: Text(
                         'ALLE FOLGEN',
-                        style: AppTheme.sectionHeaderStyle,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.2,
+                          color: DesignTokens.textPrimary,
+                        ),
                       ),
                     ),
                   ),
@@ -324,13 +329,13 @@ class PodcastScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                  color: DesignTokens.primaryRed.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   audio.post!.categoryName!,
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: AppTheme.primaryColor,
+                    color: DesignTokens.primaryRed,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.5,
                   ),

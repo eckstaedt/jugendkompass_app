@@ -92,7 +92,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 Text(
                   'Dein täglicher Begleiter für dein Glaubensleben.',
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.9),
+                    color: Colors.white.withOpacity(0.9),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -134,9 +134,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    disabledBackgroundColor: Colors.white.withValues(alpha: 0.5),
+                    disabledBackgroundColor: Colors.white.withOpacity(0.5),
                     disabledForegroundColor:
-                        colorScheme.primary.withValues(alpha: 0.5),
+                        colorScheme.primary.withOpacity(0.5),
                   ),
                   child: const Text(
                     'Los geht\'s 🚀',

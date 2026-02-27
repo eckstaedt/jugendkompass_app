@@ -8,7 +8,7 @@ import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
-import 'package:jugendkompass_app/core/config/app_theme.dart';
+import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
 // Combined content item for unified display
 class _CombinedContentItem {
@@ -54,7 +54,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final selectedFilter = ref.watch(_selectedDiscoverFilterProvider);
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundBeige,
+      backgroundColor: DesignTokens.appBackground,
       body: SafeArea(
         child: Column(
           children: [
@@ -67,9 +67,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   // Title
                   Text(
                     'Entdecken',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textDark,
+                    style: theme.textTheme.displaySmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: DesignTokens.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -80,12 +80,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     decoration: InputDecoration(
                       hintText: 'Wonach suchst du?',
                       hintStyle: TextStyle(
-                        color: Colors.grey.shade500,
+                        color: DesignTokens.textSecondary,
                         fontSize: 16,
                       ),
                       prefixIcon: Icon(
                         Icons.search,
-                        color: Colors.grey.shade500,
+                        color: DesignTokens.textSecondary,
                       ),
                       suffixIcon: _searchController.text.isNotEmpty
                           ? IconButton(
@@ -101,7 +101,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(DesignTokens.radiusInputFields),
                         borderSide: BorderSide(
                           color: Colors.grey.shade200,
                           width: 1,
@@ -115,9 +115,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(DesignTokens.radiusInputFields),
                         borderSide: const BorderSide(
-                          color: AppTheme.primaryColor,
+                          color: DesignTokens.primaryRed,
                           width: 2,
                         ),
                       ),
@@ -176,19 +176,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ref.read(_selectedDiscoverFilterProvider.notifier).state = value;
       },
       backgroundColor: Colors.white,
-      selectedColor: AppTheme.primaryColor,
+      selectedColor: DesignTokens.primaryRed,
       labelStyle: TextStyle(
-        color: isSelected ? Colors.white : AppTheme.textGray,
+        color: isSelected ? Colors.white : DesignTokens.textSecondary,
         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
         fontSize: 14,
       ),
       side: BorderSide(
-        color: isSelected ? AppTheme.primaryColor : Colors.grey.shade300,
+        color: isSelected ? DesignTokens.primaryRed : Colors.grey.shade300,
         width: 1,
       ),
       checkmarkColor: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     );
@@ -316,8 +316,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: _getTypeColor(item.contentType).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  color: _getTypeColor(item.contentType).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(DesignTokens.radiusInputFields),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
@@ -348,7 +348,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.textDark,
+                                    color: DesignTokens.textPrimary,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -365,7 +365,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: _getTypeColor(item.contentType).withValues(alpha: 0.1),
+                            color: _getTypeColor(item.contentType).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -387,7 +387,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: AppTheme.successGreen.withValues(alpha: 0.1),
+                                          color: DesignTokens.successGreen.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Row(
@@ -395,8 +395,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                               children: [
                                 Icon(
                                   Icons.headphones,
-                                  size: 11,
-                                  color: AppTheme.successGreen,
+                                              size: 11,
+                                              color: DesignTokens.successGreen,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
@@ -404,7 +404,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
-                                    color: AppTheme.successGreen,
+                                                color: DesignTokens.successGreen,
                                     letterSpacing: 0.5,
                                   ),
                                 ),
@@ -446,12 +446,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Color _getTypeColor(String type) {
     switch (type) {
       case 'AUDIO':
-        return AppTheme.successGreen;
+        return DesignTokens.successGreen;
       case 'VIDEO':
-        return AppTheme.primaryColor;
+        return DesignTokens.primaryRed;
       case 'ARTIKEL':
       default:
-        return AppTheme.secondaryColor;
+        return DesignTokens.textSecondary;
     }
   }
 

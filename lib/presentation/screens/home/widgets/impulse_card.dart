@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:jugendkompass_app/data/models/impulse_model.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
+import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
 class ImpulseCard extends StatelessWidget {
   final ImpulseModel impulse;
@@ -19,21 +20,15 @@ class ImpulseCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 220,
-        height: 300,
-        margin: const EdgeInsets.only(right: 12),
+        width: 240,
+        height: 320,
+        margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
+          boxShadow: [DesignTokens.shadowLargeCard],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -43,20 +38,30 @@ class ImpulseCard extends StatelessWidget {
                   imageUrl: impulse.imageUrl!,
                   fit: BoxFit.cover,
                   placeholder: Container(
-                    color: theme.colorScheme.surfaceContainerHighest,
+                    color: DesignTokens.appBackground,
                     child: const Center(
-                      child: CircularProgressIndicator(),
+                      child: CircularProgressIndicator(
+                        color: DesignTokens.primaryRed,
+                      ),
                     ),
                   ),
                   errorWidget: Container(
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    child: const Icon(Icons.image_not_supported, size: 48),
+                    color: DesignTokens.appBackground,
+                    child: const Icon(
+                      Icons.image_not_supported,
+                      size: 48,
+                      color: DesignTokens.textSecondary,
+                    ),
                   ),
                 )
               else
                 Container(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  child: const Icon(Icons.lightbulb_outline, size: 48),
+                  color: DesignTokens.appBackground,
+                  child: const Icon(
+                    Icons.lightbulb_outline,
+                    size: 48,
+                    color: DesignTokens.textSecondary,
+                  ),
                 ),
 
               // Gradient overlay (transparent to dark)
@@ -67,7 +72,7 @@ class ImpulseCard extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withValues(alpha: 0.8),
+                      Colors.black.withOpacity(0.7),
                     ],
                     stops: const [0.3, 1.0],
                   ),
@@ -76,7 +81,7 @@ class ImpulseCard extends StatelessWidget {
 
               // Content overlay
               Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(DesignTokens.spacingMedium),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -84,7 +89,7 @@ class ImpulseCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
+                        color: Colors.black.withOpacity(0.6),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
