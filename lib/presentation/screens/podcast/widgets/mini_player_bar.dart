@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/presentation/screens/podcast/full_player_screen.dart';
+import 'package:jugendkompass_app/core/config/app_theme.dart';
 
 class MiniPlayerBar extends ConsumerWidget {
   final AudioModel audio;
@@ -21,57 +22,73 @@ class MiniPlayerBar extends ConsumerWidget {
     final playerStateAsync = ref.watch(audioPlayerStateProvider);
     final theme = Theme.of(context);
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const FullPlayerScreen(),
-          ),
-        );
-      },
-      child: Container(
-        height: 72,
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            // Progress indicator (thin line at top)
-            SizedBox(
-              height: 2,
-              child: positionAsync.when(
-                data: (position) {
-                  final duration = durationAsync.value ?? Duration.zero;
-                  final progress = duration.inSeconds > 0
-                      ? position.inSeconds / duration.inSeconds
-                      : 0.0;
-                  return LinearProgressIndicator(
-                    value: progress,
-                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      theme.colorScheme.primary,
-                    ),
-                  );
-                },
-                loading: () => LinearProgressIndicator(
-                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
+    return Container(
+      color: Colors.transparent,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const FullPlayerScreen(),
                 ),
-                error: (_, _) => const SizedBox.shrink(),
+              );
+            },
+            child: Container(
+              height: 72,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
               ),
-            ),
+              child: Column(
+                children: [
+                  // Progress indicator (thin line at top with rounded corners)
+                  ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                    child: SizedBox(
+                      height: 3,
+                      child: positionAsync.when(
+                        data: (position) {
+                          final duration = durationAsync.value ?? Duration.zero;
+                          final progress = duration.inSeconds > 0
+                              ? position.inSeconds / duration.inSeconds
+                              : 0.0;
+                          return LinearProgressIndicator(
+                            value: progress,
+                            backgroundColor: Colors.grey.shade200,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              AppTheme.primaryColor,
+                            ),
+                          );
+                        },
+                        loading: () => LinearProgressIndicator(
+                          backgroundColor: Colors.grey.shade200,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppTheme.primaryColor,
+                          ),
+                        ),
+                        error: (_, _) => const SizedBox.shrink(),
+                      ),
+                    ),
+                  ),
 
-            // Main content
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  // Main content
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   children: [
                     // Thumbnail
@@ -200,6 +217,7 @@ class MiniPlayerBar extends ConsumerWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

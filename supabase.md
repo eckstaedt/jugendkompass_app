@@ -219,6 +219,7 @@ Zentrale Tabelle für alle Inhaltstypen. Wird als FK von Posts, Impulsen, Versen
 | content_id | uuid | Nein | – |
 | user_id | uuid | Ja | – |
 | created_at | timestamptz | Ja | `now()` |
+| image_url | timestamptz | Ja | – |
 
 **FK:** `content_id` → `content.id`
 

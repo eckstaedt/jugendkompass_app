@@ -20,111 +20,103 @@ class PodcastScreen extends ConsumerWidget {
     final audioListAsync = ref.watch(audioListProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
     final selectedCategory = ref.watch(selectedPodcastCategoryProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Podcast'),
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(audioListProvider);
-        },
-        child: audioListAsync.when(
-          data: (audioList) {
-            if (audioList.isEmpty) {
-              return const EmptyState(
-                icon: Icons.podcasts_outlined,
-                title: 'Keine Podcasts verfügbar',
-                message: 'Es sind noch keine Podcast-Episoden vorhanden.',
-              );
-            }
+      backgroundColor: AppTheme.backgroundBeige,
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(audioListProvider);
+          },
+          child: audioListAsync.when(
+            data: (audioList) {
+              if (audioList.isEmpty) {
+                return const EmptyState(
+                  icon: Icons.podcasts_outlined,
+                  title: 'Keine Podcasts verfügbar',
+                  message: 'Es sind noch keine Podcast-Episoden vorhanden.',
+                );
+              }
 
-            // Filter audio list based on selected category
-            final filteredList = selectedCategory == null
-                ? audioList
-                : audioList.where((audio) {
-                    // Get category name from the linked post
-                    final categoryName = audio.post?.categoryName;
+              // Filter audio list based on selected category
+              final filteredList = selectedCategory == null
+                  ? audioList
+                  : audioList.where((audio) {
+                      // Get category name from the linked post
+                      final categoryName = audio.post?.categoryName;
 
-                    if (categoryName == null) return false;
+                      if (categoryName == null) return false;
 
-                    // Normalize both for comparison
-                    final normalizedPostCategory = categoryName.toLowerCase().replaceAll(' ', '_');
-                    final normalizedSelectedCategory = selectedCategory.toLowerCase().replaceAll(' ', '_');
+                      // Normalize both for comparison
+                      final normalizedPostCategory = categoryName.toLowerCase().replaceAll(' ', '_');
+                      final normalizedSelectedCategory = selectedCategory.toLowerCase().replaceAll(' ', '_');
 
-                    // Match with selected category
-                    return normalizedPostCategory == normalizedSelectedCategory;
-                  }).toList();
+                      // Match with selected category
+                      return normalizedPostCategory == normalizedSelectedCategory;
+                    }).toList();
 
-            // Get featured episode (first in list)
-            final featuredEpisode = audioList.isNotEmpty ? audioList.first : null;
+              // Get featured episode (first in list)
+              final featuredEpisode = audioList.isNotEmpty ? audioList.first : null;
 
 
-            return CustomScrollView(
-              slivers: [
-                // Filter Chips
-                categoriesAsync.when(
-                  data: (categories) {
-                    return SliverToBoxAdapter(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        child: Row(
-                          children: [
-                            // "Alle" chip
-                            Padding(
-                              padding: const EdgeInsets.only(right: 8),
-                              child: FilterChip(
-                                label: const Text('Alle'),
-                                selected: selectedCategory == null,
-                                onSelected: (_) {
-                                  ref.read(selectedPodcastCategoryProvider.notifier).state = null;
-                                },
-                                backgroundColor: Colors.white,
-                                selectedColor: AppTheme.primaryColor,
-                                labelStyle: TextStyle(
-                                  color: selectedCategory == null ? Colors.white : AppTheme.textGray,
-                                  fontWeight: selectedCategory == null ? FontWeight.w600 : FontWeight.normal,
-                                ),
-                                side: BorderSide(
-                                  color: selectedCategory == null
-                                      ? AppTheme.primaryColor
-                                      : const Color(0xFFE5E7EB),
-                                  width: 1.5,
-                                ),
-                                checkmarkColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                              ),
+              return CustomScrollView(
+                slivers: [
+                  // Header
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Podcast',
+                            style: theme.textTheme.displaySmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.textDark,
                             ),
-                            // Category chips from database
-                            ...categories.map((category) {
-                              final categoryKey = category.name.toLowerCase().replaceAll(' ', '_');
-                              final isSelected = selectedCategory == categoryKey;
-                              return Padding(
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Alle Episoden',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: AppTheme.textGray,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Filter Chips
+                  categoriesAsync.when(
+                    data: (categories) {
+                      return SliverToBoxAdapter(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 16,
+                          ),
+                          child: Row(
+                            children: [
+                              // "Alle" chip
+                              Padding(
                                 padding: const EdgeInsets.only(right: 8),
                                 child: FilterChip(
-                                  label: Text(category.name),
-                                  selected: isSelected,
+                                  label: const Text('Alle'),
+                                  selected: selectedCategory == null,
                                   onSelected: (_) {
-                                    ref.read(selectedPodcastCategoryProvider.notifier).state = categoryKey;
+                                    ref.read(selectedPodcastCategoryProvider.notifier).state = null;
                                   },
                                   backgroundColor: Colors.white,
                                   selectedColor: AppTheme.primaryColor,
                                   labelStyle: TextStyle(
-                                    color: isSelected ? Colors.white : AppTheme.textGray,
-                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                    color: selectedCategory == null ? Colors.white : AppTheme.textGray,
+                                    fontWeight: selectedCategory == null ? FontWeight.w600 : FontWeight.normal,
                                   ),
                                   side: BorderSide(
-                                    color: isSelected
+                                    color: selectedCategory == null
                                         ? AppTheme.primaryColor
                                         : const Color(0xFFE5E7EB),
                                     width: 1.5,
@@ -138,20 +130,55 @@ class PodcastScreen extends ConsumerWidget {
                                     vertical: 8,
                                   ),
                                 ),
-                              );
-                            }),
-                          ],
+                              ),
+                              // Category chips from database
+                              ...categories.map((category) {
+                                final categoryKey = category.name.toLowerCase().replaceAll(' ', '_');
+                                final isSelected = selectedCategory == categoryKey;
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: FilterChip(
+                                    label: Text(category.name),
+                                    selected: isSelected,
+                                    onSelected: (_) {
+                                      ref.read(selectedPodcastCategoryProvider.notifier).state = categoryKey;
+                                    },
+                                    backgroundColor: Colors.white,
+                                    selectedColor: AppTheme.primaryColor,
+                                    labelStyle: TextStyle(
+                                      color: isSelected ? Colors.white : AppTheme.textGray,
+                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                    ),
+                                    side: BorderSide(
+                                      color: isSelected
+                                          ? AppTheme.primaryColor
+                                          : const Color(0xFFE5E7EB),
+                                      width: 1.5,
+                                    ),
+                                    checkmarkColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
                         ),
+                      );
+                    },
+                    loading: () => const SliverToBoxAdapter(
+                      child: SizedBox(
+                        height: 60,
+                        child: Center(child: CircularProgressIndicator()),
                       ),
-                    );
-                  },
-                  loading: () => const SliverToBoxAdapter(
-                    child: SizedBox(
-                      height: 60,
-                      child: Center(child: CircularProgressIndicator()),
                     ),
+                    error: (error, stack) => const SliverToBoxAdapter(child: SizedBox.shrink()),
                   ),
-                  error: (error, stack) => const SliverToBoxAdapter(child: SizedBox.shrink()),
                 ),
 
                 // Featured Episode
