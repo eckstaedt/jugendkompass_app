@@ -488,15 +488,15 @@ class EditionDetailScreen extends ConsumerWidget {
     if (audios.isEmpty) return;
 
     try {
-      // Play the first audio
-      final firstAudio = audios.first;
       final audioService = ref.read(audioServiceProvider);
 
-      // Set current audio
-      ref.read(currentAudioProvider.notifier).state = firstAudio;
+      // Set the entire edition as queue
+      await audioService.setQueue(audios, startIndex: 0);
 
-      // Play the audio
-      await audioService.playAudio(firstAudio.url);
+      // Update providers
+      ref.read(audioQueueProvider.notifier).state = audios;
+      ref.read(currentQueueIndexProvider.notifier).state = 0;
+      ref.read(currentAudioProvider.notifier).state = audios.first;
 
       // Navigate to full player
       if (context.mounted) {

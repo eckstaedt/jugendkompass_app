@@ -172,12 +172,14 @@ class RecommendedContentTile extends ConsumerWidget {
         return;
       }
 
-      // Set as current audio
-      ref.read(currentAudioProvider.notifier).state = audio;
-
-      // Play the audio
+      // Set as queue with single audio
       final audioService = ref.read(audioServiceProvider);
-      await audioService.playAudio(audio.url);
+      await audioService.setQueue([audio], startIndex: 0);
+
+      // Update providers
+      ref.read(audioQueueProvider.notifier).state = [audio];
+      ref.read(currentQueueIndexProvider.notifier).state = 0;
+      ref.read(currentAudioProvider.notifier).state = audio;
 
       // Don't navigate to full player - let the mini player bar handle it
       // The mini player bar will be shown automatically in the bottom nav

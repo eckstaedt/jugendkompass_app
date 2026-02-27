@@ -1,11 +1,19 @@
 import 'package:just_audio/just_audio.dart';
+import 'package:jugendkompass_app/data/models/audio_model.dart';
+import 'dart:async';
 
 class AudioService {
   static AudioService? _instance;
   late final AudioPlayer _player;
 
+  // Queue management
+  List<AudioModel> _queue = [];
+  int _currentIndex = 0;
+  StreamSubscription<PlayerState>? _playerStateSubscription;
+
   AudioService._() {
     _player = AudioPlayer();
+    _setupPlayerStateListener();
   }
 
   static AudioService get instance {
@@ -15,6 +23,24 @@ class AudioService {
 
   AudioPlayer get player => _player;
 
+  // Queue getters
+  List<AudioModel> get queue => List.unmodifiable(_queue);
+  int get currentQueueIndex => _currentIndex;
+  bool get hasNext => _currentIndex < _queue.length - 1;
+  bool get hasPrevious => _currentIndex > 0;
+
+  // Setup listener for auto-play next
+  void _setupPlayerStateListener() {
+    _playerStateSubscription = _player.playerStateStream.listen((state) {
+      if (state.processingState == ProcessingState.completed) {
+        // Auto-play next track if available
+        if (hasNext) {
+          playNext();
+        }
+      }
+    });
+  }
+
   Future<void> playAudio(String url) async {
     try {
       await _player.setUrl(url);
@@ -22,6 +48,70 @@ class AudioService {
     } catch (e) {
       throw Exception('Fehler beim Abspielen: $e');
     }
+  }
+
+  // Queue management methods
+  Future<void> setQueue(List<AudioModel> audios, {int startIndex = 0}) async {
+    if (audios.isEmpty) return;
+    if (startIndex < 0 || startIndex >= audios.length) {
+      startIndex = 0;
+    }
+
+    _queue = List.from(audios);
+    _currentIndex = startIndex;
+
+    // Play the audio at the start index
+    await playAudio(_queue[_currentIndex].audioUrl);
+  }
+
+  void addToQueue(AudioModel audio) {
+    _queue.add(audio);
+  }
+
+  Future<void> playNext() async {
+    if (!hasNext) return;
+
+    _currentIndex++;
+    await playAudio(_queue[_currentIndex].audioUrl);
+  }
+
+  Future<void> playPrevious() async {
+    if (!hasPrevious) return;
+
+    _currentIndex--;
+    await playAudio(_queue[_currentIndex].audioUrl);
+  }
+
+  Future<void> skipToQueueIndex(int index) async {
+    if (index < 0 || index >= _queue.length) return;
+
+    _currentIndex = index;
+    await playAudio(_queue[_currentIndex].audioUrl);
+  }
+
+  void removeFromQueue(int index) {
+    if (index < 0 || index >= _queue.length) return;
+
+    _queue.removeAt(index);
+
+    // Adjust current index if necessary
+    if (index < _currentIndex) {
+      _currentIndex--;
+    } else if (index == _currentIndex && _currentIndex >= _queue.length) {
+      _currentIndex = _queue.length - 1;
+    }
+  }
+
+  void clearQueue() {
+    _queue.clear();
+    _currentIndex = 0;
+  }
+
+  AudioModel? get currentAudio {
+    if (_queue.isEmpty || _currentIndex < 0 || _currentIndex >= _queue.length) {
+      return null;
+    }
+    return _queue[_currentIndex];
   }
 
   Future<void> pause() async {
@@ -53,6 +143,7 @@ class AudioService {
   Duration get position => _player.position;
 
   void dispose() {
+    _playerStateSubscription?.cancel();
     _player.dispose();
   }
 }

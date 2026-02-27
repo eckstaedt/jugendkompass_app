@@ -107,4 +107,68 @@ class AudioRepository {
       throw Exception('Fehler beim Laden des Audios: $e');
     }
   }
+
+  /// Get recommended audios based on category
+  Future<List<AudioModel>> getRecommendedAudios({
+    String? categoryId,
+    String? excludeAudioId,
+    int limit = 10,
+  }) async {
+    try {
+      var query = _supabase
+          .from(SupabaseConstants.audiosTable)
+          .select('''
+            id,
+            url,
+            posts!audio_id(
+              id,
+              title,
+              body,
+              image_url,
+              category_id,
+              content_id,
+              edition_id,
+              categories(
+                id,
+                name
+              )
+            )
+          ''');
+
+      // Exclude current audio if provided
+      if (excludeAudioId != null) {
+        query = query.neq('id', excludeAudioId);
+      }
+
+      final response = await query.limit(limit);
+
+      // Transform the response
+      var audioList = (response as List).map((json) {
+        final posts = json['posts'];
+        Map<String, dynamic>? postData;
+        if (posts is List && posts.isNotEmpty) {
+          postData = posts[0] as Map<String, dynamic>;
+          postData['audio_id'] = json['id'];
+        }
+
+        return AudioModel.fromJson({
+          'id': json['id'],
+          'url': json['url'],
+          'post': postData,
+        });
+      }).toList();
+
+      // Filter by category if provided
+      if (categoryId != null) {
+        audioList = audioList.where((audio) {
+          return audio.post?.categoryId == categoryId;
+        }).toList();
+      }
+
+      // Return up to limit items
+      return audioList.take(limit).toList();
+    } catch (e) {
+      throw Exception('Fehler beim Laden der Empfehlungen: $e');
+    }
+  }
 }

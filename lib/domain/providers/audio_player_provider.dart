@@ -37,3 +37,58 @@ final audioPlayerStateProvider = StreamProvider<PlayerState>((ref) {
   final service = ref.watch(audioServiceProvider);
   return service.playerStateStream;
 });
+
+// Queue management providers
+final audioQueueProvider = StateProvider<List<AudioModel>>((ref) => []);
+
+final currentQueueIndexProvider = StateProvider<int>((ref) => 0);
+
+final nextAudioProvider = Provider<AudioModel?>((ref) {
+  final queue = ref.watch(audioQueueProvider);
+  final index = ref.watch(currentQueueIndexProvider);
+  if (index < queue.length - 1) {
+    return queue[index + 1];
+  }
+  return null;
+});
+
+final previousAudioProvider = Provider<AudioModel?>((ref) {
+  final queue = ref.watch(audioQueueProvider);
+  final index = ref.watch(currentQueueIndexProvider);
+  if (index > 0) {
+    return queue[index - 1];
+  }
+  return null;
+});
+
+final hasNextAudioProvider = Provider<bool>((ref) {
+  final queue = ref.watch(audioQueueProvider);
+  final index = ref.watch(currentQueueIndexProvider);
+  return index < queue.length - 1;
+});
+
+final hasPreviousAudioProvider = Provider<bool>((ref) {
+  final index = ref.watch(currentQueueIndexProvider);
+  return index > 0;
+});
+
+// Recommended audios provider
+final recommendedAudiosProvider = FutureProvider<List<AudioModel>>((ref) async {
+  final audioRepository = ref.watch(audioRepositoryProvider);
+  final currentAudio = ref.watch(currentAudioProvider);
+
+  if (currentAudio == null) {
+    return [];
+  }
+
+  try {
+    return await audioRepository.getRecommendedAudios(
+      categoryId: currentAudio.post?.categoryId,
+      excludeAudioId: currentAudio.id,
+      limit: 10,
+    );
+  } catch (e) {
+    // Return empty list on error
+    return [];
+  }
+});

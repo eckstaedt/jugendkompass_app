@@ -367,12 +367,15 @@ class PodcastScreen extends ConsumerWidget {
   }
 
   void _playAudio(BuildContext context, WidgetRef ref, AudioModel audio) {
-    // Set current audio
-    ref.read(currentAudioProvider.notifier).state = audio;
-
-    // Play audio
     final audioService = ref.read(audioServiceProvider);
-    audioService.playAudio(audio.audioUrl);
+
+    // Set single audio as queue with only one item
+    audioService.setQueue([audio], startIndex: 0);
+
+    // Update providers
+    ref.read(audioQueueProvider.notifier).state = [audio];
+    ref.read(currentQueueIndexProvider.notifier).state = 0;
+    ref.read(currentAudioProvider.notifier).state = audio;
 
     // Navigate to full player
     Navigator.push(
