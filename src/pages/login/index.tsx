@@ -56,7 +56,7 @@ const LoginPage = () => {
     
     try {
       console.log("Attempting login for:", values.email);
-      const { error } = await login(values.email, values.password);
+      const { error, data } = await login(values.email, values.password);
       
       if (error) {
         console.error("Login error:", error);
@@ -74,7 +74,6 @@ const LoginPage = () => {
           } else if (error.message.includes('User not found')) {
             errorMsg = 'Benutzer nicht gefunden. Bitte überprüfe deine E-Mail.';
           } else {
-            // Use the actual error message if it's not one of the above
             errorMsg = `Fehler: ${error.message}`;
           }
         }
@@ -85,10 +84,8 @@ const LoginPage = () => {
           description: errorMsg,
           variant: 'destructive',
         });
-      } else {
-        // Success case will be handled by the auth state change listener
-        console.log("Login successful, redirecting...");
       }
+      // Navigation is handled by AuthContext's onAuthStateChange listener
     } catch (error: any) {
       console.error('Unexpected login error:', error);
       setErrorMessage('Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es später erneut.');
