@@ -53,11 +53,14 @@ class DesignTokens {
   );
 
   // ⸻ SPACING SYSTEM
-  static const double spacingSmall = 16; // increased for more whitespace
-  static const double spacingMedium = 28;
-  static const double spacingLarge = 48;
+  static const double spacingSmall = 16; // small gaps
+  static const double spacingMedium = 24; // medium gaps (used between major elements)
+  static const double spacingLarge = 48; // large gaps
   static const double paddingHorizontal = 24;
   static const double paddingVertical = 24;
+
+  // Input background color used across app
+  static const Color inputBackground = Color(0xFFE1E3E6);
 
   // Success / Positive color (used in search results etc.)
   static const Color successGreen = Color(0xFF2E7D32);

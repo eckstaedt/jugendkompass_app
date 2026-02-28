@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jugendkompass_app/domain/providers/profile_provider.dart';
 import 'package:jugendkompass_app/domain/providers/theme_provider.dart';
@@ -29,10 +31,15 @@ class ProfileScreen extends ConsumerWidget {
     );
 
     return Scaffold(
+      backgroundColor: DesignTokens.appBackground,
       appBar: AppBar(
         title: const Text('Profil'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: DesignTokens.textPrimary,
       ),
       body: ListView(
+        padding: EdgeInsets.symmetric(horizontal: DesignTokens.paddingHorizontal, vertical: DesignTokens.spacingMedium),
         children: [
           // Profile Header
           ProfileHeaderWidget(
@@ -48,38 +55,52 @@ class ProfileScreen extends ConsumerWidget {
             },
           ),
 
-          const Divider(),
+          SizedBox(height: DesignTokens.spacingMedium),
 
-          // Settings Section
+          // Settings Section Header
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(
               'EINSTELLUNGEN',
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                letterSpacing: 1.2,
-                fontWeight: FontWeight.w600,
+              style: GoogleFonts.inter(
+                textStyle: theme.textTheme.labelMedium?.copyWith(
+                  color: DesignTokens.textSecondary,
+                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
 
+          // Notification toggle
           SwitchListTile(
+            tileColor: DesignTokens.cardBackground,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             title: const Text('Benachrichtigungen'),
             subtitle: const Text('Push-Benachrichtigungen erhalten'),
             value: notificationsEnabled,
             onChanged: (value) {
               ref.read(notificationsProvider.notifier).update(value);
             },
+            activeColor: DesignTokens.primaryRed,
             secondary: const Icon(Icons.notifications_outlined),
           ),
 
+          SizedBox(height: DesignTokens.spacingSmall),
+
+          // Dark mode toggle
           SwitchListTile(
+            tileColor: DesignTokens.cardBackground,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             title: const Text('Dark Mode'),
             subtitle: const Text('Dunkles Theme verwenden'),
             value: themeMode == ThemeMode.dark,
             onChanged: (value) {
               ref.read(themeModeProvider.notifier).toggle();
             },
+            activeColor: DesignTokens.primaryRed,
             secondary: Icon(
               themeMode == ThemeMode.dark
                   ? Icons.dark_mode
@@ -87,7 +108,7 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
 
-          const Divider(),
+          SizedBox(height: DesignTokens.spacingMedium),
 
           // Collection Section
           Padding(
@@ -103,6 +124,8 @@ class ProfileScreen extends ConsumerWidget {
           ),
 
           ListTile(
+            tileColor: DesignTokens.cardBackground,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
             leading: const Icon(Icons.bookmark_outlined),
             title: const Text('Deine Sammlung'),
             subtitle: Text('$favoritesCount ${favoritesCount == 1 ? 'Element' : 'Elemente'}'),
@@ -121,7 +144,7 @@ class ProfileScreen extends ConsumerWidget {
             },
           ),
 
-          const Divider(height: 32),
+          const SizedBox(height: DesignTokens.spacingLarge),
 
           // Danger Zone
           Padding(
@@ -131,19 +154,22 @@ class ProfileScreen extends ConsumerWidget {
               children: [
                 Text(
                   'GEFAHRENBEREICH',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: Colors.red,
-                    letterSpacing: 1.2,
-                    fontWeight: FontWeight.w600,
+                  style: GoogleFonts.inter(
+                    textStyle: theme.textTheme.labelMedium?.copyWith(
+                      color: DesignTokens.primaryRed,
+                      letterSpacing: 1.2,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: DesignTokens.spacingSmall),
                 OutlinedButton.icon(
                   onPressed: () => _showDeleteDataDialog(context, ref),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red),
-                    minimumSize: const Size(double.infinity, 48),
+                    foregroundColor: DesignTokens.primaryRed,
+                    side: BorderSide(color: DesignTokens.primaryRed),
+                    minimumSize: const Size(double.infinity, 56),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusButtons)),
                   ),
                   icon: const Icon(Icons.delete_forever),
                   label: const Text('Daten löschen'),
@@ -151,8 +177,10 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Text(
                   'Löscht alle deine lokalen Daten und setzt die App zurück.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+                  style: GoogleFonts.inter(
+                    textStyle: theme.textTheme.bodySmall?.copyWith(
+                      color: DesignTokens.textSecondary,
+                    ),
                   ),
                   textAlign: TextAlign.center,
                 ),

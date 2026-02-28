@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import '../../../data/services/user_preferences_service.dart';
 import '../../navigation/bottom_nav_screen.dart';
 
@@ -48,105 +50,150 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              colorScheme.primary,
-              colorScheme.secondary,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // App Icon
-                Icon(
-                  Icons.auto_stories,
-                  size: 80,
-                  color: Colors.white,
-                ),
-                const SizedBox(height: 24),
+      backgroundColor: DesignTokens.appBackground,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: DesignTokens.paddingHorizontal),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: 420),
+                child: Container(
+                  padding: EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: DesignTokens.cardBackground,
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
+                    boxShadow: [DesignTokens.shadowLargeCard],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Logo container
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: DesignTokens.primaryRed,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: DesignTokens.primaryRed.withOpacity(0.4),
+                              blurRadius: 35,
+                              offset: const Offset(0, 20),
+                            ),
+                          ],
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.auto_stories,
+                            color: Colors.white,
+                            size: 40,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: DesignTokens.spacingMedium),
 
-                // App Title
-                Text(
-                  'Der Jugendkompass',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
+                      // Headline
+                      Text(
+                        'Der Jugendkompass',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          textStyle: theme.textTheme.titleLarge?.copyWith(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: DesignTokens.textPrimary,
+                              ) ??
+                              const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF111111),
+                              ),
+                        ),
+                      ),
+                      SizedBox(height: 24),
 
-                // Subtitle
-                Text(
-                  'Dein täglicher Begleiter für dein Glaubensleben.',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 48),
+                      // Subtitle
+                      Text(
+                        'Dein täglicher Begleiter für dein Glaubensleben.',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          textStyle: theme.textTheme.bodyMedium?.copyWith(
+                                color: DesignTokens.textSecondary,
+                              ) ??
+                              const TextStyle(color: Color(0xFF6F7479)),
+                        ),
+                      ),
+                      SizedBox(height: DesignTokens.spacingLarge),
 
-                // Name Input Field
-                TextField(
-                  controller: _nameController,
-                  onChanged: _onNameChanged,
-                  onSubmitted: (_) => _onSubmit(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Wie heißt du?',
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 20,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
+                      // Name Input Field
+                      SizedBox(
+                        height: 50,
+                        child: TextField(
+                          controller: _nameController,
+                          onChanged: _onNameChanged,
+                          onSubmitted: (_) => _onSubmit(),
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.inter(
+                            textStyle: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Wie heißt du?',
+                            hintStyle: GoogleFonts.inter(
+                              textStyle: const TextStyle(
+                                color: Color(0xFF6F7479),
+                                fontSize: 16,
+                              ),
+                            ),
+                            filled: true,
+                            fillColor: DesignTokens.inputBackground,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(DesignTokens.radiusInputFields),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: DesignTokens.spacingMedium),
 
-                // Submit Button
-                FilledButton(
-                  onPressed: _isValid ? _onSubmit : null,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: colorScheme.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    disabledBackgroundColor: Colors.white.withOpacity(0.5),
-                    disabledForegroundColor:
-                        colorScheme.primary.withOpacity(0.5),
-                  ),
-                  child: const Text(
-                    'Los geht\'s 🚀',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                      // Submit Button with shadow
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
+                          boxShadow: [DesignTokens.shadowButton],
+                        ),
+                        child: FilledButton(
+                          onPressed: _isValid ? _onSubmit : null,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: DesignTokens.primaryRed,
+                            foregroundColor: Colors.white,
+                            minimumSize: Size(double.infinity, 56),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
+                            ),
+                            disabledBackgroundColor: DesignTokens.primaryRed.withOpacity(0.5),
+                            disabledForegroundColor: Colors.white.withOpacity(0.7),
+                          ),
+                          child: const Text(
+                            'Los geht\'s 🚀',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),
