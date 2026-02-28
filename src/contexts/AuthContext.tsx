@@ -29,26 +29,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
   const navigateRef = useRef(navigate);
   const toastRef = useRef(toast);
-  const isInitialSessionRef = useRef(true);
-  const hasAuthenticatedRef = useRef(false);
-  // Keep refs up to date
+  const initialSessionDoneRef = useRef(false);
+  const processingAuthRef = useRef(false);
+
   useEffect(() => {
     navigateRef.current = navigate;
     toastRef.current = toast;
   });
 
-  // Helper function to convert Supabase User to our custom User type
   const convertSupabaseUser = (supabaseUser: SupabaseUser | null): User | null => {
     if (!supabaseUser) return null;
     return {
       id: supabaseUser.id,
       email: supabaseUser.email || '',
-      role: 'user', // Default role, will be updated after checking admin status
+      role: 'user',
       created_at: supabaseUser.created_at || new Date().toISOString()
     };
   };
 
-  // Separate function to check admin status
   const checkAdminStatus = async (userId: string) => {
     try {
       console.log("Checking admin status for user:", userId);
@@ -71,93 +69,86 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  useEffect(() => {
-    // First set up the auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth state changed:", event, session?.user?.id);
-        
-        if (session?.user) {
-          const customUser = convertSupabaseUser(session.user);
-          setUser(customUser);
-          setAdminChecked(false);
-          
-          setTimeout(async () => {
-            try {
-              const isUserAdmin = await checkAdminStatus(session.user.id);
-              setIsAdmin(isUserAdmin);
-              setAdminChecked(true);
-              
-              // Only navigate on actual login, not session restore, token refresh, or tab focus
-              const isActualLogin = event === 'SIGNED_IN' && !isInitialSessionRef.current && !hasAuthenticatedRef.current;
-              
-              hasAuthenticatedRef.current = true;
-              
-              if (isUserAdmin && isActualLogin) {
-                navigateRef.current('/dashboard');
-              } else if (!isUserAdmin) {
-                toastRef.current({
-                  title: "Zugriff verweigert",
-                  description: "Du hast keine Administrator-Berechtigungen.",
-                  variant: "destructive",
-                });
-                await supabase.auth.signOut();
-                setUser(null);
-                setIsAdmin(false);
-                navigateRef.current('/login');
-              }
-            } catch (error) {
-              console.error("Error in admin check:", error);
-              setUser(null);
-              setIsAdmin(false);
-              setAdminChecked(true);
-              navigateRef.current('/login');
-            }
-          }, 0);
-        } else {
-          setUser(null);
-          setIsAdmin(false);
-          setAdminChecked(true);
-          hasAuthenticatedRef.current = false;
-          if (event === 'SIGNED_OUT') {
-            navigateRef.current('/login');
-          }
-        }
-      }
-    );
+  const handleAuthSession = useCallback(async (session: Session | null, isLogin: boolean) => {
+    if (processingAuthRef.current) return;
+    processingAuthRef.current = true;
 
-    // Check initial session
-    supabase.auth.getSession().then(async ({ data: { session }}) => {
+    try {
       if (session?.user) {
         const customUser = convertSupabaseUser(session.user);
         setUser(customUser);
-        
-        try {
-          const isUserAdmin = await checkAdminStatus(session.user.id);
-          setIsAdmin(isUserAdmin);
-          setAdminChecked(true);
-          if (!isUserAdmin) {
-            await supabase.auth.signOut();
-            setUser(null);
-            setIsAdmin(false);
-            navigateRef.current('/login');
+        setAdminChecked(false);
+
+        const isUserAdmin = await checkAdminStatus(session.user.id);
+        setIsAdmin(isUserAdmin);
+        setAdminChecked(true);
+
+        if (isUserAdmin) {
+          if (isLogin) {
+            console.log("Login successful, navigating to dashboard");
+            navigateRef.current('/dashboard');
           }
-        } catch (error) {
-          console.error("Error checking admin status:", error);
+        } else {
+          toastRef.current({
+            title: "Zugriff verweigert",
+            description: "Du hast keine Administrator-Berechtigungen.",
+            variant: "destructive",
+          });
+          await supabase.auth.signOut();
+          setUser(null);
+          setIsAdmin(false);
+          navigateRef.current('/login');
+        }
+      } else {
         setUser(null);
+        setIsAdmin(false);
+        setAdminChecked(true);
+      }
+    } catch (error) {
+      console.error("Error in auth handling:", error);
+      setUser(null);
+      setIsAdmin(false);
+      setAdminChecked(true);
+    } finally {
+      processingAuthRef.current = false;
+    }
+  }, []);
+
+  useEffect(() => {
+    // First check initial session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      await handleAuthSession(session, false);
+      setLoading(false);
+      initialSessionDoneRef.current = true;
+    });
+
+    // Then set up listener for subsequent changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.id);
+
+        if (event === 'SIGNED_IN' && initialSessionDoneRef.current) {
+          // This is an actual login (not initial session restore or token refresh)
+          handleAuthSession(session, true);
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
           setIsAdmin(false);
           setAdminChecked(true);
+          navigateRef.current('/login');
+        } else if (event === 'TOKEN_REFRESHED') {
+          // Just update user data, don't navigate
+          if (session?.user) {
+            setUser(convertSupabaseUser(session.user));
+          }
         }
+        // Ignore INITIAL_SESSION - handled by getSession() above
       }
-      setLoading(false);
-      // Mark initial session check as done so subsequent SIGNED_IN events from the listener are treated as actual logins
-      isInitialSessionRef.current = false;
-    });
+    );
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [handleAuthSession]);
 
   const login = async (email: string, password: string) => {
     try {
