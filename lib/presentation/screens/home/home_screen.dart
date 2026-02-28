@@ -13,6 +13,7 @@ import 'package:jugendkompass_app/presentation/screens/impulse/impulse_list_scre
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -24,7 +25,6 @@ class HomeScreen extends ConsumerWidget {
     final recommendationsAsync = ref.watch(recommendedContentProvider);
     final userName = ref.watch(userNameProvider);
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     return Scaffold(
       body: RefreshIndicator(
@@ -36,39 +36,23 @@ class HomeScreen extends ConsumerWidget {
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            // Custom Header
+            // Simple greeting at top; drop red header and subtitle.
             SliverToBoxAdapter(
-              child: Container(
+              child: Padding(
                 padding: const EdgeInsets.fromLTRB(
                   DesignTokens.paddingHorizontal,
                   48,
                   DesignTokens.paddingHorizontal,
                   DesignTokens.spacingMedium,
                 ),
-                decoration: BoxDecoration(
-                  color: DesignTokens.primaryRed,
-                  boxShadow: [DesignTokens.shadowSubtle],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'WILLKOMMEN ZURÜCK',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: Colors.white.withOpacity(0.9),
-                        letterSpacing: 1.2,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Hi ${userName ?? "User"}',
-                      style: theme.textTheme.displaySmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  'Hi, ${userName ?? "User"}',
+                  style: GoogleFonts.poppins(
+                    textStyle: theme.textTheme.displaySmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ) ??
+                        const TextStyle(fontWeight: FontWeight.w800),
+                  ),
                 ),
               ),
             ),

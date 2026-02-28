@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/data/models/verse_model.dart';
 import 'package:jugendkompass_app/domain/providers/favorites_provider.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 
 class VerseCard extends ConsumerWidget {
@@ -49,11 +50,15 @@ class VerseCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: DesignTokens.spacingMedium),
+          // Verse text itself uses Merriweather (serif) per design request.
           Text(
             '"${verse.verse}"',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              height: 1.5,
+            style: GoogleFonts.merriweather(
+              textStyle: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    height: 1.5,
+                  ) ??
+                  const TextStyle(fontWeight: FontWeight.w600, height: 1.5),
             ),
           ),
           const SizedBox(height: DesignTokens.spacingMedium),

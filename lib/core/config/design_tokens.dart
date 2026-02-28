@@ -53,11 +53,11 @@ class DesignTokens {
   );
 
   // ⸻ SPACING SYSTEM
-  static const double spacingSmall = 12;
-  static const double spacingMedium = 20;
-  static const double spacingLarge = 32;
-  static const double paddingHorizontal = 20;
-  static const double paddingVertical = 20;
+  static const double spacingSmall = 16; // increased for more whitespace
+  static const double spacingMedium = 28;
+  static const double spacingLarge = 48;
+  static const double paddingHorizontal = 24;
+  static const double paddingVertical = 24;
 
   // Success / Positive color (used in search results etc.)
   static const Color successGreen = Color(0xFF2E7D32);

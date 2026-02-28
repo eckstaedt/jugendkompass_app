@@ -24,6 +24,8 @@ dependencies:
   cached_network_image: ^3.3.1
   flutter_svg: ^2.0.10
   shimmer: ^3.0.0
+  # Custom fonts via Google Fonts package (use latest version to avoid constant evaluation bug)
+  google_fonts: ^8.0.2
 
 
   # Audio Playback
