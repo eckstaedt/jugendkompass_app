@@ -132,7 +132,7 @@ class HomeScreen extends ConsumerWidget {
                     height: 250,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: EdgeInsets.symmetric(horizontal: DesignTokens.paddingHorizontal),
                       itemCount: impulses.length,
                       itemBuilder: (context, index) {
                         final impulse = impulses[index];

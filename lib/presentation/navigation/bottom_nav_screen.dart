@@ -73,8 +73,8 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
                         ),
                         _buildNavItem(
                           context: context,
-                          icon: Icons.auto_stories_outlined,
-                          selectedIcon: Icons.auto_stories,
+                          icon: Icons.compass_calibration_outlined,
+                          selectedIcon: Icons.compass_calibration,
                           label: 'Kiosk',
                           index: 1,
                         ),

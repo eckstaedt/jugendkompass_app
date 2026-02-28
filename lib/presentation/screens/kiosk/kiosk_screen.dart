@@ -26,7 +26,7 @@ class KioskScreen extends ConsumerWidget {
             data: (editions) {
               if (editions.isEmpty) {
                 return const EmptyState(
-                  icon: Icons.library_books_outlined,
+                  icon: Icons.compass_calibration_outlined,
                   title: 'Keine Magazine verfügbar',
                   message: 'Schau später noch einmal vorbei',
                 );

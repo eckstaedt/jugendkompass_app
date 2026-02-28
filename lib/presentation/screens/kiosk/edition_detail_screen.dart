@@ -97,7 +97,7 @@ class EditionDetailScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     return ListView(
       controller: scrollController,
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+      padding: EdgeInsets.fromLTRB(DesignTokens.paddingHorizontal, 0, DesignTokens.paddingHorizontal, 24),
       children: [
         Text(edition.name.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(fontSize: 12, letterSpacing: 1.5, color: DesignTokens.primaryRed, fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
