@@ -10,6 +10,7 @@ import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/data/services/favorites_service.dart';
 import 'widgets/profile_header.dart';
 import 'profile_edit_screen.dart';
+import '../shop/shop_screen.dart';
 import '../onboarding/onboarding_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -86,7 +87,6 @@ class ProfileScreen extends ConsumerWidget {
             activeColor: DesignTokens.primaryRed,
             secondary: const Icon(Icons.notifications_outlined),
           ),
-
           SizedBox(height: DesignTokens.spacingSmall),
 
           // Dark mode toggle
@@ -140,6 +140,23 @@ class ProfileScreen extends ConsumerWidget {
                 const SnackBar(
                   content: Text('Wechsle zum Sammlung-Tab'),
                 ),
+              );
+            },
+          ),
+
+          const SizedBox(height: DesignTokens.spacingSmall),
+          // Shop placeholder
+          ListTile(
+            tileColor: DesignTokens.cardBackground,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
+            leading: const Icon(Icons.storefront_outlined),
+            title: const Text('Shop'),
+            subtitle: const Text('Bald verfügbar'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ShopScreen()),
               );
             },
           ),

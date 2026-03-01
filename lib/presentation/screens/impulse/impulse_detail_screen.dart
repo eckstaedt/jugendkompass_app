@@ -22,7 +22,10 @@ class ImpulseDetailScreen extends StatelessWidget {
         slivers: [
           // App Bar with Image
           SliverAppBar(
-            expandedHeight: 300,
+            // reduce the height of the verse image so it's roughly 35% smaller
+            // than the previous default of 300. 300 * 0.65 ≈ 195.
+            // this makes the image less dominant on the impulse detail page.
+            expandedHeight: 195,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),

@@ -42,24 +42,26 @@ class PodcastScreen extends ConsumerWidget {
               // Filter audio list based on selected category
               final filteredList = selectedCategory == null
                   ? audioList
-                  : audioList.where((audio) {
-                      // Get category name from the linked post
-                      final categoryName = audio.post?.categoryName;
+                      : audioList.where((audio) {
+                        // Get list of category names from post (support multi tags)
+                        final post = audio.post;
+                        if (post == null) return false;
+                        final categories = post.categoryNames ??
+                          (post.categoryName != null ? [post.categoryName!] : []);
+                        if (categories.isEmpty) return false;
 
-                      if (categoryName == null) return false;
-
-                      // Normalize both for comparison
-                      final normalizedPostCategory = categoryName
+                        final normalizedSelectedCategory = selectedCategory
                           .toLowerCase()
                           .replaceAll(' ', '_');
-                      final normalizedSelectedCategory = selectedCategory
+
+                        // check any tag matches
+                        return categories.any((categoryName) {
+                        final normalizedPostCategory = categoryName
                           .toLowerCase()
                           .replaceAll(' ', '_');
-
-                      // Match with selected category
-                      return normalizedPostCategory ==
-                          normalizedSelectedCategory;
-                    }).toList();
+                        return normalizedPostCategory == normalizedSelectedCategory;
+                        });
+                      }).toList();
 
               // Get featured episode (first in list)
               final featuredEpisode = audioList.isNotEmpty
@@ -324,22 +326,32 @@ class PodcastScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            // Category badge
-            if (audio.post?.categoryName != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: DesignTokens.primaryRed.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  audio.post!.categoryName!,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: DesignTokens.primaryRed,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
+            // Category badges
+            if (audio.post != null)
+              Row(
+                children: [
+                  for (var tag in audio.post!.categoryNames ??
+                      (audio.post!.categoryName != null
+                          ? [audio.post!.categoryName!]
+                          : []))
+                    Container(
+                      margin: const EdgeInsets.only(right: 4),
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: DesignTokens.primaryRed.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        tag,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: DesignTokens.primaryRed,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             if (audio.durationSeconds != null) ...[
               const SizedBox(height: 6),

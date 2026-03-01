@@ -123,36 +123,62 @@ class PostDetailScreen extends ConsumerWidget {
                   // Meta information
                   Row(
                     children: [
-                      // Category badge
-                      if (post.categoryName != null)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.label,
-                                size: 16,
-                                color: theme.colorScheme.onPrimaryContainer,
+                      // Category/tag badges
+                          if ((post.categoryNames ?? []).isNotEmpty)
+                            Row(
+                              children: post.categoryNames!
+                                  .map(
+                                    (tag) => Container(
+                                      margin: const EdgeInsets.only(right: 8),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: theme.colorScheme.primaryContainer,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        tag.toUpperCase(),
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: theme.colorScheme.onPrimaryContainer,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
+                            )
+                          else if (post.categoryName != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
                               ),
-                              const SizedBox(width: 6),
-                              Text(
-                                post.categoryName!.toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: theme.colorScheme.onPrimaryContainer,
-                                ),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primaryContainer,
+                                borderRadius: BorderRadius.circular(20),
                               ),
-                            ],
-                          ),
-                        ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.label,
+                                    size: 16,
+                                    color: theme.colorScheme.onPrimaryContainer,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    post.categoryName!.toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: theme.colorScheme.onPrimaryContainer,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
 
                       // Audio badge
                       if (hasAudio) ...[
@@ -289,7 +315,12 @@ class PostDetailScreen extends ConsumerWidget {
                         fontStyle: FontStyle.italic,
                       ),
                       "img": Style(
+                        // center and scale down images inside articles
                         margin: Margins.only(top: 16, bottom: 16),
+                        display: Display.block,
+                        // use 60% of available width
+                        width: Width(60, Unit.percent),
+                        alignment: Alignment.center,
                       ),
                     },
                   ),

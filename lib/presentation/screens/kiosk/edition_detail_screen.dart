@@ -103,8 +103,34 @@ class EditionDetailScreen extends ConsumerWidget {
         const SizedBox(height: 8),
         Text(edition.displayTitle, style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold, color: DesignTokens.textPrimary)),
         const SizedBox(height: 20),
-        FilledButton.icon(onPressed: () => _playEditionAudios(context, ref, audios), icon: const Icon(Icons.play_arrow, size: 24), label: const Text('Anhören', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)), style: FilledButton.styleFrom(backgroundColor: DesignTokens.primaryRed, foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 56), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusButtons)))),
-        const SizedBox(height: 20),
+        // Audio controls: first allow playing the foreword (if present), then the full edition
+        if (audios.isNotEmpty) ...[
+          if (audios.length > 1) // assume first track is "Vorwort"
+            FilledButton.icon(
+              onPressed: () => _playVorwort(context, ref, audios),
+              icon: const Icon(Icons.headphones, size: 24),
+              label: const Text('Vorwort anhören', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              style: FilledButton.styleFrom(
+                backgroundColor: DesignTokens.primaryRed.withOpacity(0.85),
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 56),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusButtons)),
+              ),
+            ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: () => _playEditionAudios(context, ref, audios),
+            icon: const Icon(Icons.play_arrow, size: 24),
+            label: const Text('Ausgabe anhören', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            style: FilledButton.styleFrom(
+              backgroundColor: DesignTokens.primaryRed,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 56),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusButtons)),
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
         if (edition.description != null && edition.description!.isNotEmpty) ...[
           Html(data: edition.description!, style: {
             "body": Style(margin: Margins.zero, padding: HtmlPaddings.zero, fontSize: FontSize(16), color: DesignTokens.textSecondary),
@@ -140,7 +166,50 @@ class EditionDetailScreen extends ConsumerWidget {
       child: Row(children: [
         ClipRRect(borderRadius: BorderRadius.circular(DesignTokens.radiusInputFields), child: post.imageUrl != null ? CorsNetworkImage(imageUrl: post.imageUrl!, width: 60, height: 60, fit: BoxFit.cover, placeholder: Container(width: 60, height: 60, color: DesignTokens.cardBackground, child: Center(child: Text('$index', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: DesignTokens.primaryRed)))), errorWidget: Container(width: 60, height: 60, color: DesignTokens.cardBackground, child: Center(child: Text('$index', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: DesignTokens.primaryRed))))) : Container(width: 60, height: 60, decoration: BoxDecoration(color: DesignTokens.cardBackground, borderRadius: BorderRadius.circular(12)), child: Center(child: Text('$index', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: DesignTokens.primaryRed))))),
         const SizedBox(width: 16),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(post.title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: DesignTokens.textPrimary), maxLines: 2, overflow: TextOverflow.ellipsis), const SizedBox(height: 4), Row(children: [Text((post.categoryName ?? 'ALLGEMEIN').toUpperCase(), style: TextStyle(fontSize: 12, color: DesignTokens.textSecondary, fontWeight: FontWeight.w500)), const Text(' • '), Text(_calculateReadingTime(post.body), style: TextStyle(fontSize: 12, color: DesignTokens.textSecondary))])])),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                post.title,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: DesignTokens.textPrimary),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  // show one or more category/tag badges
+                  if ((post.categoryNames ?? []).isNotEmpty)
+                    ...post.categoryNames!.map((tag) => Padding(
+                          padding: const EdgeInsets.only(right: 4),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: DesignTokens.redBackground,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              tag.toUpperCase(),
+                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: DesignTokens.primaryRed),
+                            ),
+                          ),
+                        ))
+                  else if (post.categoryName != null)
+                    Text(
+                      post.categoryName!.toUpperCase(),
+                      style: TextStyle(fontSize: 12, color: DesignTokens.textSecondary, fontWeight: FontWeight.w500),
+                    ),
+                  const Text(' • '),
+                  Text(
+                    _calculateReadingTime(post.body),
+                    style: TextStyle(fontSize: 12, color: DesignTokens.textSecondary),
+                  )
+                ],
+              )
+            ],
+          ),
+        ),
         if (hasAudio)
           IconButton(onPressed: () => _playPostAudio(context, ref, post), icon: Icon(Icons.play_circle, size: 40, color: DesignTokens.primaryRed))
       ]),
@@ -195,6 +264,13 @@ class EditionDetailScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Fehler beim Öffnen des PDFs: $e'), backgroundColor: Colors.red));
       }
     }
+  }
+
+  /// Play only the first audio from the edition, used for a possible "Vorwort" track.
+  Future<void> _playVorwort(BuildContext context, WidgetRef ref, List<AudioModel> audios) async {
+    if (audios.isEmpty) return;
+    // simply delegate to _playEditionAudios with a single-item list
+    await _playEditionAudios(context, ref, [audios.first]);
   }
 
   String _calculateReadingTime(String htmlContent) {

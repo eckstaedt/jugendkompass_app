@@ -4,6 +4,7 @@ import 'package:jugendkompass_app/domain/providers/verse_provider.dart';
 import 'package:jugendkompass_app/domain/providers/profile_provider.dart';
 import 'package:jugendkompass_app/domain/providers/impulse_provider.dart';
 import 'package:jugendkompass_app/domain/providers/recommendation_provider.dart';
+import 'package:jugendkompass_app/domain/providers/post_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/home/widgets/verse_card.dart';
 import 'package:jugendkompass_app/presentation/screens/home/widgets/impulse_card.dart';
 import 'package:jugendkompass_app/presentation/screens/home/widgets/recommended_content_tile.dart';
@@ -23,6 +24,7 @@ class HomeScreen extends ConsumerWidget {
     final verseAsync = ref.watch(dailyVerseProvider);
     final impulsesAsync = ref.watch(dailyImpulsesProvider);
     final recommendationsAsync = ref.watch(recommendedContentProvider);
+    final latestPostAsync = ref.watch(latestPostProvider);
     final userName = ref.watch(userNameProvider);
     final theme = Theme.of(context);
 
@@ -33,16 +35,18 @@ class HomeScreen extends ConsumerWidget {
           ref.invalidate(dailyImpulsesProvider);
           ref.invalidate(recommendedContentProvider);
         },
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: DesignTokens.paddingHorizontal),
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
             // Simple greeting at top; drop red header and subtitle.
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
-                  DesignTokens.paddingHorizontal,
+                  0,
                   48,
-                  DesignTokens.paddingHorizontal,
+                  0,
                   DesignTokens.spacingMedium,
                 ),
                 child: Text(
@@ -233,6 +237,56 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
 
+            // Latest post section inserted above verse
+            SliverToBoxAdapter(
+              child: latestPostAsync.when(
+                data: (post) {
+                  if (post == null) return const SizedBox.shrink();
+                  final item = RecommendedItem.fromPost(post);
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: DesignTokens.spacingSmall),
+                        child: Text(
+                          'Neuester Beitrag',
+                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      RecommendedContentTile(
+                        item: item,
+                        onTap: () {
+                          // reuse existing navigation logic
+                          if (item.isVideo && item.video != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => VideoPlayerScreen(
+                                  videoUrl: item.video!.videoUrl,
+                                  title: item.video!.displayTitle,
+                                ),
+                              ),
+                            );
+                          } else if (item.post != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PostDetailScreen(
+                                  post: item.post!,
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  );
+                },
+                loading: () => const SizedBox.shrink(),
+                error: (err, st) => const SizedBox.shrink(),
+              ),
+            ),
+
             // Bottom spacing
             const SliverToBoxAdapter(
               child: SizedBox(height: 24),
@@ -240,6 +294,7 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

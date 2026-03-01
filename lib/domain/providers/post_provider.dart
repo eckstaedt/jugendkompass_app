@@ -47,6 +47,13 @@ final postByAudioIdProvider = FutureProvider.family<PostModel?, String>(
   },
 );
 
+/// Provider that fetches the single most recent post (used on home screen)
+final latestPostProvider = FutureProvider<PostModel?>((ref) async {
+  final repository = ref.watch(postRepositoryProvider);
+  final posts = await repository.getPostList(limit: 1);
+  return posts.isNotEmpty ? posts.first : null;
+});
+
 /// Filter class for posts
 class PostFilter {
   final String? categoryId;

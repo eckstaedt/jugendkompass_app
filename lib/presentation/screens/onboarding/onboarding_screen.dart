@@ -88,7 +88,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         ),
                         child: const Center(
                           child: Icon(
-                            Icons.compass_calibration,
+                            Icons.explore,
                             color: Colors.white,
                             size: 40,
                           ),
