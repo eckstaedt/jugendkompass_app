@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/presentation/screens/home/home_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/podcast/podcast_screen.dart';
@@ -48,17 +49,24 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
           if (currentAudio != null) MiniPlayerBar(audio: currentAudio),
 
           // Navigation Bar with custom rounded styling
-          Container(
-            color: Colors.transparent,
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [DesignTokens.shadowSubtle],
-                  ),
+          // glass-like bottom navigation background
+          ClipRRect(
+            borderRadius: BorderRadius.circular(32),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(
+                  sigmaX: DesignTokens.glassBlurSigma,
+                  sigmaY: DesignTokens.glassBlurSigma),
+              child: Container(
+                color: DesignTokens.glassBackground(0.10),
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [DesignTokens.shadowSubtle],
+                      ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                     child: Row(

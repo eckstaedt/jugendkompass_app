@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/domain/providers/recommendation_provider.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
@@ -21,16 +22,26 @@ class RecommendedContentTile extends ConsumerWidget {
     final theme = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: DesignTokens.paddingHorizontal, vertical: 8),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
-          boxShadow: [DesignTokens.shadowSubtle],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(DesignTokens.spacingSmall),
-          child: Row(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(
+              sigmaX: DesignTokens.glassBlurSigma,
+              sigmaY: DesignTokens.glassBlurSigma),
+          child: Container(
+            // force the tile to expand to whatever horizontal space it can take
+            // (minus the horizontal margin). This ensures that the width matches
+            // other full‑width cards such as the verse card on the home page.
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(horizontal: DesignTokens.paddingHorizontal, vertical: 8),
+            decoration: BoxDecoration(
+              color: DesignTokens.glassBackground(0.12),
+              borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+              boxShadow: [DesignTokens.shadowSubtle],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(DesignTokens.spacingSmall),
+              child: Row(
             children: [
               // Image/Icon container (left)
               Container(
@@ -57,7 +68,12 @@ class RecommendedContentTile extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(item.title, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    Text(
+                      item.title,
+                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     const SizedBox(height: 8),
                     Row(
                       children: [

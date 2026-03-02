@@ -17,18 +17,11 @@ class ImpulseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // calculate width based on screen minus horizontal padding so that
-    // all cards (including the verse card) share the same max width.
-    final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = screenWidth - 2 * DesignTokens.paddingHorizontal;
-    // keep original aspect ratio (240x320 => 3:4)
-    final cardHeight = cardWidth * (320 / 240);
-
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: cardWidth,
-        height: cardHeight,
+        width: 240,
+        height: 320,
         margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),

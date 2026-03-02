@@ -21,6 +21,7 @@ class VerseCard extends ConsumerWidget {
 
     return RoundedCard(
       padding: const EdgeInsets.all(DesignTokens.spacingMedium),
+      glass: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       withShadow: true,
       child: Column(

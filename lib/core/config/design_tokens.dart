@@ -65,6 +65,14 @@ class DesignTokens {
   // Success / Positive color (used in search results etc.)
   static const Color successGreen = Color(0xFF2E7D32);
 
+  // Glass effect background used for translucent containers (liquid glass)
+  // not const because we apply opacity dynamically
+  static Color glassBackground([double opacity = 0.15]) =>
+      Colors.white.withOpacity(opacity);
+
+  // Recommended blur sigma for backdrop filter when using glass effect
+  static const double glassBlurSigma = 20.0;
+
   // ⸻ BUTTON DIMENSIONS
   static const double buttonHeight = 56;
   static const double floatingButtonSize = 56;

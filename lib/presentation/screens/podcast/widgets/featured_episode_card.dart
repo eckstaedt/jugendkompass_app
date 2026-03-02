@@ -19,6 +19,8 @@ class FeaturedEpisodeCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
+      // make sure the card takes full width of its parent container
+      width: double.infinity,
       height: 220,
       margin: const EdgeInsets.all(DesignTokens.spacingMedium),
       decoration: BoxDecoration(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
 /// Primary Button Widget - Standard CTA Button
@@ -120,12 +121,15 @@ class FloatingActionButtonCustom extends StatelessWidget {
 }
 
 /// Rounded Card Widget - Große, weiche Cards
-class RoundedCard extends StatelessWidget {
+class RoundedCard extends StatefulWidget {
   final Widget child;
   final EdgeInsets? padding;
   final Color? backgroundColor;
   final VoidCallback? onTap;
   final bool withShadow;
+  /// if true, renders the card with a "liquid glass" effect using a
+  /// blurred backdrop and semi-translucent background colour.
+  final bool glass;
 
   const RoundedCard({
     super.key,
@@ -134,26 +138,67 @@ class RoundedCard extends StatelessWidget {
     this.backgroundColor,
     this.onTap,
     this.withShadow = true,
+    this.glass = false,
   });
 
   @override
+  _RoundedCardState createState() => _RoundedCardState();
+}
+
+class _RoundedCardState extends State<RoundedCard> {
+  bool _pressed = false;
+
+  void _onTapDown(TapDownDetails _) {
+    setState(() => _pressed = true);
+  }
+
+  void _onTapUp(TapUpDetails _) {
+    setState(() => _pressed = false);
+  }
+
+  void _onTapCancel() {
+    setState(() => _pressed = false);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = backgroundColor ?? Theme.of(context).colorScheme.surface;
+    final bg = widget.backgroundColor ?? Theme.of(context).colorScheme.surface;
+    final scale = _pressed ? 0.97 : 1.0;
 
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
-          boxShadow: withShadow
-              ? [DesignTokens.shadowLargeCard]
-              : [],
-        ),
-        child: Padding(
-          padding: padding ?? const EdgeInsets.all(DesignTokens.spacingMedium),
-          child: child,
+      onTap: widget.onTap,
+      onTapDown: _onTapDown,
+      onTapUp: _onTapUp,
+      onTapCancel: _onTapCancel,
+      child: AnimatedScale(
+        scale: scale,
+        duration: const Duration(milliseconds: 100),
+        child: Container(
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
+              boxShadow: widget.withShadow ? [DesignTokens.shadowLargeCard] : [],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
+              child: widget.glass
+                  ? BackdropFilter(
+                      filter: ImageFilter.blur(
+                          sigmaX: DesignTokens.glassBlurSigma,
+                          sigmaY: DesignTokens.glassBlurSigma),
+                      child: Padding(
+                        padding: widget.padding ?? const EdgeInsets.all(DesignTokens.spacingMedium),
+                        child: widget.child,
+                      ),
+                    )
+                  : Padding(
+                      padding: widget.padding ?? const EdgeInsets.all(DesignTokens.spacingMedium),
+                      child: widget.child,
+                    ),
+            ),
+          ),
         ),
       ),
     );

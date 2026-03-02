@@ -25,7 +25,9 @@ class EditionCard extends StatelessWidget {
           ),
         );
       },
-      child: Column(
+      child: SizedBox(
+        width: double.infinity,
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Cover Image with rounded corners - LARGE BORDER RADIUS
