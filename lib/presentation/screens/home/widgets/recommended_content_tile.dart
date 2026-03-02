@@ -42,7 +42,7 @@ class RecommendedContentTile extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.all(DesignTokens.spacingSmall),
               child: Row(
-            children: [
+                children: [
               // Image/Icon container (left)
               Container(
                 width: 80,

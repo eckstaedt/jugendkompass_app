@@ -67,11 +67,11 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [DesignTokens.shadowSubtle],
                       ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
                         _buildNavItem(
                           context: context,
                           icon: Icons.home_outlined,
