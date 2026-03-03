@@ -5,6 +5,8 @@ import 'package:jugendkompass_app/presentation/navigation/bottom_nav_screen.dart
 import 'package:jugendkompass_app/presentation/screens/onboarding/onboarding_screen.dart';
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/domain/providers/theme_provider.dart';
+import 'package:jugendkompass_app/core/services/notification_service.dart';
+import 'package:jugendkompass_app/domain/providers/verse_provider.dart';
 
 class App extends ConsumerWidget {
   const App({super.key});
@@ -12,6 +14,9 @@ class App extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    
+    // Initialize and schedule notifications once on app startup
+    Future.microtask(() => _initializeNotifications(ref));
 
     return MaterialApp(
       title: 'Jugendkompass',
@@ -42,5 +47,34 @@ class App extends ConsumerWidget {
       ),
       debugShowCheckedModeBanner: false,
     );
+  }
+
+  /// Initialize notifications and schedule the daily verse notification
+  /// Called once per app startup via Future.microtask to avoid blocking UI
+  Future<void> _initializeNotifications(WidgetRef ref) async {
+    try {
+      final notificationService = NotificationService();
+      
+      // Initialize the notification service
+      await notificationService.init();
+      
+      // Request permissions
+      await notificationService.requestPermission();
+      
+      // Fetch today's verse using the existing provider
+      final verseAsync = ref.read(dailyVerseProvider);
+      
+      // Schedule notification when verse is ready
+      verseAsync.whenData((verse) {
+        if (verse != null) {
+          notificationService.scheduleDailyVerseNotification(
+            verseText: verse.verse,
+            reference: verse.reference,
+          );
+        }
+      });
+    } catch (e) {
+      print('Error initializing notifications: $e');
+    }
   }
 }

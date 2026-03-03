@@ -30,14 +30,19 @@ class RecommendedContentTile extends ConsumerWidget {
               sigmaY: DesignTokens.glassBlurSigma),
           child: Container(
             // force the tile to expand to whatever horizontal space it can take
-            // (minus the horizontal margin). This ensures that the width matches
-            // other full‑width cards such as the verse card on the home page.
+            // The outer HomeScreen already provides symmetric horizontal padding,
+            // so we avoid additional horizontal margins here to match the verse card
             width: double.infinity,
-            margin: const EdgeInsets.symmetric(horizontal: DesignTokens.paddingHorizontal, vertical: 8),
+            margin: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color: DesignTokens.glassBackground(0.12),
+              // slightly deeper opacity so tile stands out more from app background
+              color: DesignTokens.glassBackground(0.20),
               borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
-              boxShadow: [DesignTokens.shadowSubtle],
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.12),
+                width: 1,
+              ),
+              boxShadow: [DesignTokens.shadowGlass],
             ),
             child: Padding(
               padding: const EdgeInsets.all(DesignTokens.spacingSmall),
@@ -75,13 +80,13 @@ class RecommendedContentTile extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
                       children: [
                         BadgeWidget(label: item.isVideo ? 'VIDEO' : 'ARTIKEL', backgroundColor: DesignTokens.redBackground, textColor: DesignTokens.primaryRed),
-                        if (item.hasAudio) ...[
-                          const SizedBox(width: 8),
+                        if (item.hasAudio)
                           BadgeWidget(label: 'AUDIO', backgroundColor: DesignTokens.successGreen.withOpacity(0.12), textColor: DesignTokens.successGreen, icon: Icons.headphones),
-                        ],
                       ],
                     ),
                   ],
@@ -94,6 +99,8 @@ class RecommendedContentTile extends ConsumerWidget {
               else
                 Icon(Icons.chevron_right, color: DesignTokens.textSecondary, size: 28),
             ],
+          ),
+            ),
           ),
         ),
       ),

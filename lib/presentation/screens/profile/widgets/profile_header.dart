@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 
 class ProfileHeaderWidget extends StatelessWidget {
   final String? userName;
@@ -17,8 +19,11 @@ class ProfileHeaderWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
+    return RoundedCard(
+      glass: true,
+      backgroundColor: DesignTokens.glassBackgroundDeep(0.20),
       padding: const EdgeInsets.all(16),
+      withShadow: false,
       child: Row(
         children: [
           // Avatar

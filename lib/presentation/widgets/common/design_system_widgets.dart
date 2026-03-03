@@ -162,8 +162,8 @@ class _RoundedCardState extends State<RoundedCard> {
 
   @override
   Widget build(BuildContext context) {
-    final bg = widget.backgroundColor ?? Theme.of(context).colorScheme.surface;
-    final scale = _pressed ? 0.97 : 1.0;
+    final bg = widget.backgroundColor ?? Colors.white.withValues(alpha: 0.12);
+    final scale = _pressed ? 0.96 : 1.0;
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -172,14 +172,21 @@ class _RoundedCardState extends State<RoundedCard> {
       onTapCancel: _onTapCancel,
       child: AnimatedScale(
         scale: scale,
-        duration: const Duration(milliseconds: 100),
-        child: Container(
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            decoration: BoxDecoration(
-              color: bg,
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
-              boxShadow: widget.withShadow ? [DesignTokens.shadowLargeCard] : [],
+        duration: const Duration(milliseconds: 120),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            color: widget.glass ? Colors.transparent : bg,
+            borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
+            border: widget.glass 
+                ? Border.all(
+                    color: Colors.white.withValues(alpha: 0.14),
+                    width: 1.2,
+                  )
+                : null,
+            boxShadow: widget.withShadow && !widget.glass 
+                ? [DesignTokens.shadowLargeCard] 
+                : (widget.glass ? [DesignTokens.shadowGlass] : []),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
@@ -188,9 +195,15 @@ class _RoundedCardState extends State<RoundedCard> {
                       filter: ImageFilter.blur(
                           sigmaX: DesignTokens.glassBlurSigma,
                           sigmaY: DesignTokens.glassBlurSigma),
-                      child: Padding(
-                        padding: widget.padding ?? const EdgeInsets.all(DesignTokens.spacingMedium),
-                        child: widget.child,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: DesignTokens.glassBackground(0.13),
+                          borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
+                        ),
+                        child: Padding(
+                          padding: widget.padding ?? const EdgeInsets.all(DesignTokens.spacingMedium),
+                          child: widget.child,
+                        ),
                       ),
                     )
                   : Padding(
@@ -199,7 +212,6 @@ class _RoundedCardState extends State<RoundedCard> {
                     ),
             ),
           ),
-        ),
       ),
     );
   }

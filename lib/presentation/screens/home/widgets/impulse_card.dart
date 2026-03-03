@@ -25,7 +25,7 @@ class ImpulseCard extends StatelessWidget {
         margin: const EdgeInsets.only(right: 16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
-          boxShadow: [DesignTokens.shadowLargeCard],
+          boxShadow: [DesignTokens.shadowGlass],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),

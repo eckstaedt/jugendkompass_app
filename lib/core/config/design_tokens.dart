@@ -14,42 +14,50 @@ class DesignTokens {
   static const Color textSecondary = Color(0xFF6F7479);
   static const Color iconGrey = Color(0xFF9AA0A6);
 
-  // ⸻ BORDER RADIUS SYSTEM
-  static const double radiusLargeCards = 32;
-  static const double radiusMiddleContainers = 24;
-  static const double radiusButtons = 20;
-  static const double radiusInputFields = 18;
-  static const double radiusBadges = 50;
-  static const double radiusFloatingButton = 100;
+  // ⸻ BORDER RADIUS SYSTEM (iOS 26 Liquid Glass Design)
+  static const double radiusLargeCards = 40; // Increased for flowing iOS 26 aesthetic
+  static const double radiusMiddleContainers = 32; // Increased for consistency
+  static const double radiusButtons = 24; // Rounded button appearance
+  static const double radiusInputFields = 20; // Smooth input fields
+  static const double radiusBadges = 50; // Full pill-style badges
+  static const double radiusFloatingButton = 100; // Perfect circles
+  static const double radiusNavBar = 40; // iOS 26 navbar radius
 
-  // ⸻ SHADOW SYSTEM - Soft & Modern
+  // ⸻ SHADOW SYSTEM - iOS 26 Liquid Glass Aesthetic
   
-  // Große Cards - Weiches Shadow
+  // Große Cards - Weiches Shadow (Minimal für Glass Effect)
   static BoxShadow shadowLargeCard = BoxShadow(
-    color: Colors.black.withOpacity(0.08),
-    blurRadius: 25,
-    offset: const Offset(0, 15),
-  );
-
-  // Buttons - Primary Red Shadow
-  static BoxShadow shadowButton = BoxShadow(
-    color: primaryRed.withOpacity(0.35),
+    color: Colors.black.withOpacity(0.06),
     blurRadius: 20,
     offset: const Offset(0, 10),
   );
 
-  // Icon Container - Kräftiges Glow
-  static BoxShadow shadowIconContainer = BoxShadow(
-    color: primaryRed.withOpacity(0.4),
-    blurRadius: 35,
-    offset: const Offset(0, 20),
+  // Buttons - Primary Red Shadow
+  static BoxShadow shadowButton = BoxShadow(
+    color: primaryRed.withOpacity(0.30),
+    blurRadius: 16,
+    offset: const Offset(0, 8),
   );
 
-  // Minimales Shadow für subtile Elevation
+  // Icon Container - Kräftiges Glow
+  static BoxShadow shadowIconContainer = BoxShadow(
+    color: primaryRed.withOpacity(0.35),
+    blurRadius: 30,
+    offset: const Offset(0, 16),
+  );
+
+  // Minimales Shadow für subtile Elevation (Glass layers)
   static BoxShadow shadowSubtle = BoxShadow(
-    color: Colors.black.withOpacity(0.05),
-    blurRadius: 12,
-    offset: const Offset(0, 4),
+    color: Colors.black.withOpacity(0.04),
+    blurRadius: 10,
+    offset: const Offset(0, 3),
+  );
+
+  // iOS 26 Glass shadow - Ultra-subtle for glass cards
+  static BoxShadow shadowGlass = BoxShadow(
+    color: Colors.black.withOpacity(0.03),
+    blurRadius: 8,
+    offset: const Offset(0, 2),
   );
 
   // ⸻ SPACING SYSTEM
@@ -65,13 +73,22 @@ class DesignTokens {
   // Success / Positive color (used in search results etc.)
   static const Color successGreen = Color(0xFF2E7D32);
 
-  // Glass effect background used for translucent containers (liquid glass)
+  // Glass effect background used for translucent containers (liquid glass - iOS 26 style)
   // not const because we apply opacity dynamically
-  static Color glassBackground([double opacity = 0.15]) =>
-      Colors.white.withOpacity(opacity);
+    // default opacity slightly higher so elements have more white in them
+    static Color glassBackground([double opacity = 0.18]) =>
+      Colors.white.withValues(alpha: opacity);
 
-  // Recommended blur sigma for backdrop filter when using glass effect
-  static const double glassBlurSigma = 20.0;
+  // Recommended blur sigma for backdrop filter when using glass effect (iOS 26)
+  // reduce blur so containers stand out from background more clearly
+  static const double glassBlurSigma = 16.0;
+
+  // Secondary glass opacities for depth layering
+  static Color glassBackgroundDeep([double opacity = 0.18]) =>
+      Colors.white.withValues(alpha: opacity);
+  
+  static Color glassBackgroundShallow([double opacity = 0.08]) =>
+      Colors.white.withValues(alpha: opacity);
 
   // ⸻ BUTTON DIMENSIONS
   static const double buttonHeight = 56;

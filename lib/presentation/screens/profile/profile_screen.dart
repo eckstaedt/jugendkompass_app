@@ -75,7 +75,7 @@ class ProfileScreen extends ConsumerWidget {
 
           // Notification toggle
           SwitchListTile(
-            tileColor: DesignTokens.cardBackground,
+            tileColor: DesignTokens.glassBackground(0.12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             title: const Text('Benachrichtigungen'),
@@ -91,7 +91,7 @@ class ProfileScreen extends ConsumerWidget {
 
           // Dark mode toggle
           SwitchListTile(
-            tileColor: DesignTokens.cardBackground,
+            tileColor: DesignTokens.glassBackground(0.12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             title: const Text('Dark Mode'),
@@ -124,7 +124,7 @@ class ProfileScreen extends ConsumerWidget {
           ),
 
           ListTile(
-            tileColor: DesignTokens.cardBackground,
+            tileColor: DesignTokens.glassBackground(0.12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
             leading: const Icon(Icons.bookmark_outlined),
             title: const Text('Deine Sammlung'),
@@ -147,7 +147,7 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: DesignTokens.spacingSmall),
           // Shop placeholder
           ListTile(
-            tileColor: DesignTokens.cardBackground,
+            tileColor: DesignTokens.glassBackground(0.12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
             leading: const Icon(Icons.storefront_outlined),
             title: const Text('Shop'),

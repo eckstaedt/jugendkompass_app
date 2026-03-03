@@ -121,15 +121,18 @@ class PostDetailScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Meta information
-                  Row(
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
                     children: [
                       // Category/tag badges
                           if ((post.categoryNames ?? []).isNotEmpty)
-                            Row(
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 4,
                               children: post.categoryNames!
                                   .map(
                                     (tag) => Container(
-                                      margin: const EdgeInsets.only(right: 8),
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 12,
                                         vertical: 6,
@@ -161,6 +164,7 @@ class PostDetailScreen extends ConsumerWidget {
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
                                     Icons.label,
@@ -181,8 +185,7 @@ class PostDetailScreen extends ConsumerWidget {
                             ),
 
                       // Audio badge
-                      if (hasAudio) ...[
-                        const SizedBox(width: 12),
+                      if (hasAudio)
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -193,6 +196,7 @@ class PostDetailScreen extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
                                 Icons.headphones,
@@ -211,7 +215,6 @@ class PostDetailScreen extends ConsumerWidget {
                             ],
                           ),
                         ),
-                      ],
                     ],
                   ),
 
@@ -225,11 +228,14 @@ class PostDetailScreen extends ConsumerWidget {
                         color: Colors.grey.shade600,
                       ),
                       const SizedBox(width: 6),
-                      Text(
-                        _calculateReadingTime(post.body),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
+                      Expanded(
+                        child: Text(
+                          _calculateReadingTime(post.body),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],

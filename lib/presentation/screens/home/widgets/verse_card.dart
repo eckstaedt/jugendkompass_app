@@ -22,8 +22,8 @@ class VerseCard extends ConsumerWidget {
     return RoundedCard(
       padding: const EdgeInsets.all(DesignTokens.spacingMedium),
       glass: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      withShadow: true,
+      backgroundColor: DesignTokens.glassBackgroundDeep(0.24),
+      withShadow: false, // Glass effect already has shadow via BackdropFilter
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

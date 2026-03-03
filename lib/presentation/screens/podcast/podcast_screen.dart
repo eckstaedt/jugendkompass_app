@@ -9,6 +9,7 @@ import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.
 import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 import 'widgets/featured_episode_card.dart';
 import 'full_player_screen.dart';
 
@@ -74,24 +75,30 @@ class PodcastScreen extends ConsumerWidget {
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(24, 32, 24, 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Podcast',
-                            style: theme.textTheme.displaySmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              color: DesignTokens.textPrimary,
+                      child: RoundedCard(
+                        glass: true,
+                        backgroundColor: DesignTokens.glassBackgroundDeep(0.20),
+                        padding: const EdgeInsets.all(16),
+                        withShadow: false,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Podcast',
+                              style: theme.textTheme.displaySmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: DesignTokens.textPrimary,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Alle Episoden',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: DesignTokens.textSecondary,
+                            const SizedBox(height: 4),
+                            Text(
+                              'Alle Episoden',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: DesignTokens.textSecondary,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -328,14 +335,15 @@ class PodcastScreen extends ConsumerWidget {
             const SizedBox(height: 4),
             // Category badges
             if (audio.post != null)
-              Row(
+              Wrap(
+                spacing: 4,
+                runSpacing: 2,
                 children: [
                   for (var tag in audio.post!.categoryNames ??
                       (audio.post!.categoryName != null
                           ? [audio.post!.categoryName!]
                           : []))
                     Container(
-                      margin: const EdgeInsets.only(right: 4),
                       padding:
                           const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(

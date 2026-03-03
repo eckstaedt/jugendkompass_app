@@ -9,6 +9,7 @@ import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 
 // Combined content item for unified display
 class _CombinedContentItem {
@@ -75,9 +76,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   const SizedBox(height: 16),
 
                   // Search Field
-                  TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
+                  // search box sits inside a glass card to match app style
+                  RoundedCard(
+                    glass: true,
+                    backgroundColor: DesignTokens.glassBackgroundDeep(0.20),
+                    padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                    withShadow: false,
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
                       hintText: 'Wonach suchst du?',
                       hintStyle: TextStyle(
                         color: DesignTokens.textSecondary,
@@ -132,6 +139,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       });
                     },
                   ),
+                  ), // close RoundedCard
                 ],
               ),
             ),
@@ -296,136 +304,128 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildContentTile(_CombinedContentItem item) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      elevation: 0,
+    // rebuild clean version to avoid mismatched brackets
+    return RoundedCard(
+      glass: true,
+      backgroundColor: DesignTokens.glassBackground(0.20),
+      padding: const EdgeInsets.all(12),
+      withShadow: false,
       child: InkWell(
         onTap: () => _handleItemTap(item),
         borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade200, width: 1),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            children: [
-              // Image/Thumbnail
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: _getTypeColor(item.contentType).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(DesignTokens.radiusInputFields),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: item.imageUrl != null && item.imageUrl!.isNotEmpty
-                      ? CorsNetworkImage(
-                          imageUrl: item.imageUrl!,
-                          width: 56,
-                          height: 56,
-                          fit: BoxFit.cover,
-                        )
-                      : Icon(
-                          _getTypeIcon(item.contentType),
-                          color: _getTypeColor(item.contentType),
-                          size: 28,
-                        ),
-                ),
+        child: Row(
+          children: [
+            // Image/Thumbnail
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: _getTypeColor(item.contentType).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusInputFields),
               ),
-              const SizedBox(width: 16),
-
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title
-                    Text(
-                      item.title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                                    color: DesignTokens.textPrimary,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: item.imageUrl != null && item.imageUrl!.isNotEmpty
+                    ? CorsNetworkImage(
+                        imageUrl: item.imageUrl!,
+                        width: 56,
+                        height: 56,
+                        fit: BoxFit.cover,
+                      )
+                    : Icon(
+                        _getTypeIcon(item.contentType),
+                        color: _getTypeColor(item.contentType),
+                        size: 28,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
+              ),
+            ),
+            const SizedBox(width: 16),
 
-                    // Badges Row
-                    Row(
-                      children: [
-                        // Type Badge
+            // Content description
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: DesignTokens.textPrimary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+
+                  // Badges row
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getTypeColor(item.contentType).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
+                        ),
+                        child: Text(
+                          item.contentType,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: _getTypeColor(item.contentType),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      if (item.hasAudio)
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: _getTypeColor(item.contentType).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(6),
+                            color: DesignTokens.successGreen.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
                           ),
-                          child: Text(
-                            item.contentType,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: _getTypeColor(item.contentType),
-                              letterSpacing: 0.5,
-                            ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.headphones,
+                                size: 11,
+                                color: DesignTokens.successGreen,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'AUDIO',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: DesignTokens.successGreen,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        // Audio Badge if article has audio
-                        if (item.hasAudio) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                                          color: DesignTokens.successGreen.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.headphones,
-                                              size: 11,
-                                              color: DesignTokens.successGreen,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'AUDIO',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                                color: DesignTokens.successGreen,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ),
+            ),
 
-              // Chevron
-              Icon(
-                Icons.chevron_right,
-                color: Colors.grey.shade400,
-                size: 24,
-              ),
-            ],
-          ),
+            // Chevron icon
+            Icon(
+              Icons.chevron_right,
+              color: Colors.grey.shade400,
+              size: 24,
+            ),
+          ],
         ),
       ),
     );

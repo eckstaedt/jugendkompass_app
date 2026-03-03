@@ -28,14 +28,14 @@ class EditionCard extends StatelessWidget {
       child: SizedBox(
         width: double.infinity,
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Cover Image with rounded corners - LARGE BORDER RADIUS
           Expanded(
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
-                boxShadow: [DesignTokens.shadowLargeCard],
+                boxShadow: [DesignTokens.shadowGlass],
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
@@ -109,6 +109,7 @@ class EditionCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ],
+        ),
       ),
     );
   }

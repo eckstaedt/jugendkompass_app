@@ -25,7 +25,7 @@ class FeaturedEpisodeCard extends StatelessWidget {
       margin: const EdgeInsets.all(DesignTokens.spacingMedium),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
-        boxShadow: [DesignTokens.shadowLargeCard],
+        boxShadow: [DesignTokens.shadowGlass],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),

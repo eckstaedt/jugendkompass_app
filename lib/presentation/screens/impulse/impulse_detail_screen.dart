@@ -122,7 +122,9 @@ class ImpulseDetailScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Meta information
-                  Row(
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -134,6 +136,7 @@ class ImpulseDetailScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               Icons.access_time,
@@ -148,11 +151,11 @@ class ImpulseDetailScreen extends StatelessWidget {
                                 fontWeight: FontWeight.w600,
                                 color: theme.colorScheme.onPrimaryContainer,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 12),
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -163,6 +166,7 @@ class ImpulseDetailScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               Icons.calendar_today,
@@ -177,6 +181,7 @@ class ImpulseDetailScreen extends StatelessWidget {
                                 fontWeight: FontWeight.w600,
                                 color: theme.colorScheme.onSecondaryContainer,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),

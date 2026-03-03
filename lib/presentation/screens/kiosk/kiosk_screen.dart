@@ -6,6 +6,7 @@ import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.
 import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 
 class KioskScreen extends ConsumerWidget {
   const KioskScreen({super.key});
@@ -43,9 +44,14 @@ class KioskScreen extends ConsumerWidget {
                         DesignTokens.paddingHorizontal,
                         16,
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                      child: RoundedCard(
+                        glass: true,
+                        backgroundColor: DesignTokens.glassBackgroundDeep(0.20),
+                        padding: const EdgeInsets.all(16),
+                        withShadow: false,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                           Text(
                             'Kiosk',
                             style: theme.textTheme.displaySmall?.copyWith(
@@ -60,6 +66,7 @@ class KioskScreen extends ConsumerWidget {
                             ),
                           ),
                         ],
+                      ),
                       ),
                     ),
                   ),

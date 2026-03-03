@@ -48,66 +48,73 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
           // Mini Player Bar (shown when audio is playing)
           if (currentAudio != null) MiniPlayerBar(audio: currentAudio),
 
-          // Navigation Bar with custom rounded styling
-          // glass-like bottom navigation background
-          ClipRRect(
-            borderRadius: BorderRadius.circular(32),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(
-                  sigmaX: DesignTokens.glassBlurSigma,
-                  sigmaY: DesignTokens.glassBlurSigma),
-              child: Container(
-                color: DesignTokens.glassBackground(0.10),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.transparent,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [DesignTokens.shadowSubtle],
+          // Navigation Bar with iOS 26 liquid glass design
+          // Flowing, rounded, blurry navbar
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+            // limit total height so icons sit perfectly centered
+            height: 60,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusNavBar),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(
+                    sigmaX: DesignTokens.glassBlurSigma,
+                    sigmaY: DesignTokens.glassBlurSigma),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: DesignTokens.glassBackground(0.14),
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusNavBar),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      width: 1.5,
+                    ),
+                    boxShadow: [DesignTokens.shadowGlass],
+                  ),
+                  child: SafeArea(
+                    top: false,
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildNavItem(
+                            context: context,
+                            icon: Icons.home_outlined,
+                            selectedIcon: Icons.home,
+                            label: 'Home',
+                            index: 0,
+                          ),
+                          _buildNavItem(
+                            context: context,
+                            icon: Icons.explore_outlined,
+                            selectedIcon: Icons.explore,
+                            label: 'Kiosk',
+                            index: 1,
+                          ),
+                          _buildNavItem(
+                            context: context,
+                            icon: Icons.mic_outlined,
+                            selectedIcon: Icons.mic,
+                            label: 'Podcast',
+                            index: 2,
+                          ),
+                          _buildNavItem(
+                            context: context,
+                            icon: Icons.search_outlined,
+                            selectedIcon: Icons.search,
+                            label: 'Suche',
+                            index: 3,
+                          ),
+                          _buildNavItem(
+                            context: context,
+                            icon: Icons.menu,
+                            selectedIcon: Icons.menu,
+                            label: 'Menü',
+                            index: 4,
+                          ),
+                        ],
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                        _buildNavItem(
-                          context: context,
-                          icon: Icons.home_outlined,
-                          selectedIcon: Icons.home,
-                          label: 'Home',
-                          index: 0,
-                        ),
-                        _buildNavItem(
-                          context: context,
-                          icon: Icons.explore_outlined,
-                          selectedIcon: Icons.explore,
-                          label: 'Kiosk',
-                          index: 1,
-                        ),
-                        _buildNavItem(
-                          context: context,
-                          icon: Icons.mic_outlined,
-                          selectedIcon: Icons.mic,
-                          label: 'Podcast',
-                          index: 2,
-                        ),
-                        _buildNavItem(
-                          context: context,
-                          icon: Icons.search_outlined,
-                          selectedIcon: Icons.search,
-                          label: 'Suche',
-                          index: 3,
-                        ),
-                        _buildNavItem(
-                          context: context,
-                          icon: Icons.menu,
-                          selectedIcon: Icons.menu,
-                          label: 'Menü',
-                          index: 4,
-                        ),
-                      ],
                     ),
                   ),
                 ),
