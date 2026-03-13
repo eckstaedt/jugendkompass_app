@@ -55,6 +55,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final selectedFilter = ref.watch(_selectedDiscoverFilterProvider);
 
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('Suche'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: DesignTokens.textPrimary,
+      ),
       backgroundColor: DesignTokens.appBackground,
       body: SafeArea(
         child: Column(

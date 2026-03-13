@@ -7,7 +7,6 @@ import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
-import 'package:intl/intl.dart';
 
 class VideoScreen extends ConsumerStatefulWidget {
   const VideoScreen({super.key});
@@ -28,7 +27,6 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final videosAsync = ref.watch(videosListProvider);
 
     return Scaffold(
@@ -159,29 +157,33 @@ class VideoCard extends StatelessWidget {
       child: RoundedCard(
         glass: true,
         backgroundColor: DesignTokens.glassBackground(0.08),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(8),
         withShadow: true,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Video Thumbnail
-            ClipRRect(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
-              child: SizedBox(
-                width: double.infinity,
-                height: 200,
-                child: video.imageUrl != null
-                    ? CorsNetworkImage(
-                        imageUrl: video.imageUrl!,
-                        fit: BoxFit.cover,
-                      )
-                    : Container(
-                        color: DesignTokens.glassBackground(0.2),
-                        child: const Icon(Icons.video_library, size: 64),
-                      ),
+            Expanded(
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: video.imageUrl != null
+                        ? CorsNetworkImage(
+                            imageUrl: video.imageUrl!,
+                            fit: BoxFit.cover,
+                          )
+                        : Container(
+                            color: DesignTokens.glassBackground(0.2),
+                            child: const Icon(Icons.video_library, size: 48),
+                          ),
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
 
             // Video Info
             Column(
@@ -190,7 +192,7 @@ class VideoCard extends StatelessWidget {
                 // Title
                 Text(
                   video.title,
-                  style: theme.textTheme.titleMedium?.copyWith(
+                  style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: DesignTokens.textPrimary,
                   ),
@@ -199,19 +201,10 @@ class VideoCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
 
-                // Duration placeholder (since not in model, show created date)
-                Text(
-                  'Hochgeladen: ${DateFormat('dd.MM.yyyy').format(video.createdAt)}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: DesignTokens.textSecondary,
-                  ),
-                ),
-
                 // New tag
                 if (isNew) ...[
-                  const SizedBox(height: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                     decoration: BoxDecoration(
                       color: DesignTokens.primaryRed,
                       borderRadius: BorderRadius.circular(4),
