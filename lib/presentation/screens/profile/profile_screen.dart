@@ -12,6 +12,8 @@ import '../shop/shop_screen.dart';
 import '../onboarding/onboarding_screen.dart';
 import 'widgets/profile_header.dart';
 import 'profile_edit_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/search/search_screen.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});

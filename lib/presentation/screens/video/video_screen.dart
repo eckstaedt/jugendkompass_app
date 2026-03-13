@@ -101,19 +101,22 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                     );
                   }
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                  return GridView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.75, // Adjust for thumbnail and title
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                    ),
                     itemCount: filteredVideos.length,
                     itemBuilder: (context, index) {
                       final video = filteredVideos[index];
                       final isNew = video.createdAt.isAfter(DateTime.now().subtract(const Duration(days: 7)));
 
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: VideoCard(
-                          video: video,
-                          isNew: isNew,
-                        ),
+                      return VideoCard(
+                        video: video,
+                        isNew: isNew,
                       );
                     },
                   );
@@ -158,14 +161,15 @@ class VideoCard extends StatelessWidget {
         backgroundColor: DesignTokens.glassBackground(0.08),
         padding: const EdgeInsets.all(12),
         withShadow: true,
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Video Thumbnail
             ClipRRect(
               borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
               child: SizedBox(
-                width: 120,
-                height: 68,
+                width: double.infinity,
+                height: 200,
                 child: video.imageUrl != null
                     ? CorsNetworkImage(
                         imageUrl: video.imageUrl!,
@@ -173,57 +177,55 @@ class VideoCard extends StatelessWidget {
                       )
                     : Container(
                         color: DesignTokens.glassBackground(0.2),
-                        child: const Icon(Icons.video_library, size: 32),
+                        child: const Icon(Icons.video_library, size: 64),
                       ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(height: 12),
 
             // Video Info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title
-                  Text(
-                    video.title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: DesignTokens.textPrimary,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title
+                Text(
+                  video.title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: DesignTokens.textPrimary,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+
+                // Duration placeholder (since not in model, show created date)
+                Text(
+                  'Hochgeladen: ${DateFormat('dd.MM.yyyy').format(video.createdAt)}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: DesignTokens.textSecondary,
+                  ),
+                ),
+
+                // New tag
+                if (isNew) ...[
                   const SizedBox(height: 4),
-
-                  // Duration placeholder (since not in model, show created date)
-                  Text(
-                    'Hochgeladen: ${DateFormat('dd.MM.yyyy').format(video.createdAt)}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: DesignTokens.textSecondary,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: DesignTokens.primaryRed,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      'NEU',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-
-                  // New tag
-                  if (isNew) ...[
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: DesignTokens.primaryRed,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        'NEU',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
                 ],
-              ),
+              ],
             ),
           ],
         ),
