@@ -94,9 +94,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         Icons.search,
                         color: DesignTokens.textSecondary,
                       ),
-                      suffixIcon: _searchController.text.isNotEmpty
+                        suffixIcon: _searchController.text.isNotEmpty
                           ? IconButton(
-                              icon: Icon(Icons.clear, color: Colors.grey.shade500),
+                            icon: Icon(Icons.clear,
+                              color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withOpacity(0.6)),
                               onPressed: () {
                                 _searchController.clear();
                                 setState(() {
@@ -106,18 +110,24 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             )
                           : null,
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: Theme.of(context).colorScheme.surface,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(DesignTokens.radiusInputFields),
                         borderSide: BorderSide(
-                          color: Colors.grey.shade200,
+                            color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.12),
                           width: 1,
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(
-                          color: Colors.grey.shade200,
+                          color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.12),
                           width: 1,
                         ),
                       ),
@@ -183,18 +193,25 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       onSelected: (selected) {
         ref.read(_selectedDiscoverFilterProvider.notifier).state = value;
       },
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       selectedColor: DesignTokens.primaryRed,
       labelStyle: TextStyle(
-        color: isSelected ? Colors.white : DesignTokens.textSecondary,
+        color: isSelected
+            ? Theme.of(context).colorScheme.onPrimary
+            : DesignTokens.textSecondary,
         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
         fontSize: 14,
       ),
       side: BorderSide(
-        color: isSelected ? DesignTokens.primaryRed : Colors.grey.shade300,
+        color: isSelected
+            ? DesignTokens.primaryRed
+            : Theme.of(context)
+                .colorScheme
+                .onSurface
+                .withOpacity(0.12),
         width: 1,
       ),
-      checkmarkColor: Colors.white,
+      checkmarkColor: Theme.of(context).colorScheme.onPrimary,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
       ),

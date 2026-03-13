@@ -5,6 +5,7 @@ import 'package:jugendkompass_app/data/models/post_model.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/screens/podcast/full_player_screen.dart';
+import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
 class PostDetailScreen extends ConsumerWidget {
   final PostModel post;
@@ -139,7 +140,7 @@ class PostDetailScreen extends ConsumerWidget {
                                       ),
                                       decoration: BoxDecoration(
                                         color: theme.colorScheme.primaryContainer,
-                                        borderRadius: BorderRadius.circular(20),
+                                        borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
                                       ),
                                       child: Text(
                                         tag.toUpperCase(),
@@ -161,7 +162,7 @@ class PostDetailScreen extends ConsumerWidget {
                               ),
                               decoration: BoxDecoration(
                                 color: theme.colorScheme.primaryContainer,
-                                borderRadius: BorderRadius.circular(20),
+                                borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -193,7 +194,7 @@ class PostDetailScreen extends ConsumerWidget {
                           ),
                           decoration: BoxDecoration(
                             color: theme.colorScheme.secondaryContainer,
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,

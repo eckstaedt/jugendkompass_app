@@ -53,16 +53,9 @@ class KioskScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                           Text(
-                            'Kiosk',
+                            'Alle Ausgaben',
                             style: theme.textTheme.displaySmall?.copyWith(
                               fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Alle Ausgaben',
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: DesignTokens.textSecondary,
                             ),
                           ),
                         ],

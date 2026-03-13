@@ -130,11 +130,11 @@ class PodcastScreen extends ConsumerWidget {
                                             .state =
                                         null;
                                   },
-                                  backgroundColor: Colors.white,
+                                  backgroundColor: Theme.of(context).colorScheme.surface,
                                   selectedColor: DesignTokens.primaryRed,
                                   labelStyle: TextStyle(
                                     color: selectedCategory == null
-                                      ? Colors.white
+                                      ? Theme.of(context).colorScheme.onPrimary
                                       : DesignTokens.textSecondary,
                                     fontWeight: selectedCategory == null
                                         ? FontWeight.w600
@@ -143,10 +143,14 @@ class PodcastScreen extends ConsumerWidget {
                                   side: BorderSide(
                                     color: selectedCategory == null
                                       ? DesignTokens.primaryRed
-                                      : const Color(0xFFE5E7EB),
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withOpacity(0.12),
                                     width: 1.5,
                                   ),
-                                  checkmarkColor: Colors.white,
+                                    checkmarkColor:
+                                      Theme.of(context).colorScheme.onPrimary,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(20),
                                   ),
@@ -348,7 +352,7 @@ class PodcastScreen extends ConsumerWidget {
                           const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: DesignTokens.primaryRed.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
                       ),
                       child: Text(
                         tag,

@@ -34,7 +34,11 @@ class PrimaryButton extends StatelessWidget {
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.white.withOpacity(0.8),
+                        // use theme so progress indicator respects dark mode
+                        Theme.of(context)
+                            .colorScheme
+                            .onPrimary
+                            .withOpacity(0.8),
                       ),
                 ),
               )
@@ -113,7 +117,7 @@ class FloatingActionButtonCustom extends StatelessWidget {
       elevation: 0,
       child: Icon(
         icon,
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.onPrimary,
         size: 28,
       ),
     );
@@ -162,7 +166,8 @@ class _RoundedCardState extends State<RoundedCard> {
 
   @override
   Widget build(BuildContext context) {
-    final bg = widget.backgroundColor ?? Colors.white.withValues(alpha: 0.12);
+    final bg = widget.backgroundColor ??
+      Theme.of(context).colorScheme.surface.withOpacity(0.12);
     final scale = _pressed ? 0.96 : 1.0;
 
     return GestureDetector(
@@ -178,11 +183,14 @@ class _RoundedCardState extends State<RoundedCard> {
           decoration: BoxDecoration(
             color: widget.glass ? Colors.transparent : bg,
             borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
-            border: widget.glass 
-                ? Border.all(
-                    color: Colors.white.withValues(alpha: 0.14),
-                    width: 1.2,
-                  )
+            border: widget.glass
+              ? Border.all(
+                color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withOpacity(0.14),
+                width: 1.2,
+                )
                 : null,
             boxShadow: widget.withShadow && !widget.glass 
                 ? [DesignTokens.shadowLargeCard] 
@@ -236,8 +244,8 @@ class BadgeWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 8,
+        horizontal: 8,
+        vertical: 4,
       ),
       decoration: BoxDecoration(
         color: backgroundColor ?? DesignTokens.redBackground,
@@ -249,17 +257,17 @@ class BadgeWidget extends StatelessWidget {
           if (icon != null) ...[
             Icon(
               icon,
-              size: 14,
+              size: 12,
               color: textColor ?? DesignTokens.primaryRed,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 4),
           ],
           Text(
             label,
             style: TextStyle(
               color: textColor ?? DesignTokens.primaryRed,
               fontWeight: FontWeight.w600,
-              fontSize: 13,
+              fontSize: 11,
               letterSpacing: 0.5,
             ),
           ),

@@ -57,8 +57,8 @@ class FeaturedEpisodeCard extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.7),
-                      Colors.black.withOpacity(0.9),
+                      Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      Theme.of(context).colorScheme.onSurface.withOpacity(0.9),
                     ],
                     stops: const [0.0, 0.5, 1.0],
                   ),
@@ -87,10 +87,10 @@ class FeaturedEpisodeCard extends StatelessWidget {
                           color: DesignTokens.primaryRed,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                          child: const Text(
-                        'FEATURED',
-                        style: TextStyle(
-                          color: Colors.white,
+                          child: Text(
+                          'FEATURED',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.2,
@@ -102,8 +102,8 @@ class FeaturedEpisodeCard extends StatelessWidget {
                     // Title
                     Text(
                       audio.title ?? 'Unbekannter Titel',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                          color: Colors.white,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          color: theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w700,
                         ),
                       maxLines: 2,
@@ -117,7 +117,7 @@ class FeaturedEpisodeCard extends StatelessWidget {
                           "body": Style(
                             margin: Margins.zero,
                             padding: HtmlPaddings.zero,
-                            color: Colors.white.withOpacity(0.9),
+                            color: theme.colorScheme.onSurface.withOpacity(0.9),
                             fontSize: FontSize(theme.textTheme.bodyMedium?.fontSize ?? 14),
                             maxLines: 2,
                             textOverflow: TextOverflow.ellipsis,
@@ -125,7 +125,7 @@ class FeaturedEpisodeCard extends StatelessWidget {
                           "p": Style(
                             margin: Margins.zero,
                             padding: HtmlPaddings.zero,
-                            color: Colors.white.withOpacity(0.9),
+                            color: theme.colorScheme.onSurface.withOpacity(0.9),
                             fontSize: FontSize(theme.textTheme.bodyMedium?.fontSize ?? 14),
                             maxLines: 2,
                             textOverflow: TextOverflow.ellipsis,

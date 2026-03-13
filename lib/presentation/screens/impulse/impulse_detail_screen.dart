@@ -3,6 +3,7 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:intl/intl.dart';
 import 'package:jugendkompass_app/data/models/impulse_model.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
+import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
 class ImpulseDetailScreen extends StatelessWidget {
   final ImpulseModel impulse;
@@ -32,15 +33,15 @@ class ImpulseDetailScreen extends StatelessWidget {
               title: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   impulse.displayTitle,
-                  style: const TextStyle(
+                    style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: theme.colorScheme.onSurface,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -64,10 +65,10 @@ class ImpulseDetailScreen extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            child: const Icon(
+                              child: Icon(
                               Icons.lightbulb,
                               size: 80,
-                              color: Colors.white,
+                              color: theme.colorScheme.onSurface,
                             ),
                           ),
                         ),
@@ -84,7 +85,7 @@ class ImpulseDetailScreen extends StatelessWidget {
                                 end: Alignment.bottomCenter,
                                 colors: [
                                   Colors.transparent,
-                                  Colors.black.withOpacity(0.8),
+                                  theme.colorScheme.onSurface.withOpacity(0.8),
                                 ],
                               ),
                             ),
@@ -103,11 +104,11 @@ class ImpulseDetailScreen extends StatelessWidget {
                           ],
                         ),
                       ),
-                      child: const Center(
+                        child: Center(
                         child: Icon(
                           Icons.lightbulb,
                           size: 80,
-                          color: Colors.white,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
                     ),
@@ -133,7 +134,7 @@ class ImpulseDetailScreen extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -163,7 +164,7 @@ class ImpulseDetailScreen extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.secondaryContainer,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,

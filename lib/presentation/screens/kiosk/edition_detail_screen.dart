@@ -42,9 +42,9 @@ class EditionDetailScreen extends ConsumerWidget {
           Positioned(
             top: MediaQuery.of(context).padding.top + 16,
             left: 16,
-            child: CircleAvatar(
-              backgroundColor: Colors.black.withOpacity(0.5),
-              child: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context)),
+              child: CircleAvatar(
+              backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              child: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
             ),
           ),
 
@@ -52,9 +52,9 @@ class EditionDetailScreen extends ConsumerWidget {
             Positioned(
               top: MediaQuery.of(context).padding.top + 16,
               right: 16,
-              child: CircleAvatar(
-                backgroundColor: Colors.black.withOpacity(0.5),
-                child: IconButton(icon: const Icon(Icons.picture_as_pdf, color: Colors.white), onPressed: () => _openPDF(context, edition.pdfUrl!)),
+                child: CircleAvatar(
+                backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                child: IconButton(icon: Icon(Icons.picture_as_pdf, color: Theme.of(context).colorScheme.onSurface), onPressed: () => _openPDF(context, edition.pdfUrl!)),
               ),
             ),
 
@@ -67,7 +67,7 @@ class EditionDetailScreen extends ConsumerWidget {
                 decoration: BoxDecoration(color: DesignTokens.appBackground, borderRadius: BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusLargeCards))),
                 child: Column(
                   children: [
-                    Container(margin: const EdgeInsets.only(top: 12, bottom: 8), width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade400, borderRadius: BorderRadius.circular(2))),
+                    Container(margin: const EdgeInsets.only(top: 12, bottom: 8), width: 40, height: 4, decoration: BoxDecoration(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3), borderRadius: BorderRadius.circular(2))),
                     Expanded(
                       child: audiosAsync.when(
                         data: (audios) => postsAsync.when(

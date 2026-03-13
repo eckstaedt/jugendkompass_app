@@ -51,7 +51,11 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
           // Navigation Bar with iOS 26 liquid glass design
           // Flowing, rounded, blurry navbar
           Container(
-            margin: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+            // slightly reduce bottom margin to eliminate a 4px overflow
+            // that was occurring on some devices. The navbar itself remains
+            // 60px tall and the icons keep their existing centering – we
+            // merely trim the external spacing by the exact overflow amount.
+            margin: const EdgeInsets.fromLTRB(16, 4, 16, 16),
             // limit total height so icons sit perfectly centered
             height: 60,
             child: ClipRRect(
@@ -65,7 +69,10 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
                     color: DesignTokens.glassBackground(0.14),
                     borderRadius: BorderRadius.circular(DesignTokens.radiusNavBar),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.15),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.15),
                       width: 1.5,
                     ),
                     boxShadow: [DesignTokens.shadowGlass],
@@ -74,7 +81,7 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
                     top: false,
                     bottom: false,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
@@ -140,28 +147,31 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
         onTap: () => _onItemTapped(index),
         borderRadius: BorderRadius.circular(16),
         splashColor: DesignTokens.primaryRed.withOpacity(0.1),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                isSelected ? selectedIcon : icon,
-                color: isSelected ? DesignTokens.primaryRed : DesignTokens.textSecondary,
-                size: 30,
-              ),
-              const SizedBox(height: 6),
-              // Dot indicator for selected item
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: isSelected ? 6 : 0,
-                height: isSelected ? 6 : 0,
-                decoration: const BoxDecoration(
-                  color: DesignTokens.primaryRed,
-                  shape: BoxShape.circle,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Icon(
+                  isSelected ? selectedIcon : icon,
+                  color: isSelected ? DesignTokens.primaryRed : DesignTokens.textSecondary,
+                  size: 28,
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                // Dot indicator for selected item
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: isSelected ? 5 : 0,
+                  height: isSelected ? 5 : 0,
+                  decoration: const BoxDecoration(
+                    color: DesignTokens.primaryRed,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
