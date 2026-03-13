@@ -8,10 +8,10 @@ import 'package:jugendkompass_app/domain/providers/theme_provider.dart';
 import 'package:jugendkompass_app/domain/providers/favorites_provider.dart';
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/data/services/favorites_service.dart';
-import 'widgets/profile_header.dart';
-import 'profile_edit_screen.dart';
 import '../shop/shop_screen.dart';
 import '../onboarding/onboarding_screen.dart';
+import 'widgets/profile_header.dart';
+import 'profile_edit_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -42,6 +42,42 @@ class ProfileScreen extends ConsumerWidget {
       body: ListView(
         padding: EdgeInsets.symmetric(horizontal: DesignTokens.paddingHorizontal, vertical: DesignTokens.spacingMedium),
         children: [
+          // App-wide Search Bar
+          RoundedCard(
+            glass: true,
+            backgroundColor: DesignTokens.glassBackgroundDeep(0.20),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            withShadow: false,
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SearchScreen(),
+                  ),
+                );
+              },
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.search,
+                    color: DesignTokens.textSecondary,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Suche in der ganzen App...',
+                    style: TextStyle(
+                      color: DesignTokens.textSecondary,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          SizedBox(height: DesignTokens.spacingMedium),
+
           // Profile Header
           ProfileHeaderWidget(
             userName: userName,
@@ -50,7 +86,7 @@ class ProfileScreen extends ConsumerWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const ProfileEditScreen(),
+                  builder: (context) => ProfileEditScreen(),
                 ),
               );
             },
@@ -156,7 +192,7 @@ class ProfileScreen extends ConsumerWidget {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const ShopScreen()),
+                MaterialPageRoute(builder: (_) => ShopScreen()),
               );
             },
           ),
@@ -294,7 +330,7 @@ class ProfileScreen extends ConsumerWidget {
 
       // Navigate back to onboarding
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+        MaterialPageRoute(builder: (_) => OnboardingScreen()),
         (route) => false,
       );
 

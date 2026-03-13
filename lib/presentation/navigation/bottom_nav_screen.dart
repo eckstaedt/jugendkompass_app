@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/presentation/screens/home/home_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/podcast/podcast_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/kiosk/kiosk_screen.dart';
-import 'package:jugendkompass_app/presentation/screens/search/search_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/video/video_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/profile/profile_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/podcast/widgets/mini_player_bar.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
@@ -24,7 +24,7 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
     HomeScreen(),
     KioskScreen(),
     PodcastScreen(),
-    SearchScreen(),
+    VideoScreen(),
     ProfileScreen(),
   ];
 
@@ -108,9 +108,9 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
                           ),
                           _buildNavItem(
                             context: context,
-                            icon: Icons.search_outlined,
-                            selectedIcon: Icons.search,
-                            label: 'Suche',
+                            icon: Icons.video_library_outlined,
+                            selectedIcon: Icons.video_library,
+                            label: 'Videos',
                             index: 3,
                           ),
                           _buildNavItem(
