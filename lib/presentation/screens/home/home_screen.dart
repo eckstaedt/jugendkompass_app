@@ -12,6 +12,7 @@ import 'package:jugendkompass_app/presentation/screens/impulse/impulse_detail_sc
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/profile/profile_edit_screen.dart';
+import 'package:jugendkompass_app/presentation/navigation/fade_page_route.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -199,17 +200,20 @@ class HomeScreen extends ConsumerWidget {
                       itemCount: impulses.length,
                       itemBuilder: (context, index) {
                         final impulse = impulses[index];
-                        return ImpulseCard(
-                          impulse: impulse,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    ImpulseDetailScreen(impulse: impulse),
-                              ),
-                            );
-                          },
+                        return Hero(
+                          tag: 'impulse_${impulse.id}',
+                          child: ImpulseCard(
+                            impulse: impulse,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ImpulseDetailScreen(impulse: impulse),
+                                ),
+                              );
+                            },
+                          ),
                         );
                       },
                     ),
@@ -373,7 +377,7 @@ class HomeScreen extends ConsumerWidget {
     if (item.isVideo && item.video != null) {
       Navigator.push(
         context,
-        MaterialPageRoute(
+        FadePageRoute(
           builder: (context) => VideoPlayerScreen(
             videoUrl: item.video!.videoUrl,
             title: item.video!.displayTitle,
@@ -383,7 +387,7 @@ class HomeScreen extends ConsumerWidget {
     } else if (item.post != null) {
       Navigator.push(
         context,
-        MaterialPageRoute(
+        FadePageRoute(
           builder: (context) => PostDetailScreen(post: item.post!),
         ),
       );

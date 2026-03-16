@@ -156,7 +156,7 @@ class VideoCard extends ConsumerStatefulWidget {
 }
 
 class _VideoCardState extends ConsumerState<VideoCard> {
-  late VideoPlayerController _videoPlayerController;
+  VideoPlayerController? _videoPlayerController;
   int _duration = 0;
 
   @override
@@ -167,7 +167,9 @@ class _VideoCardState extends ConsumerState<VideoCard> {
 
   Future<void> _loadDuration() async {
     if (widget.video.duration != null && widget.video.duration! > 0) {
-      setState(() => _duration = widget.video.duration!);
+      if (mounted) {
+        setState(() => _duration = widget.video.duration!);
+      }
       return;
     }
 
@@ -175,24 +177,24 @@ class _VideoCardState extends ConsumerState<VideoCard> {
       _videoPlayerController = VideoPlayerController.networkUrl(
         Uri.parse(widget.video.url),
       );
-      await _videoPlayerController.initialize();
-      final durationMs = _videoPlayerController.value.duration.inSeconds;
+      await _videoPlayerController!.initialize();
+      final durationMs = _videoPlayerController!.value.duration.inSeconds;
       
       if (mounted) {
         setState(() => _duration = durationMs);
       }
       
-      await _videoPlayerController.dispose();
+      await _videoPlayerController?.dispose();
+      _videoPlayerController = null;
     } catch (e) {
       // Dauer konnte nicht geladen werden
+      _videoPlayerController = null;
     }
   }
 
   @override
   void dispose() {
-    if (_videoPlayerController.value.isInitialized) {
-      _videoPlayerController.dispose();
-    }
+    _videoPlayerController?.dispose();
     super.dispose();
   }
 

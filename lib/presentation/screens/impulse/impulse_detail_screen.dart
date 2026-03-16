@@ -79,25 +79,27 @@ class ImpulseDetailScreen extends ConsumerWidget {
                 ),
               ),
               background: impulse.imageUrl != null
-                  ? Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        CorsNetworkImage(
-                          imageUrl: impulse.imageUrl!,
-                          fit: BoxFit.cover,
-                          errorWidget: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  theme.colorScheme.primary,
-                                  theme.colorScheme.secondary,
-                                ],
+                  ? Hero(
+                      tag: 'impulse_${impulse.id}',
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          CorsNetworkImage(
+                            imageUrl: impulse.imageUrl!,
+                            fit: BoxFit.cover,
+                            errorWidget: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    theme.colorScheme.primary,
+                                    theme.colorScheme.secondary,
+                                  ],
+                                ),
                               ),
-                            ),
-                              child: Icon(
-                              Icons.lightbulb,
+                                child: Icon(
+                                Icons.lightbulb,
                               size: 80,
                               color: theme.colorScheme.onSurface,
                             ),
@@ -121,10 +123,10 @@ class ImpulseDetailScreen extends ConsumerWidget {
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    )
-                  : Container(
+                        ],
+                      ),
+                    ),
+                  )
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
