@@ -14,8 +14,6 @@ import 'package:jugendkompass_app/data/services/favorite_verses_service.dart';
 import 'package:jugendkompass_app/data/services/collection_service.dart';
 import '../shop/shop_screen.dart';
 import '../onboarding/onboarding_screen.dart';
-import 'widgets/profile_header.dart';
-import 'profile_edit_screen.dart';
 import 'favorite_verses_screen.dart';
 import 'collection_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/search/search_screen.dart';
@@ -26,21 +24,13 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userName = ref.watch(userNameProvider);
     final notificationsEnabled = ref.watch(notificationsProvider);
     final themeMode = ref.watch(themeModeProvider);
     final theme = Theme.of(context);
 
-    // Get avatar URL from Supabase profile
-    final profileAsync = ref.watch(currentUserProfileProvider);
-    final avatarUrl = profileAsync.maybeWhen(
-      data: (profile) => profile?.avatarUrl,
-      orElse: () => null,
-    );
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profil'),
+        title: const Text('Einstellungen'),
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
@@ -79,22 +69,6 @@ class ProfileScreen extends ConsumerWidget {
                 ],
               ),
             ),
-          ),
-
-          SizedBox(height: DesignTokens.spacingMedium),
-
-          // Profile Header
-          ProfileHeaderWidget(
-            userName: userName,
-            avatarUrl: avatarUrl,
-            onEditPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ProfileEditScreen(),
-                ),
-              );
-            },
           ),
 
           SizedBox(height: DesignTokens.spacingMedium),

@@ -91,3 +91,45 @@ final recommendedContentProvider = FutureProvider<List<RecommendedItem>>((ref) a
     throw Exception('Fehler beim Laden der Empfehlungen: $e');
   }
 });
+
+/// Latest content provider - returns the newest content item across all types
+final latestContentProvider = FutureProvider<RecommendedItem?>((ref) async {
+  try {
+    // Fetch posts and videos
+    final postRepository = ref.watch(postRepositoryProvider);
+    final videoRepository = ref.watch(videoRepositoryProvider);
+    
+    final posts = await postRepository.getPostList(limit: 50);
+    final videos = await videoRepository.getVideoList(limit: 50);
+
+    // Convert to RecommendedItems
+    final allItems = <RecommendedItem>[];
+    
+    // Add posts with their creation timestamps
+    for (final post in posts) {
+      allItems.add(RecommendedItem.fromPost(post));
+    }
+    
+    // Add videos with their creation timestamps
+    for (final video in videos) {
+      allItems.add(RecommendedItem.fromVideo(video));
+    }
+
+    // Sort by creation date (newest first)
+    allItems.sort((a, b) {
+      final dateA = a.contentType == 'video'
+          ? (a.data as VideoModel).createdAt
+          : (a.data as PostModel).createdAt;
+      
+      final dateB = b.contentType == 'video'
+          ? (b.data as VideoModel).createdAt
+          : (b.data as PostModel).createdAt;
+      
+      return dateB.compareTo(dateA); // Newest first
+    });
+
+    return allItems.isNotEmpty ? allItems.first : null;
+  } catch (e) {
+    return null;
+  }
+});

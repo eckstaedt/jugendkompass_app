@@ -44,65 +44,55 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       );
 
       if (image != null) {
-        // Upload image to Supabase Storage
-        final user = ref.read(supabaseProvider).auth.currentUser;
+        setState(() {
+          _isSaving = true;
+        });
 
-        if (user != null) {
-          setState(() {
-            _isSaving = true;
-          });
+        try {
+          final profileRepo = ref.read(profileRepositoryProvider);
+          final imageFile = File(image.path);
+          
+          // Get user ID - use a fixed ID for anonymous users or auth user
+          final user = ref.read(supabaseProvider).auth.currentUser;
+          final userId = user?.id ?? 'anonymous_user';
 
-          try {
-            final profileRepo = ref.read(profileRepositoryProvider);
-            final imageFile = File(image.path);
-
-            // Delete old avatar if exists
-            if (_avatarUrl != null) {
-              try {
-                await profileRepo.deleteAvatar(_avatarUrl!);
-              } catch (_) {
-                // Ignore if old avatar doesn't exist
-              }
-            }
-
-            // Upload new avatar
-            final newAvatarUrl = await profileRepo.uploadAvatar(user.id, imageFile);
-
-            setState(() {
-              _avatarUrl = newAvatarUrl;
-            });
-
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Bild erfolgreich hochgeladen'),
-                backgroundColor: Colors.green,
-              ),
-            );
-          } catch (e) {
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Fehler beim Hochladen: $e'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          } finally {
-            if (mounted) {
-              setState(() {
-                _isSaving = false;
-              });
+          // Delete old avatar if exists
+          if (_avatarUrl != null) {
+            try {
+              await profileRepo.deleteAvatar(_avatarUrl!);
+            } catch (_) {
+              // Ignore if old avatar doesn't exist
             }
           }
-        } else {
-          // User not authenticated - show message
+
+          // Upload new avatar
+          final newAvatarUrl = await profileRepo.uploadAvatar(userId, imageFile);
+
+          setState(() {
+            _avatarUrl = newAvatarUrl;
+          });
+
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Bitte melde dich an, um ein Profilbild hochzuladen'),
-              backgroundColor: Colors.orange,
+              content: Text('Bild erfolgreich hochgeladen'),
+              backgroundColor: Colors.green,
             ),
           );
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Fehler beim Hochladen: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } finally {
+          if (mounted) {
+            setState(() {
+              _isSaving = false;
+            });
+          }
         }
       }
     } catch (e) {
@@ -201,6 +191,22 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    
+    // Load avatar if not already loaded
+    if (_avatarUrl == null) {
+      final profileAsync = ref.watch(currentUserProfileProvider);
+      profileAsync.whenData((profile) {
+        if (profile?.avatarUrl != null && _avatarUrl != profile?.avatarUrl && mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                _avatarUrl = profile!.avatarUrl;
+              });
+            }
+          });
+        }
+      });
+    }
 
     return Scaffold(
       appBar: AppBar(

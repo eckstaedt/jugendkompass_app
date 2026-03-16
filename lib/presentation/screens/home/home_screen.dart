@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:jugendkompass_app/domain/providers/verse_provider.dart';
 import 'package:jugendkompass_app/domain/providers/profile_provider.dart';
 import 'package:jugendkompass_app/domain/providers/impulse_provider.dart';
 import 'package:jugendkompass_app/domain/providers/recommendation_provider.dart';
-import 'package:jugendkompass_app/domain/providers/post_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/home/widgets/verse_card.dart';
 import 'package:jugendkompass_app/presentation/screens/home/widgets/impulse_card.dart';
 import 'package:jugendkompass_app/presentation/screens/home/widgets/recommended_content_tile.dart';
 import 'package:jugendkompass_app/presentation/screens/impulse/impulse_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/profile/profile_edit_screen.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -21,12 +22,60 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final verseAsync = ref.watch(dailyVerseProvider);
     final impulsesAsync = ref.watch(dailyImpulsesProvider);
-    final recommendationsAsync = ref.watch(recommendedContentProvider);
-    final latestPostAsync = ref.watch(latestPostProvider);
+    final latestContentAsync = ref.watch(latestContentProvider);
     final userName = ref.watch(userNameProvider);
+    final profileAsync = ref.watch(currentUserProfileProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        actions: [
+          Padding(
+            padding: EdgeInsets.only(
+              right: DesignTokens.paddingHorizontal,
+              top: 8,
+              bottom: 8,
+            ),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProfileEditScreen(),
+                  ),
+                );
+              },
+              child: profileAsync.maybeWhen(
+                data: (profile) => CircleAvatar(
+                  radius: 22,
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  backgroundImage: profile?.avatarUrl != null
+                      ? CachedNetworkImageProvider(profile!.avatarUrl!)
+                      : null,
+                  child: profile?.avatarUrl == null
+                      ? Icon(
+                          Icons.person,
+                          size: 24,
+                          color: theme.colorScheme.onPrimaryContainer,
+                        )
+                      : null,
+                ),
+                orElse: () => CircleAvatar(
+                  radius: 22,
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  child: Icon(
+                    Icons.person,
+                    size: 24,
+                    color: theme.colorScheme.onPrimaryContainer,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(dailyVerseProvider);
@@ -177,7 +226,7 @@ class HomeScreen extends ConsumerWidget {
 
             const SliverToBoxAdapter(child: SizedBox(height: 32)),
 
-            // Recommendations Section Header
+            // Latest Content Section Header
             SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.fromLTRB(
@@ -187,7 +236,7 @@ class HomeScreen extends ConsumerWidget {
                   DesignTokens.spacingSmall,
                 ),
                 child: Text(
-                  '✨ Für Dich empfohlen',
+                  'Neuester Beitrag',
                   style: GoogleFonts.poppins(
                     textStyle: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w700,
@@ -199,36 +248,25 @@ class HomeScreen extends ConsumerWidget {
 
             const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-            // Recommendations List
+            // Latest Content
             SliverToBoxAdapter(
-              child: recommendationsAsync.when(
-                data: (recommendations) {
-                  if (recommendations.isEmpty) {
+              child: latestContentAsync.when(
+                data: (latestItem) {
+                  if (latestItem == null) {
                     return const Padding(
                       padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(child: Text('Keine Empfehlungen verfügbar')),
+                      child: Center(child: Text('Kein Inhalt verfügbar')),
                     );
                   }
                   return Padding(
                     padding: EdgeInsets.symmetric(
                       horizontal: DesignTokens.paddingHorizontal,
                     ),
-                    child: Column(
-                      children: List.generate(
-                        recommendations.length,
-                        (index) {
-                          final item = recommendations[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: RecommendedContentTile(
-                              item: item,
-                              onTap: () => _navigateToContent(
-                                context,
-                                item,
-                              ),
-                            ),
-                          );
-                        },
+                    child: RecommendedContentTile(
+                      item: latestItem,
+                      onTap: () => _navigateToContent(
+                        context,
+                        latestItem,
                       ),
                     ),
                   );
@@ -240,53 +278,14 @@ class HomeScreen extends ConsumerWidget {
                 error: (error, stack) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Center(
-                    child: Text('Fehler beim Laden der Empfehlungen: $error'),
+                    child: Text('Fehler beim Laden: $error'),
                   ),
                 ),
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 32)),
-
-            // Latest Post Section
-            SliverToBoxAdapter(
-              child: latestPostAsync.when(
-                data: (post) {
-                  if (post == null) return const SizedBox.shrink();
-                  final item = RecommendedItem.fromPost(post);
-                  return Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: DesignTokens.paddingHorizontal,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(0, 32, 0, 12),
-                          child: Text(
-                            'Neuester Beitrag',
-                            style: GoogleFonts.poppins(
-                              textStyle: theme.textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.w700,
-                              ) ?? const TextStyle(fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                        ),
-                        RecommendedContentTile(
-                          item: item,
-                          onTap: () => _navigateToContent(context, item),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-                loading: () => const SizedBox.shrink(),
-                error: (_, __) => const SizedBox.shrink(),
-              ),
-            ),
-
             // Bottom spacing
-            const SliverToBoxAdapter(child: SizedBox(height: 40)),
+            const SliverToBoxAdapter(child: SizedBox(height: 100)),
           ],
         ),
       ),

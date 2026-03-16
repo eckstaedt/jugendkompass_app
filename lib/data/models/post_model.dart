@@ -10,6 +10,7 @@ class PostModel {
   final String? contentId;
   final String? audioId;
   final String? imageUrl;
+  final DateTime createdAt;
 
   PostModel({
     required this.id,
@@ -22,6 +23,7 @@ class PostModel {
     this.contentId,
     this.audioId,
     this.imageUrl,
+    required this.createdAt,
   });
 
   factory PostModel.fromJson(Map<String, dynamic> json) {
@@ -58,6 +60,9 @@ class PostModel {
       contentId: json['content_id']?.toString(),
       audioId: json['audio_id']?.toString(),
       imageUrl: json['image_url'] as String?,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now(),
     );
   }
 
@@ -72,6 +77,7 @@ class PostModel {
       'content_id': contentId,
       'audio_id': audioId,
       'image_url': imageUrl,
+      'created_at': createdAt.toIso8601String(),
     };
   }
 
@@ -86,6 +92,7 @@ class PostModel {
     String? contentId,
     String? audioId,
     String? imageUrl,
+    DateTime? createdAt,
   }) {
     return PostModel(
       id: id ?? this.id,
@@ -98,6 +105,7 @@ class PostModel {
       contentId: contentId ?? this.contentId,
       audioId: audioId ?? this.audioId,
       imageUrl: imageUrl ?? this.imageUrl,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 }

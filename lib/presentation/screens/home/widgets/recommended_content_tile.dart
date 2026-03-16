@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/domain/providers/recommendation_provider.dart';
-import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
+import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
+import 'package:jugendkompass_app/data/models/collection_item_model.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
@@ -93,11 +94,41 @@ class RecommendedContentTile extends ConsumerWidget {
                 ),
               ),
 
-              // Play button (if audio available) or chevron
-              if (item.hasAudio)
-                GestureDetector(onTap: () => _playAudio(context, ref), child: Icon(Icons.play_circle_filled, color: DesignTokens.primaryRed, size: 40))
-              else
-                Icon(Icons.chevron_right, color: DesignTokens.textSecondary, size: 28),
+              // Play button (if audio available), chevron, or save icon
+              Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Consumer(
+                  builder: (context, ref, _) {
+                    final isInCollection = ref.watch(collectionProvider).any(
+                      (item) => item.id == this.item.id && (
+                        (item.type == CollectionItemType.video && this.item.isVideo) ||
+                        (item.type == CollectionItemType.post && !this.item.isVideo)
+                      ),
+                    );
+
+                    return GestureDetector(
+                      onTap: () {
+                        final collectionItem = CollectionItem(
+                          id: this.item.id,
+                          title: this.item.title,
+                          description: '',
+                          imageUrl: this.item.imageUrl,
+                          type: this.item.isVideo ? CollectionItemType.video : CollectionItemType.post,
+                          author: '',
+                          savedAt: DateTime.now(),
+                          rawData: {},
+                        );
+                        ref.read(collectionProvider.notifier).toggleCollection(collectionItem);
+                      },
+                      child: Icon(
+                        isInCollection ? Icons.bookmark : Icons.bookmark_outline,
+                        color: isInCollection ? DesignTokens.primaryRed : DesignTokens.textSecondary,
+                        size: 28,
+                      ),
+                    );
+                  },
+                ),
+              )
             ],
           ),
             ),
@@ -106,48 +137,4 @@ class RecommendedContentTile extends ConsumerWidget {
       ),
     );
   }
-
-  Future<void> _playAudio(BuildContext context, WidgetRef ref) async {
-    if (!item.hasAudio) return;
-
-    try {
-      // Fetch the audio
-      final audioRepository = ref.read(audioRepositoryProvider);
-      final audio = await audioRepository.getAudioById(item.audioId!);
-
-      if (audio == null) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Audio nicht gefunden'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return;
-      }
-
-      // Set as queue with single audio
-      final audioService = ref.read(audioServiceProvider);
-      await audioService.setQueue([audio], startIndex: 0);
-
-      // Update providers
-      ref.read(audioQueueProvider.notifier).state = [audio];
-      ref.read(currentQueueIndexProvider.notifier).state = 0;
-      ref.read(currentAudioProvider.notifier).state = audio;
-
-      // Don't navigate to full player - let the mini player bar handle it
-      // The mini player bar will be shown automatically in the bottom nav
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Fehler beim Abspielen: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
 }
-

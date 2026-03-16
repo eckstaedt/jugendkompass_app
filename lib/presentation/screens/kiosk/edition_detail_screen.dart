@@ -5,8 +5,10 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:jugendkompass_app/data/models/edition_model.dart';
 import 'package:jugendkompass_app/data/models/post_model.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
+import 'package:jugendkompass_app/data/models/collection_item_model.dart';
 import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
+import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/screens/podcast/full_player_screen.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
@@ -23,6 +25,9 @@ class EditionDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final postsAsync = ref.watch(editionPostsProvider(edition.id));
     final audiosAsync = ref.watch(editionAudiosProvider(edition.id));
+    final isInCollection = ref.watch(collectionProvider).any(
+          (item) => item.id == edition.id && item.type == CollectionItemType.edition,
+        );
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -48,15 +53,40 @@ class EditionDetailScreen extends ConsumerWidget {
             ),
           ),
 
-          if (edition.pdfUrl != null)
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 16,
-              right: 16,
-                child: CircleAvatar(
-                backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                child: IconButton(icon: Icon(Icons.picture_as_pdf, color: Theme.of(context).colorScheme.onSurface), onPressed: () => _openPDF(context, edition.pdfUrl!)),
-              ),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            right: 16,
+            child: Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                  child: IconButton(
+                    icon: Icon(
+                      isInCollection ? Icons.bookmark : Icons.bookmark_outline,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                    onPressed: () {
+                      final item = CollectionItem(
+                        id: edition.id,
+                        title: edition.displayTitle,
+                        description: edition.body,
+                        imageUrl: edition.coverImageUrl,
+                        type: CollectionItemType.edition,
+                        savedAt: DateTime.now(),
+                      );
+                      ref.read(collectionProvider.notifier).toggleCollection(item);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                if (edition.pdfUrl != null)
+                  CircleAvatar(
+                    backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                    child: IconButton(icon: Icon(Icons.picture_as_pdf, color: Theme.of(context).colorScheme.onSurface), onPressed: () => _openPDF(context, edition.pdfUrl!)),
+                  ),
+              ],
             ),
+          ),
 
           DraggableScrollableSheet(
             initialChildSize: 0.6,
