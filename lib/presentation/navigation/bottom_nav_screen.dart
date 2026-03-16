@@ -8,17 +8,11 @@ import 'package:jugendkompass_app/presentation/screens/video/video_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/profile/profile_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/podcast/widgets/mini_player_bar.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
+import 'package:jugendkompass_app/domain/providers/bottom_nav_provider.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
-class BottomNavScreen extends ConsumerStatefulWidget {
+class BottomNavScreen extends ConsumerWidget {
   const BottomNavScreen({super.key});
-
-  @override
-  ConsumerState<BottomNavScreen> createState() => _BottomNavScreenState();
-}
-
-class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
-  int _selectedIndex = 0;
 
   static const List<Widget> _screens = [
     HomeScreen(),
@@ -28,18 +22,13 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
     ProfileScreen(),
   ];
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedIndex = ref.watch(bottomNavIndexProvider);
     final currentAudio = ref.watch(currentAudioProvider);
 
     return Scaffold(
-      body: _screens[_selectedIndex],
+      body: _screens[selectedIndex],
       extendBody: true, // Extend body behind bottom nav
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
@@ -90,6 +79,8 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
                             selectedIcon: Icons.home,
                             label: 'Home',
                             index: 0,
+                            isSelected: selectedIndex == 0,
+                            onTap: () => ref.read(bottomNavIndexProvider.notifier).setIndex(0),
                           ),
                           _buildNavItem(
                             context: context,
@@ -97,6 +88,8 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
                             selectedIcon: Icons.explore,
                             label: 'Kiosk',
                             index: 1,
+                            isSelected: selectedIndex == 1,
+                            onTap: () => ref.read(bottomNavIndexProvider.notifier).setIndex(1),
                           ),
                           _buildNavItem(
                             context: context,
@@ -104,6 +97,8 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
                             selectedIcon: Icons.mic,
                             label: 'Podcast',
                             index: 2,
+                            isSelected: selectedIndex == 2,
+                            onTap: () => ref.read(bottomNavIndexProvider.notifier).setIndex(2),
                           ),
                           _buildNavItem(
                             context: context,
@@ -111,6 +106,8 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
                             selectedIcon: Icons.video_library,
                             label: 'Videos',
                             index: 3,
+                            isSelected: selectedIndex == 3,
+                            onTap: () => ref.read(bottomNavIndexProvider.notifier).setIndex(3),
                           ),
                           _buildNavItem(
                             context: context,
@@ -118,6 +115,8 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
                             selectedIcon: Icons.menu,
                             label: 'Menü',
                             index: 4,
+                            isSelected: selectedIndex == 4,
+                            onTap: () => ref.read(bottomNavIndexProvider.notifier).setIndex(4),
                           ),
                         ],
                       ),
@@ -138,12 +137,12 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
     required IconData selectedIcon,
     required String label,
     required int index,
+    required bool isSelected,
+    required VoidCallback onTap,
   }) {
-    final isSelected = _selectedIndex == index;
-
     return Expanded(
       child: InkWell(
-        onTap: () => _onItemTapped(index),
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         splashColor: DesignTokens.primaryRed.withOpacity(0.1),
         child: Center(
