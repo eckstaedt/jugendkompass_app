@@ -39,6 +39,7 @@ dependencies:
   # Video Playback
   video_player: ^2.8.6
   chewie: ^1.8.1
+  youtube_player_flutter: ^8.1.2
 
   # HTTP & API
   http: ^1.2.1

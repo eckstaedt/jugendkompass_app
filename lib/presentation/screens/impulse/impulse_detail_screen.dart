@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:intl/intl.dart';
 import 'package:jugendkompass_app/data/models/impulse_model.dart';
+import 'package:jugendkompass_app/data/models/collection_item_model.dart';
+import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
-class ImpulseDetailScreen extends StatelessWidget {
+class ImpulseDetailScreen extends ConsumerWidget {
   final ImpulseModel impulse;
 
   const ImpulseDetailScreen({
@@ -14,9 +17,12 @@ class ImpulseDetailScreen extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final dateFormat = DateFormat('dd. MMMM yyyy', 'de_DE');
+    final isInCollection = ref.watch(collectionProvider).any(
+          (item) => item.id == impulse.id && item.type == CollectionItemType.impulse,
+        );
 
     return Scaffold(
       body: CustomScrollView(
@@ -28,6 +34,31 @@ class ImpulseDetailScreen extends StatelessWidget {
             // this makes the image less dominant on the impulse detail page.
             expandedHeight: 195,
             pinned: true,
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Center(
+                  child: GestureDetector(
+                    onTap: () {
+                      final item = CollectionItem(
+                        id: impulse.id,
+                        title: impulse.displayTitle,
+                        description: impulse.impulseText,
+                        imageUrl: impulse.imageUrl,
+                        type: CollectionItemType.impulse,
+                        author: impulse.title,
+                        savedAt: DateTime.now(),
+                      );
+                      ref.read(collectionProvider.notifier).toggleCollection(item);
+                    },
+                    child: Icon(
+                      isInCollection ? Icons.bookmark : Icons.bookmark_outline,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
               title: Container(

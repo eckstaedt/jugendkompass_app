@@ -6,12 +6,18 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jugendkompass_app/domain/providers/profile_provider.dart';
 import 'package:jugendkompass_app/domain/providers/theme_provider.dart';
 import 'package:jugendkompass_app/domain/providers/favorites_provider.dart';
+import 'package:jugendkompass_app/domain/providers/favorite_verses_provider.dart';
+import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/data/services/favorites_service.dart';
+import 'package:jugendkompass_app/data/services/favorite_verses_service.dart';
+import 'package:jugendkompass_app/data/services/collection_service.dart';
 import '../shop/shop_screen.dart';
 import '../onboarding/onboarding_screen.dart';
 import 'widgets/profile_header.dart';
 import 'profile_edit_screen.dart';
+import 'favorite_verses_screen.dart';
+import 'collection_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/search/search_screen.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 
@@ -23,7 +29,6 @@ class ProfileScreen extends ConsumerWidget {
     final userName = ref.watch(userNameProvider);
     final notificationsEnabled = ref.watch(notificationsProvider);
     final themeMode = ref.watch(themeModeProvider);
-    final favoritesCount = ref.watch(favoritesProvider).length;
     final theme = Theme.of(context);
 
     // Get avatar URL from Supabase profile
@@ -34,12 +39,10 @@ class ProfileScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      backgroundColor: DesignTokens.appBackground,
       appBar: AppBar(
         title: const Text('Profil'),
         elevation: 0,
         backgroundColor: Colors.transparent,
-        foregroundColor: DesignTokens.textPrimary,
       ),
       body: ListView(
         padding: EdgeInsets.symmetric(horizontal: DesignTokens.paddingHorizontal, vertical: DesignTokens.spacingMedium),
@@ -148,6 +151,38 @@ class ProfileScreen extends ConsumerWidget {
 
           SizedBox(height: DesignTokens.spacingMedium),
 
+          // Favorite Verses Section Header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              'VERS DES TAGES',
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                letterSpacing: 1.2,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+
+          ListTile(
+            tileColor: DesignTokens.glassBackground(0.12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
+            leading: const Icon(Icons.favorite_outline),
+            title: const Text('Favoriten'),
+            subtitle: Text('${ref.watch(favoriteVersesProvider).length} Vers${ref.watch(favoriteVersesProvider).length == 1 ? '' : 'e'}'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const FavoriteVersesScreen(),
+                ),
+              );
+            },
+          ),
+
+          const SizedBox(height: DesignTokens.spacingMedium),
+
           // Collection Section
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -166,17 +201,13 @@ class ProfileScreen extends ConsumerWidget {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
             leading: const Icon(Icons.bookmark_outlined),
             title: const Text('Deine Sammlung'),
-            subtitle: Text('$favoritesCount ${favoritesCount == 1 ? 'Element' : 'Elemente'}'),
+            subtitle: Text('${ref.watch(collectionProvider).length} ${ref.watch(collectionProvider).length == 1 ? 'Element' : 'Elemente'}'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
-              // Navigate to Sammlung tab (index 3)
-              final scaffoldContext = context;
-              // Find the bottom nav screen and switch tab
-              Navigator.of(scaffoldContext).popUntil((route) => route.isFirst);
-              // This is a workaround - in production, use a proper navigation solution
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Wechsle zum Sammlung-Tab'),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CollectionScreen(),
                 ),
               );
             },
@@ -307,6 +338,8 @@ class ProfileScreen extends ConsumerWidget {
       // Clear local data
       await UserPreferencesService.instance.clearAll();
       await FavoritesService.instance.clearAllFavorites();
+      await FavoriteVersesService.instance.clearAllFavorites();
+      await CollectionService.instance.clearAllItems();
 
       // Delete Supabase data if authenticated
       final userId = Supabase.instance.client.auth.currentUser?.id;
@@ -322,6 +355,8 @@ class ProfileScreen extends ConsumerWidget {
       // Reset providers
       ref.invalidate(userNameProvider);
       ref.invalidate(favoritesProvider);
+      ref.invalidate(favoriteVersesProvider);
+      ref.invalidate(collectionProvider);
       ref.invalidate(notificationsProvider);
       ref.invalidate(themeModeProvider);
 

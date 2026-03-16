@@ -9,7 +9,6 @@ import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.
 import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 import 'widgets/featured_episode_card.dart';
 import 'full_player_screen.dart';
 
@@ -24,7 +23,6 @@ class PodcastScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: DesignTokens.appBackground,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -74,30 +72,12 @@ class PodcastScreen extends ConsumerWidget {
                   // Header
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 8),
-                      child: RoundedCard(
-                        glass: true,
-                        backgroundColor: DesignTokens.glassBackgroundDeep(0.20),
-                        padding: const EdgeInsets.all(16),
-                        withShadow: false,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Podcast',
-                              style: theme.textTheme.displaySmall?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: DesignTokens.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Alle Episoden',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: DesignTokens.textSecondary,
-                              ),
-                            ),
-                          ],
+                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+                      child: Text(
+                        'Podcast',
+                        style: theme.textTheme.displaySmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: DesignTokens.textPrimary,
                         ),
                       ),
                     ),

@@ -7,6 +7,7 @@ import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/domain/providers/theme_provider.dart';
 import 'package:jugendkompass_app/core/services/notification_service.dart';
 import 'package:jugendkompass_app/domain/providers/verse_provider.dart';
+import 'package:jugendkompass_app/data/services/media_notification_service.dart';
 
 class App extends ConsumerWidget {
   const App({super.key});
@@ -53,6 +54,7 @@ class App extends ConsumerWidget {
   /// Called once per app startup via Future.microtask to avoid blocking UI
   Future<void> _initializeNotifications(WidgetRef ref) async {
     try {
+      // Initialize regular notifications for verses
       final notificationService = NotificationService();
       
       // Initialize the notification service
@@ -60,6 +62,10 @@ class App extends ConsumerWidget {
       
       // Request permissions
       await notificationService.requestPermission();
+      
+      // Initialize media notification service for Lock Screen controls
+      final mediaNotificationService = MediaNotificationService();
+      await mediaNotificationService.init();
       
       // Fetch today's verse using the existing provider
       final verseAsync = ref.read(dailyVerseProvider);

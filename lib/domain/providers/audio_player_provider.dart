@@ -3,6 +3,8 @@ import 'package:just_audio/just_audio.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/data/repositories/audio_repository.dart';
 import 'package:jugendkompass_app/data/services/audio_service.dart';
+import 'package:jugendkompass_app/data/services/media_notification_service.dart';
+import 'package:jugendkompass_app/data/services/web_media_session_handler.dart';
 import 'package:jugendkompass_app/domain/providers/supabase_provider.dart';
 
 final audioRepositoryProvider = Provider<AudioRepository>((ref) {
@@ -12,6 +14,14 @@ final audioRepositoryProvider = Provider<AudioRepository>((ref) {
 
 final audioServiceProvider = Provider<AudioService>((ref) {
   return AudioService.instance;
+});
+
+final mediaNotificationServiceProvider = Provider<MediaNotificationService>((ref) {
+  return MediaNotificationService();
+});
+
+final webMediaSessionHandlerProvider = Provider<WebMediaSessionHandler>((ref) {
+  return WebMediaSessionHandler();
 });
 
 final audioListProvider = FutureProvider<List<AudioModel>>((ref) async {
@@ -92,3 +102,41 @@ final recommendedAudiosProvider = FutureProvider<List<AudioModel>>((ref) async {
     return [];
   }
 });
+
+// Media notification update provider
+final mediaNotificationProvider = StreamProvider<void>((ref) async* {
+  final currentAudio = ref.watch(currentAudioProvider);
+  final isPlaying = ref.watch(isPlayingProvider);
+  final position = ref.watch(audioPositionProvider);
+  final duration = ref.watch(audioDurationProvider);
+  final mediaService = ref.watch(mediaNotificationServiceProvider);
+  final webHandler = ref.watch(webMediaSessionHandlerProvider);
+
+  // Update notification whenever audio, playing state, position, or duration changes
+  position.whenData((pos) {
+    duration.whenData((dur) {
+      if (currentAudio != null && dur != null) {
+        // Update native notification
+        mediaService.showPlaybackNotification(
+          audio: currentAudio,
+          isPlaying: isPlaying,
+          position: pos,
+          duration: dur,
+        );
+        // Update web media session
+        webHandler.updateMediaSession(
+          audio: currentAudio,
+          isPlaying: isPlaying,
+          position: pos,
+          duration: dur,
+        );
+      } else if (currentAudio == null) {
+        mediaService.hidePlaybackNotification();
+        webHandler.clear();
+      }
+    });
+  });
+
+  yield* Stream.empty();
+});
+

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:jugendkompass_app/data/models/post_model.dart';
+import 'package:jugendkompass_app/data/models/collection_item_model.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
+import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/screens/podcast/full_player_screen.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
@@ -19,6 +21,9 @@ class PostDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final hasAudio = post.audioId != null;
+    final isInCollection = ref.watch(collectionProvider).any(
+          (item) => item.id == post.id && item.type == CollectionItemType.post,
+        );
 
     return Scaffold(
       body: CustomScrollView(
@@ -27,6 +32,31 @@ class PostDetailScreen extends ConsumerWidget {
           SliverAppBar(
             expandedHeight: 300,
             pinned: true,
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Center(
+                  child: GestureDetector(
+                    onTap: () {
+                      final item = CollectionItem(
+                        id: post.id,
+                        title: post.title,
+                        description: post.body,
+                        imageUrl: post.imageUrl,
+                        type: CollectionItemType.post,
+                        author: post.categoryName,
+                        savedAt: DateTime.now(),
+                      );
+                      ref.read(collectionProvider.notifier).toggleCollection(item);
+                    },
+                    child: Icon(
+                      isInCollection ? Icons.bookmark : Icons.bookmark_outline,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
               title: Container(

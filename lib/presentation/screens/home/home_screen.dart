@@ -8,9 +8,7 @@ import 'package:jugendkompass_app/domain/providers/post_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/home/widgets/verse_card.dart';
 import 'package:jugendkompass_app/presentation/screens/home/widgets/impulse_card.dart';
 import 'package:jugendkompass_app/presentation/screens/home/widgets/recommended_content_tile.dart';
-import 'package:jugendkompass_app/presentation/screens/home/widgets/section_header.dart';
 import 'package:jugendkompass_app/presentation/screens/impulse/impulse_detail_screen.dart';
-import 'package:jugendkompass_app/presentation/screens/impulse/impulse_list_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
@@ -109,18 +107,19 @@ class HomeScreen extends ConsumerWidget {
             // Impulses Section Header
             SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: DesignTokens.paddingHorizontal),
-                child: SectionHeader(
-                  title: 'Impulse',
-                  actionText: 'Alle anzeigen',
-                  onActionTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ImpulseListScreen(),
-                      ),
-                    );
-                  },
+                padding: EdgeInsets.fromLTRB(
+                  DesignTokens.paddingHorizontal,
+                  DesignTokens.spacingMedium,
+                  DesignTokens.paddingHorizontal,
+                  DesignTokens.spacingSmall,
+                ),
+                child: Text(
+                  'Impulse',
+                  style: GoogleFonts.poppins(
+                    textStyle: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ) ?? const TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
             ),
@@ -181,9 +180,19 @@ class HomeScreen extends ConsumerWidget {
             // Recommendations Section Header
             SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: DesignTokens.paddingHorizontal),
-                child: SectionHeader(
-                  title: '✨ Für Dich empfohlen',
+                padding: EdgeInsets.fromLTRB(
+                  DesignTokens.paddingHorizontal,
+                  DesignTokens.spacingMedium,
+                  DesignTokens.paddingHorizontal,
+                  DesignTokens.spacingSmall,
+                ),
+                child: Text(
+                  '✨ Für Dich empfohlen',
+                  style: GoogleFonts.poppins(
+                    textStyle: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ) ?? const TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ),
             ),
@@ -252,13 +261,17 @@ class HomeScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Neuester Beitrag',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(0, 32, 0, 12),
+                          child: Text(
+                            'Neuester Beitrag',
+                            style: GoogleFonts.poppins(
+                              textStyle: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ) ?? const TextStyle(fontWeight: FontWeight.w700),
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 12),
                         RecommendedContentTile(
                           item: item,
                           onTap: () => _navigateToContent(context, item),

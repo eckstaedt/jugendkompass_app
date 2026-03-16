@@ -63,9 +63,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         title: const Text('Suche'),
         elevation: 0,
         backgroundColor: Colors.transparent,
-        foregroundColor: DesignTokens.textPrimary,
       ),
-      backgroundColor: DesignTokens.appBackground,
       body: SafeArea(
         child: Column(
           children: [

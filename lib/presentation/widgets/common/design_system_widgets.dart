@@ -166,8 +166,11 @@ class _RoundedCardState extends State<RoundedCard> {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
     final bg = widget.backgroundColor ??
-      Theme.of(context).colorScheme.surface.withOpacity(0.12);
+      (brightness == Brightness.dark 
+        ? DesignTokens.darkCardBackground
+        : const Color(0xFFFFFFFF));
     final scale = _pressed ? 0.96 : 1.0;
 
     return GestureDetector(
@@ -205,7 +208,9 @@ class _RoundedCardState extends State<RoundedCard> {
                           sigmaY: DesignTokens.glassBlurSigma),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: DesignTokens.glassBackground(0.13),
+                          color: brightness == Brightness.dark
+                            ? DesignTokens.glassDarkBackground(0.13)
+                            : DesignTokens.glassBackground(0.13),
                           borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
                         ),
                         child: Padding(

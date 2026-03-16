@@ -6,7 +6,6 @@ import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.
 import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 
 class KioskScreen extends ConsumerWidget {
   const KioskScreen({super.key});
@@ -17,7 +16,6 @@ class KioskScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: DesignTokens.appBackground,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -42,24 +40,13 @@ class KioskScreen extends ConsumerWidget {
                         DesignTokens.paddingHorizontal,
                         40,
                         DesignTokens.paddingHorizontal,
-                        16,
+                        24,
                       ),
-                      child: RoundedCard(
-                        glass: true,
-                        backgroundColor: DesignTokens.glassBackgroundDeep(0.20),
-                        padding: const EdgeInsets.all(16),
-                        withShadow: false,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                          Text(
-                            'Alle Ausgaben',
-                            style: theme.textTheme.displaySmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
+                      child: Text(
+                        'Alle Ausgaben',
+                        style: theme.textTheme.displaySmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ),

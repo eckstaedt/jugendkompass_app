@@ -2,17 +2,27 @@ import 'package:flutter/material.dart';
 
 /// Zentrale Design Tokens für konsistentes UI-Design
 class DesignTokens {
-  // ⸻ FARBPALETTE
+  // ⸻ FARBPALETTE - LIGHT MODE
   static const Color primaryRed = Color(0xFF8B0000);
   static const Color primaryRedActive = Color(0xFF7A0000);
   static const Color redBackground = Color(0xFFF2DCDC);
   
-  static const Color appBackground = Color(0xFFE9E9EB);
-  static const Color cardBackground = Color(0xFFF4F4F6);
+  static const Color appBackground = Color(0xFFF5F5F5);
+  static const Color cardBackground = Color(0xFFFFFFFF);
   
   static const Color textPrimary = Color(0xFF111111);
   static const Color textSecondary = Color(0xFF6F7479);
   static const Color iconGrey = Color(0xFF9AA0A6);
+
+  // ⸻ FARBPALETTE - DARK MODE
+  static const Color darkAppBackground = Color(0xFF121212);
+  static const Color darkCardBackground = Color(0xFF1E1E1E);
+  static const Color darkTextPrimary = Color(0xFFFFFFFF);
+  static const Color darkTextSecondary = Color(0xFFB0B0B0);
+  static const Color darkIconGrey = Color(0xFF808080);
+  
+  // Dark mode red background (more muted for dark theme)
+  static const Color darkRedBackground = Color(0xFF3D1515);
 
   // ⸻ BORDER RADIUS SYSTEM (iOS 26 Liquid Glass Design)
   static const double radiusLargeCards = 40; // Increased for flowing iOS 26 aesthetic
@@ -74,10 +84,42 @@ class DesignTokens {
   static const Color successGreen = Color(0xFF2E7D32);
 
   // Glass effect background used for translucent containers (liquid glass - iOS 26 style)
-  // not const because we apply opacity dynamically
-    // default opacity slightly higher so elements have more white in them
-    static Color glassBackground([double opacity = 0.18]) =>
-      Colors.white.withValues(alpha: opacity);
+  // Dynamic based on brightness
+  static Color glassBackground([double opacity = 0.18]) =>
+    Colors.white.withValues(alpha: opacity);
+
+  // Dark mode glass background
+  static Color glassDarkBackground([double opacity = 0.15]) =>
+    Colors.white.withValues(alpha: opacity);
+
+  // Helper to get appropriate color based on brightness
+  static Color getAppBackground(Brightness brightness) {
+    return brightness == Brightness.dark ? darkAppBackground : appBackground;
+  }
+
+  static Color getCardBackground(Brightness brightness) {
+    return brightness == Brightness.dark ? darkCardBackground : cardBackground;
+  }
+
+  static Color getTextPrimary(Brightness brightness) {
+    return brightness == Brightness.dark ? darkTextPrimary : textPrimary;
+  }
+
+  static Color getTextSecondary(Brightness brightness) {
+    return brightness == Brightness.dark ? darkTextSecondary : textSecondary;
+  }
+
+  static Color getRedBackground(Brightness brightness) {
+    return brightness == Brightness.dark ? darkRedBackground : redBackground;
+  }
+
+  static Color getGlassBackground(Brightness brightness, [double opacity = 0.18]) {
+    if (brightness == Brightness.dark) {
+      return glassDarkBackground(opacity);
+    } else {
+      return glassBackground(opacity);
+    }
+  }
 
   // Recommended blur sigma for backdrop filter when using glass effect (iOS 26)
   // reduce blur so containers stand out from background more clearly

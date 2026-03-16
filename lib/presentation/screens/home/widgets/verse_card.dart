@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/data/models/verse_model.dart';
-import 'package:jugendkompass_app/domain/providers/favorites_provider.dart';
+import 'package:jugendkompass_app/domain/providers/favorite_verses_provider.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
@@ -17,7 +17,8 @@ class VerseCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final isFavorite = ref.watch(favoritesProvider.notifier).isFavorite(verse.id);
+    final favoriteVerses = ref.watch(favoriteVersesProvider);
+    final isFavorite = favoriteVerses.any((v) => v.id == verse.id);
 
     return RoundedCard(
       padding: const EdgeInsets.all(DesignTokens.spacingMedium),
@@ -40,7 +41,7 @@ class VerseCard extends ConsumerWidget {
               // Favorite icon (top right)
               GestureDetector(
                 onTap: () {
-                  ref.read(favoritesProvider.notifier).toggleFavorite(verse.id);
+                  ref.read(favoriteVersesProvider.notifier).toggleFavoriteVerse(verse);
                 },
                 child: Icon(
                   isFavorite ? Icons.favorite : Icons.favorite_border,

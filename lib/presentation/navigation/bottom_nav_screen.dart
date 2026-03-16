@@ -39,7 +39,6 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
     final currentAudio = ref.watch(currentAudioProvider);
 
     return Scaffold(
-      backgroundColor: DesignTokens.appBackground,
       body: _screens[_selectedIndex],
       extendBody: true, // Extend body behind bottom nav
       bottomNavigationBar: Column(

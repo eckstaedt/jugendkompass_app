@@ -297,16 +297,17 @@ class AppTheme {
   );
 
   // ⸻ DARK THEME
+  // ⸻ DARK THEME - Premium Dark Minimal
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
-    scaffoldBackgroundColor: const Color(0xFF1A1A1A),
+    scaffoldBackgroundColor: DesignTokens.darkAppBackground,
     
     colorScheme: ColorScheme.dark(
       primary: DesignTokens.primaryRed,
       onPrimary: Colors.white,
       secondary: Colors.grey.shade600,
-      surface: const Color(0xFF2A2A2A),
-      onSurface: Colors.white,
+      surface: DesignTokens.darkCardBackground,
+      onSurface: DesignTokens.darkTextPrimary,
       error: Colors.red.shade400,
     ),
 
@@ -315,94 +316,94 @@ class AppTheme {
         fontFamily: 'Inter',
         fontSize: 32,
         fontWeight: FontWeight.w800,
-        color: Colors.white,
+        color: DesignTokens.darkTextPrimary,
       ),
       displayMedium: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 28,
         fontWeight: FontWeight.w800,
-        color: Colors.white,
+        color: DesignTokens.darkTextPrimary,
       ),
       displaySmall: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 24,
         fontWeight: FontWeight.w800,
-        color: Colors.white,
+        color: DesignTokens.darkTextPrimary,
       ),
       headlineMedium: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 24,
         fontWeight: FontWeight.w700,
-        color: Colors.white,
+        color: DesignTokens.darkTextPrimary,
       ),
       headlineSmall: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 20,
         fontWeight: FontWeight.w700,
-        color: Colors.white,
+        color: DesignTokens.darkTextPrimary,
       ),
       titleLarge: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 18,
         fontWeight: FontWeight.w700,
-        color: Colors.white,
+        color: DesignTokens.darkTextPrimary,
       ),
       titleMedium: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 16,
         fontWeight: FontWeight.w700,
-        color: Colors.white,
+        color: DesignTokens.darkTextPrimary,
       ),
       titleSmall: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 14,
         fontWeight: FontWeight.w700,
-        color: Colors.white,
+        color: DesignTokens.darkTextPrimary,
       ),
       bodyLarge: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 18,
         fontWeight: FontWeight.w400,
-        color: Colors.white,
+        color: DesignTokens.darkTextPrimary,
         height: 1.4,
       ),
       bodyMedium: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 16,
         fontWeight: FontWeight.w400,
-        color: Colors.white,
+        color: DesignTokens.darkTextPrimary,
         height: 1.4,
       ),
       bodySmall: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 14,
         fontWeight: FontWeight.w400,
-        color: Colors.grey,
+        color: DesignTokens.darkTextSecondary,
       ),
       labelLarge: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        color: Colors.white,
+        color: DesignTokens.darkTextPrimary,
       ),
       labelMedium: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 14,
         fontWeight: FontWeight.w600,
-        color: Colors.white,
+        color: DesignTokens.darkTextPrimary,
       ),
       labelSmall: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 13,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.5,
-        color: Colors.grey,
+        color: DesignTokens.darkTextSecondary,
       ),
     ),
 
     appBarTheme: AppBarTheme(
-      backgroundColor: const Color(0xFF1A1A1A),
-      foregroundColor: Colors.white,
+      backgroundColor: DesignTokens.darkAppBackground,
+      foregroundColor: DesignTokens.darkTextPrimary,
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: true,
@@ -410,12 +411,12 @@ class AppTheme {
         fontFamily: 'Inter',
         fontSize: 18,
         fontWeight: FontWeight.w700,
-        color: Colors.white,
+        color: DesignTokens.darkTextPrimary,
       ),
     ),
 
     cardTheme: CardThemeData(
-      color: const Color(0xFF2A2A2A),
+      color: DesignTokens.darkCardBackground,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
@@ -425,7 +426,7 @@ class AppTheme {
 
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: const Color(0xFF2A2A2A),
+      fillColor: DesignTokens.darkCardBackground,
       contentPadding: const EdgeInsets.symmetric(
         horizontal: 16,
         vertical: 16,
@@ -449,13 +450,7 @@ class AppTheme {
         fontFamily: 'Inter',
         fontSize: 16,
         fontWeight: FontWeight.w400,
-        color: Colors.grey,
-      ),
-      labelStyle: const TextStyle(
-        fontFamily: 'Inter',
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: Colors.white,
+        color: DesignTokens.darkTextSecondary,
       ),
     ),
 
@@ -463,15 +458,11 @@ class AppTheme {
       style: ElevatedButton.styleFrom(
         backgroundColor: DesignTokens.primaryRed,
         foregroundColor: Colors.white,
-        minimumSize: const Size(double.infinity, DesignTokens.buttonHeight),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 16,
-        ),
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
         ),
-        elevation: 0,
       ),
     ),
 
@@ -479,18 +470,9 @@ class AppTheme {
       style: FilledButton.styleFrom(
         backgroundColor: DesignTokens.primaryRed,
         foregroundColor: Colors.white,
-        minimumSize: const Size(double.infinity, DesignTokens.buttonHeight),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 16,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
-        ),
-        textStyle: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 16,
-          fontWeight: FontWeight.w700,
         ),
       ),
     ),
@@ -498,69 +480,66 @@ class AppTheme {
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         foregroundColor: DesignTokens.primaryRed,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
-        textStyle: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      ),
+    ),
+
+    iconButtonTheme: IconButtonThemeData(
+      style: IconButton.styleFrom(
+        foregroundColor: DesignTokens.darkTextPrimary,
       ),
     ),
 
     navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: const Color(0xFF1A1A1A),
-      indicatorColor: DesignTokens.primaryRed.withOpacity(0.2),
-      iconTheme: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
-          return const IconThemeData(
-            color: DesignTokens.primaryRed,
-            size: 28,
-          );
-        }
-        return IconThemeData(
-          color: Colors.grey.shade400,
-          size: 24,
-        );
-      }),
-      labelTextStyle: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
+      backgroundColor: DesignTokens.darkCardBackground,
+      indicatorColor: DesignTokens.primaryRed,
+      labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
+        (Set<WidgetState> states) {
+          if (states.contains(WidgetState.selected)) {
+            return const TextStyle(
+              color: DesignTokens.primaryRed,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            );
+          }
           return const TextStyle(
-            fontFamily: 'Inter',
+            color: DesignTokens.darkTextSecondary,
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: DesignTokens.primaryRed,
           );
-        }
-        return const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: Colors.grey,
-        );
-      }),
-      height: 70,
-      elevation: 0,
-      shadowColor: Colors.transparent,
+        },
+      ),
+      iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
+        (Set<WidgetState> states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(
+              color: DesignTokens.primaryRed,
+            );
+          }
+          return const IconThemeData(
+            color: DesignTokens.darkTextSecondary,
+          );
+        },
+      ),
     ),
 
     chipTheme: ChipThemeData(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
-      ),
-      backgroundColor: DesignTokens.primaryRed.withOpacity(0.2),
+      backgroundColor: DesignTokens.darkCardBackground,
+      selectedColor: DesignTokens.primaryRed,
       labelStyle: const TextStyle(
         fontFamily: 'Inter',
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: FontWeight.w600,
-        color: DesignTokens.primaryRed,
+        color: DesignTokens.darkTextPrimary,
       ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 8,
+      side: BorderSide(
+        color: Colors.grey.shade700,
+        width: 1.5,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
       ),
     ),
   );
 }
+

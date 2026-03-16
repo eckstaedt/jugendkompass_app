@@ -28,15 +28,30 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
   @override
   Widget build(BuildContext context) {
     final videosAsync = ref.watch(videosListProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: DesignTokens.appBackground,
       body: SafeArea(
         child: Column(
           children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Videos',
+                  style: theme.textTheme.displaySmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: DesignTokens.textPrimary,
+                  ),
+                ),
+              ),
+            ),
+
             // Search Bar at Top
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
               child: RoundedCard(
                 glass: true,
                 backgroundColor: DesignTokens.glassBackgroundDeep(0.20),

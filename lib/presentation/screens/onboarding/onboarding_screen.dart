@@ -52,7 +52,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: DesignTokens.appBackground,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(

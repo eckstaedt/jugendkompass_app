@@ -12,9 +12,7 @@ class ShopScreen extends StatelessWidget {
         title: const Text('Shop'),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: DesignTokens.textPrimary,
       ),
-      backgroundColor: DesignTokens.appBackground,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: DesignTokens.paddingHorizontal),
