@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:video_player/video_player.dart';
 import 'package:jugendkompass_app/domain/providers/video_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
@@ -118,18 +120,15 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      childAspectRatio: 0.75, // Adjust for thumbnail and title
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
+                      childAspectRatio: 1.3,
+                      mainAxisSpacing: 0,
+                      crossAxisSpacing: 12,
                     ),
                     itemCount: filteredVideos.length,
                     itemBuilder: (context, index) {
                       final video = filteredVideos[index];
-                      final isNew = video.createdAt.isAfter(DateTime.now().subtract(const Duration(days: 7)));
-
                       return VideoCard(
                         video: video,
-                        isNew: isNew,
                       );
                     },
                   );
@@ -147,11 +146,80 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
   }
 }
 
-class VideoCard extends StatelessWidget {
+class VideoCard extends ConsumerStatefulWidget {
   final dynamic video; // VideoModel
-  final bool isNew;
 
-  const VideoCard({super.key, required this.video, required this.isNew});
+  const VideoCard({super.key, required this.video});
+
+  @override
+  ConsumerState<VideoCard> createState() => _VideoCardState();
+}
+
+class _VideoCardState extends ConsumerState<VideoCard> {
+  late VideoPlayerController _videoPlayerController;
+  int _duration = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDuration();
+  }
+
+  Future<void> _loadDuration() async {
+    if (widget.video.duration != null && widget.video.duration! > 0) {
+      setState(() => _duration = widget.video.duration!);
+      return;
+    }
+
+    try {
+      _videoPlayerController = VideoPlayerController.networkUrl(
+        Uri.parse(widget.video.url),
+      );
+      await _videoPlayerController.initialize();
+      final durationMs = _videoPlayerController.value.duration.inSeconds;
+      
+      if (mounted) {
+        setState(() => _duration = durationMs);
+      }
+      
+      await _videoPlayerController.dispose();
+    } catch (e) {
+      // Dauer konnte nicht geladen werden
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_videoPlayerController.value.isInitialized) {
+      _videoPlayerController.dispose();
+    }
+    super.dispose();
+  }
+
+  String _formatDuration(int seconds) {
+    if (seconds == 0) return '';
+    final duration = Duration(seconds: seconds);
+    final minutes = duration.inMinutes;
+    final secs = duration.inSeconds.remainder(60);
+    return '${minutes}:${secs.toString().padLeft(2, '0')}';
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      return 'Heute';
+    } else if (difference.inDays == 1) {
+      return 'Gestern';
+    } else if (difference.inDays < 7) {
+      return 'vor ${difference.inDays} Tagen';
+    } else if (difference.inDays < 30) {
+      return 'vor ${(difference.inDays / 7).floor()} Wochen';
+    } else {
+      return DateFormat('d. MMM yyyy', 'de_DE').format(date);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -163,80 +231,92 @@ class VideoCard extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (context) => VideoPlayerScreen(
-              videoUrl: video.url,
-              title: video.title,
+              videoUrl: widget.video.url,
+              title: widget.video.title,
             ),
           ),
         );
       },
-      child: RoundedCard(
-        glass: true,
-        backgroundColor: DesignTokens.glassBackground(0.08),
-        padding: const EdgeInsets.all(8),
-        withShadow: true,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Video Thumbnail
-            Expanded(
-              child: AspectRatio(
-                aspectRatio: 16 / 9,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: video.imageUrl != null
-                        ? CorsNetworkImage(
-                            imageUrl: video.imageUrl!,
-                            fit: BoxFit.cover,
-                          )
-                        : Container(
-                            color: DesignTokens.glassBackground(0.2),
-                            child: const Icon(Icons.video_library, size: 48),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // YouTube-style Thumbnail (16:9 aspect ratio)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Thumbnail Image
+                  widget.video.imageUrl != null
+                      ? CorsNetworkImage(
+                          imageUrl: widget.video.imageUrl!,
+                          fit: BoxFit.cover,
+                        )
+                      : Container(
+                          color: DesignTokens.glassBackground(0.3),
+                          child: const Icon(Icons.video_library, size: 48),
+                        ),
+
+                  // Duration Badge (bottom right) - only show if duration > 0
+                  if (_duration > 0)
+                    Positioned(
+                      bottom: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.7),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                        child: Text(
+                          _formatDuration(_duration),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
                           ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            // Video Info
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title
-                Text(
-                  video.title,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: DesignTokens.textPrimary,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-
-                // New tag
-                if (isNew) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: DesignTokens.primaryRed,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'NEU',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+                        ),
                       ),
+                    ),
+
+                  // Play Icon (center)
+                  Center(
+                    child: Icon(
+                      Icons.play_circle_filled,
+                      color: Colors.white.withOpacity(0.8),
+                      size: 48,
                     ),
                   ),
                 ],
-              ],
+              ),
             ),
-          ],
-        ),
+          ),
+
+          const SizedBox(height: 4),
+
+          // Video Title
+          Text(
+            widget.video.title,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: DesignTokens.textPrimary,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+
+          const SizedBox(height: 4),
+
+          // Upload Date
+          Text(
+            _formatDate(widget.video.createdAt),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: DesignTokens.textSecondary,
+              fontSize: 12,
+            ),
+          ),
+        ],
       ),
     );
   }

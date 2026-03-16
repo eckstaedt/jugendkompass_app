@@ -23,6 +23,7 @@ class HomeScreen extends ConsumerWidget {
     final verseAsync = ref.watch(dailyVerseProvider);
     final impulsesAsync = ref.watch(dailyImpulsesProvider);
     final latestContentAsync = ref.watch(latestContentProvider);
+    final recentContentAsync = ref.watch(recentContentProvider);
     final userName = ref.watch(userNameProvider);
     final profileAsync = ref.watch(currentUserProfileProvider);
     final theme = Theme.of(context);
@@ -31,79 +32,81 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
-        actions: [
-          Padding(
-            padding: EdgeInsets.only(
-              right: DesignTokens.paddingHorizontal,
-              top: 8,
-              bottom: 8,
-            ),
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ProfileEditScreen(),
-                  ),
-                );
-              },
-              child: profileAsync.maybeWhen(
-                data: (profile) => CircleAvatar(
-                  radius: 22,
-                  backgroundColor: theme.colorScheme.primaryContainer,
-                  backgroundImage: profile?.avatarUrl != null
-                      ? CachedNetworkImageProvider(profile!.avatarUrl!)
-                      : null,
-                  child: profile?.avatarUrl == null
-                      ? Icon(
-                          Icons.person,
-                          size: 24,
-                          color: theme.colorScheme.onPrimaryContainer,
-                        )
-                      : null,
-                ),
-                orElse: () => CircleAvatar(
-                  radius: 22,
-                  backgroundColor: theme.colorScheme.primaryContainer,
-                  child: Icon(
-                    Icons.person,
-                    size: 24,
-                    color: theme.colorScheme.onPrimaryContainer,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(dailyVerseProvider);
-          ref.invalidate(dailyImpulsesProvider);
-          ref.invalidate(recommendedContentProvider);
-        },
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            // Greeting
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  DesignTokens.paddingHorizontal,
-                  48,
-                  DesignTokens.paddingHorizontal,
-                  DesignTokens.spacingMedium,
-                ),
-                child: Text(
-                  'Hi, ${userName ?? "User"}',
-                  style: GoogleFonts.poppins(
-                    textStyle: theme.textTheme.displaySmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ) ?? const TextStyle(fontWeight: FontWeight.w800),
+      body: Stack(
+        children: [
+          RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(dailyVerseProvider);
+              ref.invalidate(dailyImpulsesProvider);
+              ref.invalidate(latestContentProvider);
+            },
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                // Greeting + Profile Avatar Header
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      DesignTokens.paddingHorizontal,
+                      24,
+                      DesignTokens.paddingHorizontal,
+                      DesignTokens.spacingMedium,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Greeting Text
+                        Text(
+                          'Hi, ${userName ?? "User"}',
+                          style: GoogleFonts.poppins(
+                            textStyle: theme.textTheme.displaySmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ) ?? const TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                        ),
+
+                        // Profile Avatar
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ProfileEditScreen(),
+                              ),
+                            );
+                          },
+                          child: profileAsync.maybeWhen(
+                            data: (profile) => CircleAvatar(
+                              radius: 22,
+                              backgroundColor: theme.colorScheme.primaryContainer,
+                              backgroundImage: profile?.avatarUrl != null
+                                  ? CachedNetworkImageProvider(profile!.avatarUrl!)
+                                  : null,
+                              child: profile?.avatarUrl == null
+                                  ? Icon(
+                                      Icons.person,
+                                      size: 24,
+                                      color: theme.colorScheme.onPrimaryContainer,
+                                    )
+                                  : null,
+                            ),
+                            orElse: () => CircleAvatar(
+                              radius: 22,
+                              backgroundColor: theme.colorScheme.primaryContainer,
+                              child: Icon(
+                                Icons.person,
+                                size: 24,
+                                color: theme.colorScheme.onPrimaryContainer,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ),
 
             // Verse of the Day
             SliverToBoxAdapter(
@@ -284,10 +287,83 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
 
+            const SliverToBoxAdapter(child: SizedBox(height: 32)),
+
+            // Recent Content Section Header
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  DesignTokens.paddingHorizontal,
+                  DesignTokens.spacingMedium,
+                  DesignTokens.paddingHorizontal,
+                  DesignTokens.spacingSmall,
+                ),
+                child: Text(
+                  'Weitere Beiträge',
+                  style: GoogleFonts.poppins(
+                    textStyle: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ) ?? const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+            // Recent Content List
+            SliverToBoxAdapter(
+              child: recentContentAsync.when(
+                data: (recentItems) {
+                  if (recentItems.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(child: Text('Keine weiteren Beiträge verfügbar')),
+                    );
+                  }
+                  return Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: DesignTokens.paddingHorizontal,
+                    ),
+                    child: Column(
+                      children: List.generate(
+                        recentItems.length,
+                        (index) {
+                          final item = recentItems[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: RecommendedContentTile(
+                              item: item,
+                              onTap: () => _navigateToContent(
+                                context,
+                                item,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  );
+                },
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (error, stack) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: Text('Fehler beim Laden: $error'),
+                  ),
+                ),
+              ),
+            ),
+
             // Bottom spacing
             const SliverToBoxAdapter(child: SizedBox(height: 100)),
-          ],
-        ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

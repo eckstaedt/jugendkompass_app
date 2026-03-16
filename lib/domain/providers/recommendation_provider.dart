@@ -133,3 +133,61 @@ final latestContentProvider = FutureProvider<RecommendedItem?>((ref) async {
     return null;
   }
 });
+
+/// Recent content provider - returns content from last 4 weeks (excluding the latest one), sorted by date descending
+final recentContentProvider = FutureProvider<List<RecommendedItem>>((ref) async {
+  try {
+    // Fetch posts and videos
+    final postRepository = ref.watch(postRepositoryProvider);
+    final videoRepository = ref.watch(videoRepositoryProvider);
+    
+    final posts = await postRepository.getPostList(limit: 50);
+    final videos = await videoRepository.getVideoList(limit: 50);
+
+    // Convert to RecommendedItems
+    final allItems = <RecommendedItem>[];
+    
+    // Add posts
+    for (final post in posts) {
+      allItems.add(RecommendedItem.fromPost(post));
+    }
+    
+    // Add videos
+    for (final video in videos) {
+      allItems.add(RecommendedItem.fromVideo(video));
+    }
+
+    // Sort by creation date (newest first)
+    allItems.sort((a, b) {
+      DateTime getDate(RecommendedItem item) {
+        if (item.contentType == 'video') {
+          return (item.data as VideoModel).createdAt;
+        } else {
+          return (item.data as PostModel).createdAt;
+        }
+      }
+      return getDate(b).compareTo(getDate(a)); // Newest first
+    });
+
+    // Filter: only items from last 4 weeks, excluding the first (newest) one
+    final fourWeeksAgo = DateTime.now().subtract(const Duration(days: 28));
+    final filtered = allItems
+        .skip(1) // Skip the newest item
+        .where((item) {
+          DateTime getDate(RecommendedItem item) {
+            if (item.contentType == 'video') {
+              return (item.data as VideoModel).createdAt;
+            } else {
+              return (item.data as PostModel).createdAt;
+            }
+          }
+          return getDate(item).isAfter(fourWeeksAgo);
+        })
+        .toList();
+
+    // Already sorted by date descending (newest first)
+    return filtered;
+  } catch (e) {
+    return [];
+  }
+});

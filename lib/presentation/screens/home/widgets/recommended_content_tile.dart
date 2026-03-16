@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/domain/providers/recommendation_provider.dart';
-import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
-import 'package:jugendkompass_app/data/models/collection_item_model.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
@@ -17,6 +15,14 @@ class RecommendedContentTile extends ConsumerWidget {
     required this.item,
     this.onTap,
   });
+
+  String _getMonthName(int month) {
+    const months = [
+      'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+      'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'
+    ];
+    return months[month - 1];
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -94,36 +100,33 @@ class RecommendedContentTile extends ConsumerWidget {
                 ),
               ),
 
-              // Play button (if audio available), chevron, or save icon
+              // Date badge
               Padding(
                 padding: const EdgeInsets.only(left: 8),
-                child: Consumer(
-                  builder: (context, ref, _) {
-                    final isInCollection = ref.watch(collectionProvider).any(
-                      (item) => item.id == this.item.id && (
-                        (item.type == CollectionItemType.video && this.item.isVideo) ||
-                        (item.type == CollectionItemType.post && !this.item.isVideo)
+                child: Builder(
+                  builder: (context) {
+                    final date = item.contentType == 'video'
+                        ? (item.data as dynamic).createdAt as DateTime
+                        : (item.data as dynamic).createdAt as DateTime;
+                    
+                    // Format: "16. März 2026"
+                    final dateLabel = '${date.day}. ${_getMonthName(date.month)} ${date.year}';
+                    
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: DesignTokens.glassBackground(0.3),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.1),
+                        ),
                       ),
-                    );
-
-                    return GestureDetector(
-                      onTap: () {
-                        final collectionItem = CollectionItem(
-                          id: this.item.id,
-                          title: this.item.title,
-                          description: '',
-                          imageUrl: this.item.imageUrl,
-                          type: this.item.isVideo ? CollectionItemType.video : CollectionItemType.post,
-                          author: '',
-                          savedAt: DateTime.now(),
-                          rawData: {},
-                        );
-                        ref.read(collectionProvider.notifier).toggleCollection(collectionItem);
-                      },
-                      child: Icon(
-                        isInCollection ? Icons.bookmark : Icons.bookmark_outline,
-                        color: isInCollection ? DesignTokens.primaryRed : DesignTokens.textSecondary,
-                        size: 28,
+                      child: Text(
+                        dateLabel,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: DesignTokens.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     );
                   },

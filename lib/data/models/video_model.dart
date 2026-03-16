@@ -8,6 +8,7 @@ class VideoModel {
   final String contentId;
   final String? userId;
   final DateTime createdAt;
+  final int? duration; // Video duration in seconds
 
   VideoModel({
     required this.id,
@@ -18,6 +19,7 @@ class VideoModel {
     required this.contentId,
     this.userId,
     required this.createdAt,
+    this.duration,
   });
 
   factory VideoModel.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class VideoModel {
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
+      duration: json['duration'] as int?,
     );
   }
 
@@ -45,6 +48,7 @@ class VideoModel {
       'content_id': contentId,
       'user_id': userId,
       'created_at': createdAt.toIso8601String(),
+      'duration': duration,
     };
   }
 
@@ -57,6 +61,7 @@ class VideoModel {
     String? contentId,
     String? userId,
     DateTime? createdAt,
+    int? duration,
   }) {
     return VideoModel(
       id: id ?? this.id,
@@ -67,6 +72,7 @@ class VideoModel {
       contentId: contentId ?? this.contentId,
       userId: userId ?? this.userId,
       createdAt: createdAt ?? this.createdAt,
+      duration: duration ?? this.duration,
     );
   }
 
