@@ -120,8 +120,8 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      childAspectRatio: 1.3,
-                      mainAxisSpacing: 0,
+                      childAspectRatio: 0.75,
+                      mainAxisSpacing: 24,
                       crossAxisSpacing: 12,
                     ),
                     itemCount: filteredVideos.length,
