@@ -52,6 +52,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           final profileRepo = ref.read(profileRepositoryProvider);
           final imageFile = File(image.path);
           
+          // Verify file exists and is readable
+          if (!imageFile.existsSync()) {
+            throw Exception('Bild-Datei nicht gefunden');
+          }
+          
           // Get user ID - use a fixed ID for anonymous users or auth user
           final user = ref.read(supabaseProvider).auth.currentUser;
           final userId = user?.id ?? 'anonymous_user';
@@ -81,9 +86,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           );
         } catch (e) {
           if (!mounted) return;
+          print('Avatar upload error: $e');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Fehler beim Hochladen: $e'),
+              content: Text('Fehler beim Hochladen: ${e.toString()}'),
               backgroundColor: Colors.red,
             ),
           );

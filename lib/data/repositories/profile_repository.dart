@@ -44,10 +44,14 @@ class ProfileRepository {
       final fileName = '${userId}_${DateTime.now().millisecondsSinceEpoch}.$fileExt';
       final filePath = 'avatars/$fileName';
 
-      // Upload to Supabase Storage
+      // Upload to Supabase Storage with upsert option
       await _supabaseClient.storage
           .from('profiles')
-          .upload(filePath, imageFile);
+          .upload(
+            filePath,
+            imageFile,
+            fileOptions: const FileOptions(upsert: true),
+          );
 
       // Get public URL
       final publicUrl = _supabaseClient.storage
