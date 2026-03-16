@@ -200,20 +200,17 @@ class HomeScreen extends ConsumerWidget {
                       itemCount: impulses.length,
                       itemBuilder: (context, index) {
                         final impulse = impulses[index];
-                        return Hero(
-                          tag: 'impulse_${impulse.id}',
-                          child: ImpulseCard(
-                            impulse: impulse,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      ImpulseDetailScreen(impulse: impulse),
-                                ),
-                              );
-                            },
-                          ),
+                        return ImpulseCard(
+                          impulse: impulse,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              FadePageRoute(
+                                builder: (context) =>
+                                    ImpulseDetailScreen(impulse: impulse),
+                              ),
+                            );
+                          },
                         );
                       },
                     ),
