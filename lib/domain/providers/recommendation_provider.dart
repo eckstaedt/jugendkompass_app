@@ -99,8 +99,8 @@ final latestContentProvider = FutureProvider<RecommendedItem?>((ref) async {
     final postRepository = ref.watch(postRepositoryProvider);
     final videoRepository = ref.watch(videoRepositoryProvider);
     
-    final posts = await postRepository.getPostList(limit: 50);
-    final videos = await videoRepository.getVideoList(limit: 50);
+    final posts = await postRepository.getPostList(limit: 30);
+    final videos = await videoRepository.getVideoList(limit: 30);
 
     // Convert to RecommendedItems
     final allItems = <RecommendedItem>[];
@@ -141,8 +141,8 @@ final recentContentProvider = FutureProvider<List<RecommendedItem>>((ref) async 
     final postRepository = ref.watch(postRepositoryProvider);
     final videoRepository = ref.watch(videoRepositoryProvider);
     
-    final posts = await postRepository.getPostList(limit: 50);
-    final videos = await videoRepository.getVideoList(limit: 50);
+    final posts = await postRepository.getPostList(limit: 30);
+    final videos = await videoRepository.getVideoList(limit: 30);
 
     // Convert to RecommendedItems
     final allItems = <RecommendedItem>[];

@@ -40,6 +40,7 @@ class HomeScreen extends ConsumerWidget {
               ref.invalidate(dailyVerseProvider);
               ref.invalidate(dailyImpulsesProvider);
               ref.invalidate(latestContentProvider);
+              ref.invalidate(recentContentProvider);
             },
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
