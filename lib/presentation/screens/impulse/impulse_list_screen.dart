@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:jugendkompass_app/data/models/impulse_model.dart';
 import 'package:jugendkompass_app/domain/providers/impulse_provider.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
+import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
@@ -14,6 +16,9 @@ class ImpulseListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(languageProvider);
+    final translate = ref.watch(stringTranslatorProvider);
+    
     final impulsesAsync = ref.watch(dailyImpulsesProvider);
 
     return Scaffold(
@@ -27,10 +32,10 @@ class ImpulseListScreen extends ConsumerWidget {
         child: impulsesAsync.when(
           data: (impulses) {
             if (impulses.isEmpty) {
-              return const EmptyState(
+              return EmptyState(
                 icon: Icons.lightbulb_outline,
-                title: 'Keine Impulse verfügbar',
-                message: 'Aktuell gibt es keine Impulse zum Anzeigen.',
+                title: translate('no_impulses_available'),
+                message: translate('no_impulses_message'),
               );
             }
 
@@ -55,11 +60,11 @@ class ImpulseListScreen extends ConsumerWidget {
               },
             );
           },
-          loading: () => const LoadingIndicator(
-            message: 'Lade Impulse...',
+          loading: () => LoadingIndicator(
+            message: translate('loading_impulses'),
           ),
           error: (error, stack) => ErrorView(
-            message: 'Fehler beim Laden der Impulse: $error',
+            message: '${translate('error_loading_impulses')}: $error',
             onRetry: () => ref.invalidate(dailyImpulsesProvider),
           ),
         ),

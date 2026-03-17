@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
+import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jugendkompass_app/domain/providers/profile_provider.dart';
 import 'package:jugendkompass_app/domain/providers/theme_provider.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/favorites_provider.dart';
 import 'package:jugendkompass_app/domain/providers/favorite_verses_provider.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
@@ -26,11 +29,14 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notificationsEnabled = ref.watch(notificationsProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final currentLanguage = ref.watch(languageProvider);
+    final translations = ref.watch(translationsProvider);
+    final translate = ref.watch(stringTranslatorProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Einstellungen'),
+        title: Text(translations.get('settings')),
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
@@ -60,7 +66,7 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Suche in der ganzen App...',
+                    translate('Suche in der ganzen App...'),
                     style: TextStyle(
                       color: DesignTokens.textSecondary,
                       fontSize: 16,
@@ -77,7 +83,7 @@ class ProfileScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(
-              'EINSTELLUNGEN',
+              translate('EINSTELLUNGEN'),
               style: GoogleFonts.inter(
                 textStyle: theme.textTheme.labelMedium?.copyWith(
                   color: DesignTokens.textSecondary,
@@ -93,8 +99,8 @@ class ProfileScreen extends ConsumerWidget {
             tileColor: DesignTokens.glassBackground(0.12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            title: const Text('Benachrichtigungen'),
-            subtitle: const Text('Push-Benachrichtigungen erhalten'),
+            title: Text(translate('Benachrichtigungen')),
+            subtitle: Text(translate('Push-Benachrichtigungen erhalten')),
             value: notificationsEnabled,
             onChanged: (value) {
               ref.read(notificationsProvider.notifier).update(value);
@@ -109,8 +115,8 @@ class ProfileScreen extends ConsumerWidget {
             tileColor: DesignTokens.glassBackground(0.12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            title: const Text('Dark Mode'),
-            subtitle: const Text('Dunkles Theme verwenden'),
+            title: Text(translate('Dark Mode')),
+            subtitle: Text(translate('Dunkles Theme verwenden')),
             value: themeMode == ThemeMode.dark,
             onChanged: (value) {
               ref.read(themeModeProvider.notifier).toggle();
@@ -122,6 +128,33 @@ class ProfileScreen extends ConsumerWidget {
                   : Icons.light_mode_outlined,
             ),
           ),
+          SizedBox(height: DesignTokens.spacingSmall),
+
+          // Language selection with proper design
+          ListTile(
+            tileColor: DesignTokens.glassBackground(0.12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            leading: const Icon(Icons.language_outlined),
+            title: Text(translate('Sprache')),
+            subtitle: Text(currentLanguage.displayName),
+            trailing: DropdownButton<AppLanguage>(
+              value: currentLanguage,
+              onChanged: (AppLanguage? newLanguage) {
+                if (newLanguage != null) {
+                  ref.read(languageProvider.notifier).setLanguage(newLanguage);
+                }
+              },
+              items: AppLanguage.values.map((lang) {
+                return DropdownMenuItem<AppLanguage>(
+                  value: lang,
+                  child: Text(lang.displayName),
+                );
+              }).toList(),
+              underline: Container(),
+              icon: const Icon(Icons.arrow_drop_down, color: DesignTokens.primaryRed),
+            ),
+          ),
 
           SizedBox(height: DesignTokens.spacingMedium),
 
@@ -129,7 +162,7 @@ class ProfileScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
-              'VERS DES TAGES',
+              translate('VERS DES TAGES'),
               style: theme.textTheme.labelMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
                 letterSpacing: 1.2,
@@ -142,8 +175,8 @@ class ProfileScreen extends ConsumerWidget {
             tileColor: DesignTokens.glassBackground(0.12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
             leading: const Icon(Icons.favorite_outline),
-            title: const Text('Favoriten'),
-            subtitle: Text('${ref.watch(favoriteVersesProvider).length} Vers${ref.watch(favoriteVersesProvider).length == 1 ? '' : 'e'}'),
+            title: Text(translate('Favoriten')),
+            subtitle: Text('${ref.watch(favoriteVersesProvider).length} ${ref.watch(favoriteVersesProvider).length == 1 ? translate('Vers') : translate('Verse')}'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
               Navigator.push(
@@ -161,7 +194,7 @@ class ProfileScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
-              'MEINE INHALTE',
+              translate('MEINE INHALTE'),
               style: theme.textTheme.labelMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
                 letterSpacing: 1.2,
@@ -174,8 +207,8 @@ class ProfileScreen extends ConsumerWidget {
             tileColor: DesignTokens.glassBackground(0.12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
             leading: const Icon(Icons.bookmark_outlined),
-            title: const Text('Deine Sammlung'),
-            subtitle: Text('${ref.watch(collectionProvider).length} ${ref.watch(collectionProvider).length == 1 ? 'Element' : 'Elemente'}'),
+            title: Text(translate('Deine Sammlung')),
+            subtitle: Text('${ref.watch(collectionProvider).length} ${ref.watch(collectionProvider).length == 1 ? translate('Element') : translate('Elemente')}'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
               Navigator.push(
@@ -193,8 +226,8 @@ class ProfileScreen extends ConsumerWidget {
             tileColor: DesignTokens.glassBackground(0.12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
             leading: const Icon(Icons.storefront_outlined),
-            title: const Text('Shop'),
-            subtitle: const Text('Bald verfügbar'),
+            title: Text(translate('Shop')),
+            subtitle: Text(translate('Bald verfügbar')),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {
               Navigator.push(
@@ -213,7 +246,7 @@ class ProfileScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'GEFAHRENBEREICH',
+                  translate('GEFAHRENBEREICH'),
                   style: GoogleFonts.inter(
                     textStyle: theme.textTheme.labelMedium?.copyWith(
                       color: DesignTokens.primaryRed,
@@ -224,7 +257,7 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: DesignTokens.spacingSmall),
                 OutlinedButton.icon(
-                  onPressed: () => _showDeleteDataDialog(context, ref),
+                  onPressed: () => _showDeleteDataDialog(context, ref, translate),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: DesignTokens.primaryRed,
                     side: BorderSide(color: DesignTokens.primaryRed),
@@ -232,11 +265,11 @@ class ProfileScreen extends ConsumerWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusButtons)),
                   ),
                   icon: const Icon(Icons.delete_forever),
-                  label: const Text('Daten löschen'),
+                  label: Text(translate('Daten löschen')),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Löscht alle deine lokalen Daten und setzt die App zurück.',
+                  translate('Löscht alle deine lokalen Daten und setzt die App zurück.'),
                   style: GoogleFonts.inter(
                     textStyle: theme.textTheme.bodySmall?.copyWith(
                       color: DesignTokens.textSecondary,
@@ -265,40 +298,34 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _showDeleteDataDialog(BuildContext context, WidgetRef ref) async {
+  Future<void> _showDeleteDataDialog(BuildContext context, WidgetRef ref, String Function(String) translate) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Daten löschen?'),
-        content: const Text(
-          'Möchtest du wirklich alle deine Daten löschen? '
-          'Diese Aktion kann nicht rückgängig gemacht werden.\n\n'
-          'Folgende Daten werden gelöscht:\n'
-          '• Dein Name und Einstellungen\n'
-          '• Alle Favoriten\n'
-          '• Bibelleseplan-Fortschritt\n'
-          '• Dark Mode Einstellung',
+        title: Text(translate('Daten löschen?')),
+        content: Text(
+          translate('Möchtest du wirklich alle deine Daten löschen? Diese Aktion kann nicht rückgängig gemacht werden.\n\nFolgende Daten werden gelöscht:\n• Dein Name und Einstellungen\n• Alle Favoriten\n• Bibelleseplan-Fortschritt\n• Dark Mode Einstellung'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Abbrechen'),
+            child: Text(translate('Abbrechen')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Löschen'),
+            child: Text(translate('Löschen')),
           ),
         ],
       ),
     );
 
     if (confirmed == true && context.mounted) {
-      await _deleteAllData(context, ref);
+      await _deleteAllData(context, ref, translate);
     }
   }
 
-  Future<void> _deleteAllData(BuildContext context, WidgetRef ref) async {
+  Future<void> _deleteAllData(BuildContext context, WidgetRef ref, String Function(String) translate) async {
     try {
       // Show loading indicator
       showDialog(
@@ -346,11 +373,12 @@ class ProfileScreen extends ConsumerWidget {
       );
 
       // Show success message
+      final successMessage = translate('Alle Daten wurden gelöscht');
       Future.delayed(const Duration(milliseconds: 500), () {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Alle Daten wurden gelöscht'),
+            SnackBar(
+              content: Text(successMessage),
               backgroundColor: Colors.green,
             ),
           );
@@ -362,9 +390,10 @@ class ProfileScreen extends ConsumerWidget {
       // Close loading dialog if open
       Navigator.pop(context);
 
+      final errorMessage = '${translate('Fehler beim Löschen')}: $e';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Fehler beim Löschen: $e'),
+          content: Text(errorMessage),
           backgroundColor: Colors.red,
         ),
       );

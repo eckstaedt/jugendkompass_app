@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
-import 'package:jugendkompass_app/domain/providers/podcast_provider.dart';
-import 'package:jugendkompass_app/domain/providers/category_provider.dart';
-import 'package:jugendkompass_app/data/models/audio_model.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/data/models/audio_model.dart';
+import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
+import 'package:jugendkompass_app/domain/providers/category_provider.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
+import 'package:jugendkompass_app/domain/providers/podcast_provider.dart';
+import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
 import 'widgets/featured_episode_card.dart';
 import 'full_player_screen.dart';
 
@@ -17,6 +19,8 @@ class PodcastScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(languageProvider);
+    final translate = ref.watch(stringTranslatorProvider);
     final audioListAsync = ref.watch(audioListProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
     final selectedCategory = ref.watch(selectedPodcastCategoryProvider);
@@ -31,10 +35,10 @@ class PodcastScreen extends ConsumerWidget {
           child: audioListAsync.when(
             data: (audioList) {
               if (audioList.isEmpty) {
-                return const EmptyState(
+                return EmptyState(
                   icon: Icons.podcasts_outlined,
-                  title: 'Keine Podcasts verfügbar',
-                  message: 'Es sind noch keine Podcast-Episoden vorhanden.',
+                  title: translate('Keine Podcasts verfügbar'),
+                  message: translate('Es sind noch keine Podcast-Episoden vorhanden.'),
                 );
               }
 
@@ -251,9 +255,9 @@ class PodcastScreen extends ConsumerWidget {
                 ],
               );
             },
-            loading: () => const LoadingIndicator(message: 'Lade Podcasts...'),
+            loading: () => LoadingIndicator(message: translate('Lade Podcasts...')),
             error: (error, stack) => ErrorView(
-              message: 'Fehler beim Laden der Podcasts: $error',
+              message: '${translate('Fehler beim Laden der Podcasts')}: $error',
               onRetry: () => ref.invalidate(audioListProvider),
             ),
           ),

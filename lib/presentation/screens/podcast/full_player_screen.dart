@@ -88,7 +88,7 @@ class FullPlayerScreen extends ConsumerWidget {
 
                 // Title and Artist
                 Text(
-                  currentAudio.title ?? 'Unbekannter Titel',
+                  currentAudio.title ?? currentAudio.post?.title ?? 'Unbekannter Titel',
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -543,7 +543,7 @@ class FullPlayerScreen extends ConsumerWidget {
                                         Padding(
                                           padding: const EdgeInsets.all(8),
                                           child: Text(
-                                            audio.title ?? 'Unbekannter Titel',
+                                            audio.title ?? audio.post?.title ?? 'Unbekannter Titel',
                                             style: theme.textTheme.bodySmall
                                                 ?.copyWith(
                                                   fontWeight: FontWeight.w600,

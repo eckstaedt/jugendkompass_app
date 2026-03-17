@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:video_player/video_player.dart';
-import 'package:jugendkompass_app/domain/providers/video_provider.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
-import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
+import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
+import 'package:jugendkompass_app/domain/providers/video_provider.dart';
+import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
 
 class VideoScreen extends ConsumerStatefulWidget {
   const VideoScreen({super.key});
@@ -29,6 +31,8 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(languageProvider);
+    final translate = ref.watch(stringTranslatorProvider);
     final videosAsync = ref.watch(videosListProvider);
     final theme = Theme.of(context);
 
@@ -67,7 +71,7 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                     });
                   },
                   decoration: InputDecoration(
-                    hintText: 'Videos suchen...',
+                    hintText: translate('search_videos'),
                     hintStyle: TextStyle(
                       color: DesignTokens.textSecondary,
                       fontSize: 16,
@@ -109,10 +113,10 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                           (video.description?.toLowerCase().contains(_searchQuery) ?? false)).toList();
 
                   if (filteredVideos.isEmpty) {
-                    return const EmptyState(
+                    return EmptyState(
                       icon: Icons.video_library_outlined,
-                      title: 'Keine Videos gefunden',
-                      message: 'Versuche eine andere Suche',
+                      title: translate('no_videos_found'),
+                      message: translate('try_different_search'),
                     );
                   }
 
@@ -135,7 +139,7 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                 },
                 loading: () => const LoadingIndicator(),
                 error: (error, stack) => Center(
-                  child: Text('Fehler: $error'),
+                  child: Text('${translate('Fehler: ')}$error'),
                 ),
               ),
             ),

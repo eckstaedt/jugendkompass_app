@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/domain/providers/content_provider.dart';
-import 'package:jugendkompass_app/presentation/screens/content/widgets/content_card.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
+import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/content/content_detail_screen.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
+import 'package:jugendkompass_app/presentation/screens/content/widgets/content_card.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
 
 class ContentScreen extends ConsumerStatefulWidget {
   const ContentScreen({super.key});
@@ -25,12 +27,14 @@ class _ContentScreenState extends ConsumerState<ContentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(languageProvider);
+    final translate = ref.watch(stringTranslatorProvider);
     final contentAsync = ref.watch(contentListProvider(_currentFilter));
     final categoriesAsync = ref.watch(categoriesProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Inhalte'),
+        title: Text(translate('Inhalte')),
         centerTitle: true,
       ),
       body: Column(
@@ -44,7 +48,7 @@ class _ContentScreenState extends ConsumerState<ContentScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 children: [
                   FilterChip(
-                    label: const Text('Alle'),
+                    label: Text(translate('Alle')),
                     selected: _selectedCategoryId == null,
                     onSelected: (selected) {
                       setState(() {
@@ -76,26 +80,26 @@ class _ContentScreenState extends ConsumerState<ContentScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: SegmentedButton<String?>(
-              segments: const [
+              segments: [
                 ButtonSegment(
                   value: null,
-                  label: Text('Alle'),
-                  icon: Icon(Icons.grid_view),
+                  label: Text(translate('Alle')),
+                  icon: const Icon(Icons.grid_view),
                 ),
                 ButtonSegment(
                   value: 'article',
-                  label: Text('Artikel'),
-                  icon: Icon(Icons.article),
+                  label: Text(translate('Artikel')),
+                  icon: const Icon(Icons.article),
                 ),
                 ButtonSegment(
                   value: 'audio',
-                  label: Text('Audio'),
-                  icon: Icon(Icons.headphones),
+                  label: Text(translate('Audio')),
+                  icon: const Icon(Icons.headphones),
                 ),
                 ButtonSegment(
                   value: 'video',
-                  label: Text('Video'),
-                  icon: Icon(Icons.play_circle),
+                  label: Text(translate('Video')),
+                  icon: const Icon(Icons.play_circle),
                 ),
               ],
               selected: {_selectedContentType},

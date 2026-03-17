@@ -5,6 +5,8 @@ import 'package:jugendkompass_app/domain/providers/verse_provider.dart';
 import 'package:jugendkompass_app/domain/providers/profile_provider.dart';
 import 'package:jugendkompass_app/domain/providers/impulse_provider.dart';
 import 'package:jugendkompass_app/domain/providers/recommendation_provider.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
+import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/home/widgets/verse_card.dart';
 import 'package:jugendkompass_app/presentation/screens/home/widgets/impulse_card.dart';
 import 'package:jugendkompass_app/presentation/screens/home/widgets/recommended_content_tile.dart';
@@ -21,6 +23,11 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Watch language to rebuild when language changes
+    ref.watch(languageProvider);
+    
+    final translate = ref.watch(stringTranslatorProvider);
+    
     final verseAsync = ref.watch(dailyVerseProvider);
     final impulsesAsync = ref.watch(dailyImpulsesProvider);
     final latestContentAsync = ref.watch(latestContentProvider);
@@ -28,6 +35,7 @@ class HomeScreen extends ConsumerWidget {
     final userName = ref.watch(userNameProvider);
     final profileAsync = ref.watch(currentUserProfileProvider);
     final theme = Theme.of(context);
+    final translations = ref.watch(translationsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -117,10 +125,10 @@ class HomeScreen extends ConsumerWidget {
                 child: verseAsync.when(
                   data: (verse) {
                     if (verse == null) {
-                      return const SizedBox(
+                      return SizedBox(
                         height: 200,
                         child: Center(
-                          child: Text('Kein Vers für heute verfügbar'),
+                          child: Text(translations.get('no_verses_today')),
                         ),
                       );
                     }
@@ -138,14 +146,14 @@ class HomeScreen extends ConsumerWidget {
                         children: [
                           const Icon(Icons.error_outline, size: 40),
                           const SizedBox(height: 8),
-                          Text('Fehler: $error', textAlign: TextAlign.center),
+                          Text('${translate('Fehler')}: $error', textAlign: TextAlign.center),
                           const SizedBox(height: 12),
                           FilledButton.icon(
                             onPressed: () {
                               ref.invalidate(dailyVerseProvider);
                             },
                             icon: const Icon(Icons.refresh, size: 16),
-                            label: const Text('Erneut versuchen'),
+                            label: Text(translate('Erneut versuchen')),
                           ),
                         ],
                       ),
@@ -168,7 +176,7 @@ class HomeScreen extends ConsumerWidget {
                   DesignTokens.spacingSmall,
                 ),
                 child: Text(
-                  'Impulse',
+                  translate('Impulse'),
                   style: GoogleFonts.poppins(
                     textStyle: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w700,
@@ -185,9 +193,9 @@ class HomeScreen extends ConsumerWidget {
               child: impulsesAsync.when(
                 data: (impulses) {
                   if (impulses.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(child: Text('Keine Impulse verfügbar')),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Center(child: Text(translations.get('no_impulses'))),
                     );
                   }
                   return SizedBox(
@@ -223,7 +231,7 @@ class HomeScreen extends ConsumerWidget {
                 error: (error, stack) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Center(
-                    child: Text('Fehler beim Laden der Impulse: $error'),
+                    child: Text('${translations.get('error')} ${translations.get('loading')}: $error'),
                   ),
                 ),
               ),
@@ -241,7 +249,7 @@ class HomeScreen extends ConsumerWidget {
                   DesignTokens.spacingSmall,
                 ),
                 child: Text(
-                  'Neuester Beitrag',
+                  translate('Latest Content'),
                   style: GoogleFonts.poppins(
                     textStyle: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w700,
@@ -258,9 +266,9 @@ class HomeScreen extends ConsumerWidget {
               child: latestContentAsync.when(
                 data: (latestItem) {
                   if (latestItem == null) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(child: Text('Kein Inhalt verfügbar')),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Center(child: Text(translate('No Content Available'))),
                     );
                   }
                   return Padding(
@@ -283,7 +291,7 @@ class HomeScreen extends ConsumerWidget {
                 error: (error, stack) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Center(
-                    child: Text('Fehler beim Laden: $error'),
+                    child: Text('${translate('Error')}: $error'),
                   ),
                 ),
               ),
@@ -301,7 +309,7 @@ class HomeScreen extends ConsumerWidget {
                   DesignTokens.spacingSmall,
                 ),
                 child: Text(
-                  'Weitere Beiträge',
+                  translate('Recent Content'),
                   style: GoogleFonts.poppins(
                     textStyle: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w700,
@@ -318,9 +326,9 @@ class HomeScreen extends ConsumerWidget {
               child: recentContentAsync.when(
                 data: (recentItems) {
                   if (recentItems.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(child: Text('Keine weiteren Beiträge verfügbar')),
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Center(child: Text(translate('No More Content'))),
                     );
                   }
                   return Padding(
@@ -354,7 +362,7 @@ class HomeScreen extends ConsumerWidget {
                 error: (error, stack) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Center(
-                    child: Text('Fehler beim Laden: $error'),
+                    child: Text('${translate('Error')}: $error'),
                   ),
                 ),
               ),

@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
-import 'package:jugendkompass_app/presentation/screens/kiosk/widgets/edition_card.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
+import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
+import 'package:jugendkompass_app/presentation/screens/kiosk/widgets/edition_card.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
 
 class KioskScreen extends ConsumerWidget {
   const KioskScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(languageProvider);
+    final translate = ref.watch(stringTranslatorProvider);
     final editionsAsync = ref.watch(editionsListProvider);
     final theme = Theme.of(context);
 
@@ -24,10 +28,10 @@ class KioskScreen extends ConsumerWidget {
           child: editionsAsync.when(
             data: (editions) {
               if (editions.isEmpty) {
-                return const EmptyState(
+                return EmptyState(
                   icon: Icons.explore_outlined,
-                  title: 'Keine Magazine verfügbar',
-                  message: 'Schau später noch einmal vorbei',
+                  title: translate('Keine Magazine verfügbar'),
+                  message: translate('Schau später noch einmal vorbei'),
                 );
               }
 
@@ -43,7 +47,7 @@ class KioskScreen extends ConsumerWidget {
                         24,
                       ),
                       child: Text(
-                        'Alle Ausgaben',
+                        translate('Alle Ausgaben'),
                         style: theme.textTheme.displaySmall?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
@@ -77,11 +81,11 @@ class KioskScreen extends ConsumerWidget {
                 ],
               );
             },
-            loading: () => const LoadingIndicator(
-              message: 'Lade Magazine...',
+            loading: () => LoadingIndicator(
+              message: translate('Lade Magazine...'),
             ),
             error: (error, stack) => ErrorView(
-              message: 'Fehler beim Laden der Magazine: $error',
+              message: '${translate('Fehler beim Laden der Magazine')}: $error',
               onRetry: () => ref.invalidate(editionsListProvider),
             ),
           ),

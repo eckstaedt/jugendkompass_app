@@ -3,20 +3,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
+import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 
 class CollectionScreen extends ConsumerWidget {
   const CollectionScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(languageProvider);
+    final translate = ref.watch(stringTranslatorProvider);
     final collectionItems = ref.watch(collectionProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Deine Sammlung'),
+        title: Text(translate('Deine Sammlung')),
         elevation: 0,
         backgroundColor: Colors.transparent,
         actions: collectionItems.isNotEmpty
@@ -87,7 +91,7 @@ class CollectionScreen extends ConsumerWidget {
                 final item = collectionItems[index];
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: _buildCollectionItemCard(context, item, ref, theme),
+                  child: _buildCollectionItemCard(context, item, ref, theme, translate),
                 );
               },
             ),
@@ -99,9 +103,10 @@ class CollectionScreen extends ConsumerWidget {
     CollectionItem item,
     WidgetRef ref,
     ThemeData theme,
+    String Function(String) translate,
   ) {
     final typeEmoji = _getTypeEmoji(item.type);
-    final typeLabel = _getTypeLabel(item.type);
+    final typeLabel = _getTypeLabel(item.type, translate);
 
     return Dismissible(
       key: Key('${item.id}_${item.type}'),
@@ -241,16 +246,16 @@ class CollectionScreen extends ConsumerWidget {
     }
   }
 
-  String _getTypeLabel(CollectionItemType type) {
+  String _getTypeLabel(CollectionItemType type, String Function(String) translate) {
     switch (type) {
       case CollectionItemType.impulse:
-        return 'Impuls';
+        return translate('impulse_type');
       case CollectionItemType.video:
-        return 'Video';
+        return translate('video_type');
       case CollectionItemType.post:
-        return 'Artikel';
+        return translate('Artikel');
       case CollectionItemType.edition:
-        return 'Ausgabe';
+        return translate('edition_type');
     }
   }
 }

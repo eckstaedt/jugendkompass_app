@@ -148,7 +148,7 @@ class MiniPlayerBar extends ConsumerWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  audio.title ?? 'Unbekannter Titel',
+                                  audio.title ?? audio.post?.title ?? 'Unbekannter Titel',
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),

@@ -15,6 +15,7 @@ class UserPreferencesService {
   static const String _keyDarkMode = 'dark_mode';
   static const String _keyNotifications = 'notifications_enabled';
   static const String _keyReadingPlan = 'reading_plan_progress';
+  static const String _keyLanguage = 'language';
 
   /// Initialize SharedPreferences
   Future<void> init() async {
@@ -55,6 +56,15 @@ class UserPreferencesService {
 
   Future<void> setDarkMode(bool enabled) async {
     await _prefs.setBool(_keyDarkMode, enabled);
+  }
+
+  // Language
+  String getLanguage() {
+    return _prefs.getString(_keyLanguage) ?? 'de';
+  }
+
+  Future<void> setLanguage(String languageCode) async {
+    await _prefs.setString(_keyLanguage, languageCode);
   }
 
   // Notifications

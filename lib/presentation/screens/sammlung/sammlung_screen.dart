@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/domain/providers/favorites_provider.dart';
 import 'package:jugendkompass_app/domain/providers/content_provider.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
+import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/content/widgets/content_card.dart';
 import 'package:jugendkompass_app/presentation/screens/content/content_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
@@ -11,12 +13,15 @@ class SammlungScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(languageProvider);
+    final translate = ref.watch(stringTranslatorProvider);
+    
     final favorites = ref.watch(favoritesProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Deine Sammlung'),
+        title: Text(translate('my_collection_title')),
         actions: [
           if (favorites.isNotEmpty)
             IconButton(
@@ -28,10 +33,10 @@ class SammlungScreen extends ConsumerWidget {
         ],
       ),
       body: favorites.isEmpty
-          ? const EmptyState(
+          ? EmptyState(
               icon: Icons.bookmark_border,
-              title: 'Keine Favoriten',
-              message: 'Markiere Inhalte als Favoriten, um sie hier zu sehen.',
+              title: translate('no_favorites'),
+              message: translate('mark_as_favorite'),
             )
           : RefreshIndicator(
               onRefresh: () async {

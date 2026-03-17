@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/domain/providers/favorite_verses_provider.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
+import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 
 class FavoriteVersesScreen extends ConsumerWidget {
@@ -10,12 +12,14 @@ class FavoriteVersesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(languageProvider);
+    final translate = ref.watch(stringTranslatorProvider);
     final favoriteVerses = ref.watch(favoriteVersesProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Favorisierte Verse'),
+        title: Text(translate('favorite_verses_title')),
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
@@ -31,12 +35,12 @@ class FavoriteVersesScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Keine favorisierten Verse',
+                    translate('Keine favorisierten Verse'),
                     style: theme.textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Like den Vers des Tages um ihn hier zu speichern',
+                    translate('Like den Vers des Tages um ihn hier zu speichern'),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: DesignTokens.textSecondary,
                     ),
@@ -57,8 +61,8 @@ class FavoriteVersesScreen extends ConsumerWidget {
                       showDialog(
                         context: context,
                         builder: (context) => AlertDialog(
-                          title: const Text('Vers entfernen'),
-                          content: const Text('Diesen Vers aus Favoriten entfernen?'),
+                          title: Text(translate('remove_verse')),
+                          content: Text(translate('remove_verse_confirmation')),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context),
@@ -69,7 +73,7 @@ class FavoriteVersesScreen extends ConsumerWidget {
                                 ref.read(favoriteVersesProvider.notifier).removeFavoriteVerse(verse.id);
                                 Navigator.pop(context);
                               },
-                              child: const Text('Entfernen'),
+                              child: Text(translate('delete_all')),
                             ),
                           ],
                         ),

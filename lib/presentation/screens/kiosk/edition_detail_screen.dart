@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:jugendkompass_app/data/models/edition_model.dart';
-import 'package:jugendkompass_app/data/models/post_model.dart';
+import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
-import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
+import 'package:jugendkompass_app/data/models/edition_model.dart';
+import 'package:jugendkompass_app/data/models/post_model.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
+import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
+import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/podcast/full_player_screen.dart';
-import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 
 class EditionDetailScreen extends ConsumerWidget {
   final EditionModel edition;
@@ -23,6 +25,8 @@ class EditionDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(languageProvider);
+    final translate = ref.watch(stringTranslatorProvider);
     final postsAsync = ref.watch(editionPostsProvider(edition.id));
     final audiosAsync = ref.watch(editionAudiosProvider(edition.id));
     final isInCollection = ref.watch(collectionProvider).any(
@@ -101,15 +105,15 @@ class EditionDetailScreen extends ConsumerWidget {
                     Expanded(
                       child: audiosAsync.when(
                         data: (audios) => postsAsync.when(
-                          data: (posts) => _buildContent(context, ref, scrollController, posts, audios),
+                          data: (posts) => _buildContent(context, ref, scrollController, posts, audios, translate),
                           loading: () => const Center(child: CircularProgressIndicator()),
-                          error: (e, s) => Center(child: Text('Fehler: $e')),
+                          error: (e, s) => Center(child: Text('${translate('Fehler: ')}$e')),
                         ),
                         loading: () => const Center(child: CircularProgressIndicator()),
                         error: (e, s) => postsAsync.when(
-                          data: (posts) => _buildContent(context, ref, scrollController, posts, []),
+                          data: (posts) => _buildContent(context, ref, scrollController, posts, [], translate),
                           loading: () => const Center(child: CircularProgressIndicator()),
-                          error: (e, s) => Center(child: Text('Fehler: $e')),
+                          error: (e, s) => Center(child: Text('${translate('Fehler: ')}$e')),
                         ),
                       ),
                     ),
@@ -123,7 +127,7 @@ class EditionDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildContent(BuildContext context, WidgetRef ref, ScrollController scrollController, List<PostModel> posts, List<AudioModel> audios) {
+  Widget _buildContent(BuildContext context, WidgetRef ref, ScrollController scrollController, List<PostModel> posts, List<AudioModel> audios, String Function(String) translate) {
     final theme = Theme.of(context);
     return ListView(
       controller: scrollController,
@@ -177,17 +181,17 @@ class EditionDetailScreen extends ConsumerWidget {
           }),
           const SizedBox(height: 32),
         ],
-        Row(children: [const Icon(Icons.article, size: 20, color: Colors.black), const SizedBox(width: 8), Text('Artikel in dieser Ausgabe', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: DesignTokens.textPrimary))]),
+        Row(children: [const Icon(Icons.article, size: 20, color: Colors.black), const SizedBox(width: 8), Text(translate('articles_in_edition'), style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: DesignTokens.textPrimary))]),
         const SizedBox(height: 16),
         if (posts.isEmpty)
-          Padding(padding: const EdgeInsets.symmetric(vertical: 32), child: Center(child: Text('Keine Artikel verfügbar', style: TextStyle(color: Colors.grey.shade600))))
+          Padding(padding: const EdgeInsets.symmetric(vertical: 32), child: Center(child: Text(translate('Keine Artikel verfügbar'), style: TextStyle(color: Colors.grey.shade600))))
         else
-          ...List.generate(posts.length, (index) => _buildPostCard(context, ref, posts[index], index + 1)),
+          ...List.generate(posts.length, (index) => _buildPostCard(context, ref, posts[index], index + 1, translate)),
       ],
     );
   }
 
-  Widget _buildPostCard(BuildContext context, WidgetRef ref, PostModel post, int index) {
+  Widget _buildPostCard(BuildContext context, WidgetRef ref, PostModel post, int index, String Function(String) translate) {
     final hasAudio = post.audioId != null;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

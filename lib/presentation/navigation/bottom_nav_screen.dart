@@ -9,26 +9,31 @@ import 'package:jugendkompass_app/presentation/screens/profile/profile_screen.da
 import 'package:jugendkompass_app/presentation/screens/podcast/widgets/mini_player_bar.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/bottom_nav_provider.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
 class BottomNavScreen extends ConsumerWidget {
   const BottomNavScreen({super.key});
 
-  static const List<Widget> _screens = [
-    HomeScreen(),
-    KioskScreen(),
-    PodcastScreen(),
-    VideoScreen(),
-    ProfileScreen(),
-  ];
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Watch language changes to rebuild all child screens
+    ref.watch(languageProvider);
+    
     final selectedIndex = ref.watch(bottomNavIndexProvider);
     final currentAudio = ref.watch(currentAudioProvider);
 
+    // Build screens list dynamically so they rebuild when language changes
+    final screens = [
+      HomeScreen(),
+      KioskScreen(),
+      PodcastScreen(),
+      VideoScreen(),
+      ProfileScreen(),
+    ];
+
     return Scaffold(
-      body: _screens[selectedIndex],
+      body: screens[selectedIndex],
       extendBody: true, // Extend body behind bottom nav
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,

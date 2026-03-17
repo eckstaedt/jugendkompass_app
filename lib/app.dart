@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/core/config/app_theme.dart';
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/presentation/navigation/bottom_nav_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/onboarding/onboarding_screen.dart';
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/domain/providers/theme_provider.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/core/services/notification_service.dart';
 import 'package:jugendkompass_app/domain/providers/verse_provider.dart';
 import 'package:jugendkompass_app/data/services/media_notification_service.dart';
@@ -15,6 +18,7 @@ class App extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    final language = ref.watch(languageProvider);
     
     // Initialize and schedule notifications once on app startup
     Future.microtask(() => _initializeNotifications(ref));
@@ -24,6 +28,9 @@ class App extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
+      locale: language.locale,
+      supportedLocales: AppLanguage.values.map((lang) => lang.locale).toList(),
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       home: FutureBuilder<bool>(
         future: Future.value(
           UserPreferencesService.instance.hasCompletedOnboarding(),
@@ -40,7 +47,8 @@ class App extends ConsumerWidget {
           final hasCompletedOnboarding = snapshot.data ?? false;
 
           if (hasCompletedOnboarding) {
-            return const BottomNavScreen();
+            // Use a key that changes with language to force rebuild
+            return BottomNavScreen(key: ValueKey(language));
           }
 
           return const OnboardingScreen();
