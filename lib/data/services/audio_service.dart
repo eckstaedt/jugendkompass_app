@@ -130,6 +130,29 @@ class AudioService {
     await _player.seek(position);
   }
 
+  Future<void> skipForward(int seconds) async {
+    final currentPosition = _player.position;
+    final newPosition = currentPosition + Duration(seconds: seconds);
+    final maxPosition = _player.duration ?? currentPosition;
+    
+    if (newPosition <= maxPosition) {
+      await _player.seek(newPosition);
+    } else {
+      await _player.seek(maxPosition);
+    }
+  }
+
+  Future<void> skipBackward(int seconds) async {
+    final currentPosition = _player.position;
+    final newPosition = currentPosition - Duration(seconds: seconds);
+    
+    if (newPosition.isNegative) {
+      await _player.seek(Duration.zero);
+    } else {
+      await _player.seek(newPosition);
+    }
+  }
+
   Future<void> setSpeed(double speed) async {
     await _player.setSpeed(speed);
   }

@@ -60,18 +60,25 @@ class MediaNotificationService {
           progress: position.inSeconds,
           ongoing: isPlaying,
           autoCancel: false,
+          styleInformation: audio.imageUrl != null
+            ? BigPictureStyleInformation(
+                FilePathAndroidBitmap(audio.imageUrl!),
+                contentTitle: audio.title ?? 'Audio',
+                summaryText: audio.artist ?? audio.post?.title ?? 'Jugendkompass',
+              )
+            : null,
           actions: [
             const AndroidNotificationAction(
-              'action_skip_previous',
-              'Zurück',
+              'action_skip_backward',
+              '-10s',
             ),
             AndroidNotificationAction(
               isPlaying ? 'action_pause' : 'action_play',
               isPlaying ? 'Pause' : 'Play',
             ),
             const AndroidNotificationAction(
-              'action_skip_next',
-              'Weiter',
+              'action_skip_forward',
+              '+10s',
             ),
           ],
         ),

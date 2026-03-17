@@ -62,14 +62,14 @@ class MediaSessionHandler {
     });
 
     mediaSession.setActionHandler('seekbackward', (details) => {
-      const skipTime = details.seekOffset || 5;
+      const skipTime = 10; // 10 seconds
       this.position = Math.max(0, this.position - skipTime);
       if (this.callbacks.seek) this.callbacks.seek(this.position);
       this.updateMediaSession();
     });
 
     mediaSession.setActionHandler('seekforward', (details) => {
-      const skipTime = details.seekOffset || 5;
+      const skipTime = 10; // 10 seconds
       this.position = Math.min(this.duration, this.position + skipTime);
       if (this.callbacks.seek) this.callbacks.seek(this.position);
       this.updateMediaSession();
