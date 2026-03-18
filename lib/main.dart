@@ -69,7 +69,7 @@ Future<void> main() async {
   );
 
   // Initialize Web Audio Controller for browser media controls
-  WebAudioController().init();
+  await WebAudioController().init();
 
   runApp(const ProviderScope(child: App()));
 }

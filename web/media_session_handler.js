@@ -1,15 +1,6 @@
 // Media Session Handler for Web
 // Provides Lock Screen / Media Controls for Web Apps
 
-// Global Dart callback holder - will be set by Dart code
-window.dartAudioCallbacks = {
-  play: null,
-  pause: null,
-  skipForward: null,
-  skipBackward: null,
-  seek: null,
-};
-
 class MediaSessionHandler {
   constructor() {
     this.currentAudio = null;
@@ -42,213 +33,127 @@ class MediaSessionHandler {
     if (!('mediaSession' in navigator)) return;
 
     const mediaSession = navigator.mediaSession;
+    const self = this;
 
     // Set action handlers
     mediaSession.setActionHandler('play', () => {
-      console.log('MediaSession: play');
-      if (this.callbacks.play) this.callbacks.play();
-      // Call Dart function if available
-      if (window.dartAudioCallbacks.play && typeof window.dartAudioCallbacks.play === 'function') {
-        console.log('Calling dartAudioCallbacks.play');
-        window.dartAudioCallbacks.play();
-      } else if (typeof window.dartAudioPlay === 'function') {
-        console.log('Calling window.dartAudioPlay');
-        window.dartAudioPlay();
+      console.log('[MediaSession] play');
+      if (self.callbacks.play) self.callbacks.play();
+      // Call Dart function via dartAudioAPI
+      if (window.dartAudioAPI && typeof window.dartAudioAPI.play === 'function') {
+        console.log('[MediaSession->Dart] Calling dartAudioAPI.play()');
+        try {
+          window.dartAudioAPI.play();
+        } catch (e) {
+          console.error('[MediaSession->Dart] Error calling play:', e);
+        }
       } else {
-        console.warn('No Dart play function available');
+        console.warn('[MediaSession->Dart] dartAudioAPI.play not available');
       }
-      this.updatePlaybackState(true);
+      self.updatePlaybackState(true);
     });
 
     mediaSession.setActionHandler('pause', () => {
-      console.log('MediaSession: pause');
-      if (this.callbacks.pause) this.callbacks.pause();
-      // Call Dart function if available
-      if (window.dartAudioCallbacks.pause && typeof window.dartAudioCallbacks.pause === 'function') {
-        console.log('Calling dartAudioCallbacks.pause');
-        window.dartAudioCallbacks.pause();
-      } else if (typeof window.dartAudioPause === 'function') {
-        console.log('Calling window.dartAudioPause');
-        window.dartAudioPause();
+      console.log('[MediaSession] pause');
+      if (self.callbacks.pause) self.callbacks.pause();
+      // Call Dart function via dartAudioAPI
+      if (window.dartAudioAPI && typeof window.dartAudioAPI.pause === 'function') {
+        console.log('[MediaSession->Dart] Calling dartAudioAPI.pause()');
+        try {
+          window.dartAudioAPI.pause();
+        } catch (e) {
+          console.error('[MediaSession->Dart] Error calling pause:', e);
+        }
       } else {
-        console.warn('No Dart pause function available');
+        console.warn('[MediaSession->Dart] dartAudioAPI.pause not available');
       }
-      this.updatePlaybackState(false);
+      self.updatePlaybackState(false);
     });
 
     mediaSession.setActionHandler('previoustrack', () => {
-      console.log('MediaSession: previoustrack (skip backward)');
-      if (this.callbacks.skipPrevious) this.callbacks.skipPrevious();
-      // Call Dart function if available
-      if (window.dartAudioCallbacks.skipBackward && typeof window.dartAudioCallbacks.skipBackward === 'function') {
-        console.log('Calling dartAudioCallbacks.skipBackward(10)');
-        window.dartAudioCallbacks.skipBackward(10);
-      } else if (typeof window.dartAudioSkipBackward === 'function') {
-        console.log('Calling window.dartAudioSkipBackward(10)');
-        window.dartAudioSkipBackward(10);
+      console.log('[MediaSession] previoustrack (skip -10s)');
+      if (self.callbacks.skipPrevious) self.callbacks.skipPrevious();
+      // Call Dart function via dartAudioAPI
+      if (window.dartAudioAPI && typeof window.dartAudioAPI.skipBackward === 'function') {
+        console.log('[MediaSession->Dart] Calling dartAudioAPI.skipBackward(10)');
+        try {
+          window.dartAudioAPI.skipBackward(10);
+        } catch (e) {
+          console.error('[MediaSession->Dart] Error calling skipBackward:', e);
+        }
+      } else {
+        console.warn('[MediaSession->Dart] dartAudioAPI.skipBackward not available');
       }
     });
 
     mediaSession.setActionHandler('nexttrack', () => {
-      console.log('MediaSession: nexttrack (skip forward)');
-      if (this.callbacks.skipNext) this.callbacks.skipNext();
-      // Call Dart function if available
-      if (window.dartAudioCallbacks.skipForward && typeof window.dartAudioCallbacks.skipForward === 'function') {
-        console.log('Calling dartAudioCallbacks.skipForward(10)');
-        window.dartAudioCallbacks.skipForward(10);
-      } else if (typeof window.dartAudioSkipForward === 'function') {
-        console.log('Calling window.dartAudioSkipForward(10)');
-        window.dartAudioSkipForward(10);
+      console.log('[MediaSession] nexttrack (skip +10s)');
+      if (self.callbacks.skipNext) self.callbacks.skipNext();
+      // Call Dart function via dartAudioAPI
+      if (window.dartAudioAPI && typeof window.dartAudioAPI.skipForward === 'function') {
+        console.log('[MediaSession->Dart] Calling dartAudioAPI.skipForward(10)');
+        try {
+          window.dartAudioAPI.skipForward(10);
+        } catch (e) {
+          console.error('[MediaSession->Dart] Error calling skipForward:', e);
+        }
+      } else {
+        console.warn('[MediaSession->Dart] dartAudioAPI.skipForward not available');
       }
     });
 
     mediaSession.setActionHandler('seekto', (details) => {
-      console.log('MediaSession: seekto', details.seekTime);
-      if (this.callbacks.seek) {
-        this.callbacks.seek(details.seekTime);
+      console.log('[MediaSession] seekto', details.seekTime);
+      if (self.callbacks.seek) {
+        self.callbacks.seek(details.seekTime);
       }
-      // Call Dart function if available
-      if (window.dartAudioCallbacks.seek && typeof window.dartAudioCallbacks.seek === 'function') {
-        console.log('Calling dartAudioCallbacks.seek(' + Math.floor(details.seekTime) + ')');
-        window.dartAudioCallbacks.seek(Math.floor(details.seekTime));
-      } else if (typeof window.dartAudioSeek === 'function') {
-        console.log('Calling window.dartAudioSeek(' + Math.floor(details.seekTime) + ')');
-        window.dartAudioSeek(Math.floor(details.seekTime));
+      // Call Dart function via dartAudioAPI
+      if (window.dartAudioAPI && typeof window.dartAudioAPI.seek === 'function') {
+        console.log('[MediaSession->Dart] Calling dartAudioAPI.seek(' + Math.floor(details.seekTime) + ')');
+        try {
+          window.dartAudioAPI.seek(Math.floor(details.seekTime));
+        } catch (e) {
+          console.error('[MediaSession->Dart] Error calling seek:', e);
+        }
+      } else {
+        console.warn('[MediaSession->Dart] dartAudioAPI.seek not available');
       }
-      this.position = details.seekTime;
-      this.updateMediaSession();
+      self.position = details.seekTime;
+      self.updateMediaSession();
     });
 
     mediaSession.setActionHandler('seekbackward', (details) => {
-      console.log('MediaSession: seekbackward');
+      console.log('[MediaSession] seekbackward');
       const skipTime = 10; // 10 seconds
-      this.position = Math.max(0, this.position - skipTime);
-      if (this.callbacks.seek) this.callbacks.seek(this.position);
-      // Call Dart function if available
-      if (window.dartAudioCallbacks.skipBackward && typeof window.dartAudioCallbacks.skipBackward === 'function') {
-        console.log('Calling dartAudioCallbacks.skipBackward(10)');
-        window.dartAudioCallbacks.skipBackward(10);
-      } else if (typeof window.dartAudioSkipBackward === 'function') {
-        console.log('Calling window.dartAudioSkipBackward(10)');
-        window.dartAudioSkipBackward(10);
+      self.position = Math.max(0, self.position - skipTime);
+      if (self.callbacks.seek) self.callbacks.seek(self.position);
+      // Call Dart function via dartAudioAPI
+      if (window.dartAudioAPI && typeof window.dartAudioAPI.skipBackward === 'function') {
+        console.log('[MediaSession->Dart] Calling dartAudioAPI.skipBackward(10)');
+        try {
+          window.dartAudioAPI.skipBackward(10);
+        } catch (e) {
+          console.error('[MediaSession->Dart] Error calling skipBackward:', e);
+        }
       }
-      this.updateMediaSession();
+      self.updateMediaSession();
     });
 
     mediaSession.setActionHandler('seekforward', (details) => {
-      console.log('MediaSession: seekforward');
+      console.log('[MediaSession] seekforward');
       const skipTime = 10; // 10 seconds
-      this.position = Math.min(this.duration, this.position + skipTime);
-      if (this.callbacks.seek) this.callbacks.seek(this.position);
-      // Call Dart function if available
-      if (window.dartAudioCallbacks.skipForward && typeof window.dartAudioCallbacks.skipForward === 'function') {
-        console.log('Calling dartAudioCallbacks.skipForward(10)');
-        window.dartAudioCallbacks.skipForward(10);
-      } else if (typeof window.dartAudioSkipForward === 'function') {
-        console.log('Calling window.dartAudioSkipForward(10)');
-        window.dartAudioSkipForward(10);
+      self.position = Math.min(self.duration, self.position + skipTime);
+      if (self.callbacks.seek) self.callbacks.seek(self.position);
+      // Call Dart function via dartAudioAPI
+      if (window.dartAudioAPI && typeof window.dartAudioAPI.skipForward === 'function') {
+        console.log('[MediaSession->Dart] Calling dartAudioAPI.skipForward(10)');
+        try {
+          window.dartAudioAPI.skipForward(10);
+        } catch (e) {
+          console.error('[MediaSession->Dart] Error calling skipForward:', e);
+        }
       }
-      this.updateMediaSession();
-    });
-  }
-
-  // Update media metadata for lock screen / media controls
-  updateMediaSession(audio = null, position = null, duration = null, isPlaying = null) {
-    if (!('mediaSession' in navigator)) return;
-
-    if (audio) {
-      this.currentAudio = audio;
-    }
-    if (position !== null) {
-      this.position = position;
-    }
-    if (duration !== null) {
-      this.duration = duration;
-    }
-    if (isPlaying !== null) {
-      this.isPlaying = isPlaying;
-    }
-
-    if (!this.currentAudio) {
-      navigator.mediaSession.metadata = null;
-      return;
-    }
-
-    // Create metadata for lock screen
-    const metadata = new MediaMetadata({
-      title: this.currentAudio.title || 'Podcast',
-      artist: this.currentAudio.artist || this.currentAudio.post?.title || 'Jugendkompass',
-      album: 'Jugendkompass',
-      artwork: this.currentAudio.imageUrl
-        ? [
-            {
-              src: this.currentAudio.imageUrl,
-              sizes: '256x256',
-              type: 'image/jpeg',
-            },
-            {
-              src: this.currentAudio.imageUrl,
-              sizes: '512x512',
-              type: 'image/jpeg',
-            },
-          ]
-        : [],
-    });
-
-    navigator.mediaSession.metadata = metadata;
-        window.dartAudioPause();
-      }
-      this.updatePlaybackState(false);
-    });
-
-    mediaSession.setActionHandler('previoustrack', () => {
-      if (this.callbacks.skipPrevious) this.callbacks.skipPrevious();
-      // Call Dart function if available
-      if (typeof window.dartAudioSkipBackward === 'function') {
-        window.dartAudioSkipBackward(10);
-      }
-    });
-
-    mediaSession.setActionHandler('nexttrack', () => {
-      if (this.callbacks.skipNext) this.callbacks.skipNext();
-      // Call Dart function if available
-      if (typeof window.dartAudioSkipForward === 'function') {
-        window.dartAudioSkipForward(10);
-      }
-    });
-
-    mediaSession.setActionHandler('seekto', (details) => {
-      if (this.callbacks.seek) {
-        this.callbacks.seek(details.seekTime);
-      }
-      // Call Dart function if available
-      if (typeof window.dartAudioSeek === 'function') {
-        window.dartAudioSeek(Math.floor(details.seekTime));
-      }
-      this.position = details.seekTime;
-      this.updateMediaSession();
-    });
-
-    mediaSession.setActionHandler('seekbackward', (details) => {
-      const skipTime = 10; // 10 seconds
-      this.position = Math.max(0, this.position - skipTime);
-      if (this.callbacks.seek) this.callbacks.seek(this.position);
-      // Call Dart function if available
-      if (typeof window.dartAudioSkipBackward === 'function') {
-        window.dartAudioSkipBackward(10);
-      }
-      this.updateMediaSession();
-    });
-
-    mediaSession.setActionHandler('seekforward', (details) => {
-      const skipTime = 10; // 10 seconds
-      this.position = Math.min(this.duration, this.position + skipTime);
-      if (this.callbacks.seek) this.callbacks.seek(this.position);
-      // Call Dart function if available
-      if (typeof window.dartAudioSkipForward === 'function') {
-        window.dartAudioSkipForward(10);
-      }
-      this.updateMediaSession();
+      self.updateMediaSession();
     });
   }
 

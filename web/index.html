@@ -36,11 +36,50 @@
   <title>Jugendkompass</title>
   <link rel="manifest" href="manifest.json">
   
-  <!-- Dart Audio API Bridge -->
-  <script src="dart_audio_api.js"></script>
-  
   <!-- Media Session Handler for Web Browser Controls -->
   <script src="media_session_handler.js"></script>
+  
+  <!-- Script to initialize Dart Audio functions after Flutter loads -->
+  <script>
+    // Wait for Dart to load and register its functions
+    let dartInitTimeout;
+    let dartInitCheckCount = 0;
+    const maxChecks = 100; // Check for up to 10 seconds (100 * 100ms)
+    
+    function waitForDartAudioAPI() {
+      clearTimeout(dartInitTimeout);
+      dartInitCheckCount++;
+      
+      // Check if Dart audio API is available
+      if (typeof window.dartAudioAPI === 'object' && 
+          typeof window.dartAudioAPI.play === 'function' && 
+          typeof window.dartAudioAPI.pause === 'function' &&
+          typeof window.dartAudioAPI.skipForward === 'function' &&
+          typeof window.dartAudioAPI.skipBackward === 'function' &&
+          typeof window.dartAudioAPI.seek === 'function') {
+        console.log('✓ Dart audio API is available after ' + (dartInitCheckCount * 100) + 'ms');
+      } else if (dartInitCheckCount < maxChecks) {
+        // Retry after a short delay
+        dartInitTimeout = setTimeout(waitForDartAudioAPI, 100);
+      } else {
+        console.warn('⚠ Dart audio API did not load within 10 seconds');
+        console.warn('dartAudioAPI object: ' + (typeof window.dartAudioAPI === 'object'));
+        if (window.dartAudioAPI) {
+          console.warn('dartAudioAPI.play: ' + (typeof window.dartAudioAPI.play === 'function'));
+          console.warn('dartAudioAPI.pause: ' + (typeof window.dartAudioAPI.pause === 'function'));
+          console.warn('dartAudioAPI.skipForward: ' + (typeof window.dartAudioAPI.skipForward === 'function'));
+          console.warn('dartAudioAPI.skipBackward: ' + (typeof window.dartAudioAPI.skipBackward === 'function'));
+          console.warn('dartAudioAPI.seek: ' + (typeof window.dartAudioAPI.seek === 'function'));
+        }
+      }
+    }
+    
+    // Start checking when the page loads
+    window.addEventListener('load', waitForDartAudioAPI);
+    
+    // Also check immediately in case page is already loaded
+    waitForDartAudioAPI();
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
