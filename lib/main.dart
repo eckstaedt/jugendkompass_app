@@ -9,6 +9,7 @@ import 'package:jugendkompass_app/data/services/favorites_service.dart';
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/data/services/media_notification_service.dart';
 import 'package:jugendkompass_app/data/services/audio_service.dart';
+import 'package:jugendkompass_app/data/services/web_audio_controller.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 // Notification callback handler
@@ -66,6 +67,9 @@ Future<void> main() async {
     ),
     onDidReceiveNotificationResponse: _onNotificationAction,
   );
+
+  // Initialize Web Audio Controller for browser media controls
+  WebAudioController().init();
 
   runApp(const ProviderScope(child: App()));
 }
