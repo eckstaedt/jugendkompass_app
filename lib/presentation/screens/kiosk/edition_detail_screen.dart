@@ -12,8 +12,8 @@ import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
-import 'package:jugendkompass_app/presentation/screens/podcast/full_player_screen.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
+import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 
 class EditionDetailScreen extends ConsumerWidget {
   final EditionModel edition;
@@ -181,7 +181,7 @@ class EditionDetailScreen extends ConsumerWidget {
           }),
           const SizedBox(height: 32),
         ],
-        Row(children: [const Icon(Icons.article, size: 20, color: Colors.black), const SizedBox(width: 8), Text(translate('articles_in_edition'), style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: DesignTokens.textPrimary))]),
+        Row(children: [const Icon(Icons.article, size: 20, color: Colors.black), const SizedBox(width: 8), Text('Artikel in dieser Ausgabe', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: DesignTokens.textPrimary))]),
         const SizedBox(height: 16),
         if (posts.isEmpty)
           Padding(padding: const EdgeInsets.symmetric(vertical: 32), child: Center(child: Text(translate('Keine Artikel verfügbar'), style: TextStyle(color: Colors.grey.shade600))))
@@ -195,58 +195,106 @@ class EditionDetailScreen extends ConsumerWidget {
     final hasAudio = post.audioId != null;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: DesignTokens.cardBackground, borderRadius: BorderRadius.circular(DesignTokens.radiusButtons), boxShadow: [DesignTokens.shadowSubtle]),
-      child: Row(children: [
-        ClipRRect(borderRadius: BorderRadius.circular(DesignTokens.radiusInputFields), child: post.imageUrl != null ? CorsNetworkImage(imageUrl: post.imageUrl!, width: 60, height: 60, fit: BoxFit.cover, placeholder: Container(width: 60, height: 60, color: DesignTokens.cardBackground, child: Center(child: Text('$index', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: DesignTokens.primaryRed)))), errorWidget: Container(width: 60, height: 60, color: DesignTokens.cardBackground, child: Center(child: Text('$index', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: DesignTokens.primaryRed))))) : Container(width: 60, height: 60, decoration: BoxDecoration(color: DesignTokens.cardBackground, borderRadius: BorderRadius.circular(12)), child: Center(child: Text('$index', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: DesignTokens.primaryRed))))),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                post.title,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: DesignTokens.textPrimary),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  // show one or more category/tag badges
-                  if ((post.categoryNames ?? []).isNotEmpty)
-                    ...post.categoryNames!.map((tag) => Padding(
-                          padding: const EdgeInsets.only(right: 4),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: DesignTokens.redBackground,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              tag.toUpperCase(),
-                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: DesignTokens.primaryRed),
-                            ),
-                          ),
-                        ))
-                  else if (post.categoryName != null)
-                    Text(
-                      post.categoryName!.toUpperCase(),
-                      style: TextStyle(fontSize: 12, color: DesignTokens.textSecondary, fontWeight: FontWeight.w500),
-                    ),
-                  const Text(' • '),
-                  Text(
-                    _calculateReadingTime(post.body),
-                    style: TextStyle(fontSize: 12, color: DesignTokens.textSecondary),
-                  )
-                ],
-              )
-            ],
-          ),
+      decoration: BoxDecoration(
+        color: DesignTokens.cardBackground,
+        borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
+        boxShadow: [DesignTokens.shadowSubtle],
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
+        // Tapping anywhere on the card opens the article
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => PostDetailScreen(post: post)),
         ),
-        if (hasAudio)
-          IconButton(onPressed: () => _playPostAudio(context, ref, post), icon: Icon(Icons.play_circle, size: 40, color: DesignTokens.primaryRed))
-      ]),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(children: [
+            // Thumbnail: tap opens article; if has audio, play icon overlay taps to play
+            GestureDetector(
+              onTap: hasAudio
+                  ? () => _playPostAudio(context, ref, post)
+                  : () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => PostDetailScreen(post: post)),
+                      ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(DesignTokens.radiusInputFields),
+                child: SizedBox(
+                  width: 60,
+                  height: 60,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      post.imageUrl != null
+                          ? CorsNetworkImage(
+                              imageUrl: post.imageUrl!,
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.cover,
+                              placeholder: Container(width: 60, height: 60, color: DesignTokens.cardBackground, child: Center(child: Text('$index', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: DesignTokens.primaryRed)))),
+                              errorWidget: Container(width: 60, height: 60, color: DesignTokens.cardBackground, child: Center(child: Text('$index', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: DesignTokens.primaryRed)))),
+                            )
+                          : Container(width: 60, height: 60, decoration: BoxDecoration(color: DesignTokens.cardBackground, borderRadius: BorderRadius.circular(12)), child: Center(child: Text('$index', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: DesignTokens.primaryRed)))),
+                      if (hasAudio)
+                        Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(color: Colors.black.withOpacity(0.35)),
+                          child: const Icon(Icons.play_arrow, color: Colors.white, size: 30),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    post.title,
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: DesignTokens.textPrimary),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      if ((post.categoryNames ?? []).isNotEmpty)
+                        ...post.categoryNames!.map((tag) => Padding(
+                              padding: const EdgeInsets.only(right: 4),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: DesignTokens.redBackground,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  tag.toUpperCase(),
+                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: DesignTokens.primaryRed),
+                                ),
+                              ),
+                            ))
+                      else if (post.categoryName != null)
+                        Text(
+                          post.categoryName!.toUpperCase(),
+                          style: TextStyle(fontSize: 12, color: DesignTokens.textSecondary, fontWeight: FontWeight.w500),
+                        ),
+                      const Text(' • '),
+                      Text(
+                        _calculateReadingTime(post.body),
+                        style: TextStyle(fontSize: 12, color: DesignTokens.textSecondary),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ]),
+        ),
+      ),
     );
   }
 
@@ -258,9 +306,7 @@ class EditionDetailScreen extends ConsumerWidget {
       ref.read(audioQueueProvider.notifier).state = audios;
       ref.read(currentQueueIndexProvider.notifier).state = 0;
       ref.read(currentAudioProvider.notifier).state = audios.first;
-      if (context.mounted) {
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FullPlayerScreen()));
-      }
+      // Mini player bar appears automatically – no navigation needed
     } catch (e) {
       if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Fehler beim Abspielen: $e'), backgroundColor: Colors.red));
     }
@@ -276,9 +322,11 @@ class EditionDetailScreen extends ConsumerWidget {
         return;
       }
       final audioService = ref.read(audioServiceProvider);
+      await audioService.setQueue([audio], startIndex: 0);
+      ref.read(audioQueueProvider.notifier).state = [audio];
+      ref.read(currentQueueIndexProvider.notifier).state = 0;
       ref.read(currentAudioProvider.notifier).state = audio;
-      await audioService.playAudio(audio.url);
-      if (context.mounted) Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FullPlayerScreen()));
+      // Mini player bar appears automatically – no navigation needed
     } catch (e) {
       if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Fehler beim Abspielen: $e'), backgroundColor: Colors.red));
     }

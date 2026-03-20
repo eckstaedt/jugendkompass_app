@@ -11,8 +11,8 @@ import 'package:jugendkompass_app/domain/providers/string_translator_provider.da
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
+import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'widgets/featured_episode_card.dart';
-import 'full_player_screen.dart';
 
 class PodcastScreen extends ConsumerWidget {
   const PodcastScreen({super.key});
@@ -276,125 +276,165 @@ class PodcastScreen extends ConsumerWidget {
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(12),
-        leading: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: audio.imageUrl != null
-              ? CachedNetworkImage(
-                  imageUrl: audio.imageUrl!,
-                  width: 60,
-                  height: 60,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    width: 60,
-                    height: 60,
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    child: const Center(
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    width: 60,
-                    height: 60,
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    child: const Icon(Icons.podcasts),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        // Tapping anywhere on the tile opens the post article
+        onTap: audio.post != null
+            ? () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PostDetailScreen(post: audio.post!),
                   ),
                 )
-              : Container(
-                  width: 60,
-                  height: 60,
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  child: const Icon(Icons.podcasts),
+            : () => _playAudio(context, ref, audio),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              // Thumbnail – tap plays audio
+              GestureDetector(
+                onTap: () => _playAudio(context, ref, audio),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: SizedBox(
+                    width: 60,
+                    height: 60,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        if (audio.imageUrl != null)
+                          CachedNetworkImage(
+                            imageUrl: audio.imageUrl!,
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              width: 60,
+                              height: 60,
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              child: const Center(
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              width: 60,
+                              height: 60,
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              child: const Icon(Icons.podcasts),
+                            ),
+                          )
+                        else
+                          Container(
+                            width: 60,
+                            height: 60,
+                            color: theme.colorScheme.surfaceContainerHighest,
+                            child: const Icon(Icons.podcasts),
+                          ),
+                        // Play overlay
+                        if (!isPlaying)
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.35),
+                            ),
+                            child: const Icon(
+                              Icons.play_arrow,
+                              color: Colors.white,
+                              size: 30,
+                            ),
+                          ),
+                        // Equaliser when playing
+                        if (isPlaying)
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.45),
+                            ),
+                            child: Icon(
+                              Icons.graphic_eq,
+                              color: DesignTokens.primaryRed,
+                              size: 28,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
-        ),
-        title: Text(
-          // Title comes from the linked post
-          audio.title ?? audio.post?.title ?? 'Unbekannter Titel',
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: isPlaying ? FontWeight.bold : FontWeight.normal,
-          ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            // Category badges
-            if (audio.post != null)
-              Wrap(
-                spacing: 4,
-                runSpacing: 2,
-                children: [
-                  for (var tag in audio.post!.categoryNames ??
-                      (audio.post!.categoryName != null
-                          ? [audio.post!.categoryName!]
-                          : []))
-                    Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: DesignTokens.primaryRed.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
+              ),
+              const SizedBox(width: 12),
+              // Title + meta
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      audio.title ?? audio.post?.title ?? 'Unbekannter Titel',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: isPlaying ? FontWeight.bold : FontWeight.normal,
                       ),
-                      child: Text(
-                        tag,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    if (audio.post != null)
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 2,
+                        children: [
+                          for (var tag in audio.post!.categoryNames ??
+                              (audio.post!.categoryName != null
+                                  ? [audio.post!.categoryName!]
+                                  : []))
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: DesignTokens.primaryRed.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(
+                                    DesignTokens.radiusBadges),
+                              ),
+                              child: Text(
+                                tag,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: DesignTokens.primaryRed,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    if (audio.durationSeconds != null) ...[  
+                      const SizedBox(height: 6),
+                      Text(
+                        _formatDuration(audio.durationSeconds!),
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: DesignTokens.primaryRed,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
-                    ),
-                ],
-              ),
-            if (audio.durationSeconds != null) ...[
-              const SizedBox(height: 6),
-              Text(
-                _formatDuration(audio.durationSeconds!),
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                    ],
+                  ],
                 ),
               ),
             ],
-          ],
+          ),
         ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Play button or playing indicator
-            if (isPlaying)
-              Icon(Icons.graphic_eq, color: theme.colorScheme.primary)
-            else
-              IconButton(
-                icon: const Icon(Icons.play_circle_outline),
-                iconSize: 32,
-                onPressed: () => _playAudio(context, ref, audio),
-              ),
-          ],
-        ),
-        onTap: () => _playAudio(context, ref, audio),
       ),
     );
-  }
-
-  void _playAudio(BuildContext context, WidgetRef ref, AudioModel audio) {
+  }  void _playAudio(BuildContext context, WidgetRef ref, AudioModel audio) {
     final audioService = ref.read(audioServiceProvider);
 
     // Set single audio as queue with only one item
     audioService.setQueue([audio], startIndex: 0);
 
-    // Update providers
+    // Update providers – mini player bar will appear automatically
     ref.read(audioQueueProvider.notifier).state = [audio];
     ref.read(currentQueueIndexProvider.notifier).state = 0;
     ref.read(currentAudioProvider.notifier).state = audio;
-
-    // Navigate to full player
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const FullPlayerScreen()),
-    );
+    // Do NOT navigate – the mini player bar slides in at the bottom.
+    // Tapping the bar opens the full player.
   }
 
   String _formatDuration(int seconds) {

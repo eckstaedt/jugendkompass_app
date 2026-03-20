@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/domain/providers/recommendation_provider.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 
@@ -62,6 +63,38 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
     _animationController.reverse();
   }
 
+  Future<void> _playAudio(BuildContext context) async {
+    final item = widget.item;
+    if (!item.hasAudio || item.post?.audioId == null) return;
+
+    try {
+      final audioRepository = ref.read(audioRepositoryProvider);
+      final audio = await audioRepository.getAudioById(item.post!.audioId!);
+
+      if (audio == null) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Audio nicht gefunden')),
+          );
+        }
+        return;
+      }
+
+      final audioService = ref.read(audioServiceProvider);
+      await audioService.setQueue([audio], startIndex: 0);
+
+      ref.read(audioQueueProvider.notifier).state = [audio];
+      ref.read(currentQueueIndexProvider.notifier).state = 0;
+      ref.read(currentAudioProvider.notifier).state = audio;
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Fehler beim Abspielen: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -97,19 +130,50 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
                   padding: const EdgeInsets.all(DesignTokens.spacingSmall),
                   child: Row(
                     children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: DesignTokens.appBackground,
-                          borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
-                          boxShadow: [DesignTokens.shadowSubtle],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
-                          child: item.imageUrl != null && item.imageUrl!.isNotEmpty
-                              ? CorsNetworkImage(imageUrl: item.imageUrl!, width: 80, height: 80, fit: BoxFit.cover)
-                              : Icon(item.isVideo ? Icons.play_circle_outline : Icons.article_outlined, size: 32, color: DesignTokens.primaryRed),
+                      // Thumbnail with play overlay
+                      GestureDetector(
+                        onTap: item.hasAudio
+                            ? () => _playAudio(context)
+                            : null,
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: DesignTokens.appBackground,
+                            borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
+                            boxShadow: [DesignTokens.shadowSubtle],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
+                            child: Stack(
+                              children: [
+                                item.imageUrl != null && item.imageUrl!.isNotEmpty
+                                    ? CorsNetworkImage(imageUrl: item.imageUrl!, width: 80, height: 80, fit: BoxFit.cover)
+                                    : SizedBox(
+                                        width: 80,
+                                        height: 80,
+                                        child: Icon(
+                                          item.isVideo ? Icons.play_circle_outline : Icons.article_outlined,
+                                          size: 32,
+                                          color: DesignTokens.primaryRed,
+                                        ),
+                                      ),
+                                if (item.hasAudio)
+                                  Positioned.fill(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.35),
+                                      ),
+                                      child: const Icon(
+                                        Icons.play_arrow_rounded,
+                                        color: Colors.white,
+                                        size: 36,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(width: DesignTokens.spacingMedium),

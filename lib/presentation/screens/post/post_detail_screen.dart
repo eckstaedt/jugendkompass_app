@@ -6,7 +6,6 @@ import 'package:jugendkompass_app/data/models/collection_item_model.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
-import 'package:jugendkompass_app/presentation/screens/podcast/full_player_screen.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
 class PostDetailScreen extends ConsumerWidget {
@@ -419,19 +418,10 @@ class PostDetailScreen extends ConsumerWidget {
       final audioService = ref.read(audioServiceProvider);
       await audioService.setQueue([audio], startIndex: 0);
 
-      // Update providers
+      // Update providers – mini player bar appears automatically
       ref.read(audioQueueProvider.notifier).state = [audio];
       ref.read(currentQueueIndexProvider.notifier).state = 0;
       ref.read(currentAudioProvider.notifier).state = audio;
-
-      // Navigate to full player
-      if (context.mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => const FullPlayerScreen(),
-          ),
-        );
-      }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

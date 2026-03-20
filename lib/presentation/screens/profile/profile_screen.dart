@@ -15,7 +15,7 @@ import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/data/services/favorites_service.dart';
 import 'package:jugendkompass_app/data/services/favorite_verses_service.dart';
 import 'package:jugendkompass_app/data/services/collection_service.dart';
-import '../shop/shop_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../onboarding/onboarding_screen.dart';
 import 'favorite_verses_screen.dart';
 import 'collection_screen.dart';
@@ -105,7 +105,7 @@ class ProfileScreen extends ConsumerWidget {
             onChanged: (value) {
               ref.read(notificationsProvider.notifier).update(value);
             },
-            activeColor: DesignTokens.primaryRed,
+            activeThumbColor: DesignTokens.primaryRed,
             secondary: const Icon(Icons.notifications_outlined),
           ),
           SizedBox(height: DesignTokens.spacingSmall),
@@ -121,7 +121,7 @@ class ProfileScreen extends ConsumerWidget {
             onChanged: (value) {
               ref.read(themeModeProvider.notifier).toggle();
             },
-            activeColor: DesignTokens.primaryRed,
+            activeThumbColor: DesignTokens.primaryRed,
             secondary: Icon(
               themeMode == ThemeMode.dark
                   ? Icons.dark_mode
@@ -221,19 +221,19 @@ class ProfileScreen extends ConsumerWidget {
           ),
 
           const SizedBox(height: DesignTokens.spacingSmall),
-          // Shop placeholder
+          // Shop – opens external website
           ListTile(
             tileColor: DesignTokens.glassBackground(0.12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
             leading: const Icon(Icons.storefront_outlined),
             title: Text(translate('Shop')),
-            subtitle: Text(translate('Bald verfügbar')),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => ShopScreen()),
-              );
+            subtitle: const Text('cdh-stephanus.org'),
+            trailing: const Icon(Icons.open_in_new, size: 18),
+            onTap: () async {
+              final uri = Uri.parse('https://cdh-stephanus.org/');
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
             },
           ),
 

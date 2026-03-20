@@ -71,7 +71,7 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                     });
                   },
                   decoration: InputDecoration(
-                    hintText: translate('search_videos'),
+                    hintText: 'Videos suchen',
                     hintStyle: TextStyle(
                       color: DesignTokens.textSecondary,
                       fontSize: 16,
@@ -207,7 +207,7 @@ class _VideoCardState extends ConsumerState<VideoCard> {
     final duration = Duration(seconds: seconds);
     final minutes = duration.inMinutes;
     final secs = duration.inSeconds.remainder(60);
-    return '${minutes}:${secs.toString().padLeft(2, '0')}';
+    return '$minutes:${secs.toString().padLeft(2, '0')}';
   }
 
   String _formatDate(DateTime date) {
