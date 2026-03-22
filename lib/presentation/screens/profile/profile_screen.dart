@@ -227,10 +227,10 @@ class ProfileScreen extends ConsumerWidget {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
             leading: const Icon(Icons.storefront_outlined),
             title: Text(translate('Shop')),
-            subtitle: const Text('cdh-stephanus.org'),
+            subtitle: const Text('stephanus-verlag.de'),
             trailing: const Icon(Icons.open_in_new, size: 18),
             onTap: () async {
-              final uri = Uri.parse('https://cdh-stephanus.org/');
+              final uri = Uri.parse('https://stephanus-verlag.de/');
               if (await canLaunchUrl(uri)) {
                 await launchUrl(uri, mode: LaunchMode.externalApplication);
               }
