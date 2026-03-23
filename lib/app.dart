@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/core/config/app_theme.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/presentation/navigation/bottom_nav_screen.dart';
+import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart';
 import 'package:jugendkompass_app/presentation/screens/onboarding/onboarding_screen.dart';
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/domain/providers/theme_provider.dart';
@@ -14,6 +15,9 @@ import 'package:jugendkompass_app/data/services/media_notification_service.dart'
 
 class App extends ConsumerWidget {
   const App({super.key});
+
+  // Single observer instance lives with the App widget
+  static final _routeObserver = FullPlayerRouteObserver();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -31,6 +35,13 @@ class App extends ConsumerWidget {
       locale: language.locale,
       supportedLocales: AppLanguage.values.map((lang) => lang.locale).toList(),
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      navigatorObservers: [_routeObserver],
+      builder: (context, child) {
+        return MiniPlayerOverlay(
+          routeObserver: _routeObserver,
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       home: FutureBuilder<bool>(
         future: Future.value(
           UserPreferencesService.instance.hasCompletedOnboarding(),

@@ -25,6 +25,7 @@ class PodcastScreen extends ConsumerWidget {
     final categoriesAsync = ref.watch(categoriesProvider);
     final selectedCategory = ref.watch(selectedPodcastCategoryProvider);
     final theme = Theme.of(context);
+    final brightness = theme.brightness;
 
     return Scaffold(
       body: SafeArea(
@@ -81,7 +82,7 @@ class PodcastScreen extends ConsumerWidget {
                         'Podcast',
                         style: theme.textTheme.displaySmall?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: DesignTokens.textPrimary,
+                          color: DesignTokens.getTextPrimary(brightness),
                         ),
                       ),
                     ),
@@ -119,7 +120,7 @@ class PodcastScreen extends ConsumerWidget {
                                   labelStyle: TextStyle(
                                     color: selectedCategory == null
                                       ? Theme.of(context).colorScheme.onPrimary
-                                      : DesignTokens.textSecondary,
+                                      : DesignTokens.getTextSecondary(brightness),
                                     fontWeight: selectedCategory == null
                                         ? FontWeight.w600
                                         : FontWeight.normal,
@@ -165,12 +166,12 @@ class PodcastScreen extends ConsumerWidget {
                                               .state =
                                           categoryKey;
                                     },
-                                    backgroundColor: Colors.white,
+                                    backgroundColor: DesignTokens.getCardBackground(brightness),
                                     selectedColor: DesignTokens.primaryRed,
                                     labelStyle: TextStyle(
                                       color: isSelected
                                           ? Colors.white
-                                          : DesignTokens.textSecondary,
+                                          : DesignTokens.getTextSecondary(brightness),
                                       fontWeight: isSelected
                                           ? FontWeight.w600
                                           : FontWeight.normal,
@@ -178,7 +179,9 @@ class PodcastScreen extends ConsumerWidget {
                                     side: BorderSide(
                                       color: isSelected
                                           ? DesignTokens.primaryRed
-                                          : const Color(0xFFE5E7EB),
+                                          : (brightness == Brightness.dark
+                                              ? Colors.grey.shade700
+                                              : const Color(0xFFE5E7EB)),
                                       width: 1.5,
                                     ),
                                     checkmarkColor: Colors.white,
@@ -226,7 +229,7 @@ class PodcastScreen extends ConsumerWidget {
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 1.2,
-                          color: DesignTokens.textPrimary,
+                          color: DesignTokens.getTextPrimary(brightness),
                         ),
                       ),
                     ),

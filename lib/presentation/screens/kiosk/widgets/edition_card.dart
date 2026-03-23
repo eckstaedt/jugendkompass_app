@@ -15,6 +15,9 @@ class EditionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final brightness = theme.brightness;
+    final bgColor = DesignTokens.getAppBackground(brightness);
+    final secondaryColor = DesignTokens.getTextSecondary(brightness);
     
     return GestureDetector(
       onTap: () {
@@ -47,7 +50,7 @@ class EditionCard extends StatelessWidget {
                             fit: BoxFit.cover,
                             width: double.infinity,
                             placeholder: Container(
-                              color: DesignTokens.appBackground,
+                              color: bgColor,
                               child: const Center(
                                 child: CircularProgressIndicator(
                                   color: DesignTokens.primaryRed,
@@ -55,20 +58,20 @@ class EditionCard extends StatelessWidget {
                               ),
                             ),
                             errorWidget: Container(
-                              color: DesignTokens.appBackground,
-                              child: const Column(
+                              color: bgColor,
+                              child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
                                     Icons.library_books,
                                     size: 48,
-                                    color: DesignTokens.textSecondary,
+                                    color: secondaryColor,
                                   ),
-                                  SizedBox(height: 8),
+                                  const SizedBox(height: 8),
                                   Text(
                                     'Cover nicht verfügbar',
                                     style: TextStyle(
-                                      color: DesignTokens.textSecondary,
+                                      color: secondaryColor,
                                     ),
                                   ),
                                 ],
@@ -76,20 +79,20 @@ class EditionCard extends StatelessWidget {
                             ),
                           )
                         : Container(
-                            color: DesignTokens.appBackground,
-                            child: const Column(
+                            color: bgColor,
+                            child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
                                   Icons.library_books,
                                   size: 48,
-                                  color: DesignTokens.textSecondary,
+                                  color: secondaryColor,
                                 ),
-                                SizedBox(height: 8),
+                                const SizedBox(height: 8),
                                 Text(
                                   'Cover nicht verfügbar',
                                   style: TextStyle(
-                                    color: DesignTokens.textSecondary,
+                                    color: secondaryColor,
                                   ),
                                 ),
                               ],

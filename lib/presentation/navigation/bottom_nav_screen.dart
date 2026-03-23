@@ -6,8 +6,6 @@ import 'package:jugendkompass_app/presentation/screens/podcast/podcast_screen.da
 import 'package:jugendkompass_app/presentation/screens/kiosk/kiosk_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/video/video_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/profile/profile_screen.dart';
-import 'package:jugendkompass_app/presentation/screens/podcast/widgets/mini_player_bar.dart';
-import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/bottom_nav_provider.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
@@ -21,7 +19,6 @@ class BottomNavScreen extends ConsumerWidget {
     ref.watch(languageProvider);
     
     final selectedIndex = ref.watch(bottomNavIndexProvider);
-    final currentAudio = ref.watch(currentAudioProvider);
 
     // Build screens list dynamically so they rebuild when language changes
     final screens = [
@@ -38,9 +35,6 @@ class BottomNavScreen extends ConsumerWidget {
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Mini Player Bar (shown when audio is playing)
-          if (currentAudio != null) MiniPlayerBar(audio: currentAudio),
-
           // Navigation Bar with iOS 26 liquid glass design
           // Flowing, rounded, blurry navbar
           Container(

@@ -42,7 +42,7 @@ class FavoriteVersesScreen extends ConsumerWidget {
                   Text(
                     translate('Like den Vers des Tages um ihn hier zu speichern'),
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: DesignTokens.textSecondary,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -103,7 +103,7 @@ class FavoriteVersesScreen extends ConsumerWidget {
                           Text(
                             '— ${verse.reference}',
                             style: theme.textTheme.titleSmall?.copyWith(
-                              color: DesignTokens.textSecondary,
+                              color: theme.colorScheme.onSurfaceVariant,
                               fontStyle: FontStyle.italic,
                             ),
                           ),
@@ -112,7 +112,7 @@ class FavoriteVersesScreen extends ConsumerWidget {
                           Text(
                             'Von: ${verse.date.day}.${verse.date.month}.${verse.date.year}',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: DesignTokens.textSecondary,
+                              color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],

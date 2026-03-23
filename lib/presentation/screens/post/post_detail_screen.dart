@@ -255,7 +255,7 @@ class PostDetailScreen extends ConsumerWidget {
                       Icon(
                         Icons.access_time,
                         size: 16,
-                        color: Colors.grey.shade600,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                       const SizedBox(width: 6),
                       Expanded(
@@ -263,7 +263,7 @@ class PostDetailScreen extends ConsumerWidget {
                           _calculateReadingTime(post.body),
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey.shade600,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),

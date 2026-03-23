@@ -5,6 +5,8 @@ import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/presentation/screens/podcast/full_player_screen.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
+    show kFullPlayerRouteName;
 
 class MiniPlayerBar extends ConsumerWidget {
   final AudioModel audio;
@@ -18,6 +20,8 @@ class MiniPlayerBar extends ConsumerWidget {
     final durationAsync = ref.watch(audioDurationProvider);
     final playerStateAsync = ref.watch(audioPlayerStateProvider);
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final progressBgColor = isDark ? Colors.grey.shade800 : Colors.grey.shade200;
 
     return Container(
       color: Colors.transparent,
@@ -30,6 +34,7 @@ class MiniPlayerBar extends ConsumerWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
+                  settings: const RouteSettings(name: kFullPlayerRouteName),
                   builder: (context) => const FullPlayerScreen(),
                 ),
               );
@@ -54,19 +59,21 @@ class MiniPlayerBar extends ConsumerWidget {
                       child: positionAsync.when(
                         data: (position) {
                           final duration = durationAsync.value ?? Duration.zero;
-                          final progress = duration.inSeconds > 0
-                              ? position.inSeconds / duration.inSeconds
+                          final progress = duration.inMilliseconds > 0
+                              ? (position.inMilliseconds /
+                                      duration.inMilliseconds)
+                                  .clamp(0.0, 1.0)
                               : 0.0;
                           return LinearProgressIndicator(
                             value: progress,
-                            backgroundColor: Colors.grey.shade200,
+                            backgroundColor: progressBgColor,
                             valueColor: AlwaysStoppedAnimation<Color>(
                               DesignTokens.primaryRed,
                             ),
                           );
                         },
                         loading: () => LinearProgressIndicator(
-                          backgroundColor: Colors.grey.shade200,
+                          backgroundColor: progressBgColor,
                           valueColor: AlwaysStoppedAnimation<Color>(
                             DesignTokens.primaryRed,
                           ),

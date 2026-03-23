@@ -52,6 +52,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final brightness = theme.brightness;
+    final textPrimary = DesignTokens.getTextPrimary(brightness);
+    final textSecondary = DesignTokens.getTextSecondary(brightness);
     final selectedFilter = ref.watch(_selectedDiscoverFilterProvider);
 
     return Scaffold(
@@ -78,7 +81,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     'Entdecken',
                     style: theme.textTheme.displaySmall?.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: DesignTokens.textPrimary,
+                      color: textPrimary,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -95,12 +98,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       decoration: InputDecoration(
                       hintText: 'Wonach suchst du?',
                       hintStyle: TextStyle(
-                        color: DesignTokens.textSecondary,
+                        color: textSecondary,
                         fontSize: 16,
                       ),
                       prefixIcon: Icon(
                         Icons.search,
-                        color: DesignTokens.textSecondary,
+                        color: textSecondary,
                       ),
                         suffixIcon: _searchController.text.isNotEmpty
                           ? IconButton(
@@ -206,7 +209,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       labelStyle: TextStyle(
         color: isSelected
             ? Theme.of(context).colorScheme.onPrimary
-            : DesignTokens.textSecondary,
+            : DesignTokens.getTextSecondary(Theme.of(context).brightness),
         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
         fontSize: 14,
       ),
@@ -297,7 +300,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               itemCount: combinedItems.length,
               separatorBuilder: (context, index) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
-                return _buildContentTile(combinedItems[index]);
+                return _buildContentTile(context, combinedItems[index]);
               },
             );
           },
@@ -328,11 +331,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
-  Widget _buildContentTile(_CombinedContentItem item) {
+  Widget _buildContentTile(BuildContext context, _CombinedContentItem item) {
+    final brightness = Theme.of(context).brightness;
+    final textPrimary = DesignTokens.getTextPrimary(brightness);
+    final textSecondary = DesignTokens.getTextSecondary(brightness);
+    final cardBg = DesignTokens.getGlassBackground(brightness, 0.20);
     // rebuild clean version to avoid mismatched brackets
     return RoundedCard(
       glass: true,
-      backgroundColor: DesignTokens.glassBackground(0.20),
+      backgroundColor: cardBg,
       padding: const EdgeInsets.all(12),
       withShadow: false,
       child: InkWell(
@@ -373,10 +380,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 children: [
                   Text(
                     item.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: DesignTokens.textPrimary,
+                      color: textPrimary,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -447,7 +454,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             // Chevron icon
             Icon(
               Icons.chevron_right,
-              color: Colors.grey.shade400,
+              color: textSecondary,
               size: 24,
             ),
           ],
@@ -476,7 +483,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         return DesignTokens.primaryRed;
       case 'ARTIKEL':
       default:
-        return DesignTokens.textSecondary;
+        return DesignTokens.getTextSecondary(Theme.of(context).brightness);
     }
   }
 

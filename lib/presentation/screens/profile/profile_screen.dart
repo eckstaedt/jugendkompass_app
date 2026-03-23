@@ -33,6 +33,8 @@ class ProfileScreen extends ConsumerWidget {
     final translations = ref.watch(translationsProvider);
     final translate = ref.watch(stringTranslatorProvider);
     final theme = Theme.of(context);
+    final brightness = theme.brightness;
+    final textSecondary = DesignTokens.getTextSecondary(brightness);
 
     return Scaffold(
       appBar: AppBar(
@@ -62,13 +64,13 @@ class ProfileScreen extends ConsumerWidget {
                 children: [
                   Icon(
                     Icons.search,
-                    color: DesignTokens.textSecondary,
+                    color: textSecondary,
                   ),
                   const SizedBox(width: 12),
                   Text(
                     translate('Suche in der ganzen App...'),
                     style: TextStyle(
-                      color: DesignTokens.textSecondary,
+                      color: textSecondary,
                       fontSize: 16,
                     ),
                   ),
@@ -86,7 +88,7 @@ class ProfileScreen extends ConsumerWidget {
               translate('EINSTELLUNGEN'),
               style: GoogleFonts.inter(
                 textStyle: theme.textTheme.labelMedium?.copyWith(
-                  color: DesignTokens.textSecondary,
+                  color: textSecondary,
                   letterSpacing: 1.2,
                   fontWeight: FontWeight.w600,
                 ),
@@ -272,7 +274,7 @@ class ProfileScreen extends ConsumerWidget {
                   translate('Löscht alle deine lokalen Daten und setzt die App zurück.'),
                   style: GoogleFonts.inter(
                     textStyle: theme.textTheme.bodySmall?.copyWith(
-                      color: DesignTokens.textSecondary,
+                      color: textSecondary,
                     ),
                   ),
                   textAlign: TextAlign.center,

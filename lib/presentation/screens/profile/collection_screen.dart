@@ -77,7 +77,7 @@ class CollectionScreen extends ConsumerWidget {
                   Text(
                     'Speichern Sie Inhalte mit dem Speichersymbol',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: DesignTokens.textSecondary,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -196,7 +196,7 @@ class CollectionScreen extends ConsumerWidget {
                         child: Text(
                           typeLabel,
                           style: theme.textTheme.labelSmall?.copyWith(
-                            color: DesignTokens.textSecondary,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -207,7 +207,7 @@ class CollectionScreen extends ConsumerWidget {
                     Text(
                       item.description!,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: DesignTokens.textSecondary,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -218,7 +218,7 @@ class CollectionScreen extends ConsumerWidget {
                     Text(
                       'von ${item.author}',
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: DesignTokens.textSecondary,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

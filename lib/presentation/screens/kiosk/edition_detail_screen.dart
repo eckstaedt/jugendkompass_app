@@ -129,13 +129,16 @@ class EditionDetailScreen extends ConsumerWidget {
 
   Widget _buildContent(BuildContext context, WidgetRef ref, ScrollController scrollController, List<PostModel> posts, List<AudioModel> audios, String Function(String) translate) {
     final theme = Theme.of(context);
+    final brightness = theme.brightness;
+    final textPrimary = DesignTokens.getTextPrimary(brightness);
+    final textSecondary = DesignTokens.getTextSecondary(brightness);
     return ListView(
       controller: scrollController,
       padding: EdgeInsets.fromLTRB(DesignTokens.paddingHorizontal, 0, DesignTokens.paddingHorizontal, 24),
       children: [
         Text(edition.name.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(fontSize: 12, letterSpacing: 1.5, color: DesignTokens.primaryRed, fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
-        Text(edition.displayTitle, style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold, color: DesignTokens.textPrimary)),
+        Text(edition.displayTitle, style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold, color: textPrimary)),
         const SizedBox(height: 20),
         // Audio controls: first allow playing the foreword (if present), then the full edition
         if (audios.isNotEmpty) ...[
@@ -167,11 +170,11 @@ class EditionDetailScreen extends ConsumerWidget {
         ],
         if (edition.description != null && edition.description!.isNotEmpty) ...[
           Html(data: edition.description!, style: {
-            "body": Style(margin: Margins.zero, padding: HtmlPaddings.zero, fontSize: FontSize(16), color: DesignTokens.textSecondary),
-            "p": Style(margin: Margins.only(bottom: 12), fontSize: FontSize(16), lineHeight: const LineHeight(1.6), color: DesignTokens.textSecondary),
-            "h1": Style(fontSize: FontSize(24), fontWeight: FontWeight.bold, color: DesignTokens.textPrimary, margin: Margins.only(bottom: 8, top: 16)),
-            "h2": Style(fontSize: FontSize(20), fontWeight: FontWeight.bold, color: DesignTokens.textPrimary, margin: Margins.only(bottom: 8, top: 16)),
-            "h3": Style(fontSize: FontSize(18), fontWeight: FontWeight.bold, color: DesignTokens.textPrimary, margin: Margins.only(bottom: 8, top: 12)),
+            "body": Style(margin: Margins.zero, padding: HtmlPaddings.zero, fontSize: FontSize(16), color: textSecondary),
+            "p": Style(margin: Margins.only(bottom: 12), fontSize: FontSize(16), lineHeight: const LineHeight(1.6), color: textSecondary),
+            "h1": Style(fontSize: FontSize(24), fontWeight: FontWeight.bold, color: textPrimary, margin: Margins.only(bottom: 8, top: 16)),
+            "h2": Style(fontSize: FontSize(20), fontWeight: FontWeight.bold, color: textPrimary, margin: Margins.only(bottom: 8, top: 16)),
+            "h3": Style(fontSize: FontSize(18), fontWeight: FontWeight.bold, color: textPrimary, margin: Margins.only(bottom: 8, top: 12)),
             "a": Style(color: DesignTokens.primaryRed, textDecoration: TextDecoration.underline),
             "ul": Style(margin: Margins.only(left: 16, bottom: 12)),
             "ol": Style(margin: Margins.only(left: 16, bottom: 12)),
@@ -181,10 +184,10 @@ class EditionDetailScreen extends ConsumerWidget {
           }),
           const SizedBox(height: 32),
         ],
-        Row(children: [const Icon(Icons.article, size: 20, color: Colors.black), const SizedBox(width: 8), Text('Artikel in dieser Ausgabe', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: DesignTokens.textPrimary))]),
+        Row(children: [Icon(Icons.article, size: 20, color: textPrimary), const SizedBox(width: 8), Text('Artikel in dieser Ausgabe', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: textPrimary))]),
         const SizedBox(height: 16),
         if (posts.isEmpty)
-          Padding(padding: const EdgeInsets.symmetric(vertical: 32), child: Center(child: Text(translate('Keine Artikel verfügbar'), style: TextStyle(color: Colors.grey.shade600))))
+          Padding(padding: const EdgeInsets.symmetric(vertical: 32), child: Center(child: Text(translate('Keine Artikel verfügbar'), style: TextStyle(color: textSecondary))))
         else
           ...List.generate(posts.length, (index) => _buildPostCard(context, ref, posts[index], index + 1, translate)),
       ],
@@ -193,10 +196,15 @@ class EditionDetailScreen extends ConsumerWidget {
 
   Widget _buildPostCard(BuildContext context, WidgetRef ref, PostModel post, int index, String Function(String) translate) {
     final hasAudio = post.audioId != null;
+    final brightness = Theme.of(context).brightness;
+    final cardBg = DesignTokens.getCardBackground(brightness);
+    final textPrimary = DesignTokens.getTextPrimary(brightness);
+    final textSecondary = DesignTokens.getTextSecondary(brightness);
+    final redBg = DesignTokens.getRedBackground(brightness);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: DesignTokens.cardBackground,
+        color: cardBg,
         borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
         boxShadow: [DesignTokens.shadowSubtle],
       ),
@@ -232,10 +240,10 @@ class EditionDetailScreen extends ConsumerWidget {
                               width: 60,
                               height: 60,
                               fit: BoxFit.cover,
-                              placeholder: Container(width: 60, height: 60, color: DesignTokens.cardBackground, child: Center(child: Text('$index', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: DesignTokens.primaryRed)))),
-                              errorWidget: Container(width: 60, height: 60, color: DesignTokens.cardBackground, child: Center(child: Text('$index', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: DesignTokens.primaryRed)))),
+                              placeholder: Container(width: 60, height: 60, color: cardBg, child: Center(child: Text('$index', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: DesignTokens.primaryRed)))),
+                              errorWidget: Container(width: 60, height: 60, color: cardBg, child: Center(child: Text('$index', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: DesignTokens.primaryRed)))),
                             )
-                          : Container(width: 60, height: 60, decoration: BoxDecoration(color: DesignTokens.cardBackground, borderRadius: BorderRadius.circular(12)), child: Center(child: Text('$index', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: DesignTokens.primaryRed)))),
+                          : Container(width: 60, height: 60, decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(12)), child: Center(child: Text('$index', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: DesignTokens.primaryRed)))),
                       if (hasAudio)
                         Container(
                           width: 60,
@@ -255,7 +263,7 @@ class EditionDetailScreen extends ConsumerWidget {
                 children: [
                   Text(
                     post.title,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: DesignTokens.textPrimary),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textPrimary),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -268,7 +276,7 @@ class EditionDetailScreen extends ConsumerWidget {
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: DesignTokens.redBackground,
+                                  color: redBg,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -280,12 +288,12 @@ class EditionDetailScreen extends ConsumerWidget {
                       else if (post.categoryName != null)
                         Text(
                           post.categoryName!.toUpperCase(),
-                          style: TextStyle(fontSize: 12, color: DesignTokens.textSecondary, fontWeight: FontWeight.w500),
+                          style: TextStyle(fontSize: 12, color: textSecondary, fontWeight: FontWeight.w500),
                         ),
                       const Text(' • '),
                       Text(
                         _calculateReadingTime(post.body),
-                        style: TextStyle(fontSize: 12, color: DesignTokens.textSecondary),
+                        style: TextStyle(fontSize: 12, color: textSecondary),
                       ),
                     ],
                   ),

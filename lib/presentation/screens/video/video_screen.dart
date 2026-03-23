@@ -35,6 +35,9 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
     final translate = ref.watch(stringTranslatorProvider);
     final videosAsync = ref.watch(videosListProvider);
     final theme = Theme.of(context);
+    final brightness = theme.brightness;
+    final textPrimary = DesignTokens.getTextPrimary(brightness);
+    final textSecondary = DesignTokens.getTextSecondary(brightness);
 
     return Scaffold(
       body: SafeArea(
@@ -49,7 +52,7 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                   'Videos',
                   style: theme.textTheme.displaySmall?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: DesignTokens.textPrimary,
+                    color: textPrimary,
                   ),
                 ),
               ),
@@ -73,16 +76,16 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                   decoration: InputDecoration(
                     hintText: 'Videos suchen',
                     hintStyle: TextStyle(
-                      color: DesignTokens.textSecondary,
+                      color: textSecondary,
                       fontSize: 16,
                     ),
                     prefixIcon: Icon(
                       Icons.search,
-                      color: DesignTokens.textSecondary,
+                      color: textSecondary,
                     ),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
-                            icon: Icon(Icons.clear, color: DesignTokens.textSecondary),
+                            icon: Icon(Icons.clear, color: textSecondary),
                             onPressed: () {
                               _searchController.clear();
                               setState(() {
@@ -306,7 +309,7 @@ class _VideoCardState extends ConsumerState<VideoCard> {
             widget.video.title,
             style: theme.textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w600,
-              color: DesignTokens.textPrimary,
+              color: DesignTokens.getTextPrimary(Theme.of(context).brightness),
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -318,7 +321,7 @@ class _VideoCardState extends ConsumerState<VideoCard> {
           Text(
             _formatDate(widget.video.createdAt),
             style: theme.textTheme.labelSmall?.copyWith(
-              color: DesignTokens.textSecondary,
+              color: DesignTokens.getTextSecondary(Theme.of(context).brightness),
               fontSize: 12,
             ),
           ),
