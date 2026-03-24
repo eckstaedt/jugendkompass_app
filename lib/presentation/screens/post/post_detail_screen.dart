@@ -6,6 +6,7 @@ import 'package:jugendkompass_app/data/models/collection_item_model.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier;
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
+import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
@@ -25,6 +26,17 @@ class PostDetailScreen extends ConsumerWidget {
           (item) => item.id == post.id && item.type == CollectionItemType.post,
         );
 
+    // Translate post content to the selected app language
+    final translationAsync = ref.watch(
+      translatePostProvider((
+        id: post.id,
+        title: post.title,
+        body: post.body,
+      )),
+    );
+    final displayTitle = translationAsync.whenOrNull(data: (d) => d.title) ?? post.title;
+    final displayBody = translationAsync.whenOrNull(data: (d) => d.body) ?? post.body;
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -40,8 +52,8 @@ class PostDetailScreen extends ConsumerWidget {
                     onTap: () {
                       final item = CollectionItem(
                         id: post.id,
-                        title: post.title,
-                        description: post.body,
+                        title: displayTitle,
+                        description: displayBody,
                         imageUrl: post.imageUrl,
                         type: CollectionItemType.post,
                         author: post.categoryName,
@@ -66,7 +78,7 @@ class PostDetailScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  post.title,
+                  displayTitle,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -261,7 +273,7 @@ class PostDetailScreen extends ConsumerWidget {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          _calculateReadingTime(post.body),
+                          _calculateReadingTime(displayBody),
                           style: TextStyle(
                             fontSize: 12,
                             color: theme.colorScheme.onSurfaceVariant,
@@ -328,7 +340,7 @@ class PostDetailScreen extends ConsumerWidget {
 
                   // HTML Content
                   Html(
-                    data: post.body,
+                    data: displayBody,
                     style: {
                       "body": Style(
                         margin: Margins.zero,

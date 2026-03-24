@@ -5,6 +5,7 @@ import 'package:jugendkompass_app/data/models/impulse_model.dart';
 import 'package:jugendkompass_app/domain/providers/impulse_provider.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
+import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
@@ -73,7 +74,7 @@ class ImpulseListScreen extends ConsumerWidget {
   }
 }
 
-class _ImpulseListItem extends StatelessWidget {
+class _ImpulseListItem extends ConsumerWidget {
   final ImpulseModel impulse;
   final VoidCallback onTap;
 
@@ -83,10 +84,17 @@ class _ImpulseListItem extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final dateFormat = DateFormat('dd. MMM yyyy', 'de_DE');
+
+    // Translate the title to the selected app language
+    final titleAsync = ref.watch(
+      translateTextProvider(impulse.displayTitle),
+    );
+    final displayTitle =
+        titleAsync.whenOrNull(data: (t) => t) ?? impulse.displayTitle;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -138,7 +146,7 @@ class _ImpulseListItem extends StatelessWidget {
                   children: [
                     // Title
                     Text(
-                      impulse.displayTitle,
+                      displayTitle,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),

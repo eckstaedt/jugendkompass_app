@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/domain/providers/recommendation_provider.dart';
+import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier;
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
@@ -102,6 +103,10 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
     final theme = Theme.of(context);
     final item = widget.item;
 
+    // Translate item title to the selected app language
+    final titleAsync = ref.watch(translateTextProvider(item.title));
+    final displayTitle = titleAsync.whenOrNull(data: (t) => t) ?? item.title;
+
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
@@ -185,7 +190,7 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              item.title,
+                              displayTitle,
                               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,

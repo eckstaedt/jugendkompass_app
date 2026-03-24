@@ -141,21 +141,8 @@ class EditionDetailScreen extends ConsumerWidget {
         const SizedBox(height: 8),
         Text(edition.displayTitle, style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold, color: textPrimary)),
         const SizedBox(height: 20),
-        // Audio controls: first allow playing the foreword (if present), then the full edition
+        // Audio controls: play full edition
         if (audios.isNotEmpty) ...[
-          if (audios.length > 1) // assume first track is "Vorwort"
-            FilledButton.icon(
-              onPressed: () => _playVorwort(context, ref, audios),
-              icon: const Icon(Icons.headphones, size: 24),
-              label: const Text('Vorwort anhören', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              style: FilledButton.styleFrom(
-                backgroundColor: DesignTokens.primaryRed.withOpacity(0.85),
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 56),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusButtons)),
-              ),
-            ),
-          const SizedBox(height: 12),
           FilledButton.icon(
             onPressed: () => _playEditionAudios(context, ref, audios),
             icon: const Icon(Icons.play_arrow, size: 24),
@@ -357,13 +344,6 @@ class EditionDetailScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Fehler beim Öffnen des PDFs: $e'), backgroundColor: Colors.red));
       }
     }
-  }
-
-  /// Play only the first audio from the edition, used for a possible "Vorwort" track.
-  Future<void> _playVorwort(BuildContext context, WidgetRef ref, List<AudioModel> audios) async {
-    if (audios.isEmpty) return;
-    // simply delegate to _playEditionAudios with a single-item list
-    await _playEditionAudios(context, ref, [audios.first]);
   }
 
   String _calculateReadingTime(String htmlContent) {

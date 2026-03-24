@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/data/models/impulse_model.dart';
+import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
-class ImpulseCard extends StatefulWidget {
+class ImpulseCard extends ConsumerStatefulWidget {
   final ImpulseModel impulse;
   final VoidCallback? onTap;
 
@@ -14,10 +16,10 @@ class ImpulseCard extends StatefulWidget {
   });
 
   @override
-  State<ImpulseCard> createState() => _ImpulseCardState();
+  ConsumerState<ImpulseCard> createState() => _ImpulseCardState();
 }
 
-class _ImpulseCardState extends State<ImpulseCard>
+class _ImpulseCardState extends ConsumerState<ImpulseCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
@@ -63,6 +65,11 @@ class _ImpulseCardState extends State<ImpulseCard>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final impulse = widget.impulse;
+
+    // Translate title to the selected app language
+    final titleAsync = ref.watch(translateTextProvider(impulse.displayTitle));
+    final displayTitle =
+        titleAsync.whenOrNull(data: (t) => t) ?? impulse.displayTitle;
 
     return GestureDetector(
       onTapDown: _onTapDown,
@@ -141,7 +148,7 @@ class _ImpulseCardState extends State<ImpulseCard>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            impulse.title,
+                            displayTitle,
                             style: theme.textTheme.titleMedium?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,

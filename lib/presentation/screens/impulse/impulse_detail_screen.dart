@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:jugendkompass_app/data/models/impulse_model.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
+import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
@@ -24,6 +25,17 @@ class ImpulseDetailScreen extends ConsumerWidget {
           (item) => item.id == impulse.id && item.type == CollectionItemType.impulse,
         );
 
+    // Translate impulse content to the selected app language
+    final translationAsync = ref.watch(
+      translateImpulseProvider((
+        id: impulse.id,
+        title: impulse.title,
+        impulseText: impulse.impulseText,
+      )),
+    );
+    final displayTitle = translationAsync.whenOrNull(data: (d) => d.title) ?? impulse.displayTitle;
+    final displayBody = translationAsync.whenOrNull(data: (d) => d.impulseText) ?? impulse.impulseText;
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -42,8 +54,8 @@ class ImpulseDetailScreen extends ConsumerWidget {
                     onTap: () {
                       final item = CollectionItem(
                         id: impulse.id,
-                        title: impulse.displayTitle,
-                        description: impulse.impulseText,
+                        title: displayTitle,
+                        description: displayBody,
                         imageUrl: impulse.imageUrl,
                         type: CollectionItemType.impulse,
                         author: impulse.title,
@@ -68,7 +80,7 @@ class ImpulseDetailScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  impulse.displayTitle,
+                  displayTitle,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -225,7 +237,7 @@ class ImpulseDetailScreen extends ConsumerWidget {
 
                   // HTML Content
                   Html(
-                    data: impulse.impulseText,
+                    data: displayBody,
                     style: {
                       "body": Style(
                         margin: Margins.zero,

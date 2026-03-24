@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/data/models/verse_model.dart';
 import 'package:jugendkompass_app/domain/providers/favorite_verses_provider.dart';
+import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
@@ -66,6 +67,11 @@ class _VerseCardState extends ConsumerState<VerseCard>
     final isFavorite = favoriteVerses.any((v) => v.id == widget.verse.id);
     final verse = widget.verse;
 
+    // Translate verse content to the selected app language
+    final translationAsync = ref.watch(
+      translateVerseProvider((verse: verse.verse, reference: verse.reference)),
+    );
+
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
@@ -108,7 +114,7 @@ class _VerseCardState extends ConsumerState<VerseCard>
           const SizedBox(height: DesignTokens.spacingMedium),
           // Verse text itself uses Merriweather (serif) per design request.
           Text(
-            '"${verse.verse}"',
+            '"${translationAsync.whenOrNull(data: (d) => d.verse) ?? verse.verse}"',
             style: GoogleFonts.merriweather(
               textStyle: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w600,
@@ -119,7 +125,7 @@ class _VerseCardState extends ConsumerState<VerseCard>
           ),
           const SizedBox(height: DesignTokens.spacingMedium),
           Text(
-            '— ${verse.reference}',
+            '— ${translationAsync.whenOrNull(data: (d) => d.reference) ?? verse.reference}',
             style: theme.textTheme.titleMedium?.copyWith(
               color: DesignTokens.textSecondary,
               fontStyle: FontStyle.italic,
