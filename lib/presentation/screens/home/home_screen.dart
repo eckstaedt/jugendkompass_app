@@ -14,6 +14,8 @@ import 'package:jugendkompass_app/presentation/screens/home/widgets/recommended_
 import 'package:jugendkompass_app/presentation/screens/impulse/impulse_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
+import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
+    show kVideoPlayerRouteName;
 import 'package:jugendkompass_app/presentation/screens/profile/profile_edit_screen.dart';
 import 'package:jugendkompass_app/presentation/navigation/fade_page_route.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
@@ -391,6 +393,7 @@ class HomeScreen extends ConsumerWidget {
       Navigator.push(
         context,
         FadePageRoute(
+          settings: const RouteSettings(name: kVideoPlayerRouteName),
           builder: (context) => VideoPlayerScreen(
             videoUrl: item.video!.videoUrl,
             title: item.video!.displayTitle,

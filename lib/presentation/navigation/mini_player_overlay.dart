@@ -5,14 +5,26 @@ import 'package:jugendkompass_app/data/models/audio_model.dart';
 /// identify it without importing the screen (avoids circular imports).
 const kFullPlayerRouteName = '/full_player';
 
+/// Route name used when pushing [VideoPlayerScreen].
+const kVideoPlayerRouteName = '/video_player';
+
+/// Route names where the navbar and mini bar should be hidden.
+const _kHideNavRoutes = {kFullPlayerRouteName, kVideoPlayerRouteName};
+
 /// A [NavigatorObserver] that tracks whether [FullPlayerScreen] is currently
 /// on top of the navigation stack.
 class FullPlayerRouteObserver extends NavigatorObserver {
   final ValueNotifier<bool> fullPlayerActive = ValueNotifier(false);
+  /// True whenever a route that should hide the navbar/mini-bar is on top.
+  final ValueNotifier<bool> hideNavActive = ValueNotifier(false);
   // Called whenever any route is pushed (used to reset the bottom offset
   // for pushed detail screens where the bottom navbar is not visible).
   VoidCallback? onRoutePushed;
   VoidCallback? onRoutePopped;
+
+  void _updateHideNav(String? routeName) {
+    hideNavActive.value = _kHideNavRoutes.contains(routeName);
+  }
 
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
@@ -20,6 +32,7 @@ class FullPlayerRouteObserver extends NavigatorObserver {
     if (route.settings.name == kFullPlayerRouteName) {
       fullPlayerActive.value = true;
     }
+    _updateHideNav(route.settings.name);
     // Notify so app.dart can reset the bottom offset.
     if (previousRoute != null) onRoutePushed?.call();
   }
@@ -30,6 +43,7 @@ class FullPlayerRouteObserver extends NavigatorObserver {
     if (route.settings.name == kFullPlayerRouteName) {
       fullPlayerActive.value = false;
     }
+    _updateHideNav(previousRoute?.settings.name);
     onRoutePopped?.call();
   }
 
@@ -39,6 +53,7 @@ class FullPlayerRouteObserver extends NavigatorObserver {
     if (route.settings.name == kFullPlayerRouteName) {
       fullPlayerActive.value = false;
     }
+    _updateHideNav(previousRoute?.settings.name);
     onRoutePopped?.call();
   }
 
@@ -51,6 +66,7 @@ class FullPlayerRouteObserver extends NavigatorObserver {
     if (newRoute?.settings.name == kFullPlayerRouteName) {
       fullPlayerActive.value = true;
     }
+    _updateHideNav(newRoute?.settings.name);
   }
 }
 

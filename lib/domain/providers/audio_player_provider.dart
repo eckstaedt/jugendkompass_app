@@ -58,6 +58,10 @@ final currentQueueIndexProvider = StateProvider<int>((ref) => 0);
 /// reset to 0 on pushed routes.
 final miniPlayerBottomOffsetProvider = StateProvider<double>((ref) => 0);
 
+/// Whether the main app navbar should be shown.
+/// Set to true when [BottomNavScreen] is active, false on onboarding / login.
+final navBarVisibleProvider = StateProvider<bool>((ref) => false);
+
 final nextAudioProvider = Provider<AudioModel?>((ref) {
   final queue = ref.watch(audioQueueProvider);
   final index = ref.watch(currentQueueIndexProvider);

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/domain/providers/post_provider.dart';
 import 'package:jugendkompass_app/domain/providers/video_provider.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
-import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier;
+import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier, kVideoPlayerRouteName;
 import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
@@ -495,6 +495,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
+            settings: const RouteSettings(name: kVideoPlayerRouteName),
             builder: (context) => VideoPlayerScreen(
               videoUrl: item.data.videoUrl,
               title: item.data.displayTitle,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import '../../../data/services/user_preferences_service.dart';
 import '../../navigation/bottom_nav_screen.dart';
 
@@ -15,6 +16,15 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final TextEditingController _nameController = TextEditingController();
   bool _isValid = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Ensure the global navbar is hidden while onboarding is shown.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(navBarVisibleProvider.notifier).state = false;
+    });
+  }
 
   @override
   void dispose() {

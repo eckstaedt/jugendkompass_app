@@ -7,6 +7,8 @@ import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/domain/providers/video_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
+import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
+    show kVideoPlayerRouteName;
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
@@ -239,6 +241,7 @@ class _VideoCardState extends ConsumerState<VideoCard> {
         Navigator.push(
           context,
           MaterialPageRoute(
+            settings: const RouteSettings(name: kVideoPlayerRouteName),
             builder: (context) => VideoPlayerScreen(
               videoUrl: widget.video.url,
               title: widget.video.title,

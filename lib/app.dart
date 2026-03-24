@@ -1,7 +1,9 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/core/config/app_theme.dart';
+import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/presentation/navigation/bottom_nav_screen.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
@@ -10,6 +12,7 @@ import 'package:jugendkompass_app/presentation/screens/onboarding/onboarding_scr
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/domain/providers/theme_provider.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
+import 'package:jugendkompass_app/domain/providers/bottom_nav_provider.dart';
 import 'package:jugendkompass_app/core/services/notification_service.dart';
 import 'package:jugendkompass_app/domain/providers/verse_provider.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
@@ -144,6 +147,7 @@ class _MiniPlayerScaffoldState extends ConsumerState<_MiniPlayerScaffold> {
   void initState() {
     super.initState();
     widget.routeObserver.fullPlayerActive.addListener(_onFullPlayerChange);
+    widget.routeObserver.hideNavActive.addListener(_onHideNavChange);
     widget.routeObserver.onRoutePushed = _onRoutePushed;
     widget.routeObserver.onRoutePopped = _onRoutePopped;
   }
@@ -151,12 +155,17 @@ class _MiniPlayerScaffoldState extends ConsumerState<_MiniPlayerScaffold> {
   @override
   void dispose() {
     widget.routeObserver.fullPlayerActive.removeListener(_onFullPlayerChange);
+    widget.routeObserver.hideNavActive.removeListener(_onHideNavChange);
     widget.routeObserver.onRoutePushed = null;
     widget.routeObserver.onRoutePopped = null;
     super.dispose();
   }
 
   void _onFullPlayerChange() {
+    if (mounted) setState(() {});
+  }
+
+  void _onHideNavChange() {
     if (mounted) setState(() {});
   }
 
@@ -172,30 +181,167 @@ class _MiniPlayerScaffoldState extends ConsumerState<_MiniPlayerScaffold> {
   Widget build(BuildContext context) {
     final currentAudio = ref.watch(currentAudioProvider);
     final isFullPlayer = widget.routeObserver.fullPlayerActive.value;
+    final hideNav = widget.routeObserver.hideNavActive.value;
+    final navBarVisible = ref.watch(navBarVisibleProvider);
     final navBarOffset = ref.watch(miniPlayerBottomOffsetProvider);
-    final showBar = currentAudio != null && !isFullPlayer;
+    final showNav = navBarVisible && !hideNav;
+    final showBar = currentAudio != null && !isFullPlayer && showNav;
+    final selectedIndex = ref.watch(bottomNavIndexProvider);
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
 
-    // When a detail/sub route is pushed, BottomNavScreen is no longer in the
-    // widget tree.  Use safe-area bottom inset only so the bar sits right at
-    // the bottom edge of the screen.
-    final bottomOffset = _routeDepth > 0
-        ? MediaQuery.paddingOf(context).bottom
-        : navBarOffset;
+    // Mini bar sits above the navbar when it is visible.
+    final miniBarBottom = showNav
+        ? (_routeDepth > 0
+            ? safeBottom + BottomNavScreen.navBarHeight
+            : navBarOffset)
+        : safeBottom;
 
     return Stack(
       children: [
         widget.child,
+
+        // ── Persistent navbar ───────────────────────────────────────────────
+        if (showNav)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            // Material is required so InkWell/ripples work inside the overlay
+            // Stack (MaterialApp.builder has no Material ancestor of its own).
+            child: Material(
+              type: MaterialType.transparency,
+              child: _PersistentNavBar(
+                selectedIndex: selectedIndex,
+                onItemTapped: (i) =>
+                    ref.read(bottomNavIndexProvider.notifier).setIndex(i),
+              ),
+            ),
+          ),
+
+        // ── Mini player bar (above the navbar) ─────────────────────────────
         if (showBar)
           Positioned(
             left: 0,
             right: 0,
-            bottom: bottomOffset,
-            child: MiniPlayerBar(
-              audio: currentAudio,
-              navigatorKey: widget.navigatorKey,
+            bottom: miniBarBottom,
+            child: Material(
+              type: MaterialType.transparency,
+              child: MiniPlayerBar(
+                audio: currentAudio,
+                navigatorKey: widget.navigatorKey,
+              ),
             ),
           ),
       ],
+    );
+  }
+}
+
+// ─── Persistent navbar ────────────────────────────────────────────────────────
+//
+// Drawn by the MaterialApp.builder overlay so it appears on EVERY route.
+// Hidden only when kFullPlayerRouteName or kVideoPlayerRouteName is active.
+
+class _PersistentNavBar extends ConsumerWidget {
+  const _PersistentNavBar({
+    required this.selectedIndex,
+    required this.onItemTapped,
+  });
+
+  final int selectedIndex;
+  final ValueChanged<int> onItemTapped;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final brightness = Theme.of(context).brightness;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+      height: 60,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(DesignTokens.radiusNavBar),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(
+            sigmaX: DesignTokens.glassBlurSigma,
+            sigmaY: DesignTokens.glassBlurSigma,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: DesignTokens.getGlassBackground(brightness, 0.14),
+              borderRadius: BorderRadius.circular(DesignTokens.radiusNavBar),
+              border: Border.all(
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.15),
+                width: 1.5,
+              ),
+              boxShadow: [DesignTokens.shadowGlass],
+            ),
+            child: SafeArea(
+              top: false,
+              bottom: true,
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _item(context, Icons.home_outlined, Icons.home, 'Home', 0),
+                    _item(context, Icons.explore_outlined, Icons.explore,
+                        'Kiosk', 1),
+                    _item(
+                        context, Icons.mic_outlined, Icons.mic, 'Podcast', 2),
+                    _item(context, Icons.video_library_outlined,
+                        Icons.video_library, 'Videos', 3),
+                    _item(context, Icons.menu, Icons.menu, 'Menü', 4),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _item(BuildContext context, IconData icon, IconData selectedIcon,
+      String label, int index) {
+    final isSelected = selectedIndex == index;
+    return Expanded(
+      child: InkWell(
+        onTap: () => onItemTapped(index),
+        borderRadius: BorderRadius.circular(16),
+        splashColor: DesignTokens.primaryRed.withValues(alpha: 0.1),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Icon(
+                  isSelected ? selectedIcon : icon,
+                  color: isSelected
+                      ? DesignTokens.primaryRed
+                      : DesignTokens.textSecondary,
+                  size: 28,
+                ),
+                const SizedBox(height: 4),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: isSelected ? 5 : 0,
+                  height: isSelected ? 5 : 0,
+                  decoration: const BoxDecoration(
+                    color: DesignTokens.primaryRed,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
