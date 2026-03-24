@@ -12,7 +12,6 @@ import 'package:jugendkompass_app/domain/providers/theme_provider.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/core/services/notification_service.dart';
 import 'package:jugendkompass_app/domain/providers/verse_provider.dart';
-import 'package:jugendkompass_app/data/services/media_notification_service.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/podcast/widgets/mini_player_bar.dart';
 
@@ -94,11 +93,7 @@ class _AppState extends ConsumerState<App> {
       
       // Request permissions
       await notificationService.requestPermission();
-      
-      // Initialize media notification service for Lock Screen controls
-      final mediaNotificationService = MediaNotificationService();
-      await mediaNotificationService.init();
-      
+
       // Fetch today's verse using the existing provider
       final verseAsync = ref.read(dailyVerseProvider);
       

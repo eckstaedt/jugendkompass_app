@@ -1,4 +1,5 @@
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'dart:async';
 
@@ -33,7 +34,6 @@ class AudioService {
   void _setupPlayerStateListener() {
     _playerStateSubscription = _player.playerStateStream.listen((state) {
       if (state.processingState == ProcessingState.completed) {
-        // Auto-play next track if available
         if (hasNext) {
           playNext();
         }
@@ -41,9 +41,23 @@ class AudioService {
     });
   }
 
-  Future<void> playAudio(String url) async {
+  /// Build a [MediaItem] tag from an [AudioModel] for lock screen display.
+  MediaItem _mediaItem(AudioModel audio) {
+    return MediaItem(
+      id: audio.id,
+      title: audio.title ?? 'Audio',
+      artist: audio.artist ?? 'Jugendkompass',
+      artUri: audio.imageUrl != null ? Uri.tryParse(audio.imageUrl!) : null,
+      duration: audio.duration,
+    );
+  }
+
+  Future<void> playAudio(String url, {AudioModel? audio}) async {
     try {
-      await _player.setUrl(url);
+      final tag = audio != null ? _mediaItem(audio) : null;
+      await _player.setAudioSource(
+        AudioSource.uri(Uri.parse(url), tag: tag),
+      );
       await _player.play();
     } catch (e) {
       throw Exception('Fehler beim Abspielen: $e');
@@ -60,8 +74,12 @@ class AudioService {
     _queue = List.from(audios);
     _currentIndex = startIndex;
 
-    // Play the audio at the start index
-    await playAudio(_queue[_currentIndex].audioUrl);
+    // Play the audio at the start index, passing the model so the lock
+    // screen gets the correct title / artwork.
+    await playAudio(
+      _queue[_currentIndex].audioUrl,
+      audio: _queue[_currentIndex],
+    );
   }
 
   void addToQueue(AudioModel audio) {
@@ -70,31 +88,34 @@ class AudioService {
 
   Future<void> playNext() async {
     if (!hasNext) return;
-
     _currentIndex++;
-    await playAudio(_queue[_currentIndex].audioUrl);
+    await playAudio(
+      _queue[_currentIndex].audioUrl,
+      audio: _queue[_currentIndex],
+    );
   }
 
   Future<void> playPrevious() async {
     if (!hasPrevious) return;
-
     _currentIndex--;
-    await playAudio(_queue[_currentIndex].audioUrl);
+    await playAudio(
+      _queue[_currentIndex].audioUrl,
+      audio: _queue[_currentIndex],
+    );
   }
 
   Future<void> skipToQueueIndex(int index) async {
     if (index < 0 || index >= _queue.length) return;
-
     _currentIndex = index;
-    await playAudio(_queue[_currentIndex].audioUrl);
+    await playAudio(
+      _queue[_currentIndex].audioUrl,
+      audio: _queue[_currentIndex],
+    );
   }
 
   void removeFromQueue(int index) {
     if (index < 0 || index >= _queue.length) return;
-
     _queue.removeAt(index);
-
-    // Adjust current index if necessary
     if (index < _currentIndex) {
       _currentIndex--;
     } else if (index == _currentIndex && _currentIndex >= _queue.length) {
@@ -134,23 +155,13 @@ class AudioService {
     final currentPosition = _player.position;
     final newPosition = currentPosition + Duration(seconds: seconds);
     final maxPosition = _player.duration ?? currentPosition;
-    
-    if (newPosition <= maxPosition) {
-      await _player.seek(newPosition);
-    } else {
-      await _player.seek(maxPosition);
-    }
+    await _player.seek(newPosition <= maxPosition ? newPosition : maxPosition);
   }
 
   Future<void> skipBackward(int seconds) async {
     final currentPosition = _player.position;
     final newPosition = currentPosition - Duration(seconds: seconds);
-    
-    if (newPosition.isNegative) {
-      await _player.seek(Duration.zero);
-    } else {
-      await _player.seek(newPosition);
-    }
+    await _player.seek(newPosition.isNegative ? Duration.zero : newPosition);
   }
 
   Future<void> setSpeed(double speed) async {

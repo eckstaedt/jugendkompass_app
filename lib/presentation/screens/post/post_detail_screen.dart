@@ -272,19 +272,55 @@ class PostDetailScreen extends ConsumerWidget {
                     ],
                   ),
 
-                  // Audio play button
-                  if (hasAudio) ...[
+                  // Audio play / pause button
+                  if (hasAudio) ...[  
                     const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed: () => _playAudio(context, ref),
-                        icon: const Icon(Icons.play_arrow),
-                        label: const Text('Artikel anhören'),
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                      ),
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final current = ref.watch(currentAudioProvider);
+                        final isPlaying = ref.watch(isPlayingProvider);
+                        final isThisAudio =
+                            current != null && current.id == post.audioId;
+                        final isThisPlaying = isThisAudio && isPlaying;
+
+                        return SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: () async {
+                              if (isThisPlaying) {
+                                // Pause via audioService
+                                await ref
+                                    .read(audioServiceProvider)
+                                    .pause();
+                              } else if (isThisAudio) {
+                                // Resume same audio
+                                await ref
+                                    .read(audioServiceProvider)
+                                    .resume();
+                              } else {
+                                // Load + play this article's audio
+                                await _playAudio(context, ref);
+                              }
+                            },
+                            icon: Icon(
+                              isThisPlaying
+                                  ? Icons.pause
+                                  : Icons.play_arrow,
+                            ),
+                            label: Text(
+                              isThisPlaying
+                                  ? 'Pause'
+                                  : isThisAudio
+                                      ? 'Weiter anhören'
+                                      : 'Artikel anhören',
+                            ),
+                            style: FilledButton.styleFrom(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ],
 
@@ -415,15 +451,24 @@ class PostDetailScreen extends ConsumerWidget {
         return;
       }
 
+      // Enrich audio with the current post's metadata so the mini bar
+      // always shows the correct title and thumbnail image.
+      final enrichedAudio = audio.copyWith(
+        title: audio.title?.isNotEmpty == true ? audio.title : post.title,
+        thumbnailUrl: audio.imageUrl?.isNotEmpty == true
+            ? audio.imageUrl
+            : post.imageUrl,
+      );
+
       // Set as queue with single audio
       final audioService = ref.read(audioServiceProvider);
-      await audioService.setQueue([audio], startIndex: 0);
+      await audioService.setQueue([enrichedAudio], startIndex: 0);
 
-      // Update providers – mini player bar appears automatically
-      ref.read(audioQueueProvider.notifier).state = [audio];
+      // Update providers – mini player bar appears automatically.
+      ref.read(audioQueueProvider.notifier).state = [enrichedAudio];
       ref.read(currentQueueIndexProvider.notifier).state = 0;
-      ref.read(currentAudioProvider.notifier).state = audio;
-      currentAudioNotifier.value = audio;
+      ref.read(currentAudioProvider.notifier).state = enrichedAudio;
+      currentAudioNotifier.value = enrichedAudio;
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
