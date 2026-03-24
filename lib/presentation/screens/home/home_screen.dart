@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/verse_provider.dart';
 import 'package:jugendkompass_app/domain/providers/profile_provider.dart';
 import 'package:jugendkompass_app/domain/providers/impulse_provider.dart';
@@ -368,8 +369,15 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
 
-            // Bottom spacing
-            const SliverToBoxAdapter(child: SizedBox(height: 100)),
+            // Bottom spacing: extra room when mini player bar is active.
+            SliverToBoxAdapter(
+              child: Consumer(
+                builder: (context, ref, _) {
+                  final hasAudio = ref.watch(currentAudioProvider) != null;
+                  return SizedBox(height: hasAudio ? 180 : 100);
+                },
+              ),
+            ),
               ],
             ),
           ),

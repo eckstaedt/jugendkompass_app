@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/domain/providers/post_provider.dart';
 import 'package:jugendkompass_app/domain/providers/video_provider.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
+import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier;
 import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
@@ -536,11 +537,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         return;
       }
 
-      // Set as current audio
-      ref.read(currentAudioProvider.notifier).state = audio;
-
-      // Play the audio
+      // Set queue + current audio so the mini player bar and full player work.
       final audioService = ref.read(audioServiceProvider);
+      await audioService.setQueue([audio], startIndex: 0);
+      ref.read(audioQueueProvider.notifier).state = [audio];
+      ref.read(currentQueueIndexProvider.notifier).state = 0;
+      ref.read(currentAudioProvider.notifier).state = audio;
+      currentAudioNotifier.value = audio;
+
+      // Start playback
       await audioService.playAudio(audio.url);
 
       // Don't navigate to full player - let the mini player bar handle it

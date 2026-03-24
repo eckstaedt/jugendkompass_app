@@ -53,6 +53,11 @@ final audioQueueProvider = StateProvider<List<AudioModel>>((ref) => []);
 
 final currentQueueIndexProvider = StateProvider<int>((ref) => 0);
 
+/// The extra bottom offset (in logical pixels) that the persistent mini player
+/// bar should sit above.  Set to the navbar height on [BottomNavScreen] and
+/// reset to 0 on pushed routes.
+final miniPlayerBottomOffsetProvider = StateProvider<double>((ref) => 0);
+
 final nextAudioProvider = Provider<AudioModel?>((ref) {
   final queue = ref.watch(audioQueueProvider);
   final index = ref.watch(currentQueueIndexProvider);

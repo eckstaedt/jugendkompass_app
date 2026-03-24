@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
+import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier;
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/category_provider.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
@@ -251,9 +252,17 @@ class PodcastScreen extends ConsumerWidget {
                     }, childCount: filteredList.length),
                   ),
 
-                  // Bottom spacing
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: 80), // Extra space for mini player
+                  // Bottom spacing: add extra height when the mini player
+                  // bar is visible so the last item is not hidden behind it.
+                  SliverToBoxAdapter(
+                    child: Consumer(
+                      builder: (context, ref, _) {
+                        final hasAudio =
+                            ref.watch(currentAudioProvider) != null;
+                        return SizedBox(
+                            height: hasAudio ? 160 : 80);
+                      },
+                    ),
                   ),
                 ],
               );
@@ -436,7 +445,7 @@ class PodcastScreen extends ConsumerWidget {
     ref.read(audioQueueProvider.notifier).state = [audio];
     ref.read(currentQueueIndexProvider.notifier).state = 0;
     ref.read(currentAudioProvider.notifier).state = audio;
-    // Do NOT navigate – the mini player bar slides in at the bottom.
+    currentAudioNotifier.value = audio;
     // Tapping the bar opens the full player.
   }
 

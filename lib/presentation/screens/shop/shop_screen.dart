@@ -28,7 +28,7 @@ class ShopScreen extends ConsumerWidget {
               Icon(
                 Icons.storefront_outlined,
                 size: 80,
-                color: theme.colorScheme.onBackground.withOpacity(0.4),
+                color: theme.colorScheme.onSurface.withOpacity(0.4),
               ),
               const SizedBox(height: DesignTokens.spacingLarge),
               Text(
@@ -42,7 +42,7 @@ class ShopScreen extends ConsumerWidget {
               Text(
                 translate('shop_coming_soon_subtitle'),
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onBackground.withOpacity(0.6),
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
                 ),
                 textAlign: TextAlign.center,
               ),

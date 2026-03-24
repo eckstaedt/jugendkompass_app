@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
-import 'package:jugendkompass_app/presentation/screens/podcast/widgets/mini_player_bar.dart';
+import 'package:jugendkompass_app/data/models/audio_model.dart';
 
 /// Route name used when pushing [FullPlayerScreen] so the observer can
 /// identify it without importing the screen (avoids circular imports).
 const kFullPlayerRouteName = '/full_player';
 
 /// A [NavigatorObserver] that tracks whether [FullPlayerScreen] is currently
-/// on top of the navigation stack. Notifies a [ValueNotifier] so the overlay
-/// can react without Riverpod.
+/// on top of the navigation stack.
 class FullPlayerRouteObserver extends NavigatorObserver {
   final ValueNotifier<bool> fullPlayerActive = ValueNotifier(false);
+  // Called whenever any route is pushed (used to reset the bottom offset
+  // for pushed detail screens where the bottom navbar is not visible).
+  VoidCallback? onRoutePushed;
+  VoidCallback? onRoutePopped;
 
   @override
   void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
@@ -19,6 +20,8 @@ class FullPlayerRouteObserver extends NavigatorObserver {
     if (route.settings.name == kFullPlayerRouteName) {
       fullPlayerActive.value = true;
     }
+    // Notify so app.dart can reset the bottom offset.
+    if (previousRoute != null) onRoutePushed?.call();
   }
 
   @override
@@ -27,6 +30,7 @@ class FullPlayerRouteObserver extends NavigatorObserver {
     if (route.settings.name == kFullPlayerRouteName) {
       fullPlayerActive.value = false;
     }
+    onRoutePopped?.call();
   }
 
   @override
@@ -35,6 +39,7 @@ class FullPlayerRouteObserver extends NavigatorObserver {
     if (route.settings.name == kFullPlayerRouteName) {
       fullPlayerActive.value = false;
     }
+    onRoutePopped?.call();
   }
 
   @override
@@ -49,73 +54,30 @@ class FullPlayerRouteObserver extends NavigatorObserver {
   }
 }
 
-/// Wraps the entire app's widget tree (via MaterialApp.builder) and shows the
-/// [MiniPlayerBar] persistently at the bottom of the screen above all routes,
-/// unless [FullPlayerScreen] is currently active.
-class MiniPlayerOverlay extends ConsumerStatefulWidget {
-  const MiniPlayerOverlay({
+/// Global notifier for the currently playing audio.
+/// Set this whenever audio starts anywhere in the app.
+/// Setting to null hides the mini bar.
+///
+/// NOTE: The mini player is now embedded directly in [BottomNavScreen]'s
+/// bottomNavigationBar column (above the nav pill). This notifier is kept
+/// for backward compatibility so existing call-sites that set
+/// [currentAudioNotifier.value] still work — but the visible bar is driven
+/// by [currentAudioProvider] (Riverpod) instead.
+final currentAudioNotifier = ValueNotifier<AudioModel?>(null);
+
+/// Simple passthrough host. Kept so [app.dart] doesn't need changes.
+class MiniPlayerOverlayHost extends StatelessWidget {
+  const MiniPlayerOverlayHost({
     super.key,
     required this.child,
-    required this.routeObserver,
+    required this.observer,
+    required this.navigatorKey,
   });
 
   final Widget child;
-  final FullPlayerRouteObserver routeObserver;
+  final FullPlayerRouteObserver observer;
+  final GlobalKey<NavigatorState> navigatorKey;
 
   @override
-  ConsumerState<MiniPlayerOverlay> createState() => _MiniPlayerOverlayState();
-}
-
-class _MiniPlayerOverlayState extends ConsumerState<MiniPlayerOverlay> {
-  @override
-  void initState() {
-    super.initState();
-    widget.routeObserver.fullPlayerActive.addListener(_onRouteChanged);
-  }
-
-  @override
-  void dispose() {
-    widget.routeObserver.fullPlayerActive.removeListener(_onRouteChanged);
-    super.dispose();
-  }
-
-  void _onRouteChanged() {
-    if (mounted) setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final currentAudio = ref.watch(currentAudioProvider);
-    final isFullPlayerActive = widget.routeObserver.fullPlayerActive.value;
-
-    final showMiniPlayer = currentAudio != null && !isFullPlayerActive;
-
-    // When the mini player is visible, add extra bottom padding to the child
-    // so content is not hidden behind the bar (~96 px including safe area inset).
-    const miniPlayerHeight = 96.0;
-    final child = showMiniPlayer
-        ? MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              padding: MediaQuery.of(context).padding.copyWith(
-                    bottom: MediaQuery.of(context).padding.bottom +
-                        miniPlayerHeight,
-                  ),
-            ),
-            child: widget.child,
-          )
-        : widget.child;
-
-    return Stack(
-      children: [
-        child,
-        if (showMiniPlayer)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: MiniPlayerBar(audio: currentAudio),
-          ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => child;
 }

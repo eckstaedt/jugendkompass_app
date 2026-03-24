@@ -9,6 +9,8 @@ import 'package:jugendkompass_app/domain/providers/string_translator_provider.da
 import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
+import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
+    show currentAudioNotifier;
 
 class AudioPlayerScreen extends ConsumerWidget {
   const AudioPlayerScreen({super.key});
@@ -271,6 +273,7 @@ class AudioPlayerScreen extends ConsumerWidget {
                             : null,
                         onTap: () async {
                           ref.read(currentAudioProvider.notifier).state = audio;
+                          currentAudioNotifier.value = audio;
                           await audioService.playAudio(audio.audioUrl);
                         },
                       ),

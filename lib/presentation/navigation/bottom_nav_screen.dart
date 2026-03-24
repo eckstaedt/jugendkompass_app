@@ -8,19 +8,28 @@ import 'package:jugendkompass_app/presentation/screens/video/video_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/profile/profile_screen.dart';
 import 'package:jugendkompass_app/domain/providers/bottom_nav_provider.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
+import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
 class BottomNavScreen extends ConsumerWidget {
   const BottomNavScreen({super.key});
 
+  // Navbar height: 60px bar + 4px top margin + 16px bottom margin = 80px
+  // We also add the bottom safe-area inset at runtime.
+  static const double _navBarHeight = 80;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch language changes to rebuild all child screens
     ref.watch(languageProvider);
-    
     final selectedIndex = ref.watch(bottomNavIndexProvider);
 
-    // Build screens list dynamically so they rebuild when language changes
+    // Tell the persistent mini player how far above the bottom to sit.
+    final safeBottom = MediaQuery.of(context).padding.bottom;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(miniPlayerBottomOffsetProvider.notifier).state =
+          _navBarHeight + safeBottom;
+    });
+
     final screens = [
       HomeScreen(),
       KioskScreen(),
@@ -31,101 +40,103 @@ class BottomNavScreen extends ConsumerWidget {
 
     return Scaffold(
       body: screens[selectedIndex],
-      extendBody: true, // Extend body behind bottom nav
-      bottomNavigationBar: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Navigation Bar with iOS 26 liquid glass design
-          // Flowing, rounded, blurry navbar
-          Container(
-            // slightly reduce bottom margin to eliminate a 4px overflow
-            // that was occurring on some devices. The navbar itself remains
-            // 60px tall and the icons keep their existing centering – we
-            // merely trim the external spacing by the exact overflow amount.
-            margin: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-            // limit total height so icons sit perfectly centered
-            height: 60,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusNavBar),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(
-                    sigmaX: DesignTokens.glassBlurSigma,
-                    sigmaY: DesignTokens.glassBlurSigma),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: DesignTokens.glassBackground(0.14),
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusNavBar),
-                    border: Border.all(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withOpacity(0.15),
-                      width: 1.5,
-                    ),
-                    boxShadow: [DesignTokens.shadowGlass],
-                  ),
-                  child: SafeArea(
-                    top: false,
-                    bottom: false,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _buildNavItem(
-                            context: context,
-                            icon: Icons.home_outlined,
-                            selectedIcon: Icons.home,
-                            label: 'Home',
-                            index: 0,
-                            isSelected: selectedIndex == 0,
-                            onTap: () => ref.read(bottomNavIndexProvider.notifier).setIndex(0),
-                          ),
-                          _buildNavItem(
-                            context: context,
-                            icon: Icons.explore_outlined,
-                            selectedIcon: Icons.explore,
-                            label: 'Kiosk',
-                            index: 1,
-                            isSelected: selectedIndex == 1,
-                            onTap: () => ref.read(bottomNavIndexProvider.notifier).setIndex(1),
-                          ),
-                          _buildNavItem(
-                            context: context,
-                            icon: Icons.mic_outlined,
-                            selectedIcon: Icons.mic,
-                            label: 'Podcast',
-                            index: 2,
-                            isSelected: selectedIndex == 2,
-                            onTap: () => ref.read(bottomNavIndexProvider.notifier).setIndex(2),
-                          ),
-                          _buildNavItem(
-                            context: context,
-                            icon: Icons.video_library_outlined,
-                            selectedIcon: Icons.video_library,
-                            label: 'Videos',
-                            index: 3,
-                            isSelected: selectedIndex == 3,
-                            onTap: () => ref.read(bottomNavIndexProvider.notifier).setIndex(3),
-                          ),
-                          _buildNavItem(
-                            context: context,
-                            icon: Icons.menu,
-                            selectedIcon: Icons.menu,
-                            label: 'Menü',
-                            index: 4,
-                            isSelected: selectedIndex == 4,
-                            onTap: () => ref.read(bottomNavIndexProvider.notifier).setIndex(4),
-                          ),
-                        ],
+      // extendBody lets screen content scroll behind the floating navbar.
+      extendBody: true,
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+        height: 60,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(DesignTokens.radiusNavBar),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(
+              sigmaX: DesignTokens.glassBlurSigma,
+              sigmaY: DesignTokens.glassBlurSigma,
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: DesignTokens.glassBackground(0.14),
+                borderRadius:
+                    BorderRadius.circular(DesignTokens.radiusNavBar),
+                border: Border.all(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withOpacity(0.15),
+                  width: 1.5,
+                ),
+                boxShadow: [DesignTokens.shadowGlass],
+              ),
+              child: SafeArea(
+                top: false,
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildNavItem(
+                        context: context,
+                        icon: Icons.home_outlined,
+                        selectedIcon: Icons.home,
+                        label: 'Home',
+                        index: 0,
+                        isSelected: selectedIndex == 0,
+                        onTap: () => ref
+                            .read(bottomNavIndexProvider.notifier)
+                            .setIndex(0),
                       ),
-                    ),
+                      _buildNavItem(
+                        context: context,
+                        icon: Icons.explore_outlined,
+                        selectedIcon: Icons.explore,
+                        label: 'Kiosk',
+                        index: 1,
+                        isSelected: selectedIndex == 1,
+                        onTap: () => ref
+                            .read(bottomNavIndexProvider.notifier)
+                            .setIndex(1),
+                      ),
+                      _buildNavItem(
+                        context: context,
+                        icon: Icons.mic_outlined,
+                        selectedIcon: Icons.mic,
+                        label: 'Podcast',
+                        index: 2,
+                        isSelected: selectedIndex == 2,
+                        onTap: () => ref
+                            .read(bottomNavIndexProvider.notifier)
+                            .setIndex(2),
+                      ),
+                      _buildNavItem(
+                        context: context,
+                        icon: Icons.video_library_outlined,
+                        selectedIcon: Icons.video_library,
+                        label: 'Videos',
+                        index: 3,
+                        isSelected: selectedIndex == 3,
+                        onTap: () => ref
+                            .read(bottomNavIndexProvider.notifier)
+                            .setIndex(3),
+                      ),
+                      _buildNavItem(
+                        context: context,
+                        icon: Icons.menu,
+                        selectedIcon: Icons.menu,
+                        label: 'Menü',
+                        index: 4,
+                        isSelected: selectedIndex == 4,
+                        onTap: () => ref
+                            .read(bottomNavIndexProvider.notifier)
+                            .setIndex(4),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -153,11 +164,12 @@ class BottomNavScreen extends ConsumerWidget {
               children: [
                 Icon(
                   isSelected ? selectedIcon : icon,
-                  color: isSelected ? DesignTokens.primaryRed : DesignTokens.textSecondary,
+                  color: isSelected
+                      ? DesignTokens.primaryRed
+                      : DesignTokens.textSecondary,
                   size: 28,
                 ),
                 const SizedBox(height: 4),
-                // Dot indicator for selected item
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   width: isSelected ? 5 : 0,

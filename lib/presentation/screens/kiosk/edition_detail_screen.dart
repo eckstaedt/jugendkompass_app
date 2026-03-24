@@ -3,6 +3,7 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier;
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
 import 'package:jugendkompass_app/data/models/edition_model.dart';
@@ -314,6 +315,7 @@ class EditionDetailScreen extends ConsumerWidget {
       ref.read(audioQueueProvider.notifier).state = audios;
       ref.read(currentQueueIndexProvider.notifier).state = 0;
       ref.read(currentAudioProvider.notifier).state = audios.first;
+      currentAudioNotifier.value = audios.first;
       // Mini player bar appears automatically – no navigation needed
     } catch (e) {
       if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Fehler beim Abspielen: $e'), backgroundColor: Colors.red));
@@ -334,6 +336,7 @@ class EditionDetailScreen extends ConsumerWidget {
       ref.read(audioQueueProvider.notifier).state = [audio];
       ref.read(currentQueueIndexProvider.notifier).state = 0;
       ref.read(currentAudioProvider.notifier).state = audio;
+      currentAudioNotifier.value = audio;
       // Mini player bar appears automatically – no navigation needed
     } catch (e) {
       if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Fehler beim Abspielen: $e'), backgroundColor: Colors.red));
