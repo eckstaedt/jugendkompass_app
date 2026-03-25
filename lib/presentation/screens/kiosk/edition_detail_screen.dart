@@ -15,8 +15,9 @@ import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
+import 'package:jugendkompass_app/data/repositories/audio_repository.dart';
 
-class EditionDetailScreen extends ConsumerWidget {
+class EditionDetailScreen extends ConsumerStatefulWidget {
   final EditionModel edition;
 
   const EditionDetailScreen({
@@ -25,7 +26,33 @@ class EditionDetailScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<EditionDetailScreen> createState() => _EditionDetailScreenState();
+}
+
+class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Hide the bottom navigation bar when this screen is shown
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(navBarVisibleProvider.notifier).state = false;
+    });
+  }
+
+  @override
+  void dispose() {
+    // Restore the bottom navigation bar when leaving this screen
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(navBarVisibleProvider.notifier).state = true;
+      }
+    });
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final edition = widget.edition;
     ref.watch(languageProvider);
     final translate = ref.watch(stringTranslatorProvider);
     final postsAsync = ref.watch(editionPostsProvider(edition.id));
@@ -53,8 +80,8 @@ class EditionDetailScreen extends ConsumerWidget {
             top: MediaQuery.of(context).padding.top + 16,
             left: 16,
               child: CircleAvatar(
-              backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-              child: IconButton(icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface), onPressed: () => Navigator.pop(context)),
+              backgroundColor: Colors.black.withOpacity(0.5),
+              child: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context)),
             ),
           ),
 
@@ -64,11 +91,11 @@ class EditionDetailScreen extends ConsumerWidget {
             child: Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                  backgroundColor: Colors.black.withOpacity(0.5),
                   child: IconButton(
                     icon: Icon(
                       isInCollection ? Icons.bookmark : Icons.bookmark_outline,
-                      color: Theme.of(context).colorScheme.onSurface,
+                      color: Colors.white,
                     ),
                     onPressed: () {
                       final item = CollectionItem(
@@ -86,8 +113,8 @@ class EditionDetailScreen extends ConsumerWidget {
                 const SizedBox(width: 12),
                 if (edition.pdfUrl != null)
                   CircleAvatar(
-                    backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                    child: IconButton(icon: Icon(Icons.picture_as_pdf, color: Theme.of(context).colorScheme.onSurface), onPressed: () => _openPDF(context, edition.pdfUrl!)),
+                    backgroundColor: Colors.black.withOpacity(0.5),
+                    child: IconButton(icon: const Icon(Icons.picture_as_pdf, color: Colors.white), onPressed: () => _openPDF(context, edition.pdfUrl!)),
                   ),
               ],
             ),
@@ -106,13 +133,13 @@ class EditionDetailScreen extends ConsumerWidget {
                     Expanded(
                       child: audiosAsync.when(
                         data: (audios) => postsAsync.when(
-                          data: (posts) => _buildContent(context, ref, scrollController, posts, audios, translate),
+                          data: (posts) => _buildContent(context, scrollController, posts, audios, translate),
                           loading: () => const Center(child: CircularProgressIndicator()),
                           error: (e, s) => Center(child: Text('${translate('Fehler: ')}$e')),
                         ),
                         loading: () => const Center(child: CircularProgressIndicator()),
                         error: (e, s) => postsAsync.when(
-                          data: (posts) => _buildContent(context, ref, scrollController, posts, [], translate),
+                          data: (posts) => _buildContent(context, scrollController, posts, [], translate),
                           loading: () => const Center(child: CircularProgressIndicator()),
                           error: (e, s) => Center(child: Text('${translate('Fehler: ')}$e')),
                         ),
@@ -128,7 +155,8 @@ class EditionDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildContent(BuildContext context, WidgetRef ref, ScrollController scrollController, List<PostModel> posts, List<AudioModel> audios, String Function(String) translate) {
+  Widget _buildContent(BuildContext context, ScrollController scrollController, List<PostModel> posts, List<AudioModel> audios, String Function(String) translate) {
+    final edition = widget.edition;
     final theme = Theme.of(context);
     final brightness = theme.brightness;
     final textPrimary = DesignTokens.getTextPrimary(brightness);
@@ -144,7 +172,7 @@ class EditionDetailScreen extends ConsumerWidget {
         // Audio controls: play full edition
         if (audios.isNotEmpty) ...[
           FilledButton.icon(
-            onPressed: () => _playEditionAudios(context, ref, audios),
+            onPressed: () => _playEditionAudios(context, audios),
             icon: const Icon(Icons.play_arrow, size: 24),
             label: const Text('Ausgabe anhören', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             style: FilledButton.styleFrom(
@@ -177,12 +205,12 @@ class EditionDetailScreen extends ConsumerWidget {
         if (posts.isEmpty)
           Padding(padding: const EdgeInsets.symmetric(vertical: 32), child: Center(child: Text(translate('Keine Artikel verfügbar'), style: TextStyle(color: textSecondary))))
         else
-          ...List.generate(posts.length, (index) => _buildPostCard(context, ref, posts[index], index + 1, translate)),
+          ...List.generate(posts.length, (index) => _buildPostCard(context, posts[index], index + 1, translate)),
       ],
     );
   }
 
-  Widget _buildPostCard(BuildContext context, WidgetRef ref, PostModel post, int index, String Function(String) translate) {
+  Widget _buildPostCard(BuildContext context, PostModel post, int index, String Function(String) translate) {
     final hasAudio = post.audioId != null;
     final brightness = Theme.of(context).brightness;
     final cardBg = DesignTokens.getCardBackground(brightness);
@@ -209,7 +237,7 @@ class EditionDetailScreen extends ConsumerWidget {
             // Thumbnail: tap opens article; if has audio, play icon overlay taps to play
             GestureDetector(
               onTap: hasAudio
-                  ? () => _playPostAudio(context, ref, post)
+                  ? () => _playPostAudio(context, post)
                   : () => Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => PostDetailScreen(post: post)),
@@ -294,7 +322,7 @@ class EditionDetailScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _playEditionAudios(BuildContext context, WidgetRef ref, List<AudioModel> audios) async {
+  Future<void> _playEditionAudios(BuildContext context, List<AudioModel> audios) async {
     if (audios.isEmpty) return;
     try {
       final audioService = ref.read(audioServiceProvider);
@@ -309,7 +337,7 @@ class EditionDetailScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _playPostAudio(BuildContext context, WidgetRef ref, PostModel post) async {
+  Future<void> _playPostAudio(BuildContext context, PostModel post) async {
     if (post.audioId == null) return;
     try {
       final audioRepository = ref.read(audioRepositoryProvider);
