@@ -38,7 +38,7 @@ const AusgabenPage = () => {
   const [keepExistingPdf, setKeepExistingPdf] = useState(true);
   const editPdfInputRef = useRef<HTMLInputElement>(null);
 
-  const { editions, createEdition, isCreating, updateEdition, isUpdating, deleteEdition } = useEditions();
+  const { editions, createEdition, isCreating, updateEdition, isUpdating } = useEditions();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
