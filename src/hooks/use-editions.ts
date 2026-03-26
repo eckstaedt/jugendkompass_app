@@ -21,6 +21,16 @@ export type CreateEditionParams = {
   pdfFile?: File | null;
 };
 
+export type UpdateEditionParams = {
+  id: string;
+  name: string;
+  title?: string;
+  body?: string;
+  image_url?: string | null;
+  pdfFile?: File | null;
+  keepExistingPdf?: boolean;
+};
+
 export function useEditions() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -38,17 +48,20 @@ export function useEditions() {
     }
   });
 
+  const uploadPdf = async (file: File): Promise<string> => {
+    const ext = file.name.split('.').pop();
+    const fileName = `${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from('pdfs').upload(fileName, file);
+    if (error) throw error;
+    const { data } = supabase.storage.from('pdfs').getPublicUrl(fileName);
+    return data.publicUrl;
+  };
+
   const { mutate: createEdition, isPending: isCreating } = useMutation({
     mutationFn: async (params: CreateEditionParams) => {
       let pdf_url: string | null = null;
-
       if (params.pdfFile) {
-        const ext = params.pdfFile.name.split('.').pop();
-        const fileName = `${crypto.randomUUID()}.${ext}`;
-        const { error } = await supabase.storage.from('pdfs').upload(fileName, params.pdfFile);
-        if (error) throw error;
-        const { data } = supabase.storage.from('pdfs').getPublicUrl(fileName);
-        pdf_url = data.publicUrl;
+        pdf_url = await uploadPdf(params.pdfFile);
       }
 
       const { error } = await supabase
@@ -65,20 +78,66 @@ export function useEditions() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['editions'] });
-      toast({
-        title: "Erfolg",
-        description: "Ausgabe wurde erstellt",
-        variant: "success",
-      });
+      toast({ title: "Erfolg", description: "Ausgabe wurde erstellt", variant: "success" });
     },
     onError: () => {
-      toast({
-        title: "Fehler",
-        description: "Ausgabe konnte nicht erstellt werden",
-        variant: "destructive",
-      });
+      toast({ title: "Fehler", description: "Ausgabe konnte nicht erstellt werden", variant: "destructive" });
     }
   });
 
-  return { editions, isLoading, createEdition, isCreating };
+  const { mutate: updateEdition, isPending: isUpdating } = useMutation({
+    mutationFn: async (params: UpdateEditionParams) => {
+      let pdf_url: string | null | undefined = undefined;
+
+      if (params.pdfFile) {
+        pdf_url = await uploadPdf(params.pdfFile);
+      } else if (!params.keepExistingPdf) {
+        pdf_url = null;
+      }
+
+      const updateData: Record<string, unknown> = {
+        name: params.name,
+        title: params.title || null,
+        body: params.body || null,
+        image_url: params.image_url || null,
+      };
+
+      if (pdf_url !== undefined) {
+        updateData.pdf_url = pdf_url;
+      }
+
+      const { error } = await supabase
+        .from('editions')
+        .update(updateData)
+        .eq('id', params.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['editions'] });
+      toast({ title: "Erfolg", description: "Ausgabe wurde aktualisiert", variant: "success" });
+    },
+    onError: () => {
+      toast({ title: "Fehler", description: "Ausgabe konnte nicht aktualisiert werden", variant: "destructive" });
+    }
+  });
+
+  const { mutate: deleteEdition, isPending: isDeleting } = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('editions')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['editions'] });
+      toast({ title: "Erfolg", description: "Ausgabe wurde gelöscht", variant: "success" });
+    },
+    onError: () => {
+      toast({ title: "Fehler", description: "Ausgabe konnte nicht gelöscht werden", variant: "destructive" });
+    }
+  });
+
+  return { editions, isLoading, createEdition, isCreating, updateEdition, isUpdating, deleteEdition, isDeleting };
 }
