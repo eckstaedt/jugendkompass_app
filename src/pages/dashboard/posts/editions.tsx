@@ -165,27 +165,6 @@ const AusgabenPage = () => {
                     <Button variant="outline" size="icon" onClick={() => openEditDialog(edition)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="icon" className="text-destructive hover:text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Ausgabe löschen?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Möchten Sie die Ausgabe "{edition.name}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => deleteEdition(edition.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Löschen
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
                   </div>
                 </div>
               ))}
