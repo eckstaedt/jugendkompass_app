@@ -19,18 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Upload, FileText, ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import { Upload, FileText, ExternalLink, Pencil } from 'lucide-react';
 
 const AusgabenPage = () => {
   const [name, setName] = useState('');
@@ -49,7 +38,7 @@ const AusgabenPage = () => {
   const [keepExistingPdf, setKeepExistingPdf] = useState(true);
   const editPdfInputRef = useRef<HTMLInputElement>(null);
 
-  const { editions, createEdition, isCreating, updateEdition, isUpdating, deleteEdition } = useEditions();
+  const { editions, createEdition, isCreating, updateEdition, isUpdating } = useEditions();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,27 +154,6 @@ const AusgabenPage = () => {
                     <Button variant="outline" size="icon" onClick={() => openEditDialog(edition)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="icon" className="text-destructive hover:text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Ausgabe löschen?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Möchten Sie die Ausgabe "{edition.name}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => deleteEdition(edition.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Löschen
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
                   </div>
                 </div>
               ))}
