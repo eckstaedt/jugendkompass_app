@@ -19,18 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Upload, FileText, ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import { Upload, FileText, ExternalLink, Pencil } from 'lucide-react';
 
 const AusgabenPage = () => {
   const [name, setName] = useState('');
