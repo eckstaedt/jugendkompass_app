@@ -11,7 +11,7 @@ import MessageForm from './MessageForm';
 
 interface MessageItemProps {
   message: Message;
-  onUpdate: (data: { id: number; message: string; imageFile?: File }) => Promise<void>;
+  onUpdate: (data: { id: number; title?: string; message: string; imageFile?: File }) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
 }
 
