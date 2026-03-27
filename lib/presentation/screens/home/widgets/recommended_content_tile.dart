@@ -13,11 +13,13 @@ import 'package:jugendkompass_app/presentation/widgets/common/design_system_widg
 class RecommendedContentTile extends ConsumerStatefulWidget {
   final RecommendedItem item;
   final VoidCallback? onTap;
+  final bool isNewest;
 
   const RecommendedContentTile({
     super.key,
     required this.item,
     this.onTap,
+    this.isNewest = false,
   });
 
   @override
@@ -198,7 +200,9 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
                               spacing: 8,
                               runSpacing: 4,
                               children: [
-                                BadgeWidget(label: item.isVideo ? 'VIDEO' : 'ARTIKEL', backgroundColor: DesignTokens.redBackground, textColor: DesignTokens.primaryRed),
+                                if (widget.isNewest)
+                                  BadgeWidget(label: 'NEU', backgroundColor: DesignTokens.primaryRed, textColor: Colors.white),
+                                BadgeWidget(label: item.isVideo ? 'VIDEO' : item.isKurznachricht ? 'KURZNACHRICHT' : 'ARTIKEL', backgroundColor: DesignTokens.redBackground, textColor: DesignTokens.primaryRed),
                                 if (item.hasAudio)
                                   BadgeWidget(label: 'AUDIO', backgroundColor: DesignTokens.successGreen.withOpacity(0.12), textColor: DesignTokens.successGreen, icon: Icons.headphones),
                               ],

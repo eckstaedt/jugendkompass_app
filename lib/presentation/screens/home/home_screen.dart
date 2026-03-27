@@ -28,7 +28,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final List<RecommendedItem> _allContent = [];
-  final List<RecommendedItem> _kurznachrichten = [];
+  final Set<String> _seenIds = {};
   int _currentPage = 0;
   bool _isLoadingMore = false;
   bool _hasMore = true;
@@ -51,12 +51,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (mounted) {
         setState(() {
           for (final item in items) {
-            if (item.isKurznachricht) {
-              _kurznachrichten.add(item);
-            } else {
+            if (_seenIds.add(item.id)) {
               _allContent.add(item);
             }
           }
+          // Sort chronologically: newest first
+          _allContent.sort((a, b) => b.createdAt.compareTo(a.createdAt));
           _hasMore = items.length >= 50;
           _currentPage++;
           _isLoadingMore = false;
@@ -79,7 +79,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final oldPage = _currentPage;
     setState(() {
       _allContent.clear();
-      _kurznachrichten.clear();
+      _seenIds.clear();
       _currentPage = 0;
       _hasMore = true;
       _initialLoaded = false;
@@ -320,6 +320,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               padding: const EdgeInsets.only(bottom: 12),
                               child: RecommendedContentTile(
                                 item: item,
+                                isNewest: index == 0,
                                 onTap: () => _navigateToContent(context, item),
                               ),
                             );
@@ -337,51 +338,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: Center(child: CircularProgressIndicator()),
                       ),
                     ),
-
-                  const SliverToBoxAdapter(child: SizedBox(height: 32)),
-
-                  // ── Kurznachrichten Section ──────────────────────────
-                  if (_kurznachrichten.isNotEmpty) ...[
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(
-                          DesignTokens.paddingHorizontal,
-                          DesignTokens.spacingMedium,
-                          DesignTokens.paddingHorizontal,
-                          DesignTokens.spacingSmall,
-                        ),
-                        child: Text(
-                          translate('Kurznachrichten'),
-                          style: GoogleFonts.poppins(
-                            textStyle: theme.textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                ) ??
-                                const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-                    SliverPadding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: DesignTokens.paddingHorizontal,
-                      ),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            final item = _kurznachrichten[index];
-                            return _KurznachrichtenCard(
-                              item: item,
-                              onTap: () => _navigateToContent(context, item),
-                            );
-                          },
-                          childCount: _kurznachrichten.length,
-                        ),
-                      ),
-                    ),
-                  ],
 
                   // Bottom spacing
                   SliverToBoxAdapter(
@@ -421,90 +377,5 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       );
     }
-  }
-}
-
-/// A card for Kurznachrichten (short news posts)
-class _KurznachrichtenCard extends StatelessWidget {
-  final RecommendedItem item;
-  final VoidCallback? onTap;
-
-  const _KurznachrichtenCard({
-    required this.item,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final brightness = theme.brightness;
-    final post = item.post;
-    if (post == null) return const SizedBox.shrink();
-
-    final bodyPreview = post.body
-        .replaceAll(RegExp(r'<[^>]*>'), '')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: DesignTokens.getGlassBackground(brightness, 0.26),
-            borderRadius:
-                BorderRadius.circular(DesignTokens.radiusMiddleContainers),
-            border: DesignTokens.cardBorder(brightness),
-            boxShadow: [DesignTokens.shadowGlass],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.bolt,
-                    size: 16,
-                    color: DesignTokens.primaryRed,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'KURZNACHRICHT',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.0,
-                      color: DesignTokens.primaryRed,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                post.title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (bodyPreview.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text(
-                  bodyPreview,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: DesignTokens.getTextSecondary(brightness),
-                  ),
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
