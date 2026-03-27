@@ -33,7 +33,7 @@ export const useCreateMessage = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ message, imageFile, userId }: { message: string; imageFile?: File; userId?: string }) => {
+    mutationFn: async ({ title, message, imageFile, userId }: { title?: string; message: string; imageFile?: File; userId?: string }) => {
       let image_url = null;
 
       if (imageFile) {
