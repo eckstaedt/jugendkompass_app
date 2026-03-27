@@ -7,15 +7,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jugendkompass_app/domain/providers/profile_provider.dart';
 import 'package:jugendkompass_app/domain/providers/theme_provider.dart';
 import 'package:jugendkompass_app/domain/providers/favorites_provider.dart';
-import 'package:jugendkompass_app/domain/providers/favorite_verses_provider.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/data/services/favorites_service.dart';
-import 'package:jugendkompass_app/data/services/favorite_verses_service.dart';
+
 import 'package:jugendkompass_app/data/services/collection_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../onboarding/onboarding_screen.dart';
-import 'favorite_verses_screen.dart';
 import 'collection_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/search/search_screen.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
@@ -138,36 +136,6 @@ class ProfileScreen extends ConsumerWidget {
             subtitle: Text(ref.watch(userNameProvider) ?? translate('Nicht festgelegt')),
             trailing: const Icon(Icons.edit_outlined, size: 20),
             onTap: () => _showNameEditDialog(context, ref, translate),
-          ),
-
-          SizedBox(height: DesignTokens.spacingMedium),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Text(
-              translate('VERS DES TAGES'),
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                letterSpacing: 1.2,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-
-          ListTile(
-            tileColor: DesignTokens.glassBackground(0.12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
-            leading: const Icon(Icons.favorite_outline),
-            title: Text(translate('Favoriten')),
-            subtitle: Text('${ref.watch(favoriteVersesProvider).length} ${ref.watch(favoriteVersesProvider).length == 1 ? translate('Vers') : translate('Verse')}'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const FavoriteVersesScreen(),
-                ),
-              );
-            },
           ),
 
           const SizedBox(height: DesignTokens.spacingMedium),
@@ -370,7 +338,6 @@ class ProfileScreen extends ConsumerWidget {
       // Clear local data
       await UserPreferencesService.instance.clearAll();
       await FavoritesService.instance.clearAllFavorites();
-      await FavoriteVersesService.instance.clearAllFavorites();
       await CollectionService.instance.clearAllItems();
 
       // Delete Supabase data if authenticated
@@ -387,7 +354,6 @@ class ProfileScreen extends ConsumerWidget {
       // Reset providers
       ref.invalidate(userNameProvider);
       ref.invalidate(favoritesProvider);
-      ref.invalidate(favoriteVersesProvider);
       ref.invalidate(collectionProvider);
       ref.invalidate(notificationsProvider);
       ref.invalidate(themeModeProvider);
