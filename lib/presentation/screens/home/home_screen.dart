@@ -13,6 +13,7 @@ import 'package:jugendkompass_app/presentation/screens/home/widgets/recommended_
 import 'package:jugendkompass_app/presentation/screens/impulse/impulse_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/message/message_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
     show kVideoPlayerRouteName;
 import 'package:jugendkompass_app/presentation/navigation/fade_page_route.dart';
@@ -51,7 +52,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (mounted) {
         setState(() {
           for (final item in items) {
-            if (_seenIds.add(item.id)) {
+            // Use composite key (type + id) to avoid cross-type collisions
+            final key = '${item.contentType}_${item.id}';
+            if (_seenIds.add(key)) {
               _allContent.add(item);
             }
           }
@@ -367,6 +370,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             videoUrl: item.video!.videoUrl,
             title: item.video!.displayTitle,
           ),
+        ),
+      );
+    } else if (item.isMessage && item.message != null) {
+      Navigator.push(
+        context,
+        FadePageRoute(
+          builder: (context) => MessageDetailScreen(message: item.message!),
         ),
       );
     } else if (item.post != null) {

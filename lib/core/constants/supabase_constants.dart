@@ -9,6 +9,7 @@ class SupabaseConstants {
   static const String profilesTable = 'profiles';
   static const String activitiesTable = 'activities';
   static const String editionsTable = 'editions';
+  static const String messagesTable = 'messages';
 
   // Column names for current_verse
   static const String verseId = 'id';

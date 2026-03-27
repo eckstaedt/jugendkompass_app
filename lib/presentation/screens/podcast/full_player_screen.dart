@@ -56,7 +56,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: DesignTokens.textSecondary.withOpacity(0.4),
+                        color: DesignTokens.getTextSecondary(brightness).withOpacity(0.4),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),

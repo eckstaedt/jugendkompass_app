@@ -98,7 +98,7 @@ class _ImpulseCardState extends ConsumerState<ImpulseCard>
                       imageUrl: impulse.imageUrl!,
                       fit: BoxFit.cover,
                       placeholder: Container(
-                        color: DesignTokens.appBackground,
+                        color: DesignTokens.getAppBackground(Theme.of(context).brightness),
                         child: const Center(
                           child: CircularProgressIndicator(
                             color: DesignTokens.primaryRed,
@@ -106,7 +106,7 @@ class _ImpulseCardState extends ConsumerState<ImpulseCard>
                         ),
                       ),
                       errorWidget: Container(
-                        color: DesignTokens.appBackground,
+                        color: DesignTokens.getAppBackground(Theme.of(context).brightness),
                         child: const Icon(
                           Icons.broken_image_outlined,
                           color: DesignTokens.primaryRed,
@@ -116,7 +116,7 @@ class _ImpulseCardState extends ConsumerState<ImpulseCard>
                     )
                   else
                     Container(
-                      color: DesignTokens.appBackground,
+                      color: DesignTokens.getAppBackground(Theme.of(context).brightness),
                       child: const Center(
                         child: Icon(
                           Icons.image_outlined,

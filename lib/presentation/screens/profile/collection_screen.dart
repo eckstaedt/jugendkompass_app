@@ -153,13 +153,13 @@ class CollectionScreen extends ConsumerWidget {
                   placeholder: Container(
                     width: 60,
                     height: 60,
-                    color: DesignTokens.glassBackground(0.2),
+                    color: DesignTokens.getGlassBackground(theme.brightness, 0.2),
                     child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
                   ),
                   errorWidget: Container(
                     width: 60,
                     height: 60,
-                    color: DesignTokens.glassBackground(0.2),
+                    color: DesignTokens.getGlassBackground(theme.brightness, 0.2),
                     child: const Icon(Icons.broken_image, size: 30),
                   ),
                 ),
@@ -170,7 +170,7 @@ class CollectionScreen extends ConsumerWidget {
                 height: 60,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
-                  color: DesignTokens.glassBackground(0.2),
+                  color: DesignTokens.getGlassBackground(theme.brightness, 0.2),
                 ),
                 child: Center(
                   child: Text(
@@ -202,7 +202,7 @@ class CollectionScreen extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(4),
-                          color: DesignTokens.glassBackground(0.15),
+                          color: DesignTokens.getGlassBackground(theme.brightness, 0.15),
                         ),
                         child: Text(
                           typeLabel,

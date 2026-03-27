@@ -112,7 +112,7 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
             maxChildSize: 0.94,
             builder: (context, scrollController) {
               return Container(
-                decoration: BoxDecoration(color: DesignTokens.appBackground, borderRadius: BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusLargeCards))),
+                decoration: BoxDecoration(color: DesignTokens.getAppBackground(Theme.of(context).brightness), borderRadius: BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusLargeCards))),
                 child: Column(
                   children: [
                     Container(margin: const EdgeInsets.only(top: 12, bottom: 8), width: 40, height: 4, decoration: BoxDecoration(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3), borderRadius: BorderRadius.circular(2))),

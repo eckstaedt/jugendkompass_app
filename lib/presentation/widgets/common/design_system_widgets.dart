@@ -241,13 +241,14 @@ class BadgeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 8,
         vertical: 4,
       ),
       decoration: BoxDecoration(
-        color: backgroundColor ?? DesignTokens.redBackground,
+        color: backgroundColor ?? DesignTokens.getRedBackground(brightness),
         borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
       ),
       child: Row(
@@ -311,7 +312,7 @@ class IconButtonContainer extends StatelessWidget {
         ),
         child: Icon(
           icon,
-          color: iconColor ?? DesignTokens.iconGrey,
+          color: iconColor ?? DesignTokens.getTextSecondary(Theme.of(context).brightness),
           size: size * 0.5,
         ),
       ),
@@ -337,7 +338,9 @@ class CustomDivider extends StatelessWidget {
     return Padding(
       padding: padding ?? const EdgeInsets.symmetric(vertical: DesignTokens.spacingMedium),
       child: Divider(
-        color: color ?? Colors.grey.shade200,
+        color: color ?? (Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey.shade800
+            : Colors.grey.shade200),
         thickness: height,
         height: height + 20,
       ),

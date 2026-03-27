@@ -88,7 +88,7 @@ class _VerseCardState extends ConsumerState<VerseCard>
           // Header with label and favorite icon
           BadgeWidget(
                 label: 'VERS DES TAGES',
-                backgroundColor: DesignTokens.redBackground,
+                backgroundColor: DesignTokens.getRedBackground(theme.brightness),
                 textColor: DesignTokens.primaryRed,
               ),
           const SizedBox(height: DesignTokens.spacingMedium),
@@ -107,7 +107,7 @@ class _VerseCardState extends ConsumerState<VerseCard>
           Text(
             '— ${translationAsync.whenOrNull(data: (d) => d.reference) ?? verse.reference}',
             style: theme.textTheme.titleMedium?.copyWith(
-              color: DesignTokens.textSecondary,
+              color: DesignTokens.getTextSecondary(theme.brightness),
               fontStyle: FontStyle.italic,
             ),
           ),

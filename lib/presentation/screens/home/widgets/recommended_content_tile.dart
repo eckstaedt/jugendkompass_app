@@ -128,7 +128,7 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
                 width: double.infinity,
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: DesignTokens.glassBackground(0.26),
+                  color: DesignTokens.getGlassBackground(Theme.of(context).brightness, 0.26),
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
                   border: DesignTokens.cardBorder(Theme.of(context).brightness),
                   boxShadow: [DesignTokens.shadowGlass],
@@ -146,7 +146,7 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
                           width: 80,
                           height: 80,
                           decoration: BoxDecoration(
-                            color: DesignTokens.appBackground,
+                            color: DesignTokens.getAppBackground(Theme.of(context).brightness),
                             borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
                             boxShadow: [DesignTokens.shadowSubtle],
                           ),
@@ -160,7 +160,7 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
                                         width: 80,
                                         height: 80,
                                         child: Icon(
-                                          item.isVideo ? Icons.play_circle_outline : Icons.article_outlined,
+                                          item.isVideo ? Icons.play_circle_outline : item.isMessage ? Icons.message_outlined : Icons.article_outlined,
                                           size: 32,
                                           color: DesignTokens.primaryRed,
                                         ),
@@ -202,7 +202,7 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
                               children: [
                                 if (widget.isNewest)
                                   BadgeWidget(label: 'NEU', backgroundColor: DesignTokens.primaryRed, textColor: Colors.white),
-                                BadgeWidget(label: item.isVideo ? 'VIDEO' : item.isKurznachricht ? 'KURZNACHRICHT' : 'ARTIKEL', backgroundColor: DesignTokens.redBackground, textColor: DesignTokens.primaryRed),
+                                BadgeWidget(label: item.isVideo ? 'VIDEO' : item.isKurznachricht ? 'KURZNACHRICHT' : 'ARTIKEL', backgroundColor: DesignTokens.getRedBackground(Theme.of(context).brightness), textColor: DesignTokens.primaryRed),
                                 if (item.hasAudio)
                                   BadgeWidget(label: 'AUDIO', backgroundColor: DesignTokens.successGreen.withOpacity(0.12), textColor: DesignTokens.successGreen, icon: Icons.headphones),
                               ],

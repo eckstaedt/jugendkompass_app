@@ -76,15 +76,15 @@ class ImpulseDetailScreen extends ConsumerWidget {
               title: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: Colors.black.withOpacity(0.7),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   displayTitle,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface,
+                    color: Colors.white,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -108,10 +108,10 @@ class ImpulseDetailScreen extends ConsumerWidget {
                                 ],
                               ),
                             ),
-                            child: Icon(
+                            child: const Icon(
                               Icons.lightbulb,
                               size: 80,
-                              color: theme.colorScheme.onSurface,
+                              color: Colors.white,
                             ),
                           ),
                         ),
@@ -128,7 +128,7 @@ class ImpulseDetailScreen extends ConsumerWidget {
                                 end: Alignment.bottomCenter,
                                 colors: [
                                   Colors.transparent,
-                                  theme.colorScheme.onSurface.withOpacity(0.8),
+                                  Colors.black.withOpacity(0.8),
                                 ],
                               ),
                             ),
@@ -147,11 +147,11 @@ class ImpulseDetailScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      child: Center(
+                      child: const Center(
                         child: Icon(
                           Icons.lightbulb,
                           size: 80,
-                          color: theme.colorScheme.onSurface,
+                          color: Colors.white,
                         ),
                       ),
                     ),

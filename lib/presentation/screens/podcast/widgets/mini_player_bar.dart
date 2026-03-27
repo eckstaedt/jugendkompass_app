@@ -90,7 +90,7 @@ class MiniPlayerBar extends ConsumerWidget {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: DesignTokens.textSecondary.withOpacity(0.4),
+                        color: DesignTokens.getTextSecondary(brightness).withOpacity(0.4),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -244,7 +244,7 @@ class MiniPlayerBar extends ConsumerWidget {
                             DesignTokens.primaryRed,
                           ),
                         ),
-                        error: (_, __) => const SizedBox.shrink(),
+                        error: (_, _) => const SizedBox.shrink(),
                       ),
                     ),
                   ),
@@ -395,7 +395,7 @@ class MiniPlayerBar extends ConsumerWidget {
                                     strokeWidth: 2),
                               ),
                             ),
-                            error: (_, __) => GestureDetector(
+                            error: (_, _) => GestureDetector(
                               onTap: () => audioService.playAudio(audio.audioUrl),
                               child: Padding(
                                 padding: const EdgeInsets.all(6),

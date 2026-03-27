@@ -330,7 +330,7 @@ class _PersistentNavBar extends ConsumerWidget {
                   isSelected ? selectedIcon : icon,
                   color: isSelected
                       ? DesignTokens.primaryRed
-                      : DesignTokens.textSecondary,
+                      : DesignTokens.getTextSecondary(Theme.of(context).brightness),
                   size: 28,
                 ),
                 const SizedBox(height: 4),

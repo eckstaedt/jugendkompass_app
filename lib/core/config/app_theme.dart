@@ -122,6 +122,7 @@ class AppTheme {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: true,
+      surfaceTintColor: Colors.transparent,
       titleTextStyle: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 18,
@@ -134,6 +135,7 @@ class AppTheme {
     cardTheme: CardThemeData(
       color: DesignTokens.cardBackground,
       elevation: 0,
+      surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
         side: BorderSide(
@@ -543,7 +545,7 @@ class AppTheme {
         color: DesignTokens.darkTextPrimary,
       ),
       side: BorderSide(
-        color: Colors.grey.shade700,
+        color: Colors.grey.shade800,
         width: 1.5,
       ),
       shape: RoundedRectangleBorder(

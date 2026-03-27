@@ -60,6 +60,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final brightness = theme.brightness;
 
     return Scaffold(
       body: SafeArea(
@@ -72,7 +73,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 child: Container(
                   padding: EdgeInsets.all(32),
                   decoration: BoxDecoration(
-                    color: DesignTokens.cardBackground,
+                    color: DesignTokens.getCardBackground(brightness),
                     borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
                     boxShadow: [DesignTokens.shadowLargeCard],
                   ),
@@ -113,12 +114,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           textStyle: theme.textTheme.titleLarge?.copyWith(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w800,
-                                color: DesignTokens.textPrimary,
+                                color: DesignTokens.getTextPrimary(brightness),
                               ) ??
-                              const TextStyle(
+                              TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF111111),
+                                color: DesignTokens.getTextPrimary(brightness),
                               ),
                         ),
                       ),
@@ -130,9 +131,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         textAlign: TextAlign.center,
                         style: GoogleFonts.inter(
                           textStyle: theme.textTheme.bodyMedium?.copyWith(
-                                color: DesignTokens.textSecondary,
+                                color: DesignTokens.getTextSecondary(brightness),
                               ) ??
-                              const TextStyle(color: Color(0xFF6F7479)),
+                              TextStyle(color: DesignTokens.getTextSecondary(brightness)),
                         ),
                       ),
                       SizedBox(height: DesignTokens.spacingLarge),
@@ -154,13 +155,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           decoration: InputDecoration(
                             hintText: 'Wie heißt du?',
                             hintStyle: GoogleFonts.inter(
-                              textStyle: const TextStyle(
-                                color: Color(0xFF6F7479),
+                              textStyle: TextStyle(
+                                color: DesignTokens.getTextSecondary(brightness),
                                 fontSize: 16,
                               ),
                             ),
                             filled: true,
-                            fillColor: DesignTokens.inputBackground,
+                            fillColor: brightness == Brightness.dark
+                                ? DesignTokens.darkCardBackground
+                                : DesignTokens.inputBackground,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(DesignTokens.radiusInputFields),
                               borderSide: BorderSide.none,

@@ -79,6 +79,11 @@ class DesignTokens {
 
   // Input background color used across app
   static const Color inputBackground = Color(0xFFE1E3E6);
+  static const Color darkInputBackground = Color(0xFF2A2A2A);
+
+  static Color getInputBackground(Brightness brightness) {
+    return brightness == Brightness.dark ? darkInputBackground : inputBackground;
+  }
 
   // Success / Positive color (used in search results etc.)
   static const Color successGreen = Color(0xFF2E7D32);
@@ -88,9 +93,9 @@ class DesignTokens {
   static Color glassBackground([double opacity = 0.18]) =>
     Colors.white.withValues(alpha: opacity);
 
-  // Dark mode glass background - higher opacity for more contrast
+  // Dark mode glass background - uses white with higher opacity for frosted glass on dark
   static Color glassDarkBackground([double opacity = 0.20]) =>
-    Colors.white.withValues(alpha: opacity);
+    Colors.white.withValues(alpha: opacity * 0.7);
 
   /// Standard card border for consistent contrast across the app.
   /// Use this for ALL card-like elements.
@@ -147,7 +152,7 @@ class DesignTokens {
   static const double buttonHeight = 56;
   static const double floatingButtonSize = 56;
 
-  // ⸻ TYPOGRAPHY HELPER
+  // ⸻ TYPOGRAPHY HELPER (prefer theme.textTheme for dark mode support)
   static TextStyle headlineStyle = const TextStyle(
     fontWeight: FontWeight.w800,
     fontSize: 30,
@@ -155,10 +160,24 @@ class DesignTokens {
     fontFamily: 'Inter',
   );
 
+  static TextStyle getHeadlineStyle(Brightness brightness) => TextStyle(
+    fontWeight: FontWeight.w800,
+    fontSize: 30,
+    color: getTextPrimary(brightness),
+    fontFamily: 'Inter',
+  );
+
   static TextStyle cardTitleStyle = const TextStyle(
     fontWeight: FontWeight.w700,
     fontSize: 16,
     color: textPrimary,
+    fontFamily: 'Inter',
+  );
+
+  static TextStyle getCardTitleStyle(Brightness brightness) => TextStyle(
+    fontWeight: FontWeight.w700,
+    fontSize: 16,
+    color: getTextPrimary(brightness),
     fontFamily: 'Inter',
   );
 
@@ -170,11 +189,27 @@ class DesignTokens {
     height: 1.4,
   );
 
+  static TextStyle getBodyTextStyle(Brightness brightness) => TextStyle(
+    fontWeight: FontWeight.w400,
+    fontSize: 16,
+    color: getTextPrimary(brightness),
+    fontFamily: 'Inter',
+    height: 1.4,
+  );
+
   static TextStyle captionStyle = const TextStyle(
     fontWeight: FontWeight.w600,
     fontSize: 13,
     letterSpacing: 1.2,
     color: textSecondary,
+    fontFamily: 'Inter',
+  );
+
+  static TextStyle getCaptionStyle(Brightness brightness) => TextStyle(
+    fontWeight: FontWeight.w600,
+    fontSize: 13,
+    letterSpacing: 1.2,
+    color: getTextSecondary(brightness),
     fontFamily: 'Inter',
   );
 }

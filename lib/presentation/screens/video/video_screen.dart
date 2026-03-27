@@ -263,7 +263,7 @@ class _VideoCardState extends ConsumerState<VideoCard> {
                           fit: BoxFit.cover,
                         )
                       : Container(
-                          color: DesignTokens.glassBackground(0.3),
+                          color: DesignTokens.getGlassBackground(Theme.of(context).brightness, 0.3),
                           child: const Icon(Icons.video_library, size: 48),
                         ),
 
