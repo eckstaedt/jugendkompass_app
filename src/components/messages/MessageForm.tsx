@@ -7,13 +7,15 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 
 interface MessageFormProps {
+  initialTitle?: string;
   initialMessage?: string;
   initialImageUrl?: string | null;
-  onSubmit: (data: { message: string; imageFile?: File }) => Promise<void>;
+  onSubmit: (data: { title?: string; message: string; imageFile?: File }) => Promise<void>;
   isSubmitting: boolean;
 }
 
-const MessageForm = ({ initialMessage = '', initialImageUrl, onSubmit, isSubmitting }: MessageFormProps) => {
+const MessageForm = ({ initialTitle = '', initialMessage = '', initialImageUrl, onSubmit, isSubmitting }: MessageFormProps) => {
+  const [title, setTitle] = useState(initialTitle);
   const [message, setMessage] = useState(initialMessage);
   const [imageFile, setImageFile] = useState<File | undefined>();
   const { toast } = useToast();
