@@ -23,7 +23,8 @@ const MessageForm = ({ initialTitle = '', initialMessage = '', initialImageUrl, 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await onSubmit({ message, imageFile });
+      await onSubmit({ title: title || undefined, message, imageFile });
+      setTitle('');
       setMessage('');
       setImageFile(undefined);
     } catch (error) {
