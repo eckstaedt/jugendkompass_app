@@ -1,5 +1,6 @@
 class MessageModel {
   final String id;
+  final String? title;
   final String message;
   final String? contentId;
   final String? imageUrl;
@@ -8,6 +9,7 @@ class MessageModel {
 
   MessageModel({
     required this.id,
+    this.title,
     required this.message,
     this.contentId,
     this.imageUrl,
@@ -18,6 +20,7 @@ class MessageModel {
   factory MessageModel.fromJson(Map<String, dynamic> json) {
     return MessageModel(
       id: json['id'].toString(),
+      title: json['title'] as String?,
       message: json['message'] as String? ?? '',
       contentId: json['content_id']?.toString(),
       imageUrl: json['image_url'] as String?,
@@ -31,6 +34,7 @@ class MessageModel {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'title': title,
       'message': message,
       'content_id': contentId,
       'image_url': imageUrl,
@@ -41,6 +45,7 @@ class MessageModel {
 
   MessageModel copyWith({
     String? id,
+    String? title,
     String? message,
     String? contentId,
     String? imageUrl,
@@ -49,6 +54,7 @@ class MessageModel {
   }) {
     return MessageModel(
       id: id ?? this.id,
+      title: title ?? this.title,
       message: message ?? this.message,
       contentId: contentId ?? this.contentId,
       imageUrl: imageUrl ?? this.imageUrl,
@@ -57,7 +63,28 @@ class MessageModel {
     );
   }
 
+  /// Strip HTML tags from a string
+  static String _stripHtml(String html) {
+    return html
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'")
+        .trim();
+  }
+
+  /// Plain text version of the message (HTML stripped)
+  String get plainText => _stripHtml(message);
+
   // Helper getters for UI compatibility
-  String get displayTitle => message.length > 80 ? '${message.substring(0, 80)}…' : message;
+  String get displayTitle {
+    if (title != null && title!.isNotEmpty) return title!;
+    final text = plainText;
+    return text.length > 80 ? '${text.substring(0, 80)}…' : text;
+  }
+
   String get body => message;
 }

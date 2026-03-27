@@ -52,6 +52,7 @@ class RecommendedItem {
       return (data as VideoModel).title;
     }
     if (contentType == 'message') {
+      // Use title if available, otherwise stripped plain text
       return (data as MessageModel).displayTitle;
     }
     return (data as PostModel).title;
