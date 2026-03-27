@@ -54,7 +54,7 @@ export const useCreateMessage = () => {
 
       const { data, error } = await supabase
         .from('messages')
-        .insert([{ message, image_url }])
+        .insert([{ title: title || null, message, image_url }])
         .select()
         .single();
 
