@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/domain/providers/recommendation_provider.dart';
 import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier;
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
@@ -76,7 +77,7 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
       if (audio == null) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Audio nicht gefunden')),
+            SnackBar(content: Text(AppTranslations.t('audio_not_found'))),
           );
         }
         return;
@@ -92,7 +93,7 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehler beim Abspielen: $e')),
+          SnackBar(content: Text('${AppTranslations.t('error_playing')}: $e')),
         );
       }
     }

@@ -7,8 +7,10 @@ import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.da
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 
 class PostDetailScreen extends ConsumerWidget {
   final PostModel post;
@@ -22,6 +24,7 @@ class PostDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final hasAudio = post.audioId != null;
+    ref.watch(languageProvider);
     final isInCollection = ref.watch(collectionProvider).any(
           (item) => item.id == post.id && item.type == CollectionItemType.post,
         );
@@ -321,7 +324,7 @@ class PostDetailScreen extends ConsumerWidget {
                             ),
                             label: Text(
                               isThisPlaying
-                                  ? 'Pause'
+                                  ? 'Pausieren'
                                   : isThisAudio
                                       ? 'Weiter anhören'
                                       : 'Artikel anhören',
@@ -454,8 +457,8 @@ class PostDetailScreen extends ConsumerWidget {
       if (audio == null) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Audio nicht gefunden'),
+            SnackBar(
+              content: Text(AppTranslations.t('audio_not_found')),
               backgroundColor: Colors.red,
             ),
           );
@@ -485,7 +488,7 @@ class PostDetailScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Fehler beim Abspielen: $e'),
+            content: Text('${AppTranslations.t('error_playing')}: $e'),
             backgroundColor: Colors.red,
           ),
         );

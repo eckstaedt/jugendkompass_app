@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
-import 'package:jugendkompass_app/domain/providers/language_provider.dart';
-import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 
 class ShopScreen extends ConsumerWidget {
   const ShopScreen({super.key});
@@ -10,8 +8,6 @@ class ShopScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    ref.watch(languageProvider);
-    final translate = ref.watch(stringTranslatorProvider);
     
     return Scaffold(
       appBar: AppBar(
@@ -32,7 +28,7 @@ class ShopScreen extends ConsumerWidget {
               ),
               const SizedBox(height: DesignTokens.spacingLarge),
               Text(
-                translate('shop_coming_soon_title'),
+                'Der Shop wird bald verfügbar sein!',
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -40,7 +36,7 @@ class ShopScreen extends ConsumerWidget {
               ),
               const SizedBox(height: DesignTokens.spacingMedium),
               Text(
-                translate('shop_coming_soon_subtitle'),
+                'Bis dahin kannst du dich zurücklehnen und dich auf neue Angebote freuen.',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withOpacity(0.6),
                 ),

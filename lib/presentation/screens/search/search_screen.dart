@@ -10,6 +10,7 @@ import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 
 // Combined content item for unified display
@@ -64,7 +65,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Suche'),
+        title: Text('Suche'),
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
@@ -289,10 +290,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             }
 
             if (combinedItems.isEmpty) {
-              return const EmptyState(
+              return EmptyState(
                 icon: Icons.explore_outlined,
-                title: 'Keine Inhalte gefunden',
-                message: 'Versuche einen anderen Filter oder Suchbegriff',
+                title: AppTranslations.t('no_content_found'),
+                message: AppTranslations.t('try_different_filter'),
               );
             }
 
@@ -305,11 +306,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               },
             );
           },
-          loading: () => const LoadingIndicator(message: 'Lade Videos...'),
-          error: (error, stack) => const LoadingIndicator(message: 'Lade Inhalte...'),
+          loading: () => LoadingIndicator(message: AppTranslations.t('loading_videos')),
+          error: (error, stack) => LoadingIndicator(message: AppTranslations.t('loading_content')),
         );
       },
-      loading: () => const LoadingIndicator(message: 'Lade Inhalte...'),
+      loading: () => LoadingIndicator(message: AppTranslations.t('loading_content')),
       error: (error, stack) => Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -317,7 +318,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             const Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
             Text(
-              'Fehler beim Laden',
+              AppTranslations.t('error_loading'),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
@@ -529,8 +530,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       if (audio == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Audio nicht gefunden'),
+            SnackBar(
+              content: Text(AppTranslations.t('audio_not_found')),
               backgroundColor: Colors.red,
             ),
           );
@@ -554,7 +555,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Fehler beim Abspielen: $e'),
+            content: Text('${AppTranslations.t('error_playing')}: $e'),
             backgroundColor: Colors.red,
           ),
         );

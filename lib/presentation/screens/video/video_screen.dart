@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:video_player/video_player.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
-import 'package:jugendkompass_app/domain/providers/language_provider.dart';
-import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/domain/providers/video_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
@@ -33,8 +31,6 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(languageProvider);
-    final translate = ref.watch(stringTranslatorProvider);
     final videosAsync = ref.watch(videosListProvider);
     final theme = Theme.of(context);
     final brightness = theme.brightness;
@@ -76,7 +72,7 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                     });
                   },
                   decoration: InputDecoration(
-                    hintText: 'Videos suchen',
+                    hintText: 'Videos suchen...',
                     hintStyle: TextStyle(
                       color: textSecondary,
                       fontSize: 16,
@@ -120,8 +116,8 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                   if (filteredVideos.isEmpty) {
                     return EmptyState(
                       icon: Icons.video_library_outlined,
-                      title: translate('no_videos_found'),
-                      message: translate('try_different_search'),
+                      title: 'Keine Videos gefunden',
+                      message: 'Versuche eine andere Suche',
                     );
                   }
 
@@ -144,7 +140,7 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                 },
                 loading: () => const LoadingIndicator(),
                 error: (error, stack) => Center(
-                  child: Text('${translate('Fehler: ')}$error'),
+                  child: Text('Fehler: $error'),
                 ),
               ),
             ),

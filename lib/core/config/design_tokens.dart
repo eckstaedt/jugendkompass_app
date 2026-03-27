@@ -7,7 +7,7 @@ class DesignTokens {
   static const Color primaryRedActive = Color(0xFF7A0000);
   static const Color redBackground = Color(0xFFF2DCDC);
   
-  static const Color appBackground = Color(0xFFF5F5F5);
+  static const Color appBackground = Color(0xFFF0F0F3);
   static const Color cardBackground = Color(0xFFFFFFFF);
   
   static const Color textPrimary = Color(0xFF111111);
@@ -15,14 +15,14 @@ class DesignTokens {
   static const Color iconGrey = Color(0xFF9AA0A6);
 
   // ⸻ FARBPALETTE - DARK MODE
-  static const Color darkAppBackground = Color(0xFF121212);
-  static const Color darkCardBackground = Color(0xFF1E1E1E);
+  static const Color darkAppBackground = Color(0xFF0A0A0A);
+  static const Color darkCardBackground = Color(0xFF1A1A1A);
   static const Color darkTextPrimary = Color(0xFFFFFFFF);
-  static const Color darkTextSecondary = Color(0xFFB0B0B0);
-  static const Color darkIconGrey = Color(0xFF808080);
+  static const Color darkTextSecondary = Color(0xFFA0A0A0);
+  static const Color darkIconGrey = Color(0xFF707070);
   
-  // Dark mode red background (more muted for dark theme)
-  static const Color darkRedBackground = Color(0xFF3D1515);
+  // Dark mode red background (more visible for dark theme)
+  static const Color darkRedBackground = Color(0xFF4A1818);
 
   // ⸻ BORDER RADIUS SYSTEM (iOS 26 Liquid Glass Design)
   static const double radiusLargeCards = 40; // Increased for flowing iOS 26 aesthetic
@@ -88,8 +88,8 @@ class DesignTokens {
   static Color glassBackground([double opacity = 0.18]) =>
     Colors.white.withValues(alpha: opacity);
 
-  // Dark mode glass background
-  static Color glassDarkBackground([double opacity = 0.15]) =>
+  // Dark mode glass background - higher opacity for more contrast
+  static Color glassDarkBackground([double opacity = 0.20]) =>
     Colors.white.withValues(alpha: opacity);
 
   // Helper to get appropriate color based on brightness

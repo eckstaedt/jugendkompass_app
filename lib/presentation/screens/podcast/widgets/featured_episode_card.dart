@@ -3,6 +3,7 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 
 class FeaturedEpisodeCard extends StatelessWidget {
   final AudioModel audio;
@@ -90,7 +91,7 @@ class FeaturedEpisodeCard extends StatelessWidget {
                           child: Text(
                           'FEATURED',
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface,
+                            color: Colors.white,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.2,
@@ -103,8 +104,20 @@ class FeaturedEpisodeCard extends StatelessWidget {
                     Text(
                       audio.title ?? audio.post?.title ?? 'Unbekannter Titel',
                         style: theme.textTheme.titleLarge?.copyWith(
-                          color: theme.colorScheme.onSurface,
+                          color: Colors.white,
                           fontWeight: FontWeight.w700,
+                          shadows: [
+                            Shadow(
+                              offset: const Offset(0, 1),
+                              blurRadius: 6,
+                              color: Colors.black.withOpacity(0.7),
+                            ),
+                            Shadow(
+                              offset: const Offset(0, 2),
+                              blurRadius: 12,
+                              color: Colors.black.withOpacity(0.4),
+                            ),
+                          ],
                         ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -139,7 +152,7 @@ class FeaturedEpisodeCard extends StatelessWidget {
                     ElevatedButton.icon(
                       onPressed: onPlay,
                       icon: const Icon(Icons.play_arrow, size: 20),
-                      label: const Text('Abspielen'),
+                      label: Text(AppTranslations.t('play')),
                       style: ElevatedButton.styleFrom(
                           backgroundColor: DesignTokens.primaryRed,
                           foregroundColor: Colors.white,

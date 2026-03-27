@@ -66,6 +66,22 @@ class RecommendedItem {
   bool get hasAudio => contentType == 'post' && (data as PostModel).audioId != null;
   bool get isVideo => contentType == 'video';
   bool get isArticle => contentType == 'post' && !hasAudio;
+  
+  /// Whether this is a Kurznachricht (short news post - no audio, no image, short body)
+  bool get isKurznachricht {
+    if (contentType != 'post') return false;
+    final p = data as PostModel;
+    // Kurznachrichten: posts with category "news" or without audio/image and short body
+    final categories = p.categoryNames ?? (p.categoryName != null ? [p.categoryName!] : []);
+    return categories.any((c) => c.toLowerCase() == 'news' || c.toLowerCase() == 'kurznachricht' || c.toLowerCase() == 'kurznachrichten');
+  }
+
+  DateTime get createdAt {
+    if (contentType == 'video') {
+      return (data as VideoModel).createdAt;
+    }
+    return (data as PostModel).createdAt;
+  }
 }
 
 final recommendedContentProvider = FutureProvider<List<RecommendedItem>>((ref) async {
@@ -89,6 +105,38 @@ final recommendedContentProvider = FutureProvider<List<RecommendedItem>>((ref) a
     return combined.take(10).toList();
   } catch (e) {
     throw Exception('Fehler beim Laden der Empfehlungen: $e');
+  }
+});
+
+/// Paginated content provider - fetches all content (posts, videos, audios) sorted by date
+/// Returns batches of 50 items. Parameter is the page number (0-indexed).
+final paginatedContentProvider = FutureProvider.family<List<RecommendedItem>, int>((ref, page) async {
+  try {
+    final postRepository = ref.watch(postRepositoryProvider);
+    final videoRepository = ref.watch(videoRepositoryProvider);
+    
+    final batchSize = 50;
+    // Fetch more than needed to account for merging
+    final posts = await postRepository.getPostList(limit: batchSize, offset: page * batchSize);
+    final videos = await videoRepository.getVideoList(limit: batchSize, offset: page * batchSize);
+
+    // Convert to RecommendedItems
+    final allItems = <RecommendedItem>[];
+    
+    for (final post in posts) {
+      allItems.add(RecommendedItem.fromPost(post));
+    }
+    
+    for (final video in videos) {
+      allItems.add(RecommendedItem.fromVideo(video));
+    }
+
+    // Sort by creation date (newest first)
+    allItems.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    return allItems;
+  } catch (e) {
+    return [];
   }
 });
 

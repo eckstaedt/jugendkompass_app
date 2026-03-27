@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/domain/providers/favorites_provider.dart';
 import 'package:jugendkompass_app/domain/providers/content_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/content/widgets/content_card.dart';
@@ -15,7 +16,7 @@ class FavoritesScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Favoriten'),
+        title: Text('Favoriten'),
         centerTitle: true,
         actions: [
           if (favorites.isNotEmpty)
@@ -28,7 +29,7 @@ class FavoritesScreen extends ConsumerWidget {
         ],
       ),
       body: favorites.isEmpty
-          ? const EmptyState(
+          ? EmptyState(
               icon: Icons.favorite_border,
               title: 'Keine Favoriten',
               message: 'Markiere Inhalte als Favoriten, um sie hier zu sehen.',
@@ -71,9 +72,9 @@ class FavoritesScreen extends ConsumerWidget {
                             ref.read(favoritesProvider.notifier).removeFavorite(content.id);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('${content.displayTitle} aus Favoriten entfernt'),
+                                content: Text('${content.displayTitle} ${AppTranslations.t('removed_from_favorites')}'),
                                 action: SnackBarAction(
-                                  label: 'Rückgängig',
+                                  label: AppTranslations.t('undo'),
                                   onPressed: () {
                                     ref.read(favoritesProvider.notifier).toggleFavorite(content.id);
                                   },

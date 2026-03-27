@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
-import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jugendkompass_app/domain/providers/profile_provider.dart';
 import 'package:jugendkompass_app/domain/providers/theme_provider.dart';
-import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/favorites_provider.dart';
 import 'package:jugendkompass_app/domain/providers/favorite_verses_provider.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
@@ -29,8 +27,6 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notificationsEnabled = ref.watch(notificationsProvider);
     final themeMode = ref.watch(themeModeProvider);
-    final currentLanguage = ref.watch(languageProvider);
-    final translations = ref.watch(translationsProvider);
     final translate = ref.watch(stringTranslatorProvider);
     final theme = Theme.of(context);
     final brightness = theme.brightness;
@@ -38,7 +34,7 @@ class ProfileScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(translations.get('settings')),
+        title: const Text('Einstellungen'),
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
@@ -132,35 +128,19 @@ class ProfileScreen extends ConsumerWidget {
           ),
           SizedBox(height: DesignTokens.spacingSmall),
 
-          // Language selection with proper design
+          // Name editing
           ListTile(
             tileColor: DesignTokens.glassBackground(0.12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            leading: const Icon(Icons.language_outlined),
-            title: Text(translate('Sprache')),
-            subtitle: Text(currentLanguage.displayName),
-            trailing: DropdownButton<AppLanguage>(
-              value: currentLanguage,
-              onChanged: (AppLanguage? newLanguage) {
-                if (newLanguage != null) {
-                  ref.read(languageProvider.notifier).setLanguage(newLanguage);
-                }
-              },
-              items: AppLanguage.values.map((lang) {
-                return DropdownMenuItem<AppLanguage>(
-                  value: lang,
-                  child: Text(lang.displayName),
-                );
-              }).toList(),
-              underline: Container(),
-              icon: const Icon(Icons.arrow_drop_down, color: DesignTokens.primaryRed),
-            ),
+            leading: const Icon(Icons.person_outline),
+            title: Text(translate('Name')),
+            subtitle: Text(ref.watch(userNameProvider) ?? translate('Nicht festgelegt')),
+            trailing: const Icon(Icons.edit_outlined, size: 20),
+            onTap: () => _showNameEditDialog(context, ref, translate),
           ),
 
           SizedBox(height: DesignTokens.spacingMedium),
-
-          // Favorite Verses Section Header
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
@@ -298,6 +278,55 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _showNameEditDialog(BuildContext context, WidgetRef ref, String Function(String) translate) async {
+    final currentName = ref.watch(userNameProvider) ?? '';
+    final controller = TextEditingController(text: currentName);
+    
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(translate('Name ändern')),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          decoration: InputDecoration(
+            hintText: translate('Dein Name'),
+            border: const OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(translate('Abbrechen')),
+          ),
+          FilledButton(
+            onPressed: () {
+              final name = controller.text.trim();
+              if (name.length >= 2) {
+                Navigator.pop(context, name);
+              }
+            },
+            child: Text(translate('Speichern')),
+          ),
+        ],
+      ),
+    );
+    
+    if (newName != null && newName.isNotEmpty && context.mounted) {
+      await UserPreferencesService.instance.setUserName(newName);
+      ref.read(userNameProvider.notifier).state = newName;
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(translate('Name gespeichert')),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _showDeleteDataDialog(BuildContext context, WidgetRef ref, String Function(String) translate) async {

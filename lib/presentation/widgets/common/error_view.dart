@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 
 class ErrorView extends StatelessWidget {
   final String message;
@@ -28,7 +29,7 @@ class ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Fehler',
+              AppTranslations.t('error'),
               style: theme.textTheme.headlineSmall?.copyWith(
                 color: colorScheme.error,
               ),
@@ -44,7 +45,7 @@ class ErrorView extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Erneut versuchen'),
+                label: Text(AppTranslations.t('try_again')),
               ),
             ],
           ],

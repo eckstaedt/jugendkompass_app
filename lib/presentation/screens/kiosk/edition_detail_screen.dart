@@ -3,6 +3,7 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier;
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
@@ -135,13 +136,13 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
                         data: (audios) => postsAsync.when(
                           data: (posts) => _buildContent(context, scrollController, posts, audios, translate),
                           loading: () => const Center(child: CircularProgressIndicator()),
-                          error: (e, s) => Center(child: Text('${translate('Fehler: ')}$e')),
+                          error: (e, s) => Center(child: Text('Fehler: $e')),
                         ),
                         loading: () => const Center(child: CircularProgressIndicator()),
                         error: (e, s) => postsAsync.when(
                           data: (posts) => _buildContent(context, scrollController, posts, [], translate),
                           loading: () => const Center(child: CircularProgressIndicator()),
-                          error: (e, s) => Center(child: Text('${translate('Fehler: ')}$e')),
+                          error: (e, s) => Center(child: Text('Fehler: $e')),
                         ),
                       ),
                     ),
@@ -174,7 +175,7 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
           FilledButton.icon(
             onPressed: () => _playEditionAudios(context, audios),
             icon: const Icon(Icons.play_arrow, size: 24),
-            label: const Text('Ausgabe anhören', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            label: Text('Ausgabe anhören', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             style: FilledButton.styleFrom(
               backgroundColor: DesignTokens.primaryRed,
               foregroundColor: Colors.white,
@@ -333,7 +334,7 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
       currentAudioNotifier.value = audios.first;
       // Mini player bar appears automatically – no navigation needed
     } catch (e) {
-      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Fehler beim Abspielen: $e'), backgroundColor: Colors.red));
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppTranslations.t('error_playing')}: $e'), backgroundColor: Colors.red));
     }
   }
 
@@ -343,7 +344,7 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
       final audioRepository = ref.read(audioRepositoryProvider);
       final audio = await audioRepository.getAudioById(post.audioId!);
       if (audio == null) {
-        if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Audio nicht gefunden'), backgroundColor: Colors.red));
+        if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppTranslations.t('audio_not_found')), backgroundColor: Colors.red));
         return;
       }
       final audioService = ref.read(audioServiceProvider);
@@ -354,7 +355,7 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
       currentAudioNotifier.value = audio;
       // Mini player bar appears automatically – no navigation needed
     } catch (e) {
-      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Fehler beim Abspielen: $e'), backgroundColor: Colors.red));
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppTranslations.t('error_playing')}: $e'), backgroundColor: Colors.red));
     }
   }
 
@@ -365,11 +366,11 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
       if (canLaunch) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
-        throw Exception('PDF konnte nicht geöffnet werden');
+        throw Exception(AppTranslations.t('pdf_not_opened'));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Fehler beim Öffnen des PDFs: $e'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppTranslations.t('error_opening_pdf')}: $e'), backgroundColor: Colors.red));
       }
     }
   }

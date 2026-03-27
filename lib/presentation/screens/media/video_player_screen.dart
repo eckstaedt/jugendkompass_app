@@ -4,6 +4,7 @@ import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 
 class VideoPlayerScreen extends ConsumerStatefulWidget {
@@ -57,7 +58,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
         });
       } else {
         setState(() {
-          _error = 'Ungültige YouTube URL';
+          _error = AppTranslations.t('invalid_youtube_url');
         });
       }
     } else {
@@ -107,7 +108,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = 'Fehler beim Laden des Videos: $e';
+          _error = '${AppTranslations.t('error_loading_video')}: $e';
         });
       }
     }
@@ -184,7 +185,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                         _checkVideoType();
                       },
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Erneut versuchen'),
+                      label: Text(AppTranslations.t('try_again')),
                     ),
                   ],
                 ),

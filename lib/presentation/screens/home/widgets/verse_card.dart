@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/data/models/verse_model.dart';
-import 'package:jugendkompass_app/domain/providers/favorite_verses_provider.dart';
 import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -63,8 +62,6 @@ class _VerseCardState extends ConsumerState<VerseCard>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final favoriteVerses = ref.watch(favoriteVersesProvider);
-    final isFavorite = favoriteVerses.any((v) => v.id == widget.verse.id);
     final verse = widget.verse;
 
     // Translate verse content to the selected app language
@@ -89,28 +86,11 @@ class _VerseCardState extends ConsumerState<VerseCard>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header with label and favorite icon
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              BadgeWidget(
+          BadgeWidget(
                 label: 'VERS DES TAGES',
                 backgroundColor: DesignTokens.redBackground,
                 textColor: DesignTokens.primaryRed,
               ),
-              // Favorite icon (top right)
-              GestureDetector(
-                onTap: () {
-                  ref.read(favoriteVersesProvider.notifier).toggleFavoriteVerse(verse);
-                },
-                child: Icon(
-                  isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: DesignTokens.primaryRed,
-                  size: 24,
-                ),
-              ),
-            ],
-          ),
           const SizedBox(height: DesignTokens.spacingMedium),
           // Verse text itself uses Merriweather (serif) per design request.
           Text(

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/profile_provider.dart';
 import 'package:jugendkompass_app/domain/providers/supabase_provider.dart';
 import 'package:jugendkompass_app/data/models/profile_model.dart';
@@ -79,7 +80,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text('Bild erfolgreich hochgeladen'),
               backgroundColor: Colors.green,
             ),
@@ -117,7 +118,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
     if (name.isEmpty || name.length < 2) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Bitte gib einen Namen mit mindestens 2 Zeichen ein'),
           backgroundColor: Colors.orange,
         ),
@@ -170,7 +171,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Profil gespeichert'),
           backgroundColor: Colors.green,
         ),
@@ -197,6 +198,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    ref.watch(languageProvider);
     
     // Load avatar if not already loaded
     if (_avatarUrl == null) {
@@ -216,7 +218,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profil bearbeiten'),
+        title: Text('Profil bearbeiten'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -265,7 +267,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             // Name TextField
             TextField(
               controller: _nameController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Name',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.person_outline),
@@ -289,7 +291,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                         color: Colors.white,
                       ),
                     )
-                  : const Text('Speichern'),
+                  : Text('Speichern'),
             ),
           ],
         ),

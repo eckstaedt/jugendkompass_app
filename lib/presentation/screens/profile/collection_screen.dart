@@ -5,6 +5,13 @@ import 'package:jugendkompass_app/data/models/collection_item_model.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
+import 'package:jugendkompass_app/domain/providers/post_provider.dart';
+import 'package:jugendkompass_app/domain/providers/impulse_provider.dart';
+import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
+import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/impulse/impulse_detail_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/kiosk/edition_detail_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 
@@ -20,7 +27,7 @@ class CollectionScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(translate('Deine Sammlung')),
+        title: Text('Deine Sammlung'),
         elevation: 0,
         backgroundColor: Colors.transparent,
         actions: collectionItems.isNotEmpty
@@ -28,17 +35,17 @@ class CollectionScreen extends ConsumerWidget {
                 PopupMenuButton(
                   itemBuilder: (context) => [
                     PopupMenuItem(
-                      child: const Text('Alle löschen'),
+                      child: Text('Alle löschen'),
                       onTap: () {
                         showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
-                            title: const Text('Sammlung leeren?'),
-                            content: const Text('Möchtest du wirklich alle Inhalte aus deiner Sammlung löschen?'),
+                            title: Text('Sammlung leeren?'),
+                            content: Text('Möchtest du wirklich alle Inhalte aus deiner Sammlung löschen?'),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context),
-                                child: const Text('Abbrechen'),
+                                child: Text('Abbrechen'),
                               ),
                               FilledButton.tonal(
                                 onPressed: () {
@@ -46,7 +53,7 @@ class CollectionScreen extends ConsumerWidget {
                                   ref.invalidate(collectionProvider);
                                   Navigator.pop(context);
                                 },
-                                child: const Text('Löschen'),
+                                child: Text('Löschen'),
                               ),
                             ],
                           ),
@@ -75,7 +82,7 @@ class CollectionScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Speichern Sie Inhalte mit dem Speichersymbol',
+                    'Speichere Inhalte mit dem Lesezeichen-Symbol',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -123,7 +130,9 @@ class CollectionScreen extends ConsumerWidget {
         ),
         child: const Icon(Icons.delete, color: Colors.white),
       ),
-      child: RoundedCard(
+      child: GestureDetector(
+        onTap: () => _navigateToItem(context, ref, item),
+        child: RoundedCard(
         padding: const EdgeInsets.all(12),
         glass: true,
         backgroundColor: DesignTokens.glassBackgroundDeep(0.12),
@@ -230,7 +239,59 @@ class CollectionScreen extends ConsumerWidget {
           ],
         ),
       ),
+      ),
     );
+  }
+
+  Future<void> _navigateToItem(BuildContext context, WidgetRef ref, CollectionItem item) async {
+    switch (item.type) {
+      case CollectionItemType.video:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => VideoPlayerScreen(
+              videoUrl: item.id,
+              title: item.title,
+              imageUrl: item.imageUrl,
+              description: item.description,
+            ),
+          ),
+        );
+        break;
+      case CollectionItemType.post:
+        final post = await ref.read(postDetailProvider(item.id).future);
+        if (post != null && context.mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PostDetailScreen(post: post),
+            ),
+          );
+        }
+        break;
+      case CollectionItemType.impulse:
+        final impulse = await ref.read(impulseDetailProvider(item.id).future);
+        if (impulse != null && context.mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ImpulseDetailScreen(impulse: impulse),
+            ),
+          );
+        }
+        break;
+      case CollectionItemType.edition:
+        final edition = await ref.read(editionDetailProvider(item.id).future);
+        if (edition != null && context.mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => EditionDetailScreen(edition: edition),
+            ),
+          );
+        }
+        break;
+    }
   }
 
   String _getTypeEmoji(CollectionItemType type) {
@@ -249,13 +310,13 @@ class CollectionScreen extends ConsumerWidget {
   String _getTypeLabel(CollectionItemType type, String Function(String) translate) {
     switch (type) {
       case CollectionItemType.impulse:
-        return translate('impulse_type');
+        return 'Impuls';
       case CollectionItemType.video:
-        return translate('video_type');
+        return 'Video';
       case CollectionItemType.post:
         return translate('Artikel');
       case CollectionItemType.edition:
-        return translate('edition_type');
+        return 'Ausgabe';
     }
   }
 }

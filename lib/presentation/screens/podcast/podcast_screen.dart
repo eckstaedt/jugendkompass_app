@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier;
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
@@ -105,7 +106,7 @@ class PodcastScreen extends ConsumerWidget {
                               Padding(
                                 padding: const EdgeInsets.only(right: 8),
                                 child: FilterChip(
-                                  label: const Text('Alle'),
+                                  label: Text(AppTranslations.t('all_filter')),
                                   selected: selectedCategory == null,
                                   onSelected: (_) {
                                     ref

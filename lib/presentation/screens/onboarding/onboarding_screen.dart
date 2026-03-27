@@ -190,9 +190,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             disabledBackgroundColor: DesignTokens.primaryRed.withOpacity(0.5),
                             disabledForegroundColor: Colors.white.withOpacity(0.7),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Los geht\'s 🚀',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                             ),

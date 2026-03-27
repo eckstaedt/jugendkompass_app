@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:just_audio/just_audio.dart' as just_audio;
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 
@@ -61,7 +62,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      'Wiedergabegeschwindigkeit',
+                      AppTranslations.t('playback_speed'),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -73,7 +74,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                       final isSelected = speed == _currentSpeed;
                       return ListTile(
                         title: Text(
-                          speed == 1.0 ? '1× Normal' : '${speed}×',
+                          speed == 1.0 ? '1× Normal' : '$speed×',
                           style: TextStyle(
                             fontWeight: isSelected
                                 ? FontWeight.w700
@@ -124,8 +125,8 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
 
     if (currentAudio == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Player')),
-        body: const Center(child: Text('Kein Audio ausgewählt')),
+        appBar: AppBar(title: Text(AppTranslations.t('player'))),
+        body: Center(child: Text(AppTranslations.t('no_audio_selected'))),
       );
     }
 
@@ -143,7 +144,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                 child: CachedNetworkImage(
                   imageUrl: currentAudio.imageUrl!,
                   fit: BoxFit.cover,
-                  errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                  errorWidget: (_, _, _) => const SizedBox.shrink(),
                 ),
               ),
             ),
@@ -200,7 +201,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                               child: Text(
                                 _currentSpeed == 1.0
                                     ? '1×'
-                                    : '${_currentSpeed}×',
+                                    : '$_currentSpeed×',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 13,
@@ -246,13 +247,13 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                   ? CachedNetworkImage(
                                       imageUrl: currentAudio.imageUrl!,
                                       fit: BoxFit.cover,
-                                      placeholder: (_, __) => Container(
+                                      placeholder: (_, _) => Container(
                                         color: theme.colorScheme
                                             .surfaceContainerHighest,
                                         child: const Center(
                                             child: CircularProgressIndicator()),
                                       ),
-                                      errorWidget: (_, __, ___) => Container(
+                                      errorWidget: (_, _, _) => Container(
                                         color: theme.colorScheme
                                             .surfaceContainerHighest,
                                         child: Icon(Icons.podcasts,
@@ -335,7 +336,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                 backgroundColor:
                                     DesignTokens.primaryRed.withOpacity(0.15),
                               ),
-                              error: (_, __) => const SizedBox.shrink(),
+                              error: (_, _) => const SizedBox.shrink(),
                             ),
                           ),
                         ),
@@ -429,7 +430,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                           strokeWidth: 3, color: Colors.white),
                                     ),
                                   ),
-                                  error: (_, __) => GestureDetector(
+                                  error: (_, _) => GestureDetector(
                                     onTap: () =>
                                         audioService.playAudio(currentAudio.audioUrl),
                                     child: const _PlayPauseShell(
@@ -514,7 +515,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                                   .notifier)
                                               .state = 0;
                                         },
-                                        child: Text('Leeren',
+                                        child: Text(AppTranslations.t('delete_action'),
                                             style: TextStyle(
                                                 color:
                                                     DesignTokens.primaryRed)),
@@ -537,7 +538,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                                 width: 44,
                                                 height: 44,
                                                 fit: BoxFit.cover,
-                                                errorWidget: (_, __, ___) =>
+                                                errorWidget: (_, _, _) =>
                                                     const SizedBox(
                                                         width: 44,
                                                         height: 44,
@@ -693,8 +694,8 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                                               height: 72,
                                                               fit: BoxFit.cover,
                                                               errorWidget: (_,
-                                                                      __,
-                                                                      ___) =>
+                                                                      _,
+                                                                      _) =>
                                                                   Container(
                                                                       width: 130,
                                                                       height: 72,
@@ -742,7 +743,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                             );
                           },
                           loading: () => const SizedBox.shrink(),
-                          error: (_, __) => const SizedBox.shrink(),
+                          error: (_, _) => const SizedBox.shrink(),
                         ),
 
                         const SizedBox(height: 36),

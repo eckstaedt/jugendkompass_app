@@ -18,7 +18,6 @@ class ContentDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // First, check the content type by loading the content
     final contentAsync = ref.watch(contentDetailProvider(contentId));
 
     return contentAsync.when(
@@ -32,7 +31,6 @@ class ContentDetailScreen extends ConsumerWidget {
           );
         }
 
-        // If it's a video, load and show video player
         if (content.isVideo) {
           final videoAsync = ref.watch(videoByContentIdProvider(contentId));
           return videoAsync.when(
@@ -68,7 +66,6 @@ class ContentDetailScreen extends ConsumerWidget {
           );
         }
 
-        // Otherwise, load post by content_id
         final postsAsync = ref.watch(postsListProvider(
           PostFilter(contentId: contentId, limit: 1),
         ));
@@ -83,8 +80,6 @@ class ContentDetailScreen extends ConsumerWidget {
                 ),
               );
             }
-
-            // Show PostDetailScreen with the loaded post
             return PostDetailScreen(post: posts.first);
           },
           loading: () => Scaffold(

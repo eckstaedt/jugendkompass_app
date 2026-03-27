@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:jugendkompass_app/data/models/impulse_model.dart';
 import 'package:jugendkompass_app/domain/providers/impulse_provider.dart';
-import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
@@ -17,14 +16,11 @@ class ImpulseListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(languageProvider);
-    final translate = ref.watch(stringTranslatorProvider);
-    
     final impulsesAsync = ref.watch(dailyImpulsesProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Impulse'),
+        title: Text('Impulse'),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -35,8 +31,8 @@ class ImpulseListScreen extends ConsumerWidget {
             if (impulses.isEmpty) {
               return EmptyState(
                 icon: Icons.lightbulb_outline,
-                title: translate('no_impulses_available'),
-                message: translate('no_impulses_message'),
+                title: 'Keine Impulse verfügbar',
+                message: 'Aktuell gibt es keine Impulse zum Anzeigen.',
               );
             }
 
@@ -62,10 +58,10 @@ class ImpulseListScreen extends ConsumerWidget {
             );
           },
           loading: () => LoadingIndicator(
-            message: translate('loading_impulses'),
+            message: 'Lade Impulse...',
           ),
           error: (error, stack) => ErrorView(
-            message: '${translate('error_loading_impulses')}: $error',
+            message: '${'Fehler beim Laden der Impulse'}: $error',
             onRetry: () => ref.invalidate(dailyImpulsesProvider),
           ),
         ),
@@ -203,7 +199,7 @@ class _ImpulseListItem extends ConsumerWidget {
                     FilledButton.tonalIcon(
                       onPressed: onTap,
                       icon: const Icon(Icons.arrow_forward, size: 16),
-                      label: const Text('Lesen'),
+                      label: Text(ref.watch(stringTranslatorProvider)('read')),
                       style: FilledButton.styleFrom(
                         minimumSize: const Size(0, 32),
                         padding: const EdgeInsets.symmetric(
