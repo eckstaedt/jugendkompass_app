@@ -68,6 +68,7 @@ const MessageItem = ({ message, onUpdate, onDelete }: MessageItemProps) => {
             <DialogTitle>Nachricht bearbeiten</DialogTitle>
           </DialogHeader>
           <MessageForm
+            initialTitle={message.title || ''}
             initialMessage={message.message}
             initialImageUrl={message.image_url}
             onSubmit={async (data) => {

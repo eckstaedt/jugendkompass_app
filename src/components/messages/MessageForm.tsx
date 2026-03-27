@@ -39,6 +39,16 @@ const MessageForm = ({ initialTitle = '', initialMessage = '', initialImageUrl, 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
+        <Label htmlFor="title">Titel (optional)</Label>
+        <Input
+          id="title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Titel der Nachricht"
+        />
+      </div>
+
+      <div className="space-y-2">
         <Label>Nachricht</Label>
         <RichTextEditor content={message} onChange={setMessage} />
       </div>

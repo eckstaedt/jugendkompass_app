@@ -103,7 +103,7 @@ export const useUpdateMessage = () => {
 
       const { data, error } = await supabase
         .from('messages')
-        .update({ message, ...(image_url ? { image_url } : {}) })
+        .update({ title: title || null, message, ...(image_url ? { image_url } : {}) })
         .eq('id', id)
         .select()
         .single();
