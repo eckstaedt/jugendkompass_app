@@ -59,7 +59,7 @@ final currentQueueIndexProvider = StateProvider<int>((ref) => 0);
 final miniPlayerBottomOffsetProvider = StateProvider<double>((ref) => 0);
 
 /// Whether the main app navbar should be shown.
-/// Set to true when [BottomNavScreen] is active, false on onboarding / login.
+/// Defaults to false; set to true by BottomNavScreen when active.
 final navBarVisibleProvider = StateProvider<bool>((ref) => false);
 
 final nextAudioProvider = Provider<AudioModel?>((ref) {

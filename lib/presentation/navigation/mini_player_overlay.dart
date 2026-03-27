@@ -8,8 +8,19 @@ const kFullPlayerRouteName = '/full_player';
 /// Route name used when pushing [VideoPlayerScreen].
 const kVideoPlayerRouteName = '/video_player';
 
+/// Route name used for the onboarding / name-input screen.
+const kOnboardingRouteName = '/onboarding';
+
+/// Route name used for [EditionDetailScreen] (inside an Ausgabe).
+const kEditionDetailRouteName = '/edition_detail';
+
 /// Route names where the navbar and mini bar should be hidden.
-const _kHideNavRoutes = {kFullPlayerRouteName, kVideoPlayerRouteName};
+const _kHideNavRoutes = {
+  kFullPlayerRouteName,
+  kVideoPlayerRouteName,
+  kOnboardingRouteName,
+  kEditionDetailRouteName,
+};
 
 /// A [NavigatorObserver] that tracks whether [FullPlayerScreen] is currently
 /// on top of the navigation stack.

@@ -34,21 +34,6 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Hide the bottom navigation bar when this screen is shown
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(navBarVisibleProvider.notifier).state = false;
-    });
-  }
-
-  @override
-  void dispose() {
-    // Restore the bottom navigation bar when leaving this screen
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.read(navBarVisibleProvider.notifier).state = true;
-      }
-    });
-    super.dispose();
   }
 
   @override

@@ -212,8 +212,14 @@ class _MiniPlayerScaffoldState extends ConsumerState<_MiniPlayerScaffold> {
               type: MaterialType.transparency,
               child: _PersistentNavBar(
                 selectedIndex: selectedIndex,
-                onItemTapped: (i) =>
-                    ref.read(bottomNavIndexProvider.notifier).setIndex(i),
+                onItemTapped: (i) {
+                  // Pop back to root if we're on a pushed detail screen.
+                  if (_routeDepth > 0) {
+                    widget.navigatorKey.currentState
+                        ?.popUntil((route) => route.isFirst);
+                  }
+                  ref.read(bottomNavIndexProvider.notifier).setIndex(i);
+                },
               ),
             ),
           ),

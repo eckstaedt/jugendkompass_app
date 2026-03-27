@@ -8,6 +8,8 @@ import 'package:jugendkompass_app/domain/providers/string_translator_provider.da
 import 'package:jugendkompass_app/domain/providers/post_provider.dart';
 import 'package:jugendkompass_app/domain/providers/impulse_provider.dart';
 import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
+import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
+    show kEditionDetailRouteName;
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/impulse/impulse_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/kiosk/edition_detail_screen.dart';
@@ -286,6 +288,7 @@ class CollectionScreen extends ConsumerWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
+              settings: RouteSettings(name: kEditionDetailRouteName),
               builder: (context) => EditionDetailScreen(edition: edition),
             ),
           );

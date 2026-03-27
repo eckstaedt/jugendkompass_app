@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:jugendkompass_app/data/models/edition_model.dart';
+import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
+    show kEditionDetailRouteName;
 import 'package:jugendkompass_app/presentation/screens/kiosk/edition_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
@@ -24,6 +26,7 @@ class EditionCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
+            settings: RouteSettings(name: kEditionDetailRouteName),
             builder: (context) => EditionDetailScreen(edition: edition),
           ),
         );
