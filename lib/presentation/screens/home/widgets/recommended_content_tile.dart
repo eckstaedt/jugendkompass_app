@@ -126,12 +126,9 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
                 width: double.infinity,
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: DesignTokens.glassBackground(0.20),
+                  color: DesignTokens.glassBackground(0.26),
                   borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.12),
-                    width: 1,
-                  ),
+                  border: DesignTokens.cardBorder(Theme.of(context).brightness),
                   boxShadow: [DesignTokens.shadowGlass],
                 ),
                 child: Padding(

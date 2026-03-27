@@ -35,11 +35,11 @@ class DesignTokens {
 
   // ⸻ SHADOW SYSTEM - iOS 26 Liquid Glass Aesthetic
   
-  // Große Cards - Weiches Shadow (Minimal für Glass Effect)
+  // Große Cards - Weiches Shadow
   static BoxShadow shadowLargeCard = BoxShadow(
-    color: Colors.black.withOpacity(0.06),
-    blurRadius: 20,
-    offset: const Offset(0, 10),
+    color: Colors.black.withOpacity(0.10),
+    blurRadius: 24,
+    offset: const Offset(0, 8),
   );
 
   // Buttons - Primary Red Shadow
@@ -58,16 +58,16 @@ class DesignTokens {
 
   // Minimales Shadow für subtile Elevation (Glass layers)
   static BoxShadow shadowSubtle = BoxShadow(
-    color: Colors.black.withOpacity(0.04),
-    blurRadius: 10,
-    offset: const Offset(0, 3),
+    color: Colors.black.withOpacity(0.07),
+    blurRadius: 12,
+    offset: const Offset(0, 4),
   );
 
-  // iOS 26 Glass shadow - Ultra-subtle for glass cards
+  // iOS 26 Glass shadow - Subtle elevation for glass cards
   static BoxShadow shadowGlass = BoxShadow(
-    color: Colors.black.withOpacity(0.03),
-    blurRadius: 8,
-    offset: const Offset(0, 2),
+    color: Colors.black.withOpacity(0.08),
+    blurRadius: 12,
+    offset: const Offset(0, 4),
   );
 
   // ⸻ SPACING SYSTEM
@@ -91,6 +91,17 @@ class DesignTokens {
   // Dark mode glass background - higher opacity for more contrast
   static Color glassDarkBackground([double opacity = 0.20]) =>
     Colors.white.withValues(alpha: opacity);
+
+  /// Standard card border for consistent contrast across the app.
+  /// Use this for ALL card-like elements.
+  static Border cardBorder(Brightness brightness) {
+    return Border.all(
+      color: brightness == Brightness.dark
+          ? Colors.white.withValues(alpha: 0.12)
+          : Colors.black.withValues(alpha: 0.08),
+      width: 1,
+    );
+  }
 
   // Helper to get appropriate color based on brightness
   static Color getAppBackground(Brightness brightness) {

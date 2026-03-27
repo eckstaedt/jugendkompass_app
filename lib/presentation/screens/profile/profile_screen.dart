@@ -92,8 +92,11 @@ class ProfileScreen extends ConsumerWidget {
 
           // Notification toggle
           SwitchListTile(
-            tileColor: DesignTokens.glassBackground(0.12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
+            tileColor: DesignTokens.getGlassBackground(theme.brightness, 0.22),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+              side: BorderSide(color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08)),
+            ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             title: Text(translate('Benachrichtigungen')),
             subtitle: Text(translate('Push-Benachrichtigungen erhalten')),
@@ -108,8 +111,11 @@ class ProfileScreen extends ConsumerWidget {
 
           // Dark mode toggle
           SwitchListTile(
-            tileColor: DesignTokens.glassBackground(0.12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
+            tileColor: DesignTokens.getGlassBackground(theme.brightness, 0.22),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+              side: BorderSide(color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08)),
+            ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             title: Text(translate('Dark Mode')),
             subtitle: Text(translate('Dunkles Theme verwenden')),
@@ -128,8 +134,11 @@ class ProfileScreen extends ConsumerWidget {
 
           // Name editing
           ListTile(
-            tileColor: DesignTokens.glassBackground(0.12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
+            tileColor: DesignTokens.getGlassBackground(theme.brightness, 0.22),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+              side: BorderSide(color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08)),
+            ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             leading: const Icon(Icons.person_outline),
             title: Text(translate('Name')),
@@ -154,8 +163,11 @@ class ProfileScreen extends ConsumerWidget {
           ),
 
           ListTile(
-            tileColor: DesignTokens.glassBackground(0.12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
+            tileColor: DesignTokens.getGlassBackground(theme.brightness, 0.22),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+              side: BorderSide(color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08)),
+            ),
             leading: const Icon(Icons.bookmark_outlined),
             title: Text(translate('Deine Sammlung')),
             subtitle: Text('${ref.watch(collectionProvider).length} ${ref.watch(collectionProvider).length == 1 ? translate('Element') : translate('Elemente')}'),
@@ -173,8 +185,11 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: DesignTokens.spacingSmall),
           // Shop – opens external website
           ListTile(
-            tileColor: DesignTokens.glassBackground(0.12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers)),
+            tileColor: DesignTokens.getGlassBackground(theme.brightness, 0.22),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+              side: BorderSide(color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08)),
+            ),
             leading: const Icon(Icons.storefront_outlined),
             title: Text(translate('Shop')),
             subtitle: const Text('stephanus-verlag.de'),

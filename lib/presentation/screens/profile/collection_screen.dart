@@ -137,8 +137,8 @@ class CollectionScreen extends ConsumerWidget {
         child: RoundedCard(
         padding: const EdgeInsets.all(12),
         glass: true,
-        backgroundColor: DesignTokens.glassBackgroundDeep(0.12),
-        withShadow: false,
+        backgroundColor: DesignTokens.glassBackgroundDeep(0.22),
+        withShadow: true,
         child: Row(
           children: [
             // Image or icon

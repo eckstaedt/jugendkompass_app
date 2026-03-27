@@ -187,17 +187,11 @@ class _RoundedCardState extends State<RoundedCard> {
             color: widget.glass ? Colors.transparent : bg,
             borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
             border: widget.glass
-              ? Border.all(
-                color: Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withOpacity(0.14),
-                width: 1.2,
-                )
-                : null,
+              ? DesignTokens.cardBorder(brightness)
+              : DesignTokens.cardBorder(brightness),
             boxShadow: widget.withShadow && !widget.glass 
                 ? [DesignTokens.shadowLargeCard] 
-                : (widget.glass ? [DesignTokens.shadowGlass] : []),
+                : [DesignTokens.shadowGlass],
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
@@ -209,8 +203,8 @@ class _RoundedCardState extends State<RoundedCard> {
                       child: Container(
                         decoration: BoxDecoration(
                           color: brightness == Brightness.dark
-                            ? DesignTokens.glassDarkBackground(0.13)
-                            : DesignTokens.glassBackground(0.13),
+                            ? DesignTokens.glassDarkBackground(0.16)
+                            : DesignTokens.glassBackground(0.22),
                           borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
                         ),
                         child: Padding(

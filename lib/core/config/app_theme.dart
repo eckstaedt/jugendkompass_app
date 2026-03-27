@@ -132,13 +132,17 @@ class AppTheme {
 
     // Card Theme - iOS 26 Glass Aesthetic with Large Radii
     cardTheme: CardThemeData(
-      color: DesignTokens.glassBackground(0.12),
+      color: DesignTokens.cardBackground,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
+        side: BorderSide(
+          color: Colors.black.withOpacity(0.08),
+          width: 1,
+        ),
       ),
       clipBehavior: Clip.antiAlias,
-      shadowColor: Colors.black.withOpacity(0.04),
+      shadowColor: Colors.black.withOpacity(0.08),
     ),
 
     // Input Decoration Theme - Sanfte Ränder
@@ -422,6 +426,10 @@ class AppTheme {
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
+        side: BorderSide(
+          color: Colors.white.withOpacity(0.12),
+          width: 1,
+        ),
       ),
       clipBehavior: Clip.antiAlias,
     ),

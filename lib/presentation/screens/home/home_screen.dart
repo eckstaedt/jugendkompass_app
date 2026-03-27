@@ -453,13 +453,11 @@ class _KurznachrichtenCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: DesignTokens.getGlassBackground(brightness, 0.20),
+            color: DesignTokens.getGlassBackground(brightness, 0.26),
             borderRadius:
                 BorderRadius.circular(DesignTokens.radiusMiddleContainers),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.12),
-              width: 1,
-            ),
+            border: DesignTokens.cardBorder(brightness),
+            boxShadow: [DesignTokens.shadowGlass],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

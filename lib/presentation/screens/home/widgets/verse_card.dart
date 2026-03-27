@@ -80,8 +80,8 @@ class _VerseCardState extends ConsumerState<VerseCard>
           child: RoundedCard(
             padding: const EdgeInsets.all(DesignTokens.spacingMedium),
             glass: true,
-            backgroundColor: DesignTokens.glassBackgroundDeep(0.24),
-            withShadow: false, // Glass effect already has shadow via BackdropFilter
+            backgroundColor: DesignTokens.glassBackgroundDeep(0.30),
+            withShadow: true,
             child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
