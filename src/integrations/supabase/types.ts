@@ -199,6 +199,7 @@ export type Database = {
           id: number
           image_url: string | null
           message: string
+          title: string | null
         }
         Insert: {
           content_id?: string | null
@@ -207,6 +208,7 @@ export type Database = {
           id?: number
           image_url?: string | null
           message: string
+          title?: string | null
         }
         Update: {
           content_id?: string | null
@@ -215,6 +217,7 @@ export type Database = {
           id?: number
           image_url?: string | null
           message?: string
+          title?: string | null
         }
         Relationships: [
           {
