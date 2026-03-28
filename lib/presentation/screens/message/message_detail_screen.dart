@@ -88,6 +88,12 @@ class MessageDetailScreen extends StatelessWidget {
                   color: DesignTokens.primaryRed,
                   textDecoration: TextDecoration.underline,
                 ),
+                "img": Style(
+                  margin: Margins.only(top: 16, bottom: 16),
+                  display: Display.block,
+                  width: Width(60, Unit.percent),
+                  alignment: Alignment.center,
+                ),
               },
             ),
             const SizedBox(height: 40),
