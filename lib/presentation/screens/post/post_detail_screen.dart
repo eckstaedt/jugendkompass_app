@@ -11,6 +11,7 @@ import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
+import 'package:jugendkompass_app/core/utils/html_utils.dart';
 
 class PostDetailScreen extends ConsumerWidget {
   final PostModel post;
@@ -55,8 +56,8 @@ class PostDetailScreen extends ConsumerWidget {
                     onTap: () {
                       final item = CollectionItem(
                         id: post.id,
-                        title: displayTitle,
-                        description: displayBody,
+                        title: HtmlUtils.stripHtml(displayTitle),
+                        description: HtmlUtils.stripAndTruncate(displayBody, maxLength: 200),
                         imageUrl: post.imageUrl,
                         type: CollectionItemType.post,
                         author: post.categoryName,
@@ -81,7 +82,7 @@ class PostDetailScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  displayTitle,
+                  HtmlUtils.stripHtml(displayTitle),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -403,12 +404,9 @@ class PostDetailScreen extends ConsumerWidget {
                         fontStyle: FontStyle.italic,
                       ),
                       "img": Style(
-                        // center and scale down images inside articles
                         margin: Margins.only(top: 16, bottom: 16),
                         display: Display.block,
-                        // use 60% of available width
-                        width: Width(60, Unit.percent),
-                        alignment: Alignment.center,
+                        width: Width(100, Unit.percent),
                       ),
                     },
                   ),

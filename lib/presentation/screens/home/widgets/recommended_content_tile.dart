@@ -5,6 +5,7 @@ import 'package:jugendkompass_app/domain/providers/recommendation_provider.dart'
 import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier;
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
@@ -108,7 +109,7 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
 
     // Translate item title to the selected app language
     final titleAsync = ref.watch(translateTextProvider(item.title));
-    final displayTitle = titleAsync.whenOrNull(data: (t) => t) ?? item.title;
+    final displayTitle = HtmlUtils.stripHtml(titleAsync.whenOrNull(data: (t) => t) ?? item.title);
 
     return GestureDetector(
       onTapDown: _onTapDown,

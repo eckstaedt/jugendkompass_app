@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
@@ -15,6 +16,8 @@ import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.d
 import 'package:jugendkompass_app/presentation/screens/impulse/impulse_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/kiosk/edition_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/message/message_detail_screen.dart';
+import 'package:jugendkompass_app/domain/providers/message_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 
@@ -118,7 +121,7 @@ class CollectionScreen extends ConsumerWidget {
     final brightness = theme.brightness;
     final typeLabel = _getTypeLabel(item.type, translate);
     // Strip HTML tags from title for clean display
-    final cleanTitle = _stripHtml(item.title);
+    final cleanTitle = HtmlUtils.stripHtml(item.title);
 
     return Dismissible(
       key: Key('${item.id}_${item.type}'),
@@ -219,17 +222,19 @@ class CollectionScreen extends ConsumerWidget {
     );
   }
 
-  /// Strip HTML tags from a string
-  static String _stripHtml(String html) {
-    return html
-        .replaceAll(RegExp(r'<[^>]*>'), '')
-        .replaceAll('&nbsp;', ' ')
-        .replaceAll('&amp;', '&')
-        .replaceAll('&lt;', '<')
-        .replaceAll('&gt;', '>')
-        .replaceAll('&quot;', '"')
-        .replaceAll('&#39;', "'")
-        .trim();
+  IconData _getTypeIcon(CollectionItemType type) {
+    switch (type) {
+      case CollectionItemType.impulse:
+        return Icons.auto_awesome;
+      case CollectionItemType.video:
+        return Icons.play_circle_outline;
+      case CollectionItemType.post:
+        return Icons.article_outlined;
+      case CollectionItemType.edition:
+        return Icons.menu_book_outlined;
+      case CollectionItemType.message:
+        return Icons.message_outlined;
+    }
   }
 
   Future<void> _navigateToItem(BuildContext context, WidgetRef ref, CollectionItem item) async {
@@ -240,9 +245,9 @@ class CollectionScreen extends ConsumerWidget {
           MaterialPageRoute(
             builder: (context) => VideoPlayerScreen(
               videoUrl: item.id,
-              title: item.title,
+              title: HtmlUtils.stripHtml(item.title),
               imageUrl: item.imageUrl,
-              description: item.description,
+              description: item.description != null ? HtmlUtils.stripHtml(item.description!) : null,
             ),
           ),
         );
@@ -281,19 +286,17 @@ class CollectionScreen extends ConsumerWidget {
           );
         }
         break;
-    }
-  }
-
-  IconData _getTypeIcon(CollectionItemType type) {
-    switch (type) {
-      case CollectionItemType.impulse:
-        return Icons.auto_awesome;
-      case CollectionItemType.video:
-        return Icons.play_circle_outline;
-      case CollectionItemType.post:
-        return Icons.article_outlined;
-      case CollectionItemType.edition:
-        return Icons.menu_book_outlined;
+      case CollectionItemType.message:
+        final msg = await ref.read(messageDetailProvider(item.id).future);
+        if (msg != null && context.mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MessageDetailScreen(message: msg),
+            ),
+          );
+        }
+        break;
     }
   }
 
@@ -307,6 +310,8 @@ class CollectionScreen extends ConsumerWidget {
         return translate('Artikel');
       case CollectionItemType.edition:
         return 'Ausgabe';
+      case CollectionItemType.message:
+        return 'Kurznachricht';
     }
   }
 }

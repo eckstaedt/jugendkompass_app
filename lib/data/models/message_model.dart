@@ -1,3 +1,5 @@
+import 'package:jugendkompass_app/core/utils/html_utils.dart';
+
 class MessageModel {
   final String id;
   final String? title;
@@ -63,21 +65,8 @@ class MessageModel {
     );
   }
 
-  /// Strip HTML tags from a string
-  static String _stripHtml(String html) {
-    return html
-        .replaceAll(RegExp(r'<[^>]*>'), '')
-        .replaceAll('&nbsp;', ' ')
-        .replaceAll('&amp;', '&')
-        .replaceAll('&lt;', '<')
-        .replaceAll('&gt;', '>')
-        .replaceAll('&quot;', '"')
-        .replaceAll('&#39;', "'")
-        .trim();
-  }
-
   /// Plain text version of the message (HTML stripped)
-  String get plainText => _stripHtml(message);
+  String get plainText => HtmlUtils.stripHtml(message);
 
   // Helper getters for UI compatibility
   String get displayTitle {

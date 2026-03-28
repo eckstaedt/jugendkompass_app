@@ -3,6 +3,7 @@ enum CollectionItemType {
   video,
   post,
   edition,
+  message,
 }
 
 class CollectionItem {

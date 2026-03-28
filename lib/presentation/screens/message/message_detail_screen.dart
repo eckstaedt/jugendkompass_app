@@ -1,23 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:jugendkompass_app/data/models/message_model.dart';
+import 'package:jugendkompass_app/data/models/collection_item_model.dart';
+import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-class MessageDetailScreen extends StatelessWidget {
+class MessageDetailScreen extends ConsumerWidget {
   final MessageModel message;
 
   const MessageDetailScreen({super.key, required this.message});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final brightness = theme.brightness;
     final dateFormat = DateFormat('dd. MMMM yyyy, HH:mm', 'de_DE');
     final textColor = DesignTokens.getTextPrimary(brightness);
     final textSecondary = DesignTokens.getTextSecondary(brightness);
+    final isInCollection = ref.watch(collectionProvider).any(
+          (item) => item.id == message.id && item.type == CollectionItemType.message,
+        );
 
     return Scaffold(
       appBar: AppBar(
@@ -27,6 +34,30 @@ class MessageDetailScreen extends StatelessWidget {
         ),
         elevation: 0,
         backgroundColor: Colors.transparent,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Center(
+              child: GestureDetector(
+                onTap: () {
+                  final collectionItem = CollectionItem(
+                    id: message.id,
+                    title: HtmlUtils.stripHtml(message.displayTitle),
+                    description: HtmlUtils.stripAndTruncate(message.message, maxLength: 200),
+                    imageUrl: message.imageUrl,
+                    type: CollectionItemType.message,
+                    savedAt: DateTime.now(),
+                  );
+                  ref.read(collectionProvider.notifier).toggleCollection(collectionItem);
+                },
+                child: Icon(
+                  isInCollection ? Icons.bookmark : Icons.bookmark_outline,
+                  size: 24,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(DesignTokens.paddingHorizontal),
@@ -91,8 +122,7 @@ class MessageDetailScreen extends StatelessWidget {
                 "img": Style(
                   margin: Margins.only(top: 16, bottom: 16),
                   display: Display.block,
-                  width: Width(60, Unit.percent),
-                  alignment: Alignment.center,
+                  width: Width(100, Unit.percent),
                 ),
               },
             ),

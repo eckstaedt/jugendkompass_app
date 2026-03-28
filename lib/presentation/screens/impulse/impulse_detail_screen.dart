@@ -8,6 +8,7 @@ import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/core/utils/html_utils.dart';
 
 class ImpulseDetailScreen extends ConsumerWidget {
   final ImpulseModel impulse;
@@ -54,8 +55,8 @@ class ImpulseDetailScreen extends ConsumerWidget {
                     onTap: () {
                       final item = CollectionItem(
                         id: impulse.id,
-                        title: displayTitle,
-                        description: displayBody,
+                        title: HtmlUtils.stripHtml(displayTitle),
+                        description: HtmlUtils.stripAndTruncate(displayBody, maxLength: 200),
                         imageUrl: impulse.imageUrl,
                         type: CollectionItemType.impulse,
                         author: impulse.title,
@@ -80,7 +81,7 @@ class ImpulseDetailScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  displayTitle,
+                  HtmlUtils.stripHtml(displayTitle),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -299,8 +300,7 @@ class ImpulseDetailScreen extends ConsumerWidget {
                       "img": Style(
                         margin: Margins.only(top: 16, bottom: 16),
                         display: Display.block,
-                        width: Width(60, Unit.percent),
-                        alignment: Alignment.center,
+                        width: Width(100, Unit.percent),
                       ),
                     },
                   ),

@@ -11,6 +11,7 @@ import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.d
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
+import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 
 // Combined content item for unified display
@@ -258,7 +259,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               if (shouldAdd) {
                 combinedItems.add(_CombinedContentItem(
                   id: post.id,
-                  title: post.title,
+                  title: HtmlUtils.stripHtml(post.title),
                   imageUrl: post.imageUrl,
                   contentType: 'ARTIKEL',
                   hasAudio: post.audioId != null,
@@ -273,7 +274,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               if (filter == 'alle' || filter == 'für_dich' || filter == 'video') {
                 combinedItems.add(_CombinedContentItem(
                   id: video.id,
-                  title: video.displayTitle,
+                  title: HtmlUtils.stripHtml(video.displayTitle),
                   imageUrl: video.thumbnailUrl,
                   contentType: 'VIDEO',
                   hasAudio: false,

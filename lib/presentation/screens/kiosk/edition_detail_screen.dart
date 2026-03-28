@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
+import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier;
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
@@ -86,8 +87,8 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
                     onPressed: () {
                       final item = CollectionItem(
                         id: edition.id,
-                        title: edition.displayTitle,
-                        description: edition.body,
+                        title: HtmlUtils.stripHtml(edition.displayTitle),
+                        description: edition.body != null ? HtmlUtils.stripAndTruncate(edition.body!, maxLength: 200) : null,
                         imageUrl: edition.coverImageUrl,
                         type: CollectionItemType.edition,
                         savedAt: DateTime.now(),
@@ -264,7 +265,7 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    post.title,
+                    HtmlUtils.stripHtml(post.title),
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textPrimary),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
