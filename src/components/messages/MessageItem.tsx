@@ -18,8 +18,6 @@ interface MessageItemProps {
 const MessageItem = ({ message, onUpdate, onDelete }: MessageItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const { user } = useAuth();
-  const isOwner = user?.id === message.created_by;
-
   return (
     <Card>
       <CardHeader>
@@ -43,7 +41,7 @@ const MessageItem = ({ message, onUpdate, onDelete }: MessageItemProps) => {
           />
         )}
       </CardContent>
-      {isOwner && (
+      {user && (
         <CardFooter className="gap-2">
           <Button
             variant="outline"
