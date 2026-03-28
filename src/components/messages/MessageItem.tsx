@@ -18,8 +18,6 @@ interface MessageItemProps {
 const MessageItem = ({ message, onUpdate, onDelete }: MessageItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const { user } = useAuth();
-  const isOwner = user?.id === message.created_by;
-
   return (
     <Card>
       <CardHeader>
