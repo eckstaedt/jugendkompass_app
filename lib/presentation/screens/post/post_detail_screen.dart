@@ -404,9 +404,7 @@ class PostDetailScreen extends ConsumerWidget {
                         fontStyle: FontStyle.italic,
                       ),
                       "img": Style(
-                        margin: Margins.only(top: 16, bottom: 16),
-                        display: Display.block,
-                        width: Width(100, Unit.percent),
+                        display: Display.none,
                       ),
                     },
                   ),

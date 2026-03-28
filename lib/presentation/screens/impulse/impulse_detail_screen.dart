@@ -298,14 +298,12 @@ class ImpulseDetailScreen extends ConsumerWidget {
                         fontStyle: FontStyle.italic,
                       ),
                       "img": Style(
-                        margin: Margins.only(top: 16, bottom: 16),
-                        display: Display.block,
-                        width: Width(100, Unit.percent),
+                        display: Display.none,
                       ),
                     },
                   ),
 
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 120),
                 ],
               ),
             ),
