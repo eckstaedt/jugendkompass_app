@@ -41,7 +41,7 @@ const MessageItem = ({ message, onUpdate, onDelete }: MessageItemProps) => {
           />
         )}
       </CardContent>
-      {isOwner && (
+      {user && (
         <CardFooter className="gap-2">
           <Button
             variant="outline"
