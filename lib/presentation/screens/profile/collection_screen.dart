@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
@@ -114,8 +115,10 @@ class CollectionScreen extends ConsumerWidget {
     ThemeData theme,
     String Function(String) translate,
   ) {
-    final typeEmoji = _getTypeEmoji(item.type);
+    final brightness = theme.brightness;
     final typeLabel = _getTypeLabel(item.type, translate);
+    // Strip HTML tags from title for clean display
+    final cleanTitle = _stripHtml(item.title);
 
     return Dismissible(
       key: Key('${item.id}_${item.type}'),
@@ -134,115 +137,99 @@ class CollectionScreen extends ConsumerWidget {
       ),
       child: GestureDetector(
         onTap: () => _navigateToItem(context, ref, item),
-        child: RoundedCard(
-        padding: const EdgeInsets.all(12),
-        glass: true,
-        backgroundColor: DesignTokens.glassBackgroundDeep(0.22),
-        withShadow: true,
-        child: Row(
-          children: [
-            // Image or icon
-            if (item.imageUrl != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
-                child: CorsNetworkImage(
-                  imageUrl: item.imageUrl!,
-                  width: 60,
-                  height: 60,
-                  fit: BoxFit.cover,
-                  placeholder: Container(
-                    width: 60,
-                    height: 60,
-                    color: DesignTokens.getGlassBackground(theme.brightness, 0.2),
-                    child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                  ),
-                  errorWidget: Container(
-                    width: 60,
-                    height: 60,
-                    color: DesignTokens.getGlassBackground(theme.brightness, 0.2),
-                    child: const Icon(Icons.broken_image, size: 30),
-                  ),
-                ),
-              )
-            else
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
-                  color: DesignTokens.getGlassBackground(theme.brightness, 0.2),
-                ),
-                child: Center(
-                  child: Text(
-                    typeEmoji,
-                    style: const TextStyle(fontSize: 28),
-                  ),
-                ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(
+              sigmaX: DesignTokens.glassBlurSigma,
+              sigmaY: DesignTokens.glassBlurSigma,
+            ),
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: DesignTokens.getGlassBackground(brightness, 0.26),
+                borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+                border: DesignTokens.cardBorder(brightness),
+                boxShadow: [DesignTokens.shadowGlass],
               ),
-            const SizedBox(width: 12),
-            // Content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item.title,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
+              child: Padding(
+                padding: const EdgeInsets.all(DesignTokens.spacingSmall),
+                child: Row(
+                  children: [
+                    // Thumbnail
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: DesignTokens.getAppBackground(brightness),
+                        borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
+                        boxShadow: [DesignTokens.shadowSubtle],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
+                        child: item.imageUrl != null && item.imageUrl!.isNotEmpty
+                            ? CorsNetworkImage(
+                                imageUrl: item.imageUrl!,
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                              )
+                            : SizedBox(
+                                width: 80,
+                                height: 80,
+                                child: Icon(
+                                  _getTypeIcon(item.type),
+                                  size: 32,
+                                  color: DesignTokens.primaryRed,
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(width: DesignTokens.spacingMedium),
+                    // Title + Badge
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            cleanTitle,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4),
-                          color: DesignTokens.getGlassBackground(theme.brightness, 0.15),
-                        ),
-                        child: Text(
-                          typeLabel,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                          const SizedBox(height: 8),
+                          BadgeWidget(
+                            label: typeLabel.toUpperCase(),
+                            backgroundColor: DesignTokens.getRedBackground(brightness),
+                            textColor: DesignTokens.primaryRed,
                           ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
-                  if (item.description != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      item.description!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
-                  if (item.author != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      'von ${item.author}',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
-          ],
+          ),
         ),
       ),
-      ),
     );
+  }
+
+  /// Strip HTML tags from a string
+  static String _stripHtml(String html) {
+    return html
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'")
+        .trim();
   }
 
   Future<void> _navigateToItem(BuildContext context, WidgetRef ref, CollectionItem item) async {
@@ -297,16 +284,16 @@ class CollectionScreen extends ConsumerWidget {
     }
   }
 
-  String _getTypeEmoji(CollectionItemType type) {
+  IconData _getTypeIcon(CollectionItemType type) {
     switch (type) {
       case CollectionItemType.impulse:
-        return '✨';
+        return Icons.auto_awesome;
       case CollectionItemType.video:
-        return '▶️';
+        return Icons.play_circle_outline;
       case CollectionItemType.post:
-        return '📄';
+        return Icons.article_outlined;
       case CollectionItemType.edition:
-        return '📖';
+        return Icons.menu_book_outlined;
     }
   }
 
