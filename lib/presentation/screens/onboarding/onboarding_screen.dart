@@ -81,13 +81,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Logo container
+                      // App Logo
                       Container(
-                        width: 80,
-                        height: 80,
+                        width: 110,
+                        height: 110,
                         decoration: BoxDecoration(
-                          color: DesignTokens.primaryRed,
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(28),
                           boxShadow: [
                             BoxShadow(
                               color: DesignTokens.primaryRed.withOpacity(0.4),
@@ -96,11 +95,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             ),
                           ],
                         ),
-                        child: const Center(
-                          child: Icon(
-                            Icons.explore,
-                            color: Colors.white,
-                            size: 40,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(28),
+                          child: Image.asset(
+                            'assets/images/logo_new.png',
+                            width: 110,
+                            height: 110,
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),
