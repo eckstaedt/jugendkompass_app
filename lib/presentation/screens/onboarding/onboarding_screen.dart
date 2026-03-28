@@ -83,10 +83,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     children: [
                       // App Logo
                       Container(
-                        width: 110,
-                        height: 110,
+                        width: 80,
+                        height: 80,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(28),
+                          borderRadius: BorderRadius.circular(24),
                           boxShadow: [
                             BoxShadow(
                               color: DesignTokens.primaryRed.withOpacity(0.4),
@@ -96,11 +96,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           ],
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(28),
+                          borderRadius: BorderRadius.circular(24),
                           child: Image.asset(
                             'assets/images/logo_new.png',
-                            width: 110,
-                            height: 110,
+                            width: 80,
+                            height: 80,
                             fit: BoxFit.cover,
                           ),
                         ),
