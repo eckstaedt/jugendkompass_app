@@ -37,7 +37,7 @@ const MessageItem = ({ message, onUpdate, onDelete }: MessageItemProps) => {
           <img 
             src={message.image_url} 
             alt="" 
-            className="mt-4 rounded-md max-w-sm"
+            className="mt-4 rounded-md max-w-[200px] max-h-[200px] object-cover"
           />
         )}
       </CardContent>
