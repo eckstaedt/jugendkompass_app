@@ -3,6 +3,17 @@ import { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { Message } from '@/hooks/use-messages';
 import { formatDistanceToNow } from 'date-fns';
@@ -50,13 +61,27 @@ const MessageItem = ({ message, onUpdate, onDelete }: MessageItemProps) => {
           >
             Bearbeiten
           </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => onDelete(message.id)}
-          >
-            Löschen
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm">
+                Löschen
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Nachricht löschen?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Diese Aktion kann nicht rückgängig gemacht werden. Die Nachricht wird dauerhaft gelöscht.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                <AlertDialogAction onClick={() => onDelete(message.id)}>
+                  Löschen
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardFooter>
       )}
 
