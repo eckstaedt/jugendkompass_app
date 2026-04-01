@@ -128,15 +128,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("Auth state changed:", event, session?.user?.id);
 
         if (event === 'SIGNED_IN' && initialSessionDoneRef.current) {
-          // This is an actual login (not initial session restore or token refresh)
-          handleAuthSession(session, true);
+          // Only process as a real login if we don't already have a user
+          // (tab switch / visibility change also fires SIGNED_IN)
+          if (!user) {
+            handleAuthSession(session, true);
+          }
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
           setIsAdmin(false);
           setAdminChecked(true);
           navigateRef.current('/login');
         } else if (event === 'TOKEN_REFRESHED') {
-          // Just update user data, don't navigate
+          // Just update user data, don't navigate or reset admin state
           if (session?.user) {
             setUser(convertSupabaseUser(session.user));
           }
