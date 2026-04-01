@@ -151,7 +151,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [handleAuthSession]);
+  }, [handleAuthSession, user]);
 
   const login = async (email: string, password: string) => {
     try {
