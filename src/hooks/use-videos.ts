@@ -54,7 +54,15 @@ export const useUploadVideo = () => {
           throw new Error('Either file or url must be provided');
         }
 
-        // Insert video record — the DB trigger handle_video_content() creates the content entry automatically
+        // Create content entry first
+        const { data: contentData, error: contentError } = await supabase
+          .from('content')
+          .insert({ content_type: 'video', status: 'published' })
+          .select()
+          .single();
+
+        if (contentError) throw contentError;
+
         const { data: videoData, error: insertError } = await supabase
           .from('videos')
           .insert({ 
@@ -63,8 +71,8 @@ export const useUploadVideo = () => {
             url: videoUrl,
             image_url: imageUrl,
             user_id: userId,
-            content_id: '00000000-0000-0000-0000-000000000000' // placeholder, overwritten by trigger
-          } as any)
+            content_id: contentData.id,
+          })
           .select('*, content:content_id(*)')
           .single();
 
