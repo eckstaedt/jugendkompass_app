@@ -7,10 +7,11 @@ import 'package:jugendkompass_app/domain/providers/video_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
     show kVideoPlayerRouteName;
+import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 
 class VideoScreen extends ConsumerStatefulWidget {
   const VideoScreen({super.key});
@@ -39,6 +40,7 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
 
     return Scaffold(
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             // Header
@@ -122,7 +124,10 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                   }
 
                   return GridView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    padding: EdgeInsets.fromLTRB(20, 16, 20,
+                      ref.watch(currentAudioProvider) != null
+                          ? DesignTokens.overlayPaddingWithMiniPlayer
+                          : DesignTokens.overlayPaddingBase),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       childAspectRatio: 0.75,
@@ -138,7 +143,7 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                     },
                   );
                 },
-                loading: () => const LoadingIndicator(),
+                loading: () => const VideoListSkeleton(),
                 error: (error, stack) => Center(
                   child: Text('Fehler: $error'),
                 ),

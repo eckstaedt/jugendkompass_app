@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/data/models/verse_model.dart';
 import 'package:jugendkompass_app/data/repositories/verse_repository.dart';
 import 'package:jugendkompass_app/domain/providers/supabase_provider.dart';
+import 'package:jugendkompass_app/core/services/home_widget_service.dart';
 
 final verseRepositoryProvider = Provider<VerseRepository>((ref) {
   final supabase = ref.watch(supabaseProvider);
@@ -10,7 +11,14 @@ final verseRepositoryProvider = Provider<VerseRepository>((ref) {
 
 final dailyVerseProvider = FutureProvider<VerseModel?>((ref) async {
   final repository = ref.watch(verseRepositoryProvider);
-  return await repository.getTodaysVerse();
+  final verse = await repository.getTodaysVerse();
+
+  // Sync verse to iOS Home Screen Widget
+  if (verse != null) {
+    await HomeWidgetService.updateVerseWidget(verse);
+  }
+
+  return verse;
 });
 
 final recentVersesProvider = FutureProvider<List<VerseModel>>((ref) async {

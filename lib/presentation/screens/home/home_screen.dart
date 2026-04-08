@@ -18,6 +18,7 @@ import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.da
     show kVideoPlayerRouteName;
 import 'package:jugendkompass_app/presentation/navigation/fade_page_route.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -104,14 +105,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-      ),
-      body: Stack(
-        children: [
-          RefreshIndicator(
-            onRefresh: _refresh,
+      body: SafeArea(
+        bottom: false,
+        child: Stack(
+          children: [
+            RefreshIndicator(
+              onRefresh: _refresh,
             child: NotificationListener<ScrollNotification>(
               onNotification: (scrollInfo) {
                 if (scrollInfo.metrics.pixels >
@@ -163,9 +162,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           }
                           return VerseCard(verse: verse);
                         },
-                        loading: () => const SizedBox(
-                          height: 200,
-                          child: Center(child: CircularProgressIndicator()),
+                        loading: () => const SkeletonShimmer(
+                          child: SizedBox(
+                            height: 200,
+                            child: Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SkeletonBox(width: 100, height: 14, radius: 4),
+                                  SizedBox(height: 16),
+                                  SkeletonBox(width: double.infinity, height: 100, radius: 16),
+                                  SizedBox(height: 12),
+                                  SkeletonBox(width: 180, height: 12, radius: 4),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                         error: (error, stack) => SizedBox(
                           height: 200,
@@ -255,10 +268,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           ),
                         );
                       },
-                      loading: () => const SizedBox(
-                        height: 250,
-                        child: Center(child: CircularProgressIndicator()),
-                      ),
+                      loading: () => const HomeCardSkeleton(),
                       error: (error, stack) => Padding(
                         padding: const EdgeInsets.symmetric(vertical: 24),
                         child: Center(
@@ -296,10 +306,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                   // Paginated content list
                   if (!_initialLoaded)
-                    const SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24),
-                        child: Center(child: CircularProgressIndicator()),
+                    SliverToBoxAdapter(
+                      child: SkeletonShimmer(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Column(
+                            children: List.generate(
+                              4,
+                              (_) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Row(
+                                  children: const [
+                                    SkeletonBox(width: 80, height: 80, radius: 12),
+                                    SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          SkeletonBox(width: double.infinity, height: 14, radius: 4),
+                                          SizedBox(height: 8),
+                                          SkeletonBox(width: 160, height: 12, radius: 4),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     )
                   else if (_allContent.isEmpty)
@@ -347,7 +382,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Consumer(
                       builder: (context, ref, _) {
                         final hasAudio = ref.watch(currentAudioProvider) != null;
-                        return SizedBox(height: hasAudio ? 180 : 100);
+                        return SizedBox(height: hasAudio
+                            ? DesignTokens.overlayPaddingWithMiniPlayer
+                            : DesignTokens.overlayPaddingBase);
                       },
                     ),
                   ),
@@ -356,6 +393,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

@@ -163,7 +163,7 @@ class AudioPlayerScreen extends ConsumerWidget {
                             loading: () => const CircularProgressIndicator(),
                             error: (_, _) => FilledButton(
                               onPressed: () {
-                                audioService.playAudio(currentAudio.audioUrl);
+                                audioService.playAudio(currentAudio.audioUrl, audio: currentAudio);
                               },
                               style: FilledButton.styleFrom(
                                 padding: const EdgeInsets.all(20),
@@ -267,9 +267,13 @@ class AudioPlayerScreen extends ConsumerWidget {
                               )
                             : null,
                         onTap: () async {
+                          // Update providers immediately so mini player appears instantly
+                          ref.read(audioQueueProvider.notifier).state = [audio];
+                          ref.read(currentQueueIndexProvider.notifier).state = 0;
                           ref.read(currentAudioProvider.notifier).state = audio;
                           currentAudioNotifier.value = audio;
-                          await audioService.playAudio(audio.audioUrl);
+                          // Start playback
+                          await audioService.setQueue([audio], startIndex: 0);
                         },
                       ),
                     );

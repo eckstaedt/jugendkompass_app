@@ -70,32 +70,39 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    ...speeds.map((speed) {
-                      final isSelected = speed == _currentSpeed;
-                      return ListTile(
-                        title: Text(
-                          speed == 1.0 ? '1× Normal' : '$speed×',
-                          style: TextStyle(
-                            fontWeight: isSelected
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                            color: isSelected
-                                ? DesignTokens.primaryRed
-                                : DesignTokens.getTextPrimary(brightness),
-                            fontSize: 16,
-                          ),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: speeds.map((speed) {
+                            final isSelected = speed == _currentSpeed;
+                            return ListTile(
+                              title: Text(
+                                speed == 1.0 ? '1× Normal' : '$speed×',
+                                style: TextStyle(
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  color: isSelected
+                                      ? DesignTokens.primaryRed
+                                      : DesignTokens.getTextPrimary(brightness),
+                                  fontSize: 16,
+                                ),
+                              ),
+                              trailing: isSelected
+                                  ? Icon(Icons.check_rounded,
+                                      color: DesignTokens.primaryRed)
+                                  : null,
+                              onTap: () {
+                                audioService.setSpeed(speed);
+                                setState(() => _currentSpeed = speed);
+                                Navigator.pop(context);
+                              },
+                            );
+                          }).toList(),
                         ),
-                        trailing: isSelected
-                            ? Icon(Icons.check_rounded,
-                                color: DesignTokens.primaryRed)
-                            : null,
-                        onTap: () {
-                          audioService.setSpeed(speed);
-                          setState(() => _currentSpeed = speed);
-                          Navigator.pop(context);
-                        },
-                      );
-                    }),
+                      ),
+                    ),
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -432,7 +439,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                   ),
                                   error: (_, _) => GestureDetector(
                                     onTap: () =>
-                                        audioService.playAudio(currentAudio.audioUrl),
+                                        audioService.playAudio(currentAudio.audioUrl, audio: currentAudio),
                                     child: const _PlayPauseShell(
                                       child: Icon(Icons.play_arrow_rounded,
                                           size: 44, color: Colors.white),
@@ -844,3 +851,5 @@ class _PlayPauseShell extends StatelessWidget {
     );
   }
 }
+
+

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:jugendkompass_app/firebase_options.dart';
+import 'package:jugendkompass_app/core/services/fcm_service.dart';
 import 'package:jugendkompass_app/app.dart';
 import 'package:jugendkompass_app/core/config/env_config.dart';
 import 'package:jugendkompass_app/core/services/image_cache_service.dart';
@@ -8,6 +12,7 @@ import 'package:jugendkompass_app/data/services/supabase_service.dart';
 import 'package:jugendkompass_app/data/services/favorites_service.dart';
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/data/services/web_audio_controller.dart';
+import 'package:jugendkompass_app/core/services/home_widget_service.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 
 Future<void> main() async {
@@ -25,11 +30,22 @@ Future<void> main() async {
   // Initialize Supabase
   await SupabaseService.initialize();
 
+  // Initialize Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Register background message handler
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
   // Initialize User Preferences Service
   await UserPreferencesService.instance.init();
 
   // Initialize Favorites Service
   await FavoritesService.instance.initialize();
+
+  // Initialize Home Widget Service (iOS)
+  await HomeWidgetService.initialize();
 
   // Initialize just_audio_background — this powers the native lock screen
   // controls (play/pause, skip ±10s, artwork, title) on iOS and Android.

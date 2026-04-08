@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/core/services/device_registration_service.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jugendkompass_app/domain/providers/profile_provider.dart';
 import 'package:jugendkompass_app/domain/providers/theme_provider.dart';
 import 'package:jugendkompass_app/domain/providers/favorites_provider.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
+import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/data/services/favorites_service.dart';
 
@@ -24,6 +26,9 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notificationsEnabled = ref.watch(notificationsProvider);
+    final notificationTime = ref.watch(notificationTimeProvider);
+    final verseEnabled = ref.watch(verseNotificationsProvider);
+    final newContentEnabled = ref.watch(newContentNotificationsProvider);
     final themeMode = ref.watch(themeModeProvider);
     final translate = ref.watch(stringTranslatorProvider);
     final theme = Theme.of(context);
@@ -31,6 +36,7 @@ class ProfileScreen extends ConsumerWidget {
     final textSecondary = DesignTokens.getTextSecondary(brightness);
 
     return Scaffold(
+      extendBody: true,
       appBar: AppBar(
         title: const Text('Einstellungen'),
         elevation: 0,
@@ -75,7 +81,168 @@ class ProfileScreen extends ConsumerWidget {
 
           SizedBox(height: DesignTokens.spacingMedium),
 
-          // Settings Section Header
+          // ── BENACHRICHTIGUNGEN Section ──────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              translate('BENACHRICHTIGUNGEN'),
+              style: GoogleFonts.inter(
+                textStyle: theme.textTheme.labelMedium?.copyWith(
+                  color: textSecondary,
+                  letterSpacing: 1.2,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+
+          // Global push toggle
+          Container(
+            decoration: BoxDecoration(
+              color: DesignTokens.getGlassBackground(theme.brightness, 0.22),
+              borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+              border: Border.all(
+                color: theme.brightness == Brightness.dark
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : Colors.black.withValues(alpha: 0.08),
+              ),
+            ),
+            child: Column(
+              children: [
+                // Main push toggle
+                SwitchListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                  title: Text(translate('Push-Benachrichtigungen')),
+                  subtitle: Text(
+                    notificationsEnabled
+                        ? translate('Aktiviert')
+                        : translate('Deaktiviert'),
+                  ),
+                  value: notificationsEnabled,
+                  onChanged: (value) {
+                    ref.read(notificationsProvider.notifier).update(value);
+                  },
+                  activeThumbColor: DesignTokens.primaryRed,
+                  secondary: Icon(
+                    notificationsEnabled
+                        ? Icons.notifications_active
+                        : Icons.notifications_off_outlined,
+                  ),
+                ),
+
+                // Sub-toggles visible when main toggle is ON
+                if (notificationsEnabled) ...[
+                  Divider(
+                    height: 1,
+                    indent: 16,
+                    endIndent: 16,
+                    color: theme.brightness == Brightness.dark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : Colors.black.withValues(alpha: 0.06),
+                  ),
+
+                  // Vers des Tages toggle + time picker
+                  ListTile(
+                    contentPadding: const EdgeInsets.only(left: 16, right: 8),
+                    leading: const Icon(Icons.auto_stories_outlined, size: 22),
+                    title: Text(translate('Vers des Tages')),
+                    subtitle: verseEnabled
+                        ? Text(
+                            'Um ${notificationTime.hour.toString().padLeft(2, '0')}:${notificationTime.minute.toString().padLeft(2, '0')} Uhr',
+                          )
+                        : null,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (verseEnabled)
+                          IconButton(
+                            icon: const Icon(Icons.access_time, size: 20),
+                            onPressed: () async {
+                              final picked = await showTimePicker(
+                                context: context,
+                                initialTime: TimeOfDay(
+                                  hour: notificationTime.hour,
+                                  minute: notificationTime.minute,
+                                ),
+                                initialEntryMode: TimePickerEntryMode.input,
+                                helpText: 'Vers des Tages — Uhrzeit wählen',
+                                cancelText: 'Abbrechen',
+                                confirmText: 'Speichern',
+                              );
+                              if (picked != null) {
+                                await ref
+                                    .read(notificationTimeProvider.notifier)
+                                    .update(picked.hour, picked.minute);
+                                // Update server preferences
+                                await DeviceRegistrationService.instance
+                                    .updatePreferences(
+                                  notificationHour: picked.hour,
+                                  notificationMinute: picked.minute,
+                                );
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Vers des Tages um ${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')} Uhr',
+                                      ),
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                          ),
+                        Switch(
+                          value: verseEnabled,
+                          onChanged: (value) {
+                            ref
+                                .read(verseNotificationsProvider.notifier)
+                                .update(value);
+                            // Update server
+                            DeviceRegistrationService.instance
+                                .updatePreferences(
+                                    verseNotifications: value);
+                          },
+                          activeThumbColor: DesignTokens.primaryRed,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  Divider(
+                    height: 1,
+                    indent: 16,
+                    endIndent: 16,
+                    color: theme.brightness == Brightness.dark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : Colors.black.withValues(alpha: 0.06),
+                  ),
+
+                  // Neue Beiträge toggle
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                    title: Text(translate('Neue Beiträge')),
+                    value: newContentEnabled,
+                    onChanged: (value) {
+                      ref
+                          .read(newContentNotificationsProvider.notifier)
+                          .update(value);
+                      // Update server
+                      DeviceRegistrationService.instance
+                          .updatePreferences(
+                              contentNotifications: value);
+                    },
+                    activeThumbColor: DesignTokens.primaryRed,
+                    secondary: const Icon(Icons.article_outlined, size: 22),
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          SizedBox(height: DesignTokens.spacingMedium),
+
+          // ── EINSTELLUNGEN Section ──────────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(
@@ -89,25 +256,6 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
           ),
-
-          // Notification toggle
-          SwitchListTile(
-            tileColor: DesignTokens.getGlassBackground(theme.brightness, 0.22),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
-              side: BorderSide(color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08)),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            title: Text(translate('Benachrichtigungen')),
-            subtitle: Text(translate('Push-Benachrichtigungen erhalten')),
-            value: notificationsEnabled,
-            onChanged: (value) {
-              ref.read(notificationsProvider.notifier).update(value);
-            },
-            activeThumbColor: DesignTokens.primaryRed,
-            secondary: const Icon(Icons.notifications_outlined),
-          ),
-          SizedBox(height: DesignTokens.spacingSmall),
 
           // Dark mode toggle
           SwitchListTile(
@@ -257,7 +405,11 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(
+            height: ref.watch(currentAudioProvider) != null
+                ? DesignTokens.overlayPaddingWithMiniPlayer
+                : DesignTokens.overlayPaddingBase,
+          ),
         ],
       ),
     );

@@ -2,17 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/animated_equalizer.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 
 class FeaturedEpisodeCard extends StatelessWidget {
   final AudioModel audio;
   final VoidCallback onPlay;
+  final bool isPlaying;
 
   const FeaturedEpisodeCard({
     super.key,
     required this.audio,
     required this.onPlay,
+    this.isPlaying = false,
   });
 
   @override
@@ -156,8 +159,16 @@ class FeaturedEpisodeCard extends StatelessWidget {
                     // Play Button
                     ElevatedButton.icon(
                       onPressed: onPlay,
-                      icon: const Icon(Icons.play_arrow, size: 20),
-                      label: Text(AppTranslations.t('play')),
+                      icon: isPlaying
+                          ? const AnimatedEqualizer(
+                              color: Colors.white,
+                              size: 20,
+                              barCount: 3,
+                            )
+                          : const Icon(Icons.play_arrow, size: 20),
+                      label: Text(isPlaying
+                          ? AppTranslations.t('now_playing')
+                          : AppTranslations.t('play')),
                       style: ElevatedButton.styleFrom(
                           backgroundColor: DesignTokens.primaryRed,
                           foregroundColor: Colors.white,

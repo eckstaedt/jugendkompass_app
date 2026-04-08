@@ -61,6 +61,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final selectedFilter = ref.watch(_selectedDiscoverFilterProvider);
 
     return Scaffold(
+      extendBody: true,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -71,6 +72,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         backgroundColor: Colors.transparent,
       ),
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             // Header
@@ -298,12 +300,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               );
             }
 
-            return ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              itemCount: combinedItems.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                return _buildContentTile(context, combinedItems[index]);
+            return Consumer(
+              builder: (context, ref, _) {
+                final hasAudio = ref.watch(currentAudioProvider) != null;
+                return ListView.separated(
+                  padding: EdgeInsets.fromLTRB(20, 8, 20,
+                    hasAudio
+                        ? DesignTokens.overlayPaddingWithMiniPlayer
+                        : DesignTokens.overlayPaddingBase),
+                  itemCount: combinedItems.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    return _buildContentTile(context, combinedItems[index]);
+                  },
+                );
               },
             );
           },
@@ -540,16 +550,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         return;
       }
 
-      // Set queue + current audio so the mini player bar and full player work.
-      final audioService = ref.read(audioServiceProvider);
-      await audioService.setQueue([audio], startIndex: 0);
+      // Update providers immediately so the mini player bar appears instantly
       ref.read(audioQueueProvider.notifier).state = [audio];
       ref.read(currentQueueIndexProvider.notifier).state = 0;
       ref.read(currentAudioProvider.notifier).state = audio;
       currentAudioNotifier.value = audio;
 
-      // Start playback
-      await audioService.playAudio(audio.url);
+      // Start playback (setQueue calls playAudio internally)
+      final audioService = ref.read(audioServiceProvider);
+      await audioService.setQueue([audio], startIndex: 0);
 
       // Don't navigate to full player - let the mini player bar handle it
     } catch (e) {

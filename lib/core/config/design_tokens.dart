@@ -77,6 +77,18 @@ class DesignTokens {
   static const double paddingHorizontal = 24;
   static const double paddingVertical = 24;
 
+  // ⸻ OVERLAY BOTTOM PADDING
+  // Extra bottom padding to prevent persistent navbar + mini player from
+  // covering scrollable content. Use these in every scrollable screen.
+  //
+  // navbarOverlayHeight: navbar (60) + top margin (4) + extra clearance (16) = 80
+  // miniPlayerHeight: mini player bar (72) + gap (8) = 80
+  //
+  // When ONLY navbar is visible: overlayPaddingBase
+  // When BOTH navbar + mini player visible: overlayPaddingWithMiniPlayer
+  static const double overlayPaddingBase = 100;
+  static const double overlayPaddingWithMiniPlayer = 180;
+
   // Input background color used across app
   static const Color inputBackground = Color(0xFFE1E3E6);
   static const Color darkInputBackground = Color(0xFF2A2A2A);

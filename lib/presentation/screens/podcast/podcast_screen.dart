@@ -12,8 +12,8 @@ import 'package:jugendkompass_app/domain/providers/podcast_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
-import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/animated_equalizer.dart';
 import 'widgets/featured_episode_card.dart';
 
 class PodcastScreen extends ConsumerWidget {
@@ -31,6 +31,7 @@ class PodcastScreen extends ConsumerWidget {
 
     return Scaffold(
       body: SafeArea(
+        bottom: false,
         child: RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(audioListProvider);
@@ -202,10 +203,20 @@ class PodcastScreen extends ConsumerWidget {
                         ),
                       );
                     },
-                    loading: () => const SliverToBoxAdapter(
-                      child: SizedBox(
-                        height: 60,
-                        child: Center(child: CircularProgressIndicator()),
+                    loading: () => SliverToBoxAdapter(
+                      child: SkeletonShimmer(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                          child: Row(
+                            children: List.generate(
+                              4,
+                              (_) => Padding(
+                                padding: const EdgeInsets.only(right: 8),
+                                child: SkeletonBox(width: 70, height: 32, radius: 16),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                     error: (error, stack) =>
@@ -215,9 +226,16 @@ class PodcastScreen extends ConsumerWidget {
                   // Featured Episode
                   if (featuredEpisode != null)
                     SliverToBoxAdapter(
-                      child: FeaturedEpisodeCard(
-                        audio: featuredEpisode,
-                        onPlay: () => _playAudio(context, ref, featuredEpisode),
+                      child: Consumer(
+                        builder: (context, ref, _) {
+                          final currentAudio = ref.watch(currentAudioProvider);
+                          final isFeaturedPlaying = currentAudio?.id == featuredEpisode.id;
+                          return FeaturedEpisodeCard(
+                            audio: featuredEpisode,
+                            isPlaying: isFeaturedPlaying,
+                            onPlay: () => _playAudio(context, ref, featuredEpisode),
+                          );
+                        },
                       ),
                     ),
 
@@ -261,14 +279,16 @@ class PodcastScreen extends ConsumerWidget {
                         final hasAudio =
                             ref.watch(currentAudioProvider) != null;
                         return SizedBox(
-                            height: hasAudio ? 160 : 80);
+                            height: hasAudio
+                                ? DesignTokens.overlayPaddingWithMiniPlayer
+                                : DesignTokens.overlayPaddingBase);
                       },
                     ),
                   ),
                 ],
               );
             },
-            loading: () => LoadingIndicator(message: translate('Lade Podcasts...')),
+            loading: () => const PodcastListSkeleton(),
             error: (error, stack) => ErrorView(
               message: '${translate('Fehler beim Laden der Podcasts')}: $error',
               onRetry: () => ref.invalidate(audioListProvider),
@@ -291,23 +311,14 @@ class PodcastScreen extends ConsumerWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        // Tapping anywhere on the tile opens the post article
-        onTap: audio.post != null
-            ? () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PostDetailScreen(post: audio.post!),
-                  ),
-                )
-            : () => _playAudio(context, ref, audio),
+        // Tapping anywhere on the tile plays the audio instantly
+        onTap: () => _playAudio(context, ref, audio),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              // Thumbnail – tap plays audio
-              GestureDetector(
-                onTap: () => _playAudio(context, ref, audio),
-                child: ClipRRect(
+              // Thumbnail
+              ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: SizedBox(
                     width: 60,
@@ -365,16 +376,17 @@ class PodcastScreen extends ConsumerWidget {
                             decoration: BoxDecoration(
                               color: Colors.black.withOpacity(0.45),
                             ),
-                            child: Icon(
-                              Icons.graphic_eq,
-                              color: DesignTokens.primaryRed,
-                              size: 28,
+                            child: Center(
+                              child: AnimatedEqualizer(
+                                color: DesignTokens.primaryRed,
+                                size: 28,
+                                barCount: 3,
+                              ),
                             ),
                           ),
                       ],
                     ),
                   ),
-                ),
               ),
               const SizedBox(width: 12),
               // Title + meta
@@ -436,18 +448,17 @@ class PodcastScreen extends ConsumerWidget {
         ),
       ),
     );
-  }  void _playAudio(BuildContext context, WidgetRef ref, AudioModel audio) {
+  }  Future<void> _playAudio(BuildContext context, WidgetRef ref, AudioModel audio) async {
     final audioService = ref.read(audioServiceProvider);
 
-    // Set single audio as queue with only one item
-    audioService.setQueue([audio], startIndex: 0);
-
-    // Update providers – mini player bar will appear automatically
+    // Update providers immediately so the mini player bar appears instantly
     ref.read(audioQueueProvider.notifier).state = [audio];
     ref.read(currentQueueIndexProvider.notifier).state = 0;
     ref.read(currentAudioProvider.notifier).state = audio;
     currentAudioNotifier.value = audio;
-    // Tapping the bar opens the full player.
+
+    // Start playback (setQueue calls playAudio internally)
+    await audioService.setQueue([audio], startIndex: 0);
   }
 
   String _formatDuration(int seconds) {

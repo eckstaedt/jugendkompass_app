@@ -7,7 +7,7 @@ import 'package:jugendkompass_app/presentation/screens/content/content_detail_sc
 import 'package:jugendkompass_app/presentation/screens/content/widgets/content_card.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 
 class ContentScreen extends ConsumerStatefulWidget {
   const ContentScreen({super.key});
@@ -151,9 +151,7 @@ class _ContentScreenState extends ConsumerState<ContentScreen> {
                   ),
                 );
               },
-              loading: () => const LoadingIndicator(
-                message: 'Lade Inhalte...',
-              ),
+              loading: () => const ContentListSkeleton(),
               error: (error, stack) => ErrorView(
                 message: error.toString(),
                 onRetry: () {

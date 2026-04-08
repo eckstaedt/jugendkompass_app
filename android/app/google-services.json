@@ -1,0 +1,97 @@
+{
+  "project_info": {
+    "project_number": "443036016738",
+    "project_id": "jugendkompass-46aa7",
+    "storage_bucket": "jugendkompass-46aa7.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:443036016738:android:9c014aef2f27ecb119b13b",
+        "android_client_info": {
+          "package_name": "com.mycompany.jukolearning"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "443036016738-2rs0487qms1p2e6c5cuhkfanvsnvr310.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCaUJJwfEZALTVTGjsoXei5uz6uF8v03_Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "443036016738-2rs0487qms1p2e6c5cuhkfanvsnvr310.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:443036016738:android:f1c650fac9595bc619b13b",
+        "android_client_info": {
+          "package_name": "io.stephanus.jugendkompass"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "443036016738-2rs0487qms1p2e6c5cuhkfanvsnvr310.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCaUJJwfEZALTVTGjsoXei5uz6uF8v03_Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "443036016738-2rs0487qms1p2e6c5cuhkfanvsnvr310.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:443036016738:android:fca447660b0e94ed19b13b",
+        "android_client_info": {
+          "package_name": "stephanus.jugendkompass.io"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "443036016738-2rs0487qms1p2e6c5cuhkfanvsnvr310.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCaUJJwfEZALTVTGjsoXei5uz6uF8v03_Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "443036016738-2rs0487qms1p2e6c5cuhkfanvsnvr310.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

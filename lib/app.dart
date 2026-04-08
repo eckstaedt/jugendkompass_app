@@ -13,8 +13,8 @@ import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/domain/providers/theme_provider.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/bottom_nav_provider.dart';
-import 'package:jugendkompass_app/core/services/notification_service.dart';
-import 'package:jugendkompass_app/domain/providers/verse_provider.dart';
+import 'package:jugendkompass_app/core/services/device_registration_service.dart';
+import 'package:jugendkompass_app/core/services/fcm_service.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/podcast/widgets/mini_player_bar.dart';
 
@@ -32,14 +32,37 @@ class _AppState extends ConsumerState<App> {
   @override
   void initState() {
     super.initState();
+    // Initialise notification permissions & register device with server
+    _initPushNotifications();
+  }
+
+  /// Request notification permission and ensure the device is registered
+  /// in Supabase so the server can send push notifications (Vers des Tages,
+  /// Neue Beiträge, etc.).
+  Future<void> _initPushNotifications() async {
+    try {
+      // Initialize Firebase Cloud Messaging (handles permissions + token)
+      await FCMService().init();
+
+      // Make sure device is registered (respects current toggle states)
+      final prefs = UserPreferencesService.instance;
+      if (prefs.getNotificationsEnabled()) {
+        await DeviceRegistrationService.instance.register(
+          verseNotifications: prefs.getVerseNotificationsEnabled(),
+          contentNotifications: prefs.getNewContentNotificationsEnabled(),
+          notificationHour: prefs.getNotificationHour(),
+          notificationMinute: prefs.getNotificationMinute(),
+        );
+      }
+    } catch (e) {
+      debugPrint('Push notification init error: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     final language = ref.watch(languageProvider);
-
-    Future.microtask(() => _initializeNotifications());
 
     return MaterialApp(
       title: 'Jugendkompass',
@@ -84,35 +107,6 @@ class _AppState extends ConsumerState<App> {
     );
   }
 
-  /// Initialize notifications and schedule the daily verse notification
-  /// Called once per app startup via Future.microtask to avoid blocking UI
-  Future<void> _initializeNotifications() async {
-    try {
-      // Initialize regular notifications for verses
-      final notificationService = NotificationService();
-      
-      // Initialize the notification service
-      await notificationService.init();
-      
-      // Request permissions
-      await notificationService.requestPermission();
-
-      // Fetch today's verse using the existing provider
-      final verseAsync = ref.read(dailyVerseProvider);
-      
-      // Schedule notification when verse is ready
-      verseAsync.whenData((verse) {
-        if (verse != null) {
-          notificationService.scheduleDailyVerseNotification(
-            verseText: verse.verse,
-            reference: verse.reference,
-          );
-        }
-      });
-    } catch (e) {
-      print('Error initializing notifications: $e');
-    }
-  }
 }
 
 // ─── Persistent mini-player wrapper ─────────────────────────────────────────
@@ -260,9 +254,10 @@ class _PersistentNavBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final brightness = Theme.of(context).brightness;
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+      margin: EdgeInsets.fromLTRB(16, 4, 16, safeBottom > 0 ? safeBottom : 16),
       height: 60,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(DesignTokens.radiusNavBar),
@@ -273,36 +268,44 @@ class _PersistentNavBar extends ConsumerWidget {
           ),
           child: Container(
             decoration: BoxDecoration(
-              color: DesignTokens.getGlassBackground(brightness, 0.14),
+              color: brightness == Brightness.dark
+                  ? DesignTokens.getGlassBackground(brightness, 0.14)
+                  : Colors.white.withValues(alpha: 0.82),
               borderRadius: BorderRadius.circular(DesignTokens.radiusNavBar),
               border: Border.all(
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.15),
+                color: brightness == Brightness.dark
+                    ? Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.15)
+                    : Colors.black.withValues(alpha: 0.10),
                 width: 1.5,
               ),
-              boxShadow: [DesignTokens.shadowGlass],
+              boxShadow: [
+                DesignTokens.shadowGlass,
+                if (brightness == Brightness.light)
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 20,
+                    offset: const Offset(0, 6),
+                  ),
+              ],
             ),
-            child: SafeArea(
-              top: false,
-              bottom: true,
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _item(context, Icons.home_outlined, Icons.home, 'Home', 0),
-                    _item(context, Icons.explore_outlined, Icons.explore,
-                        'Kiosk', 1),
-                    _item(
-                        context, Icons.mic_outlined, Icons.mic, 'Podcast', 2),
-                    _item(context, Icons.video_library_outlined,
-                        Icons.video_library, 'Videos', 3),
-                    _item(context, Icons.menu, Icons.menu, 'Menü', 4),
-                  ],
-                ),
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _item(context, Icons.home_outlined, Icons.home, 'Home', 0),
+                  _item(context, Icons.explore_outlined, Icons.explore,
+                      'Kiosk', 1),
+                  _item(
+                      context, Icons.mic_outlined, Icons.mic, 'Podcast', 2),
+                  _item(context, Icons.video_library_outlined,
+                      Icons.video_library, 'Videos', 3),
+                  _item(context, Icons.menu, Icons.menu, 'Menü', 4),
+                ],
               ),
             ),
           ),
@@ -320,31 +323,28 @@ class _PersistentNavBar extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         splashColor: DesignTokens.primaryRed.withValues(alpha: 0.1),
         child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Icon(
-                  isSelected ? selectedIcon : icon,
-                  color: isSelected
-                      ? DesignTokens.primaryRed
-                      : DesignTokens.getTextSecondary(Theme.of(context).brightness),
-                  size: 28,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isSelected ? selectedIcon : icon,
+                color: isSelected
+                    ? DesignTokens.primaryRed
+                    : DesignTokens.getTextSecondary(Theme.of(context).brightness),
+                size: 26,
+              ),
+              const SizedBox(height: 3),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: isSelected ? 5 : 0,
+                height: isSelected ? 5 : 0,
+                decoration: const BoxDecoration(
+                  color: DesignTokens.primaryRed,
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 4),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: isSelected ? 5 : 0,
-                  height: isSelected ? 5 : 0,
-                  decoration: const BoxDecoration(
-                    color: DesignTokens.primaryRed,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

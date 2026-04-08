@@ -26,15 +26,30 @@ const _kHideNavRoutes = {
 /// on top of the navigation stack.
 class FullPlayerRouteObserver extends NavigatorObserver {
   final ValueNotifier<bool> fullPlayerActive = ValueNotifier(false);
-  /// True whenever a route that should hide the navbar/mini-bar is on top.
+  /// True whenever a route that should hide the navbar/mini-bar is on top
+  /// OR when such a route is anywhere in the active stack (e.g. Chewie
+  /// fullscreen pushed on top of VideoPlayerScreen).
   final ValueNotifier<bool> hideNavActive = ValueNotifier(false);
   // Called whenever any route is pushed (used to reset the bottom offset
   // for pushed detail screens where the bottom navbar is not visible).
   VoidCallback? onRoutePushed;
   VoidCallback? onRoutePopped;
 
-  void _updateHideNav(String? routeName) {
-    hideNavActive.value = _kHideNavRoutes.contains(routeName);
+  /// Keeps track of how many hide-nav routes are in the stack.
+  int _hideNavDepth = 0;
+
+  void _pushHideNav(String? routeName) {
+    if (_kHideNavRoutes.contains(routeName)) {
+      _hideNavDepth++;
+    }
+    hideNavActive.value = _hideNavDepth > 0;
+  }
+
+  void _popHideNav(String? routeName) {
+    if (_kHideNavRoutes.contains(routeName)) {
+      _hideNavDepth = (_hideNavDepth - 1).clamp(0, 999);
+    }
+    hideNavActive.value = _hideNavDepth > 0;
   }
 
   @override
@@ -43,7 +58,7 @@ class FullPlayerRouteObserver extends NavigatorObserver {
     if (route.settings.name == kFullPlayerRouteName) {
       fullPlayerActive.value = true;
     }
-    _updateHideNav(route.settings.name);
+    _pushHideNav(route.settings.name);
     // Notify so app.dart can reset the bottom offset.
     if (previousRoute != null) onRoutePushed?.call();
   }
@@ -54,7 +69,7 @@ class FullPlayerRouteObserver extends NavigatorObserver {
     if (route.settings.name == kFullPlayerRouteName) {
       fullPlayerActive.value = false;
     }
-    _updateHideNav(previousRoute?.settings.name);
+    _popHideNav(route.settings.name);
     onRoutePopped?.call();
   }
 
@@ -64,7 +79,7 @@ class FullPlayerRouteObserver extends NavigatorObserver {
     if (route.settings.name == kFullPlayerRouteName) {
       fullPlayerActive.value = false;
     }
-    _updateHideNav(previousRoute?.settings.name);
+    _popHideNav(route.settings.name);
     onRoutePopped?.call();
   }
 
@@ -77,7 +92,8 @@ class FullPlayerRouteObserver extends NavigatorObserver {
     if (newRoute?.settings.name == kFullPlayerRouteName) {
       fullPlayerActive.value = true;
     }
-    _updateHideNav(newRoute?.settings.name);
+    _popHideNav(oldRoute?.settings.name);
+    _pushHideNav(newRoute?.settings.name);
   }
 }
 

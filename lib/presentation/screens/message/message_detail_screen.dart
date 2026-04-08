@@ -4,6 +4,7 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:jugendkompass_app/data/models/message_model.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
+import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
@@ -27,6 +28,7 @@ class MessageDetailScreen extends ConsumerWidget {
         );
 
     return Scaffold(
+      extendBody: true,
       appBar: AppBar(
         title: Text(
           'Kurznachricht',
@@ -124,7 +126,16 @@ class MessageDetailScreen extends ConsumerWidget {
                 ),
               },
             ),
-            const SizedBox(height: 40),
+            Consumer(
+              builder: (context, ref, _) {
+                final hasAudio = ref.watch(currentAudioProvider) != null;
+                return SizedBox(
+                  height: hasAudio
+                      ? DesignTokens.overlayPaddingWithMiniPlayer
+                      : DesignTokens.overlayPaddingBase,
+                );
+              },
+            ),
           ],
         ),
       ),

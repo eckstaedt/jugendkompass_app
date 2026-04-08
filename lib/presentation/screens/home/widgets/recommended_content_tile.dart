@@ -86,13 +86,15 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
         return;
       }
 
-      final audioService = ref.read(audioServiceProvider);
-      await audioService.setQueue([audio], startIndex: 0);
-
+      // Update providers immediately so the mini player bar appears instantly
       ref.read(audioQueueProvider.notifier).state = [audio];
       ref.read(currentQueueIndexProvider.notifier).state = 0;
       ref.read(currentAudioProvider.notifier).state = audio;
       currentAudioNotifier.value = audio;
+
+      // Start playback (setQueue calls playAudio internally)
+      final audioService = ref.read(audioServiceProvider);
+      await audioService.setQueue([audio], startIndex: 0);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

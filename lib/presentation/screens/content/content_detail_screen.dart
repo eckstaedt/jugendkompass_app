@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/domain/providers/post_provider.dart';
 import 'package:jugendkompass_app/domain/providers/video_provider.dart';
 import 'package:jugendkompass_app/domain/providers/content_provider.dart';
+import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
+    show kVideoPlayerRouteName;
 import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
@@ -43,9 +45,25 @@ class ContentDetailScreen extends ConsumerWidget {
                   ),
                 );
               }
-              return VideoPlayerScreen(
-                videoUrl: video.videoUrl,
-                title: video.displayTitle,
+              // Push VideoPlayerScreen with proper route settings so the
+              // navbar observer can hide the navbar during video playback.
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (context.mounted) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      settings: const RouteSettings(name: kVideoPlayerRouteName),
+                      builder: (context) => VideoPlayerScreen(
+                        videoUrl: video.videoUrl,
+                        title: video.displayTitle,
+                      ),
+                    ),
+                  );
+                }
+              });
+              return Scaffold(
+                appBar: AppBar(title: const Text('Video')),
+                body: const LoadingIndicator(message: 'Lade Video...'),
               );
             },
             loading: () => Scaffold(

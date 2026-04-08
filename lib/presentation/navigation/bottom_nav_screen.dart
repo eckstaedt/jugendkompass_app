@@ -13,7 +13,8 @@ class BottomNavScreen extends ConsumerWidget {
   const BottomNavScreen({super.key});
 
   // Navbar height used by the global overlay in app.dart.
-  static const double navBarHeight = 80;
+  // 60 (bar) + 4 (top margin) = 64, safe area bottom is added dynamically.
+  static const double navBarHeight = 64;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

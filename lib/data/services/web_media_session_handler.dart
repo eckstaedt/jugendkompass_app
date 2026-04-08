@@ -7,7 +7,7 @@ import 'package:jugendkompass_app/data/models/audio_model.dart';
 
 // Conditional import: only loaded when compiling for web.
 import 'web_media_session_handler_web.dart'
-    if (dart.library.io) 'web_media_session_handler_stub.dart' as _impl;
+    if (dart.library.io) 'web_media_session_handler_stub.dart' as impl;
 
 /// Public facade — safe to instantiate on every platform.
 class WebMediaSessionHandler {
@@ -23,7 +23,7 @@ class WebMediaSessionHandler {
   Future<void> init() async {
     if (_initialized) return;
     _initialized = true;
-    if (kIsWeb) _impl.webInit();
+    if (kIsWeb) impl.webInit();
   }
 
   Future<void> updateMediaSession({
@@ -33,7 +33,7 @@ class WebMediaSessionHandler {
     required Duration? duration,
   }) async {
     if (!kIsWeb || !_initialized) return;
-    _impl.webUpdateMediaSession(
+    impl.webUpdateMediaSession(
       id: audio.id,
       title: audio.title ?? 'Podcast',
       artist: audio.artist ?? audio.post?.title ?? 'Jugendkompass',
@@ -46,11 +46,11 @@ class WebMediaSessionHandler {
 
   Future<void> updatePlaybackState(bool isPlaying) async {
     if (!kIsWeb || !_initialized) return;
-    _impl.webUpdatePlaybackState(isPlaying);
+    impl.webUpdatePlaybackState(isPlaying);
   }
 
   Future<void> clear() async {
     if (!kIsWeb || !_initialized) return;
-    _impl.webClear();
+    impl.webClear();
   }
 }

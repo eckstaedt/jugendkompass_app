@@ -9,38 +9,6 @@ import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
     show kFullPlayerRouteName, currentAudioNotifier;
 
-// ─── Audio Output Route ──────────────────────────────────────────────────────
-
-enum _AudioOutput { phone, headphones, bluetooth, car }
-
-final _audioOutputProvider = StateProvider<_AudioOutput>((_) => _AudioOutput.phone);
-
-IconData _outputIcon(_AudioOutput output) {
-  switch (output) {
-    case _AudioOutput.phone:
-      return Icons.phone_android;
-    case _AudioOutput.headphones:
-      return Icons.headphones;
-    case _AudioOutput.bluetooth:
-      return Icons.bluetooth_audio;
-    case _AudioOutput.car:
-      return Icons.directions_car;
-  }
-}
-
-String _outputLabel(_AudioOutput output) {
-  switch (output) {
-    case _AudioOutput.phone:
-      return 'Lautsprecher (Handy)';
-    case _AudioOutput.headphones:
-      return 'Kopfhörer';
-    case _AudioOutput.bluetooth:
-      return 'Bluetooth';
-    case _AudioOutput.car:
-      return 'Auto';
-  }
-}
-
 // ─── Mini Player Bar ─────────────────────────────────────────────────────────
 
 class MiniPlayerBar extends ConsumerWidget {
@@ -49,121 +17,26 @@ class MiniPlayerBar extends ConsumerWidget {
 
   const MiniPlayerBar({super.key, required this.audio, this.navigatorKey});
 
-  void _showOutputPicker(BuildContext context, WidgetRef ref) {
-    final brightness = Theme.of(context).brightness;
-    final currentOutput = ref.read(_audioOutputProvider);
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(DesignTokens.radiusMiddleContainers),
-            ),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(
-                sigmaX: DesignTokens.glassBlurSigma,
-                sigmaY: DesignTokens.glassBlurSigma,
-              ),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: DesignTokens.getGlassBackground(brightness, 0.92),
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(DesignTokens.radiusMiddleContainers),
-                  ),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
-                    width: 1,
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const SizedBox(height: 12),
-                    Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: DesignTokens.getTextSecondary(brightness).withOpacity(0.4),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'Audiowiedergabe',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: DesignTokens.getTextPrimary(brightness),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    ..._AudioOutput.values.map((output) {
-                      final isSelected = output == currentOutput;
-                      return ListTile(
-                        leading: Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? DesignTokens.primaryRed.withOpacity(0.12)
-                                : DesignTokens.getCardBackground(brightness).withOpacity(0.4),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            _outputIcon(output),
-                            color: isSelected
-                                ? DesignTokens.primaryRed
-                                : DesignTokens.getTextSecondary(brightness),
-                            size: 22,
-                          ),
-                        ),
-                        title: Text(
-                          _outputLabel(output),
-                          style: TextStyle(
-                            fontWeight: isSelected
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                            color: isSelected
-                                ? DesignTokens.primaryRed
-                                : DesignTokens.getTextPrimary(brightness),
-                            fontSize: 15,
-                          ),
-                        ),
-                        trailing: isSelected
-                            ? Icon(Icons.check_rounded,
-                                color: DesignTokens.primaryRed)
-                            : null,
-                        onTap: () {
-                          ref.read(_audioOutputProvider.notifier).state = output;
-                          Navigator.pop(context);
-                        },
-                      );
-                    }),
-                    const SizedBox(height: 20),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   void _openFullPlayer(BuildContext context) {
-    final nav = navigatorKey?.currentState ??
-        Navigator.of(context, rootNavigator: true);
+    final nav = navigatorKey?.currentState ?? Navigator.of(context);
     nav.push(
-      MaterialPageRoute(
+      PageRouteBuilder(
         settings: const RouteSettings(name: kFullPlayerRouteName),
-        builder: (context) => const FullPlayerScreen(),
+        transitionDuration: const Duration(milliseconds: 350),
+        reverseTransitionDuration: const Duration(milliseconds: 300),
+        pageBuilder: (_, _, _) => const FullPlayerScreen(),
+        transitionsBuilder: (_, animation, _, child) {
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 1),
+              end: Offset.zero,
+            ).animate(CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+            )),
+            child: child,
+          );
+        },
       ),
     );
   }
@@ -174,7 +47,6 @@ class MiniPlayerBar extends ConsumerWidget {
     final positionAsync = ref.watch(audioPositionProvider);
     final durationAsync = ref.watch(audioDurationProvider);
     final playerStateAsync = ref.watch(audioPlayerStateProvider);
-    final currentOutput = ref.watch(_audioOutputProvider);
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final progressBgColor = isDark ? Colors.grey.shade800 : Colors.grey.shade200;
@@ -349,19 +221,6 @@ class MiniPlayerBar extends ConsumerWidget {
 
                           const SizedBox(width: 4),
 
-                          // Audio output icon (speaker / headphones / car)
-                          GestureDetector(
-                            onTap: () => _showOutputPicker(context, ref),
-                            child: Padding(
-                              padding: const EdgeInsets.all(6),
-                              child: Icon(
-                                _outputIcon(currentOutput),
-                                size: 22,
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ),
-
                           // Play / Pause button
                           playerStateAsync.when(
                             data: (state) {
@@ -396,7 +255,7 @@ class MiniPlayerBar extends ConsumerWidget {
                               ),
                             ),
                             error: (_, _) => GestureDetector(
-                              onTap: () => audioService.playAudio(audio.audioUrl),
+                              onTap: () => audioService.playAudio(audio.audioUrl, audio: audio),
                               child: Padding(
                                 padding: const EdgeInsets.all(6),
                                 child: Icon(

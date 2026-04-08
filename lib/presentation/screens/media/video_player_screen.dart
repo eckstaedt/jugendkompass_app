@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
@@ -6,6 +7,7 @@ import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
+import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 
 class VideoPlayerScreen extends ConsumerStatefulWidget {
   final String videoUrl;
@@ -37,6 +39,11 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
   @override
   void initState() {
     super.initState();
+    // Pause any currently playing audio when entering video player
+    final audioService = ref.read(audioServiceProvider);
+    if (audioService.isPlaying) {
+      audioService.pause();
+    }
     _checkVideoType();
   }
 
@@ -98,6 +105,11 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
           backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
           bufferedColor: Theme.of(context).colorScheme.primaryContainer,
         ),
+        controlsSafeAreaMinimum: const EdgeInsets.only(
+          bottom: 20,
+          left: 16,
+          right: 16,
+        ),
       );
 
       if (mounted) {
@@ -116,6 +128,8 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
 
   @override
   void dispose() {
+    // Restore system UI
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     _videoPlayerController.dispose();
     _chewieController?.dispose();
     _youtubeController?.dispose();
@@ -130,8 +144,12 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
         );
 
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
         title: Text(widget.title),
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        elevation: 0,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
@@ -167,13 +185,13 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                     Icon(
                       Icons.error_outline,
                       size: 64,
-                      color: Theme.of(context).colorScheme.error,
+                      color: Colors.redAccent.shade100,
                     ),
                     const SizedBox(height: 16),
                     Text(
                       _error!,
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyLarge,
+                      style: const TextStyle(color: Colors.white70, fontSize: 16),
                     ),
                     const SizedBox(height: 24),
                     FilledButton.icon(
@@ -198,8 +216,8 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                       )
                     : _chewieController != null
                         ? Chewie(controller: _chewieController!)
-                        : const CircularProgressIndicator()
-                : const CircularProgressIndicator(),
+                        : const CircularProgressIndicator(color: Colors.white)
+                : const CircularProgressIndicator(color: Colors.white),
       ),
     );
   }

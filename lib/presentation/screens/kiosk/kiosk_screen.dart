@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/kiosk/widgets/edition_card.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 
 class KioskScreen extends ConsumerWidget {
   const KioskScreen({super.key});
@@ -21,6 +22,7 @@ class KioskScreen extends ConsumerWidget {
 
     return Scaffold(
       body: SafeArea(
+        bottom: false,
         child: RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(editionsListProvider);
@@ -57,11 +59,13 @@ class KioskScreen extends ConsumerWidget {
 
                   // Magazine Grid
                   SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(
+                    padding: EdgeInsets.fromLTRB(
                       DesignTokens.paddingHorizontal,
                       DesignTokens.spacingMedium,
                       DesignTokens.paddingHorizontal,
-                      80,
+                      ref.watch(currentAudioProvider) != null
+                          ? DesignTokens.overlayPaddingWithMiniPlayer
+                          : DesignTokens.overlayPaddingBase,
                     ),
                     sliver: SliverGrid(
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -81,9 +85,7 @@ class KioskScreen extends ConsumerWidget {
                 ],
               );
             },
-            loading: () => LoadingIndicator(
-              message: translate('Lade Magazine...'),
-            ),
+            loading: () => const KioskGridSkeleton(),
             error: (error, stack) => ErrorView(
               message: '${translate('Fehler beim Laden der Magazine')}: $error',
               onRetry: () => ref.invalidate(editionsListProvider),

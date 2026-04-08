@@ -17,7 +17,6 @@ import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
-import 'package:jugendkompass_app/data/repositories/audio_repository.dart';
 
 class EditionDetailScreen extends ConsumerStatefulWidget {
   final EditionModel edition;
@@ -312,12 +311,15 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
   Future<void> _playEditionAudios(BuildContext context, List<AudioModel> audios) async {
     if (audios.isEmpty) return;
     try {
-      final audioService = ref.read(audioServiceProvider);
-      await audioService.setQueue(audios, startIndex: 0);
+      // Update providers immediately so mini player appears instantly
       ref.read(audioQueueProvider.notifier).state = audios;
       ref.read(currentQueueIndexProvider.notifier).state = 0;
       ref.read(currentAudioProvider.notifier).state = audios.first;
       currentAudioNotifier.value = audios.first;
+
+      // Start playback
+      final audioService = ref.read(audioServiceProvider);
+      await audioService.setQueue(audios, startIndex: 0);
       // Mini player bar appears automatically – no navigation needed
     } catch (e) {
       if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppTranslations.t('error_playing')}: $e'), backgroundColor: Colors.red));
@@ -333,12 +335,15 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
         if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppTranslations.t('audio_not_found')), backgroundColor: Colors.red));
         return;
       }
-      final audioService = ref.read(audioServiceProvider);
-      await audioService.setQueue([audio], startIndex: 0);
+      // Update providers immediately so mini player appears instantly
       ref.read(audioQueueProvider.notifier).state = [audio];
       ref.read(currentQueueIndexProvider.notifier).state = 0;
       ref.read(currentAudioProvider.notifier).state = audio;
       currentAudioNotifier.value = audio;
+
+      // Start playback
+      final audioService = ref.read(audioServiceProvider);
+      await audioService.setQueue([audio], startIndex: 0);
       // Mini player bar appears automatically – no navigation needed
     } catch (e) {
       if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppTranslations.t('error_playing')}: $e'), backgroundColor: Colors.red));

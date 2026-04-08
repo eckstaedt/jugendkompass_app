@@ -13,7 +13,13 @@ final audioRepositoryProvider = Provider<AudioRepository>((ref) {
 });
 
 final audioServiceProvider = Provider<AudioService>((ref) {
-  return AudioService.instance;
+  final service = AudioService.instance;
+  // Keep Riverpod in sync when the service auto-advances to the next track.
+  service.onTrackChanged = (newIndex, newAudio) {
+    ref.read(currentQueueIndexProvider.notifier).state = newIndex;
+    ref.read(currentAudioProvider.notifier).state = newAudio;
+  };
+  return service;
 });
 
 final mediaNotificationServiceProvider = Provider<MediaNotificationService>((ref) {
@@ -31,7 +37,14 @@ final audioListProvider = FutureProvider<List<AudioModel>>((ref) async {
 
 final currentAudioProvider = StateProvider<AudioModel?>((ref) => null);
 
-final isPlayingProvider = StateProvider<bool>((ref) => false);
+final isPlayingProvider = Provider<bool>((ref) {
+  final playerState = ref.watch(audioPlayerStateProvider);
+  return playerState.when(
+    data: (state) => state.playing,
+    loading: () => false,
+    error: (_, _) => false,
+  );
+});
 
 final audioPositionProvider = StreamProvider<Duration>((ref) {
   final service = ref.watch(audioServiceProvider);

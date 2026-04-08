@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
+import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
@@ -11,7 +12,7 @@ import 'package:jugendkompass_app/domain/providers/post_provider.dart';
 import 'package:jugendkompass_app/domain/providers/impulse_provider.dart';
 import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
-    show kEditionDetailRouteName;
+    show kEditionDetailRouteName, kVideoPlayerRouteName;
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/impulse/impulse_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/kiosk/edition_detail_screen.dart';
@@ -32,6 +33,7 @@ class CollectionScreen extends ConsumerWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
+      extendBody: true,
       appBar: AppBar(
         title: Text('Deine Sammlung'),
         elevation: 0,
@@ -98,7 +100,14 @@ class CollectionScreen extends ConsumerWidget {
               ),
             )
           : ListView.builder(
-              padding: EdgeInsets.all(DesignTokens.paddingHorizontal),
+              padding: EdgeInsets.fromLTRB(
+                DesignTokens.paddingHorizontal,
+                DesignTokens.paddingHorizontal,
+                DesignTokens.paddingHorizontal,
+                ref.watch(currentAudioProvider) != null
+                    ? DesignTokens.overlayPaddingWithMiniPlayer
+                    : DesignTokens.overlayPaddingBase,
+              ),
               itemCount: collectionItems.length,
               itemBuilder: (context, index) {
                 final item = collectionItems[index];
@@ -243,6 +252,7 @@ class CollectionScreen extends ConsumerWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
+            settings: const RouteSettings(name: kVideoPlayerRouteName),
             builder: (context) => VideoPlayerScreen(
               videoUrl: item.id,
               title: HtmlUtils.stripHtml(item.title),

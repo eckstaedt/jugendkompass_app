@@ -42,6 +42,7 @@ class PostDetailScreen extends ConsumerWidget {
     final displayBody = translationAsync.whenOrNull(data: (d) => d.body) ?? post.body;
 
     return Scaffold(
+      extendBody: true,
       body: CustomScrollView(
         slivers: [
           // App Bar with Image
@@ -74,7 +75,8 @@ class PostDetailScreen extends ConsumerWidget {
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              titlePadding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+              titlePadding: const EdgeInsets.only(left: 56, right: 56, bottom: 14),
+              expandedTitleScale: 1.0,
               title: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
@@ -409,7 +411,16 @@ class PostDetailScreen extends ConsumerWidget {
                     },
                   ),
 
-                  const SizedBox(height: 40),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final hasAudio = ref.watch(currentAudioProvider) != null;
+                      return SizedBox(
+                        height: hasAudio
+                            ? DesignTokens.overlayPaddingWithMiniPlayer
+                            : DesignTokens.overlayPaddingBase,
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -471,15 +482,15 @@ class PostDetailScreen extends ConsumerWidget {
             : post.imageUrl,
       );
 
-      // Set as queue with single audio
-      final audioService = ref.read(audioServiceProvider);
-      await audioService.setQueue([enrichedAudio], startIndex: 0);
-
-      // Update providers – mini player bar appears automatically.
+      // Update providers immediately so the mini player bar appears instantly
       ref.read(audioQueueProvider.notifier).state = [enrichedAudio];
       ref.read(currentQueueIndexProvider.notifier).state = 0;
       ref.read(currentAudioProvider.notifier).state = enrichedAudio;
       currentAudioNotifier.value = enrichedAudio;
+
+      // Start playback (setQueue calls playAudio internally)
+      final audioService = ref.read(audioServiceProvider);
+      await audioService.setQueue([enrichedAudio], startIndex: 0);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

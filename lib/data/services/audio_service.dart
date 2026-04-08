@@ -12,6 +12,10 @@ class AudioService {
   int _currentIndex = 0;
   StreamSubscription<PlayerState>? _playerStateSubscription;
 
+  /// Called whenever the service auto-advances to the next track (e.g. on
+  /// completion).  Riverpod providers hook into this so they stay in sync.
+  void Function(int newIndex, AudioModel? newAudio)? onTrackChanged;
+
   AudioService._() {
     _player = AudioPlayer();
     _setupPlayerStateListener();
@@ -35,17 +39,30 @@ class AudioService {
     _playerStateSubscription = _player.playerStateStream.listen((state) {
       if (state.processingState == ProcessingState.completed) {
         if (hasNext) {
-          playNext();
+          _autoPlayNext();
         }
       }
     });
   }
 
+  /// Internal auto-advance that also notifies Riverpod via the callback.
+  Future<void> _autoPlayNext() async {
+    if (!hasNext) return;
+    _currentIndex++;
+    await playAudio(
+      _queue[_currentIndex].audioUrl,
+      audio: _queue[_currentIndex],
+    );
+    onTrackChanged?.call(_currentIndex, currentAudio);
+  }
+
   /// Build a [MediaItem] tag from an [AudioModel] for lock screen display.
+  /// The [id] MUST be set to the audio URL so that just_audio_background
+  /// can correctly map it to the underlying platform audio source.
   MediaItem _mediaItem(AudioModel audio) {
     return MediaItem(
-      id: audio.id,
-      title: audio.title ?? 'Audio',
+      id: audio.audioUrl,
+      title: audio.title ?? audio.post?.title ?? 'Audio',
       artist: audio.artist ?? 'Jugendkompass',
       artUri: audio.imageUrl != null ? Uri.tryParse(audio.imageUrl!) : null,
       duration: audio.duration,
@@ -54,7 +71,15 @@ class AudioService {
 
   Future<void> playAudio(String url, {AudioModel? audio}) async {
     try {
-      final tag = audio != null ? _mediaItem(audio) : null;
+      // Always provide a MediaItem tag – just_audio_background requires it
+      // for iOS/Android lock screen controls (artwork, title, play/pause).
+      final tag = audio != null
+          ? _mediaItem(audio)
+          : MediaItem(
+              id: url,
+              title: 'Audio',
+              artist: 'Jugendkompass',
+            );
       await _player.setAudioSource(
         AudioSource.uri(Uri.parse(url), tag: tag),
       );
