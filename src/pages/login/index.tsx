@@ -38,9 +38,16 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { login } = useAuth();
+  const { login, user, isAdmin, adminChecked } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Wenn bereits eingeloggt und Admin → direkt zum Dashboard
+  useEffect(() => {
+    if (user && isAdmin && adminChecked) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, isAdmin, adminChecked, navigate]);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
