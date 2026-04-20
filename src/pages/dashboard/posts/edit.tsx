@@ -24,6 +24,7 @@ import { AudioUploader } from '@/components/posts/AudioUploader';
 import { ImageUploader } from '@/components/posts/ImageUploader';
 import { supabase } from '@/integrations/supabase/client';
 import { AudioRecord } from '@/types/audio';
+import { RetranslateButton } from '@/components/translations/RetranslateButton';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Der Titel ist erforderlich'),
@@ -242,18 +243,23 @@ const EditPostPage = () => {
                 )}
               />
 
-              <div className="flex justify-end gap-4">
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  onClick={() => navigate('/dashboard/posts')}
-                  disabled={isLoading}
-                >
-                  Abbrechen
-                </Button>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? 'Wird gespeichert...' : 'Speichern'}
-                </Button>
+              <div className="flex justify-between items-center gap-4 flex-wrap">
+                {post.content_id ? (
+                  <RetranslateButton contentId={post.content_id} />
+                ) : <div />}
+                <div className="flex gap-4">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => navigate('/dashboard/posts')}
+                    disabled={isLoading}
+                  >
+                    Abbrechen
+                  </Button>
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? 'Wird gespeichert...' : 'Speichern'}
+                  </Button>
+                </div>
               </div>
             </form>
           </Form>
