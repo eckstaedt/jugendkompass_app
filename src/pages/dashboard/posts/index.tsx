@@ -16,6 +16,7 @@ import { BulkPostDialog } from '@/components/posts/BulkPostDialog';
 import { useBulkCreatePosts } from '@/hooks/posts/use-bulk-create-posts';
 import { useTranslationsForContents, summarizeLang, SUPPORTED_LANGS } from '@/hooks/use-translations';
 import { TranslationStatusList } from '@/components/translations/TranslationStatusBadge';
+import { BackfillButton } from '@/components/translations/BackfillButton';
 
 const PostsPage = () => {
   const { posts, isLoading, deletePost, updatePostStatus, fetchNextPage, hasNextPage, isFetchingNextPage } = usePosts();
@@ -76,6 +77,7 @@ const PostsPage = () => {
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold tracking-tight">Beiträge verwalten</h2>
           <div className="flex gap-2">
+            <BackfillButton contentType="post" invalidateKeys={['posts']} />
             <Button variant="outline" onClick={() => setBulkOpen(true)}>
               <Upload className="mr-2 h-4 w-4" />
               JSON Import
