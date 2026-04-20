@@ -15,7 +15,7 @@ export type TranslationRow = {
   updated_at: string;
 };
 
-export const SUPPORTED_LANGS = ['en'] as const;
+export const SUPPORTED_LANGS = ['en', 'es', 'ru'] as const;
 export type SupportedLang = typeof SUPPORTED_LANGS[number];
 
 /**
