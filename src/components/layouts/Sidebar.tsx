@@ -12,10 +12,12 @@ import {
   UsersIcon,
   LogOut,
   Moon,
-  Sun
+  Sun,
+  Globe
 } from 'lucide-react';
 import { useTheme } from '@/hooks/use-theme';
 import { useEffect } from 'react';
+import { usePreviewLocale } from '@/contexts/PreviewLocaleContext';
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -33,6 +35,7 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const { previewLang, setPreviewLang } = usePreviewLocale();
   
   const navItems: NavItem[] = [
     {

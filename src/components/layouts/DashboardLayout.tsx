@@ -4,8 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeftIcon, MenuIcon } from 'lucide-react';
+import { ArrowLeftIcon, MenuIcon, GlobeIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { usePreviewLocale } from '@/contexts/PreviewLocaleContext';
 
 type DashboardLayoutProps = {
   children: React.ReactNode;
@@ -17,6 +18,7 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
   const { user, loading, isAdmin, adminChecked } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { previewLang } = usePreviewLocale();
 
   useEffect(() => {
     const checkMobile = () => {
