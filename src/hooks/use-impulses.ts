@@ -41,9 +41,9 @@ export const useImpulses = () => {
   return useQuery({
     queryKey: ['impulses', previewLang],
     queryFn: async () => {
-      if (previewLang === 'en') {
+      if (previewLang !== 'de') {
         const { data: localized, error: rpcError } = await supabase
-          .rpc('get_impulses_localized', { lang: 'en' });
+          .rpc('get_impulses_localized', { lang: previewLang });
         if (rpcError) throw rpcError;
 
         const contentIds = (localized ?? []).map((i: any) => i.content_id).filter(Boolean);

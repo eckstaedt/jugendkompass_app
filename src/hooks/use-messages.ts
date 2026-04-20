@@ -21,9 +21,9 @@ export const useMessages = () => {
   return useQuery({
     queryKey: ['messages', previewLang],
     queryFn: async () => {
-      if (previewLang === 'en') {
+      if (previewLang !== 'de') {
         const { data, error } = await supabase
-          .rpc('get_messages_localized', { lang: 'en' });
+          .rpc('get_messages_localized', { lang: previewLang });
         if (error) throw error;
         const sorted = [...(data ?? [])].sort((a: any, b: any) =>
           (b.created_at ?? '').localeCompare(a.created_at ?? '')

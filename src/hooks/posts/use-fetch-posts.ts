@@ -15,9 +15,9 @@ export function useFetchPosts() {
       const from = pageParam * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
 
-      if (previewLang === 'en') {
+      if (previewLang !== 'de') {
         const { data: localized, error: rpcError } = await supabase
-          .rpc('get_posts_localized', { lang: 'en' });
+          .rpc('get_posts_localized', { lang: previewLang });
         if (rpcError) throw rpcError;
 
         const sorted = [...(localized ?? [])].sort((a: any, b: any) =>

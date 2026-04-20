@@ -1,9 +1,17 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-export type PreviewLang = 'de' | 'en';
+export type PreviewLang = 'de' | 'en' | 'es' | 'ru';
+
+export const PREVIEW_LANGS: { code: PreviewLang; label: string; name: string }[] = [
+  { code: 'de', label: 'DE', name: 'Deutsch' },
+  { code: 'en', label: 'EN', name: 'Englisch' },
+  { code: 'es', label: 'ES', name: 'Spanisch' },
+  { code: 'ru', label: 'RU', name: 'Russisch' },
+];
 
 const STORAGE_KEY = 'preview-lang';
+const VALID: PreviewLang[] = ['de', 'en', 'es', 'ru'];
 
 type PreviewLocaleContextValue = {
   previewLang: PreviewLang;
@@ -15,8 +23,8 @@ const PreviewLocaleContext = createContext<PreviewLocaleContextValue | undefined
 export const PreviewLocaleProvider = ({ children }: { children: ReactNode }) => {
   const [previewLang, setPreviewLangState] = useState<PreviewLang>(() => {
     if (typeof window === 'undefined') return 'de';
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored === 'en' ? 'en' : 'de';
+    const stored = localStorage.getItem(STORAGE_KEY) as PreviewLang | null;
+    return stored && VALID.includes(stored) ? stored : 'de';
   });
 
   const queryClient = useQueryClient();
@@ -31,7 +39,6 @@ export const PreviewLocaleProvider = ({ children }: { children: ReactNode }) => 
   };
 
   useEffect(() => {
-    // Invalidate all queries that depend on the preview language
     queryClient.invalidateQueries();
   }, [previewLang, queryClient]);
 
