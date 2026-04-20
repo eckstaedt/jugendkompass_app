@@ -93,6 +93,12 @@ export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
             </span>
           </Button>
           <h1 className="text-xl font-semibold">{title}</h1>
+          {previewLang === 'en' && (
+            <div className="ml-auto flex items-center gap-2 rounded-md bg-amber-100 dark:bg-amber-900/30 px-3 py-1.5 text-xs font-medium text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
+              <GlobeIcon className="h-3.5 w-3.5" />
+              Vorschau: Englisch
+            </div>
+          )}
         </header>
         <main className="flex-1 p-6">
           {contentToRender}

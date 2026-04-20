@@ -192,6 +192,52 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
         "mt-auto pt-4 border-t border-sidebar-border flex flex-col gap-2",
         collapsed ? "w-full items-center" : ""
       )}>
+        {/* Vorschau-Sprachumschalter */}
+        {!collapsed ? (
+          <div className="flex items-center gap-2 px-3 py-2 mb-1">
+            <Globe className="h-4 w-4 text-sidebar-foreground/70" />
+            <span className="text-xs text-sidebar-foreground/70 mr-1">Vorschau:</span>
+            <div className="flex rounded-md border border-sidebar-border overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setPreviewLang('de')}
+                className={cn(
+                  "px-2 py-0.5 text-xs font-medium transition-colors",
+                  previewLang === 'de'
+                    ? "bg-sidebar-accent text-sidebar-primary"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50"
+                )}
+              >
+                DE
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewLang('en')}
+                className={cn(
+                  "px-2 py-0.5 text-xs font-medium transition-colors border-l border-sidebar-border",
+                  previewLang === 'en'
+                    ? "bg-sidebar-accent text-sidebar-primary"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50"
+                )}
+              >
+                EN
+              </button>
+            </div>
+          </div>
+        ) : (
+          <Button
+            variant="ghost"
+            className="h-10 w-10 p-0 flex items-center justify-center relative text-sidebar-foreground hover:bg-sidebar-accent"
+            onClick={() => setPreviewLang(previewLang === 'de' ? 'en' : 'de')}
+            aria-label="Vorschau-Sprache wechseln"
+            title={`Vorschau: ${previewLang.toUpperCase()}`}
+          >
+            <Globe className="h-5 w-5" />
+            <span className="absolute -bottom-0.5 -right-0.5 text-[9px] font-bold bg-sidebar-accent text-sidebar-primary rounded px-1 leading-tight">
+              {previewLang.toUpperCase()}
+            </span>
+          </Button>
+        )}
         <Button
           variant="ghost"
           className={cn(
