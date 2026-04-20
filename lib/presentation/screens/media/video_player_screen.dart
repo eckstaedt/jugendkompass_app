@@ -143,14 +143,69 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
               item.id == widget.videoUrl && item.type == CollectionItemType.video,
         );
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: Text(widget.title),
+    return Theme(
+      data: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: Colors.black,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+        ),
+      ),
+      child: Scaffold(
         backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        elevation: 0,
+        appBar: AppBar(
+          title: Text(widget.title, style: const TextStyle(color: Colors.white)),
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+          elevation: 0,
         actions: [
+          if (widget.description != null && widget.description!.trim().isNotEmpty)
+            Builder(
+              builder: (context) {
+                return IconButton(
+                  icon: const Icon(Icons.info_outline, size: 24),
+                  onPressed: () {
+                    final RenderBox button = context.findRenderObject() as RenderBox;
+                    final RenderBox overlay = Navigator.of(context)
+                        .overlay!
+                        .context
+                        .findRenderObject() as RenderBox;
+                    final position = RelativeRect.fromRect(
+                      Rect.fromPoints(
+                        button.localToGlobal(Offset.zero, ancestor: overlay),
+                        button.localToGlobal(
+                          button.size.bottomRight(Offset.zero),
+                          ancestor: overlay,
+                        ),
+                      ),
+                      Offset.zero & overlay.size,
+                    );
+                    showMenu(
+                      context: context,
+                      position: position,
+                      color: Colors.grey.shade900,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      constraints: const BoxConstraints(maxWidth: 300),
+                      items: [
+                        PopupMenuItem(
+                          enabled: false,
+                          child: Text(
+                            widget.description!,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Center(
@@ -218,6 +273,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                         ? Chewie(controller: _chewieController!)
                         : const CircularProgressIndicator(color: Colors.white)
                 : const CircularProgressIndicator(color: Colors.white),
+      ),
       ),
     );
   }
