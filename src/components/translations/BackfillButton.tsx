@@ -21,7 +21,7 @@ export function BackfillButton({ contentType, label = 'Übersetzungen ergänzen'
     try {
       const { data, error } = await supabase.functions.invoke('translate-backfill', {
         body: {
-          target_languages: ['en'],
+          target_languages: ['en', 'es', 'ru'],
           content_types: [contentType],
           force: false,
           delay_ms: 200,
