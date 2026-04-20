@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from '@/contexts/AuthContext';
+import { PreviewLocaleProvider } from '@/contexts/PreviewLocaleContext';
 import NotFound from "./pages/NotFound";
 
 // Lazy load pages
@@ -44,6 +45,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <BrowserRouter>
       <AuthProvider>
+        <PreviewLocaleProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -74,6 +76,7 @@ const App = () => (
             </Routes>
           </Suspense>
         </TooltipProvider>
+        </PreviewLocaleProvider>
       </AuthProvider>
     </BrowserRouter>
   </QueryClientProvider>
