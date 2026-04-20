@@ -1,4 +1,5 @@
-import 'dart:io';
+import 'dart:io' if (dart.library.html) 'dart:html';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:home_widget/home_widget.dart';
 import 'package:jugendkompass_app/data/models/verse_model.dart';
 import 'dart:developer' as developer;
@@ -13,12 +14,14 @@ class HomeWidgetService {
 
   /// Initialize the home widget service with the App Group ID.
   static Future<void> initialize() async {
+    if (kIsWeb) return;
     if (!Platform.isIOS) return;
     await HomeWidget.setAppGroupId(_appGroupId);
   }
 
   /// Update the iOS widget with the latest verse data.
   static Future<void> updateVerseWidget(VerseModel verse) async {
+    if (kIsWeb) return;
     if (!Platform.isIOS) return;
 
     try {
