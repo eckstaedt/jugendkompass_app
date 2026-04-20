@@ -116,6 +116,96 @@ export type Database = {
         }
         Relationships: []
       }
+      content_translations: {
+        Row: {
+          content_id: string
+          created_at: string
+          field_name: string
+          id: string
+          language: string
+          source_hash: string | null
+          status: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          content_id: string
+          created_at?: string
+          field_name: string
+          id?: string
+          language: string
+          source_hash?: string | null
+          status?: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          content_id?: string
+          created_at?: string
+          field_name?: string
+          id?: string
+          language?: string
+          source_hash?: string | null
+          status?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_translations_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_translations_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content_feed"
+            referencedColumns: ["content_id"]
+          },
+        ]
+      }
+      device_tokens: {
+        Row: {
+          content_notifications: boolean
+          created_at: string
+          device_id: string
+          fcm_token: string | null
+          id: string
+          language: string
+          notification_hour: number
+          notification_minute: number
+          platform: string
+          verse_notifications: boolean
+        }
+        Insert: {
+          content_notifications?: boolean
+          created_at?: string
+          device_id: string
+          fcm_token?: string | null
+          id?: string
+          language?: string
+          notification_hour?: number
+          notification_minute?: number
+          platform?: string
+          verse_notifications?: boolean
+        }
+        Update: {
+          content_notifications?: boolean
+          created_at?: string
+          device_id?: string
+          fcm_token?: string | null
+          id?: string
+          language?: string
+          notification_hour?: number
+          notification_minute?: number
+          platform?: string
+          verse_notifications?: boolean
+        }
+        Relationships: []
+      }
       editions: {
         Row: {
           body: string | null
@@ -594,12 +684,139 @@ export type Database = {
       }
     }
     Functions: {
+      get_categories_localized: {
+        Args: { lang: string }
+        Returns: {
+          created_at: string
+          id: string
+          name: string
+        }[]
+      }
+      get_content_feed_localized: {
+        Args: { lang: string }
+        Returns: {
+          content_id: string
+          content_type: string
+          created_at: string
+          description: string
+          entity_id: string
+          image_url: string
+          sort_order: number
+          specific_date: string
+          title: string
+        }[]
+      }
       get_current_user_role: { Args: never; Returns: string }
+      get_editions_localized: {
+        Args: { lang: string }
+        Returns: {
+          body: string
+          id: string
+          image_url: string
+          name: string
+          pdf_url: string
+          published_at: string
+          title: string
+        }[]
+      }
+      get_impulses_localized: {
+        Args: { lang: string }
+        Returns: {
+          content_id: string
+          created_at: string
+          date: string
+          id: string
+          image_url: string
+          impulse_text: string
+          title: string
+        }[]
+      }
+      get_messages_localized: {
+        Args: { lang: string }
+        Returns: {
+          content_id: string
+          created_at: string
+          created_by: string
+          id: number
+          image_url: string
+          message: string
+          title: string
+        }[]
+      }
+      get_poll_options_localized: {
+        Args: { lang: string }
+        Returns: {
+          created_at: string
+          id: string
+          option_text: string
+          poll_id: string
+          votes: number
+        }[]
+      }
+      get_polls_localized: {
+        Args: { lang: string }
+        Returns: {
+          content_id: string
+          created_at: string
+          created_by: string
+          expires_at: string
+          id: string
+          is_active: boolean
+          question: string
+        }[]
+      }
+      get_posts_localized: {
+        Args: { lang: string }
+        Returns: {
+          audio_id: string
+          body: string
+          category_id: string
+          content_id: string
+          created_at: string
+          edition_id: string
+          id: string
+          image_url: string
+          title: string
+        }[]
+      }
       get_vers_des_tages_today_json: { Args: never; Returns: Json }
+      get_verse_of_day_localized: {
+        Args: { lang: string }
+        Returns: {
+          content_id: string
+          created_at: string
+          date: string
+          id: string
+          reference: string
+          verse: string
+        }[]
+      }
+      get_videos_localized: {
+        Args: { lang: string }
+        Returns: {
+          content_id: string
+          created_at: string
+          description: string
+          id: number
+          image_url: string
+          title: string
+          url: string
+          user_id: string
+        }[]
+      }
       increment_poll_votes: { Args: { option_id: string }; Returns: undefined }
       is_admin:
         | { Args: never; Returns: boolean }
         | { Args: { user_id: string }; Returns: boolean }
+      tr: {
+        Args: {
+          p_content_id: string
+          p_fallback: string
+          p_field: string
+          p_lang: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "user"
