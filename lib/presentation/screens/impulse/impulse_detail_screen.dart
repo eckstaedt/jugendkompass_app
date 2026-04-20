@@ -11,6 +11,8 @@ import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
 
+import 'package:google_fonts/google_fonts.dart';
+
 class ImpulseDetailScreen extends ConsumerWidget {
   final ImpulseModel impulse;
 
@@ -40,135 +42,69 @@ class ImpulseDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       extendBody: true,
-      body: CustomScrollView(
-        slivers: [
-          // App Bar with Image
-          SliverAppBar(
-            // reduce the height of the verse image so it's roughly 35% smaller
-            // than the previous default of 300. 300 * 0.65 ≈ 195.
-            // this makes the image less dominant on the impulse detail page.
-            expandedHeight: 195,
-            pinned: true,
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: Center(
-                  child: GestureDetector(
-                    onTap: () {
-                      final item = CollectionItem(
-                        id: impulse.id,
-                        title: HtmlUtils.stripHtml(displayTitle),
-                        description: HtmlUtils.stripAndTruncate(displayBody, maxLength: 200),
-                        imageUrl: impulse.imageUrl,
-                        type: CollectionItemType.impulse,
-                        author: impulse.title,
-                        savedAt: DateTime.now(),
-                      );
-                      ref.read(collectionProvider.notifier).toggleCollection(item);
-                    },
-                    child: Icon(
-                      isInCollection ? Icons.bookmark : Icons.bookmark_outline,
-                      size: 24,
-                    ),
-                  ),
+      appBar: AppBar(
+        title: Text(
+          'Impuls',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Center(
+              child: GestureDetector(
+                onTap: () {
+                  final item = CollectionItem(
+                    id: impulse.id,
+                    title: HtmlUtils.stripHtml(displayTitle),
+                    description: HtmlUtils.stripAndTruncate(displayBody, maxLength: 200),
+                    imageUrl: impulse.imageUrl,
+                    type: CollectionItemType.impulse,
+                    author: impulse.title,
+                    savedAt: DateTime.now(),
+                  );
+                  ref.read(collectionProvider.notifier).toggleCollection(item);
+                },
+                child: Icon(
+                  isInCollection ? Icons.bookmark : Icons.bookmark_outline,
+                  size: 24,
                 ),
               ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              titlePadding: const EdgeInsets.only(left: 56, right: 56, bottom: 14),
-              expandedTitleScale: 1.0,
-              title: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  HtmlUtils.stripHtml(displayTitle),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              background: impulse.imageUrl != null
-                  ? Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        CorsNetworkImage(
-                          imageUrl: impulse.imageUrl!,
-                          fit: BoxFit.cover,
-                          errorWidget: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  theme.colorScheme.primary,
-                                  theme.colorScheme.secondary,
-                                ],
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.lightbulb,
-                              size: 80,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        // Gradient overlay for better title readability
-                        Positioned(
-                          bottom: 0,
-                          left: 0,
-                          right: 0,
-                          child: Container(
-                            height: 150,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.transparent,
-                                  Colors.black.withOpacity(0.8),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  : Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            theme.colorScheme.primary,
-                            theme.colorScheme.secondary,
-                          ],
-                        ),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.lightbulb,
-                          size: 80,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
             ),
           ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(DesignTokens.paddingHorizontal),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image if available
+            if (impulse.imageUrl != null) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+                child: CorsNetworkImage(
+                  imageUrl: impulse.imageUrl!,
+                  width: double.infinity,
+                  height: 220,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+            // Title
+            Text(
+              HtmlUtils.stripHtml(displayTitle),
+              style: GoogleFonts.poppins(
+                textStyle: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
 
-          // Content
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
                   // Meta information
                   Wrap(
                     spacing: 12,

@@ -18,6 +18,8 @@ import 'package:jugendkompass_app/domain/providers/string_translator_provider.da
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 
+import 'package:google_fonts/google_fonts.dart';
+
 class EditionDetailScreen extends ConsumerStatefulWidget {
   final EditionModel edition;
 
@@ -48,109 +50,82 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
         );
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      extendBodyBehindAppBar: true,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: edition.coverImageUrl != null
-                ? CorsNetworkImage(imageUrl: edition.coverImageUrl!, fit: BoxFit.cover)
-                : const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: [Color(0xFF2B6CB0), Color(0xFF6B46C1)]),
-                    ),
-                  ),
-          ),
-
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
-            left: 16,
-              child: CircleAvatar(
-              backgroundColor: Colors.black.withOpacity(0.5),
-              child: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context)),
+      extendBody: true,
+      appBar: AppBar(
+        title: Text(
+          'Ausgabe',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        actions: [
+          if (edition.pdfUrl != null)
+            IconButton(
+              icon: const Icon(Icons.picture_as_pdf),
+              onPressed: () => _openPDF(context, edition.pdfUrl!),
             ),
-          ),
-
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
-            right: 16,
-            child: Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: Colors.black.withOpacity(0.5),
-                  child: IconButton(
-                    icon: Icon(
-                      isInCollection ? Icons.bookmark : Icons.bookmark_outline,
-                      color: Colors.white,
-                    ),
-                    onPressed: () {
-                      final item = CollectionItem(
-                        id: edition.id,
-                        title: HtmlUtils.stripHtml(edition.displayTitle),
-                        description: edition.body != null ? HtmlUtils.stripAndTruncate(edition.body!, maxLength: 200) : null,
-                        imageUrl: edition.coverImageUrl,
-                        type: CollectionItemType.edition,
-                        savedAt: DateTime.now(),
-                      );
-                      ref.read(collectionProvider.notifier).toggleCollection(item);
-                    },
-                  ),
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Center(
+              child: GestureDetector(
+                onTap: () {
+                  final item = CollectionItem(
+                    id: edition.id,
+                    title: HtmlUtils.stripHtml(edition.displayTitle),
+                    description: edition.body != null ? HtmlUtils.stripAndTruncate(edition.body!, maxLength: 200) : null,
+                    imageUrl: edition.coverImageUrl,
+                    type: CollectionItemType.edition,
+                    savedAt: DateTime.now(),
+                  );
+                  ref.read(collectionProvider.notifier).toggleCollection(item);
+                },
+                child: Icon(
+                  isInCollection ? Icons.bookmark : Icons.bookmark_outline,
+                  size: 24,
                 ),
-                const SizedBox(width: 12),
-                if (edition.pdfUrl != null)
-                  CircleAvatar(
-                    backgroundColor: Colors.black.withOpacity(0.5),
-                    child: IconButton(icon: const Icon(Icons.picture_as_pdf, color: Colors.white), onPressed: () => _openPDF(context, edition.pdfUrl!)),
-                  ),
-              ],
+              ),
             ),
-          ),
-
-          DraggableScrollableSheet(
-            initialChildSize: 0.6,
-            minChildSize: 0.6,
-            maxChildSize: 0.94,
-            builder: (context, scrollController) {
-              return Container(
-                decoration: BoxDecoration(color: DesignTokens.getAppBackground(Theme.of(context).brightness), borderRadius: BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusLargeCards))),
-                child: Column(
-                  children: [
-                    Container(margin: const EdgeInsets.only(top: 12, bottom: 8), width: 40, height: 4, decoration: BoxDecoration(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3), borderRadius: BorderRadius.circular(2))),
-                    Expanded(
-                      child: audiosAsync.when(
-                        data: (audios) => postsAsync.when(
-                          data: (posts) => _buildContent(context, scrollController, posts, audios, translate),
-                          loading: () => const Center(child: CircularProgressIndicator()),
-                          error: (e, s) => Center(child: Text('Fehler: $e')),
-                        ),
-                        loading: () => const Center(child: CircularProgressIndicator()),
-                        error: (e, s) => postsAsync.when(
-                          data: (posts) => _buildContent(context, scrollController, posts, [], translate),
-                          loading: () => const Center(child: CircularProgressIndicator()),
-                          error: (e, s) => Center(child: Text('Fehler: $e')),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
           ),
         ],
+      ),
+      body: audiosAsync.when(
+        data: (audios) => postsAsync.when(
+          data: (posts) => _buildContent(context, posts, audios, translate),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, s) => Center(child: Text('Fehler: $e')),
+        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, s) => postsAsync.when(
+          data: (posts) => _buildContent(context, posts, [], translate),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, s) => Center(child: Text('Fehler: $e')),
+        ),
       ),
     );
   }
 
-  Widget _buildContent(BuildContext context, ScrollController scrollController, List<PostModel> posts, List<AudioModel> audios, String Function(String) translate) {
+  Widget _buildContent(BuildContext context, List<PostModel> posts, List<AudioModel> audios, String Function(String) translate) {
     final edition = widget.edition;
     final theme = Theme.of(context);
     final brightness = theme.brightness;
     final textPrimary = DesignTokens.getTextPrimary(brightness);
     final textSecondary = DesignTokens.getTextSecondary(brightness);
     return ListView(
-      controller: scrollController,
       padding: EdgeInsets.fromLTRB(DesignTokens.paddingHorizontal, 0, DesignTokens.paddingHorizontal, 24),
       children: [
+        // Cover image
+        if (edition.coverImageUrl != null) ...[
+          ClipRRect(
+            borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+            child: CorsNetworkImage(
+              imageUrl: edition.coverImageUrl!,
+              width: double.infinity,
+              height: 220,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
         Text(edition.name.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(fontSize: 12, letterSpacing: 1.5, color: DesignTokens.primaryRed, fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
         Text(edition.displayTitle, style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold, color: textPrimary)),
