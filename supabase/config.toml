@@ -2,3 +2,9 @@ project_id = "vdcdibvclaulqxfjyzpq"
 
 [functions.delete-user]
 verify_jwt = true
+
+[functions.translate-content]
+verify_jwt = false
+
+[functions.translate-backfill]
+verify_jwt = false
