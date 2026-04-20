@@ -1,5 +1,4 @@
-import 'dart:io' if (dart.library.html) 'dart:html';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:home_widget/home_widget.dart';
 import 'package:jugendkompass_app/data/models/verse_model.dart';
 import 'dart:developer' as developer;
@@ -12,29 +11,18 @@ class HomeWidgetService {
   static const String _appGroupId = 'group.io.stephanus.jugendkompass';
   static const String _iOSWidgetName = 'VerseWidget';
 
+  static bool get _isIOS =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+
   /// Initialize the home widget service with the App Group ID.
   static Future<void> initialize() async {
-    if (kIsWeb) return;
-    // Only run on iOS
-    try {
-      if (Platform.isIOS) {
-        await HomeWidget.setAppGroupId(_appGroupId);
-      }
-    } catch (e) {
-      // Platform check may fail on web, ignore
-    }
+    if (!_isIOS) return;
+    await HomeWidget.setAppGroupId(_appGroupId);
   }
 
   /// Update the iOS widget with the latest verse data.
   static Future<void> updateVerseWidget(VerseModel verse) async {
-    if (kIsWeb) return;
-    // Only run on iOS
-    try {
-      if (!Platform.isIOS) return;
-    } catch (e) {
-      // Platform check may fail on web, ignore
-      return;
-    }
+    if (!_isIOS) return;
 
     try {
       // Save verse data to shared UserDefaults

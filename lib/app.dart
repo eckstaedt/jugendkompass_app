@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,6 +41,7 @@ class _AppState extends ConsumerState<App> {
   /// in Supabase so the server can send push notifications (Vers des Tages,
   /// Neue Beiträge, etc.).
   Future<void> _initPushNotifications() async {
+    if (kIsWeb) return; // Push notifications not supported on web
     try {
       // Initialize Firebase Cloud Messaging (handles permissions + token)
       await FCMService().init();

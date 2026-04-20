@@ -107,140 +107,140 @@ class ImpulseDetailScreen extends ConsumerWidget {
 
             // Meta information
             Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                    spacing: 12,
+                    runSpacing: 8,
                     children: [
-                      Icon(
-                        Icons.access_time,
-                        size: 16,
-                        color: theme.colorScheme.onPrimaryContainer,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        impulse.durationLabel,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onPrimaryContainer,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
                         ),
-                        overflow: TextOverflow.ellipsis,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.access_time,
+                              size: 16,
+                              color: theme.colorScheme.onPrimaryContainer,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              impulse.durationLabel,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.onPrimaryContainer,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.secondaryContainer,
+                          borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.calendar_today,
+                              size: 16,
+                              color: theme.colorScheme.onSecondaryContainer,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              dateFormat.format(impulse.date),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.onSecondaryContainer,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.secondaryContainer,
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.calendar_today,
-                        size: 16,
-                        color: theme.colorScheme.onSecondaryContainer,
+
+                  const SizedBox(height: 32),
+
+                  // HTML Content
+                  Html(
+                    data: displayBody,
+                    style: {
+                      "body": Style(
+                        margin: Margins.zero,
+                        padding: HtmlPaddings.zero,
+                        fontSize: FontSize(18),
+                        lineHeight: const LineHeight(1.8),
+                        color: theme.colorScheme.onSurface,
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        dateFormat.format(impulse.date),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onSecondaryContainer,
+                      "p": Style(
+                        margin: Margins.only(bottom: 16),
+                        fontSize: FontSize(18),
+                        lineHeight: const LineHeight(1.8),
+                      ),
+                      "h1": Style(
+                        fontSize: FontSize(28),
+                        fontWeight: FontWeight.bold,
+                        margin: Margins.only(bottom: 12, top: 24),
+                      ),
+                      "h2": Style(
+                        fontSize: FontSize(24),
+                        fontWeight: FontWeight.bold,
+                        margin: Margins.only(bottom: 10, top: 20),
+                      ),
+                      "h3": Style(
+                        fontSize: FontSize(20),
+                        fontWeight: FontWeight.bold,
+                        margin: Margins.only(bottom: 8, top: 16),
+                      ),
+                      "a": Style(
+                        color: theme.colorScheme.primary,
+                        textDecoration: TextDecoration.underline,
+                      ),
+                      "ul": Style(
+                        margin: Margins.only(left: 20, bottom: 16),
+                      ),
+                      "ol": Style(
+                        margin: Margins.only(left: 20, bottom: 16),
+                      ),
+                      "li": Style(
+                        margin: Margins.only(bottom: 8),
+                      ),
+                      "blockquote": Style(
+                        margin: Margins.only(left: 16, top: 16, bottom: 16),
+                        padding: HtmlPaddings.only(left: 16),
+                        border: Border(
+                          left: BorderSide(
+                            color: theme.colorScheme.primary,
+                            width: 4,
+                          ),
                         ),
-                        overflow: TextOverflow.ellipsis,
+                        fontStyle: FontStyle.italic,
                       ),
-                    ],
+                      "strong": Style(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      "em": Style(
+                        fontStyle: FontStyle.italic,
+                      ),
+                      "img": Style(
+                        display: Display.none,
+                      ),
+                    },
                   ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 32),
-
-            // HTML Content
-            Html(
-              data: displayBody,
-              style: {
-                "body": Style(
-                  margin: Margins.zero,
-                  padding: HtmlPaddings.zero,
-                  fontSize: FontSize(18),
-                  lineHeight: const LineHeight(1.8),
-                  color: theme.colorScheme.onSurface,
-                ),
-                "p": Style(
-                  margin: Margins.only(bottom: 16),
-                  fontSize: FontSize(18),
-                  lineHeight: const LineHeight(1.8),
-                ),
-                "h1": Style(
-                  fontSize: FontSize(28),
-                  fontWeight: FontWeight.bold,
-                  margin: Margins.only(bottom: 12, top: 24),
-                ),
-                "h2": Style(
-                  fontSize: FontSize(24),
-                  fontWeight: FontWeight.bold,
-                  margin: Margins.only(bottom: 10, top: 20),
-                ),
-                "h3": Style(
-                  fontSize: FontSize(20),
-                  fontWeight: FontWeight.bold,
-                  margin: Margins.only(bottom: 8, top: 16),
-                ),
-                "a": Style(
-                  color: theme.colorScheme.primary,
-                  textDecoration: TextDecoration.underline,
-                ),
-                "ul": Style(
-                  margin: Margins.only(left: 20, bottom: 16),
-                ),
-                "ol": Style(
-                  margin: Margins.only(left: 20, bottom: 16),
-                ),
-                "li": Style(
-                  margin: Margins.only(bottom: 8),
-                ),
-                "blockquote": Style(
-                  margin: Margins.only(left: 16, top: 16, bottom: 16),
-                  padding: HtmlPaddings.only(left: 16),
-                  border: Border(
-                    left: BorderSide(
-                      color: theme.colorScheme.primary,
-                      width: 4,
-                    ),
-                  ),
-                  fontStyle: FontStyle.italic,
-                ),
-                "strong": Style(
-                  fontWeight: FontWeight.bold,
-                ),
-                "em": Style(
-                  fontStyle: FontStyle.italic,
-                ),
-                "img": Style(
-                  display: Display.none,
-                ),
-              },
-            ),
 
             Consumer(
               builder: (context, ref, _) {

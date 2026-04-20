@@ -39,7 +39,7 @@ Future<void> main() async {
   // Initialize Supabase
   await SupabaseService.initialize();
 
-  // Initialize Firebase (mobile only)
+  // Initialize Firebase (not configured for web yet)
   if (!kIsWeb) {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -55,7 +55,7 @@ Future<void> main() async {
   // Initialize Favorites Service
   await FavoritesService.instance.initialize();
 
-  // Initialize Home Widget Service (iOS only, already has Platform.isIOS check)
+  // Initialize Home Widget Service (iOS only, no-op on web)
   await HomeWidgetService.initialize();
 
   // Initialize just_audio_background (mobile only) — this powers the native lock screen

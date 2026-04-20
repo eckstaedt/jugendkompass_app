@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -79,7 +78,7 @@ class FCMService {
   Future<void> _getAndStoreToken() async {
     try {
       // On iOS, get the APNs token first
-      if (Platform.isIOS) {
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
         String? apnsToken = await _messaging.getAPNSToken();
         debugPrint('[FCM] APNs token: ${apnsToken != null ? "obtained" : "null"}');
         if (apnsToken == null) {
