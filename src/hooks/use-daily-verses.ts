@@ -21,9 +21,9 @@ export const useDailyVerses = () => {
       const from = pageParam * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
 
-      if (previewLang !== 'de') {
+      if (previewLang === 'en') {
         const { data: localized, error: rpcError } = await supabase
-          .rpc('get_verse_of_day_localized', { lang: previewLang });
+          .rpc('get_verse_of_day_localized', { lang: 'en' });
         if (rpcError) throw rpcError;
         const sorted = [...(localized ?? [])].sort((a: any, b: any) =>
           (b.date ?? '').localeCompare(a.date ?? '')

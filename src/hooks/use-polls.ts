@@ -33,13 +33,13 @@ export const usePolls = (showAll = false) => {
   return useQuery({
     queryKey: ['polls', { showAll }, previewLang],
     queryFn: async () => {
-      if (previewLang !== 'de') {
+      if (previewLang === 'en') {
         const { data: localizedPolls, error: pollsError } = await supabase
-          .rpc('get_polls_localized', { lang: previewLang });
+          .rpc('get_polls_localized', { lang: 'en' });
         if (pollsError) throw pollsError;
 
         const { data: localizedOptions, error: optsError } = await supabase
-          .rpc('get_poll_options_localized', { lang: previewLang });
+          .rpc('get_poll_options_localized', { lang: 'en' });
         if (optsError) throw optsError;
 
         const contentIds = (localizedPolls ?? []).map((p: any) => p.content_id).filter(Boolean);
@@ -93,15 +93,15 @@ export const usePoll = (id: string) => {
   return useQuery({
     queryKey: ['poll', id, previewLang],
     queryFn: async () => {
-      if (previewLang !== 'de') {
+      if (previewLang === 'en') {
         const { data: pollsLocalized, error: pollsError } = await supabase
-          .rpc('get_polls_localized', { lang: previewLang });
+          .rpc('get_polls_localized', { lang: 'en' });
         if (pollsError) throw pollsError;
         const poll = (pollsLocalized ?? []).find((p: any) => p.id === id);
         if (!poll) throw new Error('Poll not found');
 
         const { data: optionsLocalized, error: optsError } = await supabase
-          .rpc('get_poll_options_localized', { lang: previewLang });
+          .rpc('get_poll_options_localized', { lang: 'en' });
         if (optsError) throw optsError;
         const options = (optionsLocalized ?? []).filter((o: any) => o.poll_id === id);
 

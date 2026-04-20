@@ -11,9 +11,9 @@ export const useVideos = () => {
   return useQuery({
     queryKey: ['videos', previewLang],
     queryFn: async () => {
-      if (previewLang !== 'de') {
+      if (previewLang === 'en') {
         const { data: localized, error: rpcError } = await supabase
-          .rpc('get_videos_localized', { lang: previewLang });
+          .rpc('get_videos_localized', { lang: 'en' });
         if (rpcError) throw rpcError;
         const contentIds = (localized ?? []).map((v: any) => v.content_id).filter(Boolean);
         let contentMap: Record<string, any> = {};
