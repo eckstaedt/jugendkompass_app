@@ -44,11 +44,6 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
       icon: BarChart2Icon,
     },
     {
-      label: 'Aktueller Feed',
-      path: '/dashboard/feed',
-      icon: FileTextIcon,
-    },
-    {
       label: 'Beiträge',
       path: '/dashboard/posts',
       icon: FileTextIcon,
