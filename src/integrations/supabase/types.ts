@@ -116,6 +116,42 @@ export type Database = {
         }
         Relationships: []
       }
+      device_tokens: {
+        Row: {
+          content_notifications: boolean
+          created_at: string
+          device_id: string
+          fcm_token: string | null
+          id: string
+          notification_hour: number
+          notification_minute: number
+          platform: string
+          verse_notifications: boolean
+        }
+        Insert: {
+          content_notifications?: boolean
+          created_at?: string
+          device_id: string
+          fcm_token?: string | null
+          id?: string
+          notification_hour?: number
+          notification_minute?: number
+          platform?: string
+          verse_notifications?: boolean
+        }
+        Update: {
+          content_notifications?: boolean
+          created_at?: string
+          device_id?: string
+          fcm_token?: string | null
+          id?: string
+          notification_hour?: number
+          notification_minute?: number
+          platform?: string
+          verse_notifications?: boolean
+        }
+        Relationships: []
+      }
       editions: {
         Row: {
           body: string | null
