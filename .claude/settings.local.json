@@ -14,7 +14,8 @@
       "Bash(test:*)",
       "Bash(dart analyze:*)",
       "Bash(dart format:*)",
-      "Bash(find /c/Users/D062831/projects/jugendkompass_app -type f -name \"*.dart\" -exec grep -l \"just_audio\\\\|playAudio\\\\|currentAudio\" {} ;)"
+      "Bash(find /c/Users/D062831/projects/jugendkompass_app -type f -name \"*.dart\" -exec grep -l \"just_audio\\\\|playAudio\\\\|currentAudio\" {} ;)",
+      "Bash(git add:*)"
     ]
   }
 }

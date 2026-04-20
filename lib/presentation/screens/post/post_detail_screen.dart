@@ -108,263 +108,260 @@ class PostDetailScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 12),
 
-                  // Meta information
+            // Meta information
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                // Category/tag badges
+                if ((post.categoryNames ?? []).isNotEmpty)
                   Wrap(
-                    spacing: 12,
-                    runSpacing: 8,
-                    children: [
-                      // Category/tag badges
-                          if ((post.categoryNames ?? []).isNotEmpty)
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 4,
-                              children: post.categoryNames!
-                                  .map(
-                                    (tag) => Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: theme.colorScheme.primaryContainer,
-                                        borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
-                                      ),
-                                      child: Text(
-                                        tag.toUpperCase(),
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: theme.colorScheme.onPrimaryContainer,
-                                        ),
-                                      ),
-                                    ),
-                                  )
-                                  .toList(),
-                            )
-                          else if (post.categoryName != null)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primaryContainer,
-                                borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.label,
-                                    size: 16,
-                                    color: theme.colorScheme.onPrimaryContainer,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    post.categoryName!.toUpperCase(),
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: theme.colorScheme.onPrimaryContainer,
-                                    ),
-                                  ),
-                                ],
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: post.categoryNames!
+                        .map(
+                          (tag) => Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
+                            ),
+                            child: Text(
+                              tag.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.onPrimaryContainer,
                               ),
                             ),
-
-                      // Audio badge
-                      if (hasAudio)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
                           ),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.secondaryContainer,
-                            borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.headphones,
-                                size: 16,
-                                color: theme.colorScheme.onSecondaryContainer,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'AUDIO',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: theme.colorScheme.onSecondaryContainer,
-                                ),
-                              ),
-                            ],
-                          ),
+                        )
+                        .toList(),
+                  )
+                else if (post.categoryName != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.label,
+                          size: 16,
+                          color: theme.colorScheme.onPrimaryContainer,
                         ),
-                    ],
-                  ),
-
-                  // Reading time
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.access_time,
-                        size: 16,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          _calculateReadingTime(displayBody),
+                        const SizedBox(width: 6),
+                        Text(
+                          post.categoryName!.toUpperCase(),
                           style: TextStyle(
                             fontSize: 12,
-                            color: theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onPrimaryContainer,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
-                  ),
-
-                  // Audio play / pause button
-                  if (hasAudio) ...[  
-                    const SizedBox(height: 24),
-                    Consumer(
-                      builder: (context, ref, _) {
-                        final current = ref.watch(currentAudioProvider);
-                        final isPlaying = ref.watch(isPlayingProvider);
-                        final isThisAudio =
-                            current != null && current.id == post.audioId;
-                        final isThisPlaying = isThisAudio && isPlaying;
-
-                        return SizedBox(
-                          width: double.infinity,
-                          child: FilledButton.icon(
-                            onPressed: () async {
-                              if (isThisPlaying) {
-                                // Pause via audioService
-                                await ref
-                                    .read(audioServiceProvider)
-                                    .pause();
-                              } else if (isThisAudio) {
-                                // Resume same audio
-                                await ref
-                                    .read(audioServiceProvider)
-                                    .resume();
-                              } else {
-                                // Load + play this article's audio
-                                await _playAudio(context, ref);
-                              }
-                            },
-                            icon: Icon(
-                              isThisPlaying
-                                  ? Icons.pause
-                                  : Icons.play_arrow,
-                            ),
-                            label: Text(
-                              isThisPlaying
-                                  ? 'Pausieren'
-                                  : isThisAudio
-                                      ? 'Weiter anhören'
-                                      : 'Artikel anhören',
-                            ),
-                            style: FilledButton.styleFrom(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 16),
-                            ),
-                          ),
-                        );
-                      },
+                      ],
                     ),
-                  ],
+                  ),
 
-                  const SizedBox(height: 32),
-
-                  // HTML Content
-                  Html(
-                    data: displayBody,
-                    style: {
-                      "body": Style(
-                        margin: Margins.zero,
-                        padding: HtmlPaddings.zero,
-                        fontSize: FontSize(18),
-                        lineHeight: const LineHeight(1.8),
-                        color: theme.colorScheme.onSurface,
-                      ),
-                      "p": Style(
-                        margin: Margins.only(bottom: 16),
-                        fontSize: FontSize(18),
-                        lineHeight: const LineHeight(1.8),
-                      ),
-                      "h1": Style(
-                        fontSize: FontSize(28),
-                        fontWeight: FontWeight.bold,
-                        margin: Margins.only(bottom: 12, top: 24),
-                      ),
-                      "h2": Style(
-                        fontSize: FontSize(24),
-                        fontWeight: FontWeight.bold,
-                        margin: Margins.only(bottom: 10, top: 20),
-                      ),
-                      "h3": Style(
-                        fontSize: FontSize(20),
-                        fontWeight: FontWeight.bold,
-                        margin: Margins.only(bottom: 8, top: 16),
-                      ),
-                      "a": Style(
-                        color: theme.colorScheme.primary,
-                        textDecoration: TextDecoration.underline,
-                      ),
-                      "ul": Style(
-                        margin: Margins.only(left: 20, bottom: 16),
-                      ),
-                      "ol": Style(
-                        margin: Margins.only(left: 20, bottom: 16),
-                      ),
-                      "li": Style(
-                        margin: Margins.only(bottom: 8),
-                      ),
-                      "blockquote": Style(
-                        margin: Margins.only(left: 16, top: 16, bottom: 16),
-                        padding: HtmlPaddings.only(left: 16),
-                        border: Border(
-                          left: BorderSide(
-                            color: theme.colorScheme.primary,
-                            width: 4,
+                // Audio badge
+                if (hasAudio)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondaryContainer,
+                      borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.headphones,
+                          size: 16,
+                          color: theme.colorScheme.onSecondaryContainer,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'AUDIO',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onSecondaryContainer,
                           ),
                         ),
-                        fontStyle: FontStyle.italic,
-                      ),
-                      "strong": Style(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      "em": Style(
-                        fontStyle: FontStyle.italic,
-                      ),
-                      "img": Style(
-                        display: Display.none,
-                      ),
-                    },
+                      ],
+                    ),
                   ),
-
-                  Consumer(
-                    builder: (context, ref, _) {
-                      final hasAudio = ref.watch(currentAudioProvider) != null;
-                      return SizedBox(
-                        height: hasAudio
-                            ? DesignTokens.overlayPaddingWithMiniPlayer
-                            : DesignTokens.overlayPaddingBase,
-                      );
-                    },
-                  ),
-                ],
-              ),
+              ],
             ),
-          ),
-        ],
+
+            // Reading time
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Icon(
+                  Icons.access_time,
+                  size: 16,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    _calculateReadingTime(displayBody),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+
+            // Audio play / pause button
+            if (hasAudio) ...[
+              const SizedBox(height: 24),
+              Consumer(
+                builder: (context, ref, _) {
+                  final current = ref.watch(currentAudioProvider);
+                  final isPlaying = ref.watch(isPlayingProvider);
+                  final isThisAudio =
+                      current != null && current.id == post.audioId;
+                  final isThisPlaying = isThisAudio && isPlaying;
+
+                  return SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: () async {
+                        if (isThisPlaying) {
+                          // Pause via audioService
+                          await ref
+                              .read(audioServiceProvider)
+                              .pause();
+                        } else if (isThisAudio) {
+                          // Resume same audio
+                          await ref
+                              .read(audioServiceProvider)
+                              .resume();
+                        } else {
+                          // Load + play this article's audio
+                          await _playAudio(context, ref);
+                        }
+                      },
+                      icon: Icon(
+                        isThisPlaying
+                            ? Icons.pause
+                            : Icons.play_arrow,
+                      ),
+                      label: Text(
+                        isThisPlaying
+                            ? 'Pausieren'
+                            : isThisAudio
+                                ? 'Weiter anhören'
+                                : 'Artikel anhören',
+                      ),
+                      style: FilledButton.styleFrom(
+                        padding:
+                            const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+
+            const SizedBox(height: 32),
+
+            // HTML Content
+            Html(
+              data: displayBody,
+              style: {
+                "body": Style(
+                  margin: Margins.zero,
+                  padding: HtmlPaddings.zero,
+                  fontSize: FontSize(18),
+                  lineHeight: const LineHeight(1.8),
+                  color: theme.colorScheme.onSurface,
+                ),
+                "p": Style(
+                  margin: Margins.only(bottom: 16),
+                  fontSize: FontSize(18),
+                  lineHeight: const LineHeight(1.8),
+                ),
+                "h1": Style(
+                  fontSize: FontSize(28),
+                  fontWeight: FontWeight.bold,
+                  margin: Margins.only(bottom: 12, top: 24),
+                ),
+                "h2": Style(
+                  fontSize: FontSize(24),
+                  fontWeight: FontWeight.bold,
+                  margin: Margins.only(bottom: 10, top: 20),
+                ),
+                "h3": Style(
+                  fontSize: FontSize(20),
+                  fontWeight: FontWeight.bold,
+                  margin: Margins.only(bottom: 8, top: 16),
+                ),
+                "a": Style(
+                  color: theme.colorScheme.primary,
+                  textDecoration: TextDecoration.underline,
+                ),
+                "ul": Style(
+                  margin: Margins.only(left: 20, bottom: 16),
+                ),
+                "ol": Style(
+                  margin: Margins.only(left: 20, bottom: 16),
+                ),
+                "li": Style(
+                  margin: Margins.only(bottom: 8),
+                ),
+                "blockquote": Style(
+                  margin: Margins.only(left: 16, top: 16, bottom: 16),
+                  padding: HtmlPaddings.only(left: 16),
+                  border: Border(
+                    left: BorderSide(
+                      color: theme.colorScheme.primary,
+                      width: 4,
+                    ),
+                  ),
+                  fontStyle: FontStyle.italic,
+                ),
+                "strong": Style(
+                  fontWeight: FontWeight.bold,
+                ),
+                "em": Style(
+                  fontStyle: FontStyle.italic,
+                ),
+                "img": Style(
+                  display: Display.none,
+                ),
+              },
+            ),
+
+            Consumer(
+              builder: (context, ref, _) {
+                final hasAudio = ref.watch(currentAudioProvider) != null;
+                return SizedBox(
+                  height: hasAudio
+                      ? DesignTokens.overlayPaddingWithMiniPlayer
+                      : DesignTokens.overlayPaddingBase,
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
