@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Languages, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,48 +11,86 @@ interface BackfillButtonProps {
   invalidateKeys?: string[];
 }
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+
 export function BackfillButton({ contentType, label = 'Übersetzungen ergänzen', invalidateKeys = [] }: BackfillButtonProps) {
   const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState<{ done: number; failed: number } | null>(null);
+  const [progress, setProgress] = useState<{ done: number; failed: number; remaining: number | null }>({
+    done: 0,
+    failed: 0,
+    remaining: null,
+  });
+  const cancelRef = useRef(false);
   const { toast } = useToast();
   const qc = useQueryClient();
 
   const handleClick = async () => {
+    if (loading) {
+      cancelRef.current = true;
+      return;
+    }
     setLoading(true);
-    setProgress({ done: 0, failed: 0 });
+    cancelRef.current = false;
+    setProgress({ done: 0, failed: 0, remaining: null });
 
     let totalDone = 0;
     let totalFailed = 0;
-    const MAX_BATCHES = 50;
+    let lastRemaining: number | null = null;
+    const MAX_BATCHES = 500;
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token ?? SUPABASE_ANON_KEY;
+
       for (let i = 0; i < MAX_BATCHES; i++) {
-        const { data, error } = await supabase.functions.invoke('translate-backfill', {
-          body: {
+        if (cancelRef.current) break;
+
+        // Direkter fetch — umgeht supabase-js Timeouts und liefert volle Kontrolle
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/translate-backfill`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
             target_languages: ['en', 'es', 'ru'],
             content_types: [contentType],
             force: false,
             only_missing: true,
-            limit: 5,
-            delay_ms: 150,
-          },
+            limit: 1, // 1 Inhalt pro Batch → ~25s Antwortzeit
+            delay_ms: 0,
+          }),
         });
-        if (error) throw error;
 
-        const { processed = 0, success = 0, failed = 0, has_more = false, remaining = 0 } =
-          (data as any) ?? {};
+        if (!resp.ok) {
+          const txt = await resp.text();
+          throw new Error(`HTTP ${resp.status}: ${txt}`);
+        }
+        const data = await resp.json();
+
+        const { processed = 0, success = 0, failed = 0, has_more = false, remaining = 0 } = data ?? {};
         totalDone += success;
         totalFailed += failed;
-        setProgress({ done: totalDone, failed: totalFailed });
+        lastRemaining = remaining;
+        setProgress({ done: totalDone, failed: totalFailed, remaining });
+
+        // Invalidate während dem Lauf, damit User Updates live sehen
+        if (i % 5 === 4) {
+          invalidateKeys.forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
+          qc.invalidateQueries({ queryKey: ['content-translations'] });
+        }
 
         if (processed === 0 || !has_more) {
-          toast({
-            title: 'Backfill abgeschlossen',
-            description: `${totalDone} übersetzt${totalFailed ? `, ${totalFailed} fehlgeschlagen` : ''}${remaining ? `, ${remaining} verbleibend` : ''}.`,
-          });
           break;
         }
       }
+
+      toast({
+        title: cancelRef.current ? 'Backfill abgebrochen' : 'Backfill abgeschlossen',
+        description: `${totalDone} übersetzt${totalFailed ? `, ${totalFailed} fehlgeschlagen` : ''}${lastRemaining ? `, ${lastRemaining} verbleibend` : ''}.`,
+      });
 
       invalidateKeys.forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
       qc.invalidateQueries({ queryKey: ['content-translations'] });
@@ -65,17 +103,15 @@ export function BackfillButton({ contentType, label = 'Übersetzungen ergänzen'
       });
     } finally {
       setLoading(false);
-      setProgress(null);
+      cancelRef.current = false;
     }
   };
 
   return (
-    <Button variant="outline" onClick={handleClick} disabled={loading}>
+    <Button variant={loading ? 'destructive' : 'outline'} onClick={handleClick}>
       {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Languages className="mr-2 h-4 w-4" />}
       {loading
-        ? progress
-          ? `Übersetze... (${progress.done}${progress.failed ? ` / ${progress.failed} Fehler` : ''})`
-          : 'Übersetze...'
+        ? `Übersetze... ${progress.done}${progress.failed ? ` (${progress.failed} Fehler)` : ''}${progress.remaining !== null ? ` · noch ${progress.remaining}` : ''} — Stop`
         : label}
     </Button>
   );
