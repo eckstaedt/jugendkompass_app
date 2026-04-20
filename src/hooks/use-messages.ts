@@ -14,10 +14,22 @@ export type Message = {
   image_url: string | null;
 };
 
+import { usePreviewLocale } from '@/contexts/PreviewLocaleContext';
+
 export const useMessages = () => {
+  const { previewLang } = usePreviewLocale();
   return useQuery({
-    queryKey: ['messages'],
+    queryKey: ['messages', previewLang],
     queryFn: async () => {
+      if (previewLang === 'en') {
+        const { data, error } = await supabase
+          .rpc('get_messages_localized', { lang: 'en' });
+        if (error) throw error;
+        const sorted = [...(data ?? [])].sort((a: any, b: any) =>
+          (b.created_at ?? '').localeCompare(a.created_at ?? '')
+        );
+        return sorted as unknown as Message[];
+      }
       const { data, error } = await supabase
         .from('messages')
         .select('*')

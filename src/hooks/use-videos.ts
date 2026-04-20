@@ -4,10 +4,31 @@ import { supabase } from '@/integrations/supabase/client';
 import { Video } from '@/lib/supabase';
 import { logActivity } from '@/lib/activity-logger';
 
+import { usePreviewLocale } from '@/contexts/PreviewLocaleContext';
+
 export const useVideos = () => {
+  const { previewLang } = usePreviewLocale();
   return useQuery({
-    queryKey: ['videos'],
+    queryKey: ['videos', previewLang],
     queryFn: async () => {
+      if (previewLang === 'en') {
+        const { data: localized, error: rpcError } = await supabase
+          .rpc('get_videos_localized', { lang: 'en' });
+        if (rpcError) throw rpcError;
+        const contentIds = (localized ?? []).map((v: any) => v.content_id).filter(Boolean);
+        let contentMap: Record<string, any> = {};
+        if (contentIds.length) {
+          const { data: contents } = await supabase
+            .from('content')
+            .select('*')
+            .in('id', contentIds);
+          contentMap = Object.fromEntries((contents ?? []).map((c: any) => [c.id, c]));
+        }
+        const merged = [...(localized ?? [])]
+          .map((v: any) => ({ ...v, content: contentMap[v.content_id] }))
+          .sort((a: any, b: any) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
+        return merged as Video[];
+      }
       const { data: videos, error } = await supabase
         .from('videos')
         .select('*, content:content_id(*)')

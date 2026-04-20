@@ -34,10 +34,35 @@ type UpdateImpulseArgs = {
   user_id: string;
 };
 
+import { usePreviewLocale } from '@/contexts/PreviewLocaleContext';
+
 export const useImpulses = () => {
+  const { previewLang } = usePreviewLocale();
   return useQuery({
-    queryKey: ['impulses'],
+    queryKey: ['impulses', previewLang],
     queryFn: async () => {
+      if (previewLang === 'en') {
+        const { data: localized, error: rpcError } = await supabase
+          .rpc('get_impulses_localized', { lang: 'en' });
+        if (rpcError) throw rpcError;
+
+        const contentIds = (localized ?? []).map((i: any) => i.content_id).filter(Boolean);
+        let contentMap: Record<string, { status: string; created_at: string }> = {};
+        if (contentIds.length) {
+          const { data: contents } = await supabase
+            .from('content')
+            .select('id, status, created_at')
+            .in('id', contentIds);
+          contentMap = Object.fromEntries(
+            (contents ?? []).map((c: any) => [c.id, { status: c.status, created_at: c.created_at }])
+          );
+        }
+        const merged = [...(localized ?? [])]
+          .map((i: any) => ({ ...i, content: contentMap[i.content_id] }))
+          .sort((a: any, b: any) => (a.date < b.date ? 1 : -1));
+        return merged as Impulse[];
+      }
+
       const { data, error } = await supabase
         .from('impulses')
         .select(`
