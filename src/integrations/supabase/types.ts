@@ -158,13 +158,6 @@ export type Database = {
             referencedRelation: "content"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "content_translations_content_id_fkey"
-            columns: ["content_id"]
-            isOneToOne: false
-            referencedRelation: "content_feed"
-            referencedColumns: ["content_id"]
-          },
         ]
       }
       device_tokens: {
@@ -272,13 +265,6 @@ export type Database = {
             referencedRelation: "content"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "impulses_content_id_fkey"
-            columns: ["content_id"]
-            isOneToOne: false
-            referencedRelation: "content_feed"
-            referencedColumns: ["content_id"]
-          },
         ]
       }
       messages: {
@@ -316,13 +302,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "content"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_content_id_fkey"
-            columns: ["content_id"]
-            isOneToOne: false
-            referencedRelation: "content_feed"
-            referencedColumns: ["content_id"]
           },
         ]
       }
@@ -433,13 +412,6 @@ export type Database = {
             referencedRelation: "content"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "polls_content_id_fkey"
-            columns: ["content_id"]
-            isOneToOne: false
-            referencedRelation: "content_feed"
-            referencedColumns: ["content_id"]
-          },
         ]
       }
       posts: {
@@ -497,13 +469,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "content"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "posts_content_id_fkey"
-            columns: ["content_id"]
-            isOneToOne: false
-            referencedRelation: "content_feed"
-            referencedColumns: ["content_id"]
           },
           {
             foreignKeyName: "posts_edition_id_fkey"
@@ -596,25 +561,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "verse_of_the_day_content_id_fkey"
-            columns: ["content_id"]
-            isOneToOne: false
-            referencedRelation: "content_feed"
-            referencedColumns: ["content_id"]
-          },
-          {
             foreignKeyName: "verse_of_the_day_new_content_id_fkey"
             columns: ["content_id"]
             isOneToOne: false
             referencedRelation: "content"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "verse_of_the_day_new_content_id_fkey"
-            columns: ["content_id"]
-            isOneToOne: false
-            referencedRelation: "content_feed"
-            referencedColumns: ["content_id"]
           },
         ]
       }
@@ -657,31 +608,11 @@ export type Database = {
             referencedRelation: "content"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "videos_content_id_fkey"
-            columns: ["content_id"]
-            isOneToOne: false
-            referencedRelation: "content_feed"
-            referencedColumns: ["content_id"]
-          },
         ]
       }
     }
     Views: {
-      content_feed: {
-        Row: {
-          content_id: string | null
-          content_type: string | null
-          created_at: string | null
-          description: string | null
-          entity_id: string | null
-          image_url: string | null
-          sort_order: number | null
-          specific_date: string | null
-          title: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       get_categories_localized: {
@@ -690,20 +621,6 @@ export type Database = {
           created_at: string
           id: string
           name: string
-        }[]
-      }
-      get_content_feed_localized: {
-        Args: { lang: string }
-        Returns: {
-          content_id: string
-          content_type: string
-          created_at: string
-          description: string
-          entity_id: string
-          image_url: string
-          sort_order: number
-          specific_date: string
-          title: string
         }[]
       }
       get_current_user_role: { Args: never; Returns: string }
