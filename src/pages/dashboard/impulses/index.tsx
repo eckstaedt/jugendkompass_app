@@ -31,6 +31,7 @@ import { de } from 'date-fns/locale';
 import { useTranslationsForContents, summarizeLang, SUPPORTED_LANGS } from '@/hooks/use-translations';
 import { TranslationStatusList } from '@/components/translations/TranslationStatusBadge';
 import { RetranslateButton } from '@/components/translations/RetranslateButton';
+import { BackfillButton } from '@/components/translations/BackfillButton';
 
 export default function ImpulsesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -114,6 +115,7 @@ export default function ImpulsesPage() {
           <Upload className="mr-2 h-4 w-4" />
           JSON Import
         </Button>
+        <BackfillButton contentType="impulse" invalidateKeys={['impulses']} />
       </div>
 
       {isLoading ? (
