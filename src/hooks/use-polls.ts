@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { logActivity } from '@/lib/activity-logger';
+import { usePreviewLocale } from '@/contexts/PreviewLocaleContext';
 
 export type Poll = {
   id: string;
@@ -28,9 +29,39 @@ export type CreatePollInput = {
 };
 
 export const usePolls = (showAll = false) => {
+  const { previewLang } = usePreviewLocale();
   return useQuery({
-    queryKey: ['polls', { showAll }],
+    queryKey: ['polls', { showAll }, previewLang],
     queryFn: async () => {
+      if (previewLang === 'en') {
+        const { data: localizedPolls, error: pollsError } = await supabase
+          .rpc('get_polls_localized', { lang: 'en' });
+        if (pollsError) throw pollsError;
+
+        const { data: localizedOptions, error: optsError } = await supabase
+          .rpc('get_poll_options_localized', { lang: 'en' });
+        if (optsError) throw optsError;
+
+        const contentIds = (localizedPolls ?? []).map((p: any) => p.content_id).filter(Boolean);
+        let contentMap: Record<string, any> = {};
+        if (contentIds.length) {
+          const { data: contents } = await supabase
+            .from('content')
+            .select('id, content_type, status, created_at')
+            .in('id', contentIds);
+          contentMap = Object.fromEntries((contents ?? []).map((c: any) => [c.id, c]));
+        }
+
+        let polls = (localizedPolls ?? []).map((p: any) => ({
+          ...p,
+          content: contentMap[p.content_id],
+          options: (localizedOptions ?? []).filter((o: any) => o.poll_id === p.id),
+        }));
+        if (!showAll) polls = polls.filter((p: any) => p.is_active);
+        polls.sort((a: any, b: any) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
+        return polls as Poll[];
+      }
+
       const query = supabase
         .from('polls')
         .select(`
@@ -58,9 +89,25 @@ export const usePolls = (showAll = false) => {
 };
 
 export const usePoll = (id: string) => {
+  const { previewLang } = usePreviewLocale();
   return useQuery({
-    queryKey: ['poll', id],
+    queryKey: ['poll', id, previewLang],
     queryFn: async () => {
+      if (previewLang === 'en') {
+        const { data: pollsLocalized, error: pollsError } = await supabase
+          .rpc('get_polls_localized', { lang: 'en' });
+        if (pollsError) throw pollsError;
+        const poll = (pollsLocalized ?? []).find((p: any) => p.id === id);
+        if (!poll) throw new Error('Poll not found');
+
+        const { data: optionsLocalized, error: optsError } = await supabase
+          .rpc('get_poll_options_localized', { lang: 'en' });
+        if (optsError) throw optsError;
+        const options = (optionsLocalized ?? []).filter((o: any) => o.poll_id === id);
+
+        return { poll, options };
+      }
+
       const { data: poll, error: pollError } = await supabase
         .from('polls')
         .select('*')

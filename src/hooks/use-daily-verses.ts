@@ -2,10 +2,12 @@ import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-q
 import { supabase } from '@/integrations/supabase/client';
 import { DailyVerse } from '@/lib/supabase';
 import { logActivity } from '@/lib/activity-logger';
+import { usePreviewLocale } from '@/contexts/PreviewLocaleContext';
 
 const PAGE_SIZE = 20;
 
 export const useDailyVerses = () => {
+  const { previewLang } = usePreviewLocale();
   const {
     data,
     isLoading,
@@ -14,10 +16,30 @@ export const useDailyVerses = () => {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ['dailyVerses'],
+    queryKey: ['dailyVerses', previewLang],
     queryFn: async ({ pageParam = 0 }) => {
       const from = pageParam * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
+
+      if (previewLang === 'en') {
+        const { data: localized, error: rpcError } = await supabase
+          .rpc('get_verse_of_day_localized', { lang: 'en' });
+        if (rpcError) throw rpcError;
+        const sorted = [...(localized ?? [])].sort((a: any, b: any) =>
+          (b.date ?? '').localeCompare(a.date ?? '')
+        );
+        const slice = sorted.slice(from, to + 1);
+        const contentIds = slice.map((v: any) => v.content_id).filter(Boolean);
+        let contentMap: Record<string, any> = {};
+        if (contentIds.length) {
+          const { data: contents } = await supabase
+            .from('content')
+            .select('id, content_type, status, created_at')
+            .in('id', contentIds);
+          contentMap = Object.fromEntries((contents ?? []).map((c: any) => [c.id, c]));
+        }
+        return slice.map((v: any) => ({ ...v, content: contentMap[v.content_id] })) as unknown as DailyVerse[];
+      }
 
       const { data: dailyVerses, error } = await supabase
         .from('verse_of_the_day')

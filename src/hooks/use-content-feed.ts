@@ -1,6 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { usePreviewLocale } from '@/contexts/PreviewLocaleContext';
 
 export type FeedItem = {
   content_id: string;
@@ -15,9 +16,27 @@ export type FeedItem = {
 };
 
 export function useContentFeed() {
+  const { previewLang } = usePreviewLocale();
   return useQuery({
-    queryKey: ['content-feed'],
+    queryKey: ['content-feed', previewLang],
     queryFn: async () => {
+      if (previewLang === 'en') {
+        const { data, error } = await supabase
+          .rpc('get_content_feed_localized', { lang: 'en' });
+        if (error) {
+          console.error('Error fetching localized content feed:', error);
+          throw error;
+        }
+        const sorted = [...(data ?? [])].sort((a: any, b: any) => {
+          const so = (a.sort_order ?? 0) - (b.sort_order ?? 0);
+          if (so !== 0) return so;
+          const sd = (a.specific_date ?? '').localeCompare(b.specific_date ?? '');
+          if (sd !== 0) return sd;
+          return (b.created_at ?? '').localeCompare(a.created_at ?? '');
+        });
+        return sorted as FeedItem[];
+      }
+
       const { data, error } = await supabase
         .from('content_feed')
         .select('*')
