@@ -4,8 +4,3 @@ class FirebaseMessaging {
     // No-op on web
   }
 }
-
-// Stub handler
-Future<void> firebaseMessagingBackgroundHandler(dynamic message) async {
-  // No-op on web
-}
