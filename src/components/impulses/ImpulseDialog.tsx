@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Impulse } from '@/hooks/use-impulses';
 import RichTextEditor from '@/components/editor/RichTextEditor';
 import { LoaderCircle, Upload } from 'lucide-react';
+import { RetranslateButton } from '@/components/translations/RetranslateButton';
 
 type ImpulseFormData = {
   date: string;
@@ -149,7 +150,10 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
                 </FormItem>
               )}
             />
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:justify-between">
+              {defaultValues?.content_id && (
+                <RetranslateButton contentId={defaultValues.content_id} />
+              )}
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? (
                   <>

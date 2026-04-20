@@ -10,12 +10,15 @@ import { usePolls } from '@/hooks/use-polls';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { PlusIcon } from 'lucide-react';
+import { useTranslationsForContents, summarizeLang, SUPPORTED_LANGS } from '@/hooks/use-translations';
+import { TranslationStatusList } from '@/components/translations/TranslationStatusBadge';
 
 const PollsPage = () => {
   const [showAll, setShowAll] = useState(false);
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const { data: polls, isLoading } = usePolls(showAll);
+  const { data: translationsMap } = useTranslationsForContents((polls ?? []).map((p: any) => p.content_id));
 
   return (
     <DashboardLayout title="Umfragen">
@@ -72,7 +75,7 @@ const PollsPage = () => {
                   {poll.expires_at && (
                     <p>Läuft bis {format(new Date(poll.expires_at), "dd. MMMM yyyy", { locale: de })}</p>
                   )}
-                  <div className="mt-2">
+                  <div className="mt-2 flex items-center gap-2 flex-wrap">
                     <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
                       poll.is_active 
                         ? "bg-green-100 text-green-700" 
@@ -80,6 +83,14 @@ const PollsPage = () => {
                     }`}>
                       {poll.is_active ? "Aktiv" : "Inaktiv"}
                     </span>
+                    <TranslationStatusList
+                      statuses={Object.fromEntries(
+                        SUPPORTED_LANGS.map((l) => [
+                          l,
+                          summarizeLang(translationsMap?.[(poll as any).content_id], l, ['question']),
+                        ])
+                      )}
+                    />
                   </div>
                 </div>
               </CardContent>

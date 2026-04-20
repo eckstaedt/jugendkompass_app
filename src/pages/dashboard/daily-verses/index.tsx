@@ -12,9 +12,12 @@ import { CalendarPlus, LayoutList, ViewIcon, Upload, Loader2 } from 'lucide-reac
 import { cn } from '@/lib/utils';
 import { DailyVerse } from '@/lib/supabase';
 import { BulkVerseDialog } from '@/components/verses/BulkVerseDialog';
+import { useTranslationsForContents, summarizeLang, SUPPORTED_LANGS } from '@/hooks/use-translations';
+import { TranslationStatusList } from '@/components/translations/TranslationStatusBadge';
 
 const DailyVersesPage = () => {
   const { verses, isLoading, createVerse, updateVerse, bulkCreateVerses, fetchNextPage, hasNextPage, isFetchingNextPage } = useDailyVerses();
+  const { data: translationsMap } = useTranslationsForContents((verses ?? []).map((v: any) => v.content_id));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [selectedVerse, setSelectedVerse] = useState<DailyVerse | undefined>();
@@ -136,6 +139,16 @@ const DailyVersesPage = () => {
                   </CardHeader>
                   <CardContent>
                     <p className="text-pretty">{verse.verse}</p>
+                    <div className="mt-3">
+                      <TranslationStatusList
+                        statuses={Object.fromEntries(
+                          SUPPORTED_LANGS.map((l) => [
+                            l,
+                            summarizeLang(translationsMap?.[verse.content_id], l, ['verse', 'reference']),
+                          ])
+                        )}
+                      />
+                    </div>
                     {isAdmin && (
                       <Button
                         variant="outline"

@@ -28,6 +28,7 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { DailyVerse } from "@/lib/supabase";
+import { RetranslateButton } from '@/components/translations/RetranslateButton';
 
 type FormData = Omit<DailyVerse, 'id' | 'content_id' | 'created_at' | 'content'>;
 
@@ -152,7 +153,10 @@ export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }:
                 </FormItem>
               )}
             />
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:justify-between">
+              {mode === 'edit' && initialData?.content_id && (
+                <RetranslateButton contentId={initialData.content_id} />
+              )}
               <Button type="submit">{mode === 'create' ? 'Erstellen' : 'Speichern'}</Button>
             </DialogFooter>
           </form>

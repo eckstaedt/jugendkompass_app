@@ -8,6 +8,7 @@ import { Video } from '@/lib/supabase';
 import RichTextEditor from '@/components/editor/RichTextEditor';
 import { LoaderCircle } from 'lucide-react';
 import { ImageUploader } from '@/components/posts/ImageUploader';
+import { RetranslateButton } from '@/components/translations/RetranslateButton';
 
 type EditVideoDialogProps = {
   video: Video | null;
@@ -92,23 +93,26 @@ const EditVideoDialog = ({ video, open, onOpenChange }: EditVideoDialogProps) =>
             label="Thumbnail (JPEG, PNG, max. 3MB)*"
           />
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Abbrechen
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={!title || !imageUrl || updateVideoMutation.isPending}
-          >
-            {updateVideoMutation.isPending ? (
-              <>
-                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                Speichern...
-              </>
-            ) : (
-              'Speichern'
-            )}
-          </Button>
+        <DialogFooter className="gap-2 sm:justify-between">
+          {video?.content_id && <RetranslateButton contentId={video.content_id} />}
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Abbrechen
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={!title || !imageUrl || updateVideoMutation.isPending}
+            >
+              {updateVideoMutation.isPending ? (
+                <>
+                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                  Speichern...
+                </>
+              ) : (
+                'Speichern'
+              )}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

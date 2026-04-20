@@ -25,10 +25,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { useTranslationsForContents, summarizeLang, SUPPORTED_LANGS } from '@/hooks/use-translations';
+import { TranslationStatusList } from '@/components/translations/TranslationStatusBadge';
 
 const VideosPage = () => {
   const { user } = useAuth();
   const { data: videos, isLoading } = useVideos();
+  const { data: translationsMap } = useTranslationsForContents((videos ?? []).map((v: any) => v.content_id));
   const uploadVideoMutation = useUploadVideo();
   const deleteVideoMutation = useDeleteVideo();
   const { toast } = useToast();
@@ -279,6 +282,14 @@ const VideosPage = () => {
                           dangerouslySetInnerHTML={{ __html: video.description }}
                         />
                       )}
+                      <TranslationStatusList
+                        statuses={Object.fromEntries(
+                          SUPPORTED_LANGS.map((l) => [
+                            l,
+                            summarizeLang(translationsMap?.[video.content_id], l, ['title', 'description']),
+                          ])
+                        )}
+                      />
                     </div>
                   </div>
                 ))}

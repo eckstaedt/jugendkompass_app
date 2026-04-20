@@ -28,6 +28,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { useTranslationsForContents, summarizeLang, SUPPORTED_LANGS } from '@/hooks/use-translations';
+import { TranslationStatusList } from '@/components/translations/TranslationStatusBadge';
+import { RetranslateButton } from '@/components/translations/RetranslateButton';
 
 export default function ImpulsesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -37,6 +40,8 @@ export default function ImpulsesPage() {
   const [impulseToDelete, setImpulseToDelete] = useState<null | any>(null);
   
   const { data: impulses, isLoading } = useImpulses();
+  const contentIds = (impulses ?? []).map((i: any) => i.content_id);
+  const { data: translationsMap } = useTranslationsForContents(contentIds);
   const createImpulse = useCreateImpulse();
   const updateImpulse = useUpdateImpulse();
   const deleteImpulse = useDeleteImpulse();
@@ -124,6 +129,7 @@ export default function ImpulsesPage() {
                 <TableHead>Titel</TableHead>
                 <TableHead>Text</TableHead>
                 <TableHead>Bild</TableHead>
+                <TableHead>Übersetzungen</TableHead>
                 <TableHead className="w-16">Aktionen</TableHead>
               </TableRow>
             </TableHeader>
@@ -152,6 +158,16 @@ export default function ImpulsesPage() {
                         className="w-16 h-16 object-cover rounded"
                       />
                     )}
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <TranslationStatusList
+                      statuses={Object.fromEntries(
+                        SUPPORTED_LANGS.map((l) => [
+                          l,
+                          summarizeLang(translationsMap?.[impulse.content_id], l, ['title', 'impulse_text']),
+                        ])
+                      )}
+                    />
                   </TableCell>
                   <TableCell>
                     <Button

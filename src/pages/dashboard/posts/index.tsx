@@ -14,9 +14,12 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { BulkPostDialog } from '@/components/posts/BulkPostDialog';
 import { useBulkCreatePosts } from '@/hooks/posts/use-bulk-create-posts';
+import { useTranslationsForContents, summarizeLang, SUPPORTED_LANGS } from '@/hooks/use-translations';
+import { TranslationStatusList } from '@/components/translations/TranslationStatusBadge';
 
 const PostsPage = () => {
   const { posts, isLoading, deletePost, updatePostStatus, fetchNextPage, hasNextPage, isFetchingNextPage } = usePosts();
+  const { data: translationsMap } = useTranslationsForContents(posts.map((p: any) => p.content_id));
   const [bulkOpen, setBulkOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const bulkCreate = useBulkCreatePosts();
@@ -109,6 +112,7 @@ const PostsPage = () => {
                   <TableRow>
                     <TableHead>Titel</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Übersetzungen</TableHead>
                     <TableHead>Aktionen</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -135,6 +139,16 @@ const PostsPage = () => {
                           ) : (
                             <Badge variant="warning">Kein Content</Badge>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          <TranslationStatusList
+                            statuses={Object.fromEntries(
+                              SUPPORTED_LANGS.map((l) => [
+                                l,
+                                summarizeLang(translationsMap?.[post.content_id], l, ['title', 'body']),
+                              ])
+                            )}
+                          />
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center">
@@ -172,7 +186,7 @@ const PostsPage = () => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center py-6 text-muted-foreground">
+                      <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
                         {searchQuery ? 'Keine Beiträge gefunden' : 'Keine Beiträge vorhanden'}
                       </TableCell>
                     </TableRow>

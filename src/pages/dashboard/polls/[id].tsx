@@ -7,6 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { usePoll, useVote } from '@/hooks/use-polls';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { RetranslateButton } from '@/components/translations/RetranslateButton';
 
 const PollDetailPage = () => {
   const { id = '' } = useParams();
@@ -63,6 +64,11 @@ const PollDetailPage = () => {
           <p className="text-muted-foreground">
             Läuft bis {format(new Date(poll.expires_at), "dd. MMMM yyyy", { locale: de })}
           </p>
+        )}
+        {(poll as any).content_id && (
+          <div className="mt-3">
+            <RetranslateButton contentId={(poll as any).content_id} />
+          </div>
         )}
       </div>
 
