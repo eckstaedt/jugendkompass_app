@@ -41,15 +41,30 @@ Deno.serve(async (req) => {
     const limit: number = Math.min(typeof body.limit === "number" ? body.limit : 5, 20);
     const onlyMissing: boolean = body.only_missing !== false; // default true
 
-    // Kandidaten laden
-    const { data: rows, error } = await admin
-      .from("content")
-      .select("id, content_type")
-      .in("content_type", content_types)
-      .order("created_at", { ascending: true });
-    if (error) throw error;
+    // Kandidaten laden — nur Inhalte mit existierender Quellzeile
+    const SOURCE_TABLE: Record<string, string> = {
+      post: "posts",
+      impulse: "impulses",
+      verse: "verse_of_the_day",
+      message: "messages",
+      poll: "polls",
+      video: "videos",
+    };
 
-    let candidates = rows ?? [];
+    let candidates: { id: string; content_type: string }[] = [];
+    for (const ct of content_types) {
+      const tbl = SOURCE_TABLE[ct];
+      if (!tbl) continue;
+      const { data: srcRows, error: srcErr } = await admin
+        .from(tbl)
+        .select("content_id")
+        .not("content_id", "is", null)
+        .order("created_at", { ascending: true });
+      if (srcErr) throw srcErr;
+      for (const r of srcRows ?? []) {
+        if (r.content_id) candidates.push({ id: r.content_id, content_type: ct });
+      }
+    }
 
     // Vorab existierende Übersetzungen laden, um zu filtern
     if (onlyMissing && !force && candidates.length > 0) {
