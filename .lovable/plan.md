@@ -1,71 +1,45 @@
 
 
-## Auswirkungen auf die Flutter-App durch Mehrsprachigkeit
+## Backfill-Lauf: Alle Inhalte nach Englisch übersetzen
 
-Da die Flutter-App aktuell direkt aus den bestehenden Tabellen liest (posts, impulses, verse_of_the_day, messages, polls, videos, editions, categories), gibt es zwei mögliche Strategien. Empfehlung: **Strategie A (Backward-Compatible)** — die App muss minimal oder gar nicht angepasst werden.
+Ich rufe die Edge Function `translate-backfill` mit `target_languages: ['en']` auf und zeige am Ende die Erfolgsstatistik (gesamt / erfolgreich / fehlgeschlagen + Fehlerdetails).
 
-### Strategie A — Backward-Compatible (empfohlen)
+### Ablauf
 
-**Prinzip:** Bestehende Tabellen/Spalten bleiben unverändert (= Originalsprache DE). Übersetzungen liegen separat in `content_translations`. Die Flutter-App funktioniert ohne Änderung weiter und zeigt DE.
-
-**Was die App tun muss, um EN auszuliefern:**
-
-1. **Neue View `content_translated`** (DB-seitig bereitgestellt):
-   - Liefert pro Tabelle dieselben Spalten wie bisher, aber Felder werden via `coalesce(translation.value, original)` ersetzt.
-   - Parameter: gewünschte Sprache (z.B. via RPC oder Query-Param).
-   
-2. **Empfohlene API-Variante: RPC-Funktionen pro Inhaltstyp**, z.B.:
-   ```text
-   get_posts_localized(lang text)        → returns SETOF posts-shape
-   get_impulses_localized(lang text)
-   get_verse_of_day_localized(lang text)
-   get_messages_localized(lang text)
-   get_polls_localized(lang text)        (inkl. options)
-   get_videos_localized(lang text)
-   get_editions_localized(lang text)
+1. Vorab DB-Check: Anzahl Einträge pro `content_type` (`post`, `impulse`, `verse`, `message`, `poll`, `video`) aus `public.content` zählen → grobe Schätzung der Übersetzungsanfragen.
+2. `supabase--curl_edge_functions` auf `translate-backfill` mit Body:
+   ```json
+   { "target_languages": ["en"], "force": false, "delay_ms": 400 }
    ```
-   - Antwortstruktur **identisch zu den heutigen Tabellen** → Flutter-Modelle bleiben gleich.
-   - Fallback `coalesce(t.value, original)` → kein leerer Text bei fehlender Übersetzung.
+   `force: false` → bereits übersetzte und unveränderte Felder werden übersprungen (idempotent, billiger).
+3. Ergebnis-JSON parsen und als Tabelle zeigen: total / success / failed + bis zu 10 Fehlerbeispiele.
+4. Zusätzlich nachzählen, wie viele Zeilen jetzt in `content_translations` mit `language='en'` existieren.
 
-3. **Was die Flutter-App ändern muss:**
-   - Geräte-/User-Sprache erkennen (`Platform.localeName` oder bestehender Locale-Provider).
-   - Statt `from('posts').select()` → `rpc('get_posts_localized', { lang: 'en' })`.
-   - Wenn `lang == 'de'` → optional weiter direkt aus Tabelle lesen (gleiches Ergebnis).
-   - **Keine Änderung** an Modellen, Cache, Push-Notifications nötig.
+### Erwartete Kosten
 
-4. **Push-Notifications** (`notify_new_content`-Trigger):
-   - Aktuell wird nur DE versendet. Zur Zwei-Sprachen-Auslieferung: Edge-Function `send-push-notification` erweitern → liest `content_translations` und sendet pro Token in passender Sprache (basierend auf `device_tokens` → neue Spalte `language text default 'de'` hinzufügen, App setzt diese beim Token-Registrieren).
+Die Übersetzung läuft über das **Lovable AI Gateway** mit `google/gemini-3-flash-preview` — eines der günstigsten verfügbaren Modelle.
 
-### Strategie B — Breaking (nicht empfohlen)
-
-Übersetzungen direkt in bestehende Tabellen (Spalten `title_en` etc.) → Flutter-Modelle und Queries müssten überall angepasst werden + erzwingt App-Update für alle User.
-
-### Konkrete Änderungen auf Server-Seite (für Strategie A)
-
-| Bereich | Änderung |
+| Posten | Wert |
 |---|---|
-| `content_translations` | neue Tabelle (wie im vorherigen Plan beschrieben) |
-| RPC-Funktionen | 7 `get_*_localized(lang)` Funktionen mit `coalesce`-Fallback |
-| `device_tokens` | neue Spalte `language text default 'de'` |
-| Edge Function `send-push-notification` | wählt Übersetzung anhand Token-Sprache |
-| `content_feed` View | optional zusätzlich `content_feed_localized(lang)` |
+| Modell | `google/gemini-3-flash-preview` |
+| Aufrufe pro Inhalt | 1 Request pro übersetzbarem Feld (z.B. Post = 2: title + body; Verse = 2; Poll = 1 + n Optionen) |
+| Token pro Request | je nach Feldlänge (Posts mit HTML-Body am teuersten) |
+| Bereits inkludiert | **$1 freies AI-Guthaben pro Monat** je Workspace (bis Anfang 2026) |
+| Faustregel Flash-Preview | sehr günstig — typischer Backfill von wenigen hundert Inhalten bleibt meist im Free-Kontingent |
 
-### Konkrete Änderungen auf Flutter-Seite
+Eine exakte Vorhersage ist ohne Token-Schätzung nicht möglich. Nach dem Lauf melde ich:
+- Anzahl tatsächlich übersetzter Felder (übersprungene werden nicht abgerechnet),
+- ob das Free-AI-Balance gereicht hat (sonst wären 402-Fehler in `details` zu sehen).
 
-1. Locale-Erkennung + manueller Sprachumschalter in App-Settings.
-2. Repository-Layer: alle `from('<table>').select()` → `rpc('get_<table>_localized', { lang })`.
-3. Beim FCM-Token-Registrieren: aktuelle Sprache mitschicken → in `device_tokens.language` speichern; bei Sprachwechsel updaten.
-4. Keine UI-Änderung sonst nötig (App-eigene Texte separat via z.B. `flutter_localizations`/`intl` — nicht Teil dieses Plans).
+Falls Kosten ein harter Constraint sind: Backfill kann auf einzelne `content_types` begrenzt werden (z.B. erst nur `verse` + `impulse`, dann der Rest) — sag Bescheid, dann passe ich den Aufruf an.
 
-### Migrationsablauf (kompatibel)
+### Rate-Limit-Schutz
 
-```text
-Phase 1: Server  → content_translations + RPCs deployen   → App läuft unverändert weiter
-Phase 2: Backfill → bestehende Inhalte automatisch nach EN übersetzen
-Phase 3: Admin-UI → Status-Badges + manueller "Neu übersetzen"-Button
-Phase 4: Flutter → Update mit RPC-Calls + Locale-Switcher veröffentlichen
-Phase 5: Push   → device_tokens.language + Edge Function update
-```
+`delay_ms: 400` zwischen den Requests vermeidet 429er. Bei großen Mengen kann das mehrere Minuten dauern; die Edge Function läuft synchron bis fertig.
 
-In jeder Phase bleibt die produktive App lauffähig — keine Breaking Changes.
+### Technische Hinweise
+
+- Die Funktion `translate-backfill` existiert bereits und ist als `verify_jwt = false` konfiguriert.
+- HTML-Inhalte (Posts, Impulse) durchlaufen die Tag-Count-Validierung in `translate-content` — bei Mismatch wird ein strikter Retry ausgeführt.
+- Kein Schemawechsel notwendig.
 
