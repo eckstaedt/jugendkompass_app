@@ -1,17 +1,18 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-export type PreviewLang = 'de' | 'en' | 'es' | 'ru';
+export type PreviewLang = 'de' | 'en' | 'es' | 'ru' | 'pl';
 
 export const PREVIEW_LANGS: { code: PreviewLang; label: string; name: string }[] = [
   { code: 'de', label: 'DE', name: 'Deutsch' },
   { code: 'en', label: 'EN', name: 'Englisch' },
   { code: 'es', label: 'ES', name: 'Spanisch' },
   { code: 'ru', label: 'RU', name: 'Russisch' },
+  { code: 'pl', label: 'PL', name: 'Polnisch' },
 ];
 
 const STORAGE_KEY = 'preview-lang';
-const VALID: PreviewLang[] = ['de', 'en', 'es', 'ru'];
+const VALID: PreviewLang[] = ['de', 'en', 'es', 'ru', 'pl'];
 
 type PreviewLocaleContextValue = {
   previewLang: PreviewLang;

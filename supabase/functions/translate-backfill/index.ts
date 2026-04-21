@@ -39,7 +39,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const target_languages: string[] = body.target_languages ?? ["en", "es", "ru"];
+    const target_languages: string[] = body.target_languages ?? ["en", "es", "ru", "pl"];
     const content_types: string[] = body.content_types ?? Object.keys(SOURCE_TABLE);
     const force: boolean = !!body.force;
     const delayMs: number = typeof body.delay_ms === "number" ? body.delay_ms : 100;
