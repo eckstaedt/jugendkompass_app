@@ -52,6 +52,7 @@ class DeviceRegistrationService {
     int notificationHour = 7,
     int notificationMinute = 0,
     String? fcmToken,
+    String? language,
   }) async {
     try {
       final supabase = Supabase.instance.client;
@@ -65,6 +66,9 @@ class DeviceRegistrationService {
       };
       if (fcmToken != null) {
         data['fcm_token'] = fcmToken;
+      }
+      if (language != null) {
+        data['language'] = language;
       }
       await supabase.from(_table).upsert(
         data,
@@ -82,6 +86,7 @@ class DeviceRegistrationService {
     bool? contentNotifications,
     int? notificationHour,
     int? notificationMinute,
+    String? language,
   }) async {
     try {
       final supabase = Supabase.instance.client;
@@ -98,6 +103,9 @@ class DeviceRegistrationService {
       if (notificationMinute != null) {
         updates['notification_minute'] = notificationMinute;
       }
+      if (language != null) {
+        updates['language'] = language;
+      }
       if (updates.isEmpty) return;
 
       await supabase
@@ -107,6 +115,20 @@ class DeviceRegistrationService {
       debugPrint('[DeviceRegistration] updated prefs: $updates');
     } catch (e) {
       debugPrint('[DeviceRegistration] updatePreferences error: $e');
+    }
+  }
+
+  /// Update the language preference for this device.
+  Future<void> updateLanguage(String language) async {
+    try {
+      final supabase = Supabase.instance.client;
+      await supabase
+          .from(_table)
+          .update({'language': language})
+          .eq('device_id', deviceId);
+      debugPrint('[DeviceRegistration] updated language: $language');
+    } catch (e) {
+      debugPrint('[DeviceRegistration] updateLanguage error: $e');
     }
   }
 

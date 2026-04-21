@@ -49,11 +49,13 @@ class _AppState extends ConsumerState<App> {
       // Make sure device is registered (respects current toggle states)
       final prefs = UserPreferencesService.instance;
       if (prefs.getNotificationsEnabled()) {
+        final language = prefs.getLanguage();
         await DeviceRegistrationService.instance.register(
           verseNotifications: prefs.getVerseNotificationsEnabled(),
           contentNotifications: prefs.getNewContentNotificationsEnabled(),
           notificationHour: prefs.getNotificationHour(),
           notificationMinute: prefs.getNotificationMinute(),
+          language: language,
         );
       }
     } catch (e) {
