@@ -32,6 +32,7 @@ const LANG_NAMES: Record<string, string> = {
   de: "German",
   ru: "Russian",
   es: "Spanish",
+  pl: "Polish",
 };
 
 async function sha256(text: string): Promise<string> {

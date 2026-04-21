@@ -55,7 +55,7 @@ export function BackfillButton({ contentType, label = 'Übersetzungen ergänzen'
             Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
-            target_languages: ['en', 'es', 'ru'],
+            target_languages: ['en', 'es', 'ru', 'pl'],
             content_types: [contentType],
             force: false,
             only_missing: true,
