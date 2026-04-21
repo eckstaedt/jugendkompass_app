@@ -16,11 +16,12 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as strin
 
 export function BackfillButton({ contentType, label = 'Übersetzungen ergänzen', invalidateKeys = [] }: BackfillButtonProps) {
   const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState<{ done: number; failed: number; remaining: number | null }>({
-    done: 0,
-    failed: 0,
-    remaining: null,
-  });
+  const [progress, setProgress] = useState<{
+    done: number;
+    failed: number;
+    remaining: number | null;
+    total: number | null;
+  }>({ done: 0, failed: 0, remaining: null, total: null });
   const cancelRef = useRef(false);
   const { toast } = useToast();
   const qc = useQueryClient();
