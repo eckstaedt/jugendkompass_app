@@ -81,7 +81,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Bild erfolgreich hochgeladen'),
+              content: Text(context.tr('image_uploaded')),
               backgroundColor: Colors.green,
             ),
           );
@@ -90,7 +90,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           print('Avatar upload error: $e');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Fehler beim Hochladen: ${e.toString()}'),
+              content: Text('${context.tr('error_uploading')}: ${e.toString()}'),
               backgroundColor: Colors.red,
             ),
           );
@@ -106,7 +106,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Fehler beim Auswählen des Bildes: $e'),
+          content: Text('${context.tr('error_selecting_image')}: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -172,7 +172,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Profil gespeichert'),
+          content: Text(context.tr('profile_saved')),
           backgroundColor: Colors.green,
         ),
       );
@@ -182,7 +182,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Fehler beim Speichern: $e'),
+          content: Text('${context.tr('error_saving')}: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -218,7 +218,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Profil bearbeiten'),
+        title: Text(context.tr('edit_profile')),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -291,7 +291,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                         color: Colors.white,
                       ),
                     )
-                  : Text('Speichern'),
+                  : Text(context.tr('save')),
             ),
           ],
         ),

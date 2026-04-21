@@ -61,19 +61,19 @@ class FavoriteVersesScreen extends ConsumerWidget {
                       showDialog(
                         context: context,
                         builder: (context) => AlertDialog(
-                          title: Text('Vers entfernen'),
-                          content: Text('Diesen Vers aus Favoriten entfernen?'),
+                          title: Text(context.tr('remove_verse')),
+                          content: Text(context.tr('remove_verse_confirmation')),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context),
-                              child: Text('Abbrechen'),
+                              child: Text(context.tr('cancel')),
                             ),
                             FilledButton.tonal(
                               onPressed: () {
                                 ref.read(favoriteVersesProvider.notifier).removeFavoriteVerse(verse.id);
                                 Navigator.pop(context);
                               },
-                              child: Text('Entfernen'),
+                              child: Text(context.tr('delete')),
                             ),
                           ],
                         ),

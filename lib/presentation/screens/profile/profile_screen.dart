@@ -41,7 +41,7 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       extendBody: true,
       appBar: AppBar(
-        title: const Text('Einstellungen'),
+        title: Text(translate('Einstellungen')),
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),

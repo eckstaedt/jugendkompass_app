@@ -26,9 +26,9 @@ class ContentDetailScreen extends ConsumerWidget {
       data: (content) {
         if (content == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Inhalt')),
-            body: const ErrorView(
-              message: 'Inhalt nicht gefunden',
+            appBar: AppBar(title: Text(context.tr('content'))),
+            body: ErrorView(
+              message: context.tr('content_not_found'),
             ),
           );
         }
@@ -39,9 +39,9 @@ class ContentDetailScreen extends ConsumerWidget {
             data: (video) {
               if (video == null) {
                 return Scaffold(
-                  appBar: AppBar(title: const Text('Video')),
-                  body: const ErrorView(
-                    message: 'Video nicht gefunden',
+                  appBar: AppBar(title: Text(context.tr('video'))),
+                  body: ErrorView(
+                    message: context.tr('video_not_found'),
                   ),
                 );
               }
@@ -62,18 +62,18 @@ class ContentDetailScreen extends ConsumerWidget {
                 }
               });
               return Scaffold(
-                appBar: AppBar(title: const Text('Video')),
-                body: const LoadingIndicator(message: 'Lade Video...'),
+                appBar: AppBar(title: Text(context.tr('video'))),
+                body: LoadingIndicator(message: context.tr('loading_video')),
               );
             },
             loading: () => Scaffold(
-              appBar: AppBar(title: const Text('Laden...')),
-              body: const LoadingIndicator(
-                message: 'Lade Video...',
+              appBar: AppBar(title: Text(context.tr('loading'))),
+              body: LoadingIndicator(
+                message: context.tr('loading_video'),
               ),
             ),
             error: (error, stack) => Scaffold(
-              appBar: AppBar(title: const Text('Fehler')),
+              appBar: AppBar(title: Text(context.tr('error'))),
               body: ErrorView(
                 message: error.toString(),
                 onRetry: () {
@@ -92,22 +92,22 @@ class ContentDetailScreen extends ConsumerWidget {
           data: (posts) {
             if (posts.isEmpty) {
               return Scaffold(
-                appBar: AppBar(title: const Text('Inhalt')),
-                body: const ErrorView(
-                  message: 'Inhalt nicht gefunden',
+                appBar: AppBar(title: Text(context.tr('content'))),
+                body: ErrorView(
+                  message: context.tr('content_not_found'),
                 ),
               );
             }
             return PostDetailScreen(post: posts.first);
           },
           loading: () => Scaffold(
-            appBar: AppBar(title: const Text('Laden...')),
-            body: const LoadingIndicator(
-              message: 'Lade Inhalt...',
+            appBar: AppBar(title: Text(context.tr('loading'))),
+            body: LoadingIndicator(
+              message: context.tr('loading_content'),
             ),
           ),
           error: (error, stack) => Scaffold(
-            appBar: AppBar(title: const Text('Fehler')),
+            appBar: AppBar(title: Text(context.tr('error'))),
             body: ErrorView(
               message: error.toString(),
               onRetry: () {
@@ -120,13 +120,13 @@ class ContentDetailScreen extends ConsumerWidget {
         );
       },
       loading: () => Scaffold(
-        appBar: AppBar(title: const Text('Laden...')),
-        body: const LoadingIndicator(
-          message: 'Lade Inhalt...',
+        appBar: AppBar(title: Text(context.tr('loading'))),
+        body: LoadingIndicator(
+          message: context.tr('loading_content'),
         ),
       ),
       error: (error, stack) => Scaffold(
-        appBar: AppBar(title: const Text('Fehler')),
+        appBar: AppBar(title: Text(context.tr('error'))),
         body: ErrorView(
           message: error.toString(),
           onRetry: () {

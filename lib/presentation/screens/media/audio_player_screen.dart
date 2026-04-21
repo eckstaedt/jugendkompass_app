@@ -24,7 +24,7 @@ class AudioPlayerScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Audios'),
+        title: Text(context.tr('audios')),
         centerTitle: true,
       ),
       body: audioListAsync.when(
@@ -32,8 +32,8 @@ class AudioPlayerScreen extends ConsumerWidget {
           if (audioList.isEmpty) {
             return EmptyState(
               icon: Icons.headphones_outlined,
-              title: 'Keine Audios verfügbar',
-              message: 'Es sind noch keine Audio-Inhalte vorhanden.',
+              title: context.tr('no_audio_available'),
+              message: context.tr('no_audio_available_message'),
             );
           }
 
