@@ -1,7 +1,8 @@
 // Edge Function: translate-backfill
 // Stapelweise Übersetzung. Pro Aufruf max. `limit` Inhalte (default 1).
-// remaining ist EXAKT (keine Schätzung): es werden nur Inhalte gezählt,
-// die noch nicht in allen Zielsprachen vollständig übersetzt sind.
+// Berücksichtigt fehlende Sprachen PRO FELD: ein Inhalt mit nur 1 fehlenden
+// Sprache wird genauso erkannt wie einer mit 4 fehlenden Sprachen, aber pro
+// Aufruf werden NUR die wirklich fehlenden Sprachen übersetzt.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -25,14 +26,14 @@ const SOURCE_TABLE: Record<string, string> = {
   video: "videos",
 };
 
-// Anzahl übersetzbarer Felder je content_type (siehe translate-content).
-const EXPECTED_FIELDS: Record<string, number> = {
-  post: 2,
-  impulse: 2,
-  verse: 2,
-  message: 2,
-  poll: 1,
-  video: 2,
+// Erwartete Feldnamen je content_type (müssen zu translate-content passen).
+const EXPECTED_FIELD_NAMES: Record<string, string[]> = {
+  post: ["title", "body"],
+  impulse: ["title", "impulse_text"],
+  verse: ["verse", "reference"],
+  message: ["title", "message"],
+  poll: ["question"],
+  video: ["title", "description"],
 };
 
 const PAGE_SIZE = 1000;
@@ -57,8 +58,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    const expected = EXPECTED_FIELDS[ct] ?? 1;
-    const expectedTotalPerContent = expected * target_languages.length;
+    const expectedFields = EXPECTED_FIELD_NAMES[ct] ?? [];
+    const expectedTotalPerContent = expectedFields.length * target_languages.length;
 
     // 1) ALLE content_ids der Quelltabelle laden (paginiert).
     const allIds: string[] = [];
@@ -79,32 +80,59 @@ Deno.serve(async (req) => {
 
     const total = allIds.length;
 
-    // 2) Übersetzungs-Counts EXAKT bestimmen (paginiert über content_translations).
-    const counts = new Map<string, number>();
-    if (!force) {
-      // Lade pro Chunk an content_ids.
+    // 2) Vorhandene Übersetzungen EXAKT laden (nur erwartete Felder & Zielsprachen),
+    //    damit wir pro Inhalt sehen, welche (lang,field)-Paare fehlen.
+    // Map: content_id -> Set("<lang>:<field>")
+    const present = new Map<string, Set<string>>();
+    if (!force && expectedFields.length > 0) {
       const CHUNK = 200;
       for (let i = 0; i < allIds.length; i += CHUNK) {
         const chunk = allIds.slice(i, i + CHUNK);
         const { data, error } = await admin
           .from("content_translations")
-          .select("content_id")
+          .select("content_id, language, field_name")
           .in("content_id", chunk)
-          .in("language", target_languages);
+          .in("language", target_languages)
+          .in("field_name", expectedFields);
         if (error) throw error;
         for (const row of (data ?? []) as any[]) {
-          counts.set(row.content_id, (counts.get(row.content_id) ?? 0) + 1);
+          const key = `${row.language}:${row.field_name}`;
+          let set = present.get(row.content_id);
+          if (!set) {
+            set = new Set();
+            present.set(row.content_id, set);
+          }
+          set.add(key);
         }
       }
     }
 
-    // 3) Echte Liste der fehlenden Inhalte.
-    const missing: string[] = [];
+    // 3) Liste der Inhalte mit irgendeiner fehlenden (lang,field)-Kombination.
+    //    Speichere zusätzlich, welche Sprachen pro Inhalt noch nötig sind.
+    const missing: { id: string; missingLangs: string[] }[] = [];
     let alreadyComplete = 0;
     for (const id of allIds) {
-      const c = counts.get(id) ?? 0;
-      if (force || c < expectedTotalPerContent) {
-        missing.push(id);
+      const set = present.get(id);
+      const have = set ? set.size : 0;
+      if (force || have < expectedTotalPerContent) {
+        // Bestimme fehlende Sprachen: eine Sprache gilt als "fehlend",
+        // wenn nicht alle erwarteten Felder dafür existieren.
+        const missingLangs: string[] = [];
+        for (const lang of target_languages) {
+          let allFieldsPresent = true;
+          for (const f of expectedFields) {
+            if (!set || !set.has(`${lang}:${f}`)) {
+              allFieldsPresent = false;
+              break;
+            }
+          }
+          if (force || !allFieldsPresent) missingLangs.push(lang);
+        }
+        if (missingLangs.length > 0) {
+          missing.push({ id, missingLangs });
+        } else {
+          alreadyComplete += 1;
+        }
       } else {
         alreadyComplete += 1;
       }
@@ -112,9 +140,14 @@ Deno.serve(async (req) => {
 
     const remainingBefore = missing.length;
     const batch = missing.slice(0, limit);
-    const summary: { content_id: string; ok: boolean; error?: string }[] = [];
+    const summary: {
+      content_id: string;
+      ok: boolean;
+      languages?: string[];
+      error?: string;
+    }[] = [];
 
-    for (const id of batch) {
+    for (const item of batch) {
       try {
         const resp = await fetch(`${SUPABASE_URL}/functions/v1/translate-content`, {
           method: "POST",
@@ -123,22 +156,29 @@ Deno.serve(async (req) => {
             Authorization: `Bearer ${SERVICE_KEY}`,
           },
           body: JSON.stringify({
-            content_id: id,
-            target_languages,
+            content_id: item.id,
+            // Nur tatsächlich fehlende Sprachen anfordern → schneller, weniger AI-Calls.
+            target_languages: item.missingLangs,
             force,
           }),
         });
         if (!resp.ok) {
           const txt = await resp.text();
-          summary.push({ content_id: id, ok: false, error: `${resp.status}: ${txt}` });
+          summary.push({
+            content_id: item.id,
+            ok: false,
+            languages: item.missingLangs,
+            error: `${resp.status}: ${txt}`,
+          });
         } else {
           await resp.json().catch(() => null);
-          summary.push({ content_id: id, ok: true });
+          summary.push({ content_id: item.id, ok: true, languages: item.missingLangs });
         }
       } catch (e) {
         summary.push({
-          content_id: id,
+          content_id: item.id,
           ok: false,
+          languages: item.missingLangs,
           error: e instanceof Error ? e.message : String(e),
         });
       }
@@ -147,7 +187,6 @@ Deno.serve(async (req) => {
 
     const okCount = summary.filter((s) => s.ok).length;
     const processed = summary.length;
-    // remaining nach diesem Batch = vorher - erfolgreich übersetzte
     const remaining = Math.max(remainingBefore - okCount, 0);
     const has_more = remaining > 0;
 
