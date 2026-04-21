@@ -56,4 +56,61 @@ class VerseRepository {
       throw Exception('Fehler beim Laden der Verse: $e');
     }
   }
+
+  /// Get today's verse localized using Supabase RPC function.
+  ///
+  /// Uses get_verse_of_day_localized(lang) which returns verse with
+  /// translated verse and reference fields. German (de) returns original.
+  Future<VerseModel?> getTodaysVerseLocalized(String language) async {
+    try {
+      // For German, use regular method
+      if (language == 'de') {
+        return getTodaysVerse();
+      }
+
+      final response = await _supabase.rpc(
+        'get_verse_of_day_localized',
+        params: {'lang': language},
+      );
+
+      if (response == null || (response is List && response.isEmpty)) {
+        // Fallback to German if no translation
+        return getTodaysVerse();
+      }
+
+      // RPC returns a list, get the first (today's) verse
+      final verseData = response is List ? response.first : response;
+      return VerseModel.fromJson(verseData);
+    } catch (e) {
+      // Fallback to German on error
+      return getTodaysVerse();
+    }
+  }
+
+  /// Get recent verses localized.
+  Future<List<VerseModel>> getRecentVersesLocalized(
+    String language, {
+    int limit = 10,
+  }) async {
+    try {
+      // For German, use regular method
+      if (language == 'de') {
+        return getRecentVerses(limit: limit);
+      }
+
+      final response = await _supabase.rpc(
+        'get_verse_of_day_localized',
+        params: {'lang': language},
+      );
+
+      final verses = (response as List)
+          .map((json) => VerseModel.fromJson(json))
+          .toList();
+
+      return verses.take(limit).toList();
+    } catch (e) {
+      // Fallback to German on error
+      return getRecentVerses(limit: limit);
+    }
+  }
 }

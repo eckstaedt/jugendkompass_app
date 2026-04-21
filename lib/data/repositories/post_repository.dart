@@ -98,4 +98,85 @@ class PostRepository {
       throw Exception('Fehler beim Laden des Posts: $e');
     }
   }
+
+  /// Get localized posts using Supabase RPC function.
+  ///
+  /// This uses the get_posts_localized(lang) function which returns posts
+  /// with translated title and body fields based on content_translations table.
+  /// German (de) returns the original content from posts table.
+  Future<List<PostModel>> getPostsLocalized(
+    String language, {
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    try {
+      final response = await _supabase.rpc(
+        'get_posts_localized',
+        params: {'lang': language},
+      );
+
+      final posts = (response as List)
+          .map((json) => PostModel.fromJson(json))
+          .toList();
+
+      // Apply limit and offset client-side
+      // (RPC function returns all posts, we paginate here)
+      return posts.skip(offset).take(limit).toList();
+    } catch (e) {
+      // Fallback to regular posts if RPC fails
+      throw Exception('Fehler beim Laden der lokalisierten Posts: $e');
+    }
+  }
+
+  /// Get a single localized post by ID.
+  ///
+  /// Falls back to German content if translation not available.
+  Future<PostModel?> getPostByIdLocalized(String id, String language) async {
+    try {
+      // For German, just use regular method
+      if (language == 'de') {
+        return getPostById(id);
+      }
+
+      // Get post with translations
+      final post = await getPostById(id);
+      if (post == null) return null;
+
+      // If no content_id, return as-is
+      if (post.contentId == null) return post;
+
+      // Fetch translations for this content
+      final translations = await _supabase
+          .from('content_translations')
+          .select('field_name, value')
+          .eq('content_id', post.contentId!)
+          .eq('language', language);
+
+      // Apply translations
+      String? translatedTitle;
+      String? translatedBody;
+
+      for (final row in translations as List) {
+        final field = row['field_name'] as String;
+        final value = row['value'] as String;
+
+        if (field == 'title') translatedTitle = value;
+        if (field == 'body') translatedBody = value;
+      }
+
+      // Return post with translations (fallback to German if not found)
+      return PostModel(
+        id: post.id,
+        title: translatedTitle ?? post.title,
+        body: translatedBody ?? post.body,
+        imageUrl: post.imageUrl,
+        categoryId: post.categoryId,
+        editionId: post.editionId,
+        audioId: post.audioId,
+        contentId: post.contentId,
+      );
+    } catch (e) {
+      throw Exception('Fehler beim Laden des lokalisierten Posts: $e');
+    }
+  }
 }

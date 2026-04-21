@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/data/models/post_model.dart';
 import 'package:jugendkompass_app/data/repositories/post_repository.dart';
 import 'package:jugendkompass_app/domain/providers/supabase_provider.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 
 /// Post repository provider
 final postRepositoryProvider = Provider<PostRepository>((ref) {
@@ -9,25 +10,28 @@ final postRepositoryProvider = Provider<PostRepository>((ref) {
   return PostRepository(supabase);
 });
 
-/// Posts list provider with optional filters
+/// Posts list provider with optional filters (localized)
 final postsListProvider = FutureProvider.family<List<PostModel>, PostFilter>(
   (ref, filter) async {
     final repository = ref.watch(postRepositoryProvider);
-    return await repository.getPostList(
-      categoryId: filter.categoryId,
-      editionId: filter.editionId,
-      contentId: filter.contentId,
+    final language = ref.watch(languageProvider).locale.languageCode;
+
+    // Use localized method
+    return await repository.getPostsLocalized(
+      language,
       limit: filter.limit,
       offset: filter.offset,
     );
   },
 );
 
-/// Single post provider by ID
+/// Single post provider by ID (localized)
 final postDetailProvider = FutureProvider.family<PostModel?, String>(
   (ref, postId) async {
     final repository = ref.watch(postRepositoryProvider);
-    return await repository.getPostById(postId);
+    final language = ref.watch(languageProvider).locale.languageCode;
+
+    return await repository.getPostByIdLocalized(postId, language);
   },
 );
 
@@ -47,10 +51,12 @@ final postByAudioIdProvider = FutureProvider.family<PostModel?, String>(
   },
 );
 
-/// Provider that fetches the single most recent post (used on home screen)
+/// Provider that fetches the single most recent post (used on home screen, localized)
 final latestPostProvider = FutureProvider<PostModel?>((ref) async {
   final repository = ref.watch(postRepositoryProvider);
-  final posts = await repository.getPostList(limit: 1);
+  final language = ref.watch(languageProvider).locale.languageCode;
+
+  final posts = await repository.getPostsLocalized(language, limit: 1);
   return posts.isNotEmpty ? posts.first : null;
 });
 

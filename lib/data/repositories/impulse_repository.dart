@@ -121,4 +121,79 @@ class ImpulseRepository {
       throw Exception('Fehler beim Laden des Impulses: $e');
     }
   }
+
+  /// Get localized impulses using Supabase RPC function.
+  ///
+  /// Uses get_impulses_localized(lang) which returns impulses with
+  /// translated title and impulse_text fields. German (de) returns original.
+  Future<List<ImpulseModel>> getImpulsesLocalized(
+    String language, {
+    int limit = 10,
+    int offset = 0,
+  }) async {
+    try {
+      final response = await _supabase.rpc(
+        'get_impulses_localized',
+        params: {'lang': language},
+      );
+
+      final impulses = (response as List)
+          .map((json) => ImpulseModel.fromJson(json))
+          .toList();
+
+      // Apply limit and offset client-side
+      return impulses.skip(offset).take(limit).toList();
+    } catch (e) {
+      throw Exception('Fehler beim Laden der lokalisierten Impulse: $e');
+    }
+  }
+
+  /// Get a single localized impulse by ID.
+  Future<ImpulseModel?> getImpulseByIdLocalized(String id, String language) async {
+    try {
+      // For German, use regular method
+      if (language == 'de') {
+        return getImpulseById(id);
+      }
+
+      // Get impulse
+      final impulse = await getImpulseById(id);
+      if (impulse == null) return null;
+
+      // If no content_id, return as-is
+      if (impulse.contentId == null) return impulse;
+
+      // Fetch translations
+      final translations = await _supabase
+          .from('content_translations')
+          .select('field_name, value')
+          .eq('content_id', impulse.contentId!)
+          .eq('language', language);
+
+      String? translatedTitle;
+      String? translatedText;
+
+      for (final row in translations as List) {
+        final field = row['field_name'] as String;
+        final value = row['value'] as String;
+
+        if (field == 'title') translatedTitle = value;
+        if (field == 'impulse_text') translatedText = value;
+      }
+
+      // Return impulse with translations
+      return ImpulseModel(
+        id: impulse.id,
+        contentId: impulse.contentId,
+        title: translatedTitle ?? impulse.title,
+        date: impulse.date,
+        impulseText: translatedText ?? impulse.impulseText,
+        imageUrl: impulse.imageUrl,
+        createdAt: impulse.createdAt,
+        status: impulse.status,
+      );
+    } catch (e) {
+      throw Exception('Fehler beim Laden des lokalisierten Impulses: $e');
+    }
+  }
 }
