@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/localization/localization_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/domain/providers/post_provider.dart';
@@ -67,7 +68,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Suche'),
+        title: Text('search'.tr),
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),

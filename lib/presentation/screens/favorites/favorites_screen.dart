@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/localization/localization_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
@@ -16,7 +17,7 @@ class FavoritesScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Favoriten'),
+        title: Text('favorites'.tr),
         centerTitle: true,
         actions: [
           if (favorites.isNotEmpty)

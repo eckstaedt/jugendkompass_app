@@ -184,6 +184,9 @@ class Translations {
       'undo': 'Rückgängig',
       'playback_speed': 'Wiedergabegeschwindigkeit',
       'player': 'Player',
+      'your_collection': 'Deine Sammlung',
+      'save_content_bookmark': 'Speichere Inhalte mit dem Lesezeichen-Symbol',
+      'listen_edition': 'Ausgabe anhören',
     },
     AppLanguage.en: {
       'home': 'Home',
@@ -350,6 +353,9 @@ class Translations {
       'undo': 'Undo',
       'playback_speed': 'Playback Speed',
       'player': 'Player',
+      'your_collection': 'Your Collection',
+      'save_content_bookmark': 'Save content with the bookmark icon',
+      'listen_edition': 'Listen to Edition',
     },
     AppLanguage.ru: {
       'home': 'Главная',
@@ -516,6 +522,9 @@ class Translations {
       'undo': 'Отменить',
       'playback_speed': 'Скорость воспроизведения',
       'player': 'Плеер',
+      'your_collection': 'Ваша Коллекция',
+      'save_content_bookmark': 'Сохраняйте контент с помощью закладки',
+      'listen_edition': 'Слушать Выпуск',
     },
     AppLanguage.pl: {
       'home': 'Strona Główna',
@@ -682,6 +691,9 @@ class Translations {
       'undo': 'Cofnij',
       'playback_speed': 'Prędkość odtwarzania',
       'player': 'Odtwarzacz',
+      'your_collection': 'Twoja Kolekcja',
+      'save_content_bookmark': 'Zapisz treść za pomocą ikony zakładki',
+      'listen_edition': 'Posłuchaj Wydania',
     },
     AppLanguage.tr: {
       'home': 'Ana Sayfa',
@@ -848,6 +860,9 @@ class Translations {
       'undo': 'Geri Al',
       'playback_speed': 'Oynatma Hızı',
       'player': 'Oynatıcı',
+      'your_collection': 'Koleksiyonunuz',
+      'save_content_bookmark': 'Yer işareti simgesiyle içerik kaydedin',
+      'listen_edition': 'Baskıyı Dinle',
     },
   };
 

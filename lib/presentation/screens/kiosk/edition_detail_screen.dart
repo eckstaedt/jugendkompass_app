@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/localization/localization_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -135,7 +136,7 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
           FilledButton.icon(
             onPressed: () => _playEditionAudios(context, audios),
             icon: const Icon(Icons.play_arrow, size: 24),
-            label: Text('Ausgabe anhören', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            label: Text('listen_edition'.tr, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             style: FilledButton.styleFrom(
               backgroundColor: DesignTokens.primaryRed,
               foregroundColor: Colors.white,
@@ -161,7 +162,7 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
           }),
           const SizedBox(height: 32),
         ],
-        Row(children: [Icon(Icons.article, size: 20, color: textPrimary), const SizedBox(width: 8), Text('Artikel in dieser Ausgabe', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: textPrimary))]),
+        Row(children: [Icon(Icons.article, size: 20, color: textPrimary), const SizedBox(width: 8), Text('articles_in_edition'.tr, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: textPrimary))]),
         const SizedBox(height: 16),
         if (posts.isEmpty)
           Padding(padding: const EdgeInsets.symmetric(vertical: 32), child: Center(child: Text(translate('Keine Artikel verfügbar'), style: TextStyle(color: textSecondary))))

@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/localization/localization_extension.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,7 +36,7 @@ class CollectionScreen extends ConsumerWidget {
     return Scaffold(
       extendBody: true,
       appBar: AppBar(
-        title: Text('Deine Sammlung'),
+        title: Text('your_collection'.tr),
         elevation: 0,
         backgroundColor: Colors.transparent,
         actions: collectionItems.isNotEmpty
@@ -43,17 +44,17 @@ class CollectionScreen extends ConsumerWidget {
                 PopupMenuButton(
                   itemBuilder: (context) => [
                     PopupMenuItem(
-                      child: Text('Alle löschen'),
+                      child: Text('delete_all'.tr),
                       onTap: () {
                         showDialog(
                           context: context,
                           builder: (context) => AlertDialog(
-                            title: Text('Sammlung leeren?'),
-                            content: Text('Möchtest du wirklich alle Inhalte aus deiner Sammlung löschen?'),
+                            title: Text('clear_collection'.tr),
+                            content: Text('clear_collection_confirmation'.tr),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context),
-                                child: Text('Abbrechen'),
+                                child: Text('cancel'.tr),
                               ),
                               FilledButton.tonal(
                                 onPressed: () {
@@ -61,7 +62,7 @@ class CollectionScreen extends ConsumerWidget {
                                   ref.invalidate(collectionProvider);
                                   Navigator.pop(context);
                                 },
-                                child: Text('Löschen'),
+                                child: Text('delete_action'.tr),
                               ),
                             ],
                           ),
@@ -85,12 +86,12 @@ class CollectionScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Deine Sammlung ist leer',
+                    'empty_collection_title'.tr,
                     style: theme.textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Speichere Inhalte mit dem Lesezeichen-Symbol',
+                    'save_content_bookmark'.tr,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),

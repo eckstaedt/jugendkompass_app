@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/localization/localization_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -20,7 +21,7 @@ class ImpulseListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Impulse'),
+        title: Text('impulses'.tr),
       ),
       body: RefreshIndicator(
         onRefresh: () async {
