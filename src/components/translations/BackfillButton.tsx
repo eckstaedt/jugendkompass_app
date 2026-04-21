@@ -33,7 +33,7 @@ export function BackfillButton({ contentType, label = 'Übersetzungen ergänzen'
     }
     setLoading(true);
     cancelRef.current = false;
-    setProgress({ done: 0, failed: 0, remaining: null });
+    setProgress({ done: 0, failed: 0, remaining: null, total: null });
 
     let totalDone = 0;
     let totalFailed = 0;
@@ -71,11 +71,11 @@ export function BackfillButton({ contentType, label = 'Übersetzungen ergänzen'
         }
         const data = await resp.json();
 
-        const { processed = 0, success = 0, failed = 0, has_more = false, remaining = 0 } = data ?? {};
+        const { processed = 0, success = 0, failed = 0, has_more = false, remaining = 0, total = null } = data ?? {};
         totalDone += success;
         totalFailed += failed;
         lastRemaining = remaining;
-        setProgress({ done: totalDone, failed: totalFailed, remaining });
+        setProgress({ done: totalDone, failed: totalFailed, remaining, total });
 
         // Invalidate während dem Lauf, damit User Updates live sehen
         if (i % 5 === 4) {
@@ -83,7 +83,8 @@ export function BackfillButton({ contentType, label = 'Übersetzungen ergänzen'
           qc.invalidateQueries({ queryKey: ['content-translations'] });
         }
 
-        if (processed === 0 || !has_more) {
+        // Stop, wenn nichts mehr zu tun ist.
+        if (!has_more || (processed === 0 && remaining === 0)) {
           break;
         }
       }
@@ -112,7 +113,7 @@ export function BackfillButton({ contentType, label = 'Übersetzungen ergänzen'
     <Button variant={loading ? 'destructive' : 'outline'} onClick={handleClick}>
       {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Languages className="mr-2 h-4 w-4" />}
       {loading
-        ? `Übersetze... ${progress.done}${progress.failed ? ` (${progress.failed} Fehler)` : ''}${progress.remaining !== null ? ` · noch ${progress.remaining}` : ''} — Stop`
+        ? `Übersetze ${progress.done}${progress.failed ? ` (${progress.failed} Fehler)` : ''}${progress.remaining !== null ? ` · ${progress.remaining} verbleibend` : ''}${progress.total !== null ? ` / ${progress.total} gesamt` : ''} — Stop`
         : label}
     </Button>
   );
