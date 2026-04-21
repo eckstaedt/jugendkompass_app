@@ -1,7 +1,7 @@
 // Edge Function: translate-backfill
-// Stapelweise Übersetzung. Pro Aufruf max. `limit` Inhalte (default 5).
-// Nutzt nur die Quelltabellen (kein orphan-content), und übergibt Inhalte direkt
-// an translate-content. Filterung per `only_missing` über content_translations.
+// Stapelweise Übersetzung. Pro Aufruf max. `limit` Inhalte (default 1).
+// Effizient: zählt zuerst die echte Gesamtmenge in der Quelltabelle und ermittelt
+// die wirklich noch fehlenden (remaining), damit das UI einen korrekten Fortschritt zeigt.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -25,6 +25,7 @@ const SOURCE_TABLE: Record<string, string> = {
   video: "videos",
 };
 
+// Anzahl übersetzbarer Felder je content_type (siehe translate-content).
 const EXPECTED_FIELDS: Record<string, number> = {
   post: 2,
   impulse: 2,
@@ -33,6 +34,11 @@ const EXPECTED_FIELDS: Record<string, number> = {
   poll: 1,
   video: 2,
 };
+
+// Maximale Seitenanzahl beim Scannen der Quelltabelle pro Request.
+// 5000 Datensätze sind günstig zu paginieren und decken die App locker ab.
+const MAX_SCAN = 5000;
+const PAGE_SIZE = 500;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -43,10 +49,9 @@ Deno.serve(async (req) => {
     const content_types: string[] = body.content_types ?? Object.keys(SOURCE_TABLE);
     const force: boolean = !!body.force;
     const delayMs: number = typeof body.delay_ms === "number" ? body.delay_ms : 100;
-    const limit: number = Math.min(typeof body.limit === "number" ? body.limit : 5, 20);
+    const limit: number = Math.min(typeof body.limit === "number" ? body.limit : 1, 20);
     const onlyMissing: boolean = body.only_missing !== false;
 
-    // Filter ein content_type pro Aufruf (Frontend ruft pro Typ separat auf).
     const ct = content_types[0];
     const tbl = SOURCE_TABLE[ct];
     if (!tbl) {
@@ -56,45 +61,89 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Lade nur eine begrenzte Auswahl an Kandidaten (oversample für Filter).
-    const oversample = onlyMissing && !force ? 200 : limit;
-    const { data: srcRows, error: srcErr } = await admin
+    const expected = EXPECTED_FIELDS[ct] ?? 1;
+    const expectedTotalPerContent = expected * target_languages.length;
+
+    // 1) Gesamtanzahl in der Quelltabelle (echte Obergrenze).
+    const { count: totalCount } = await admin
       .from(tbl)
-      .select("content_id")
-      .not("content_id", "is", null)
-      .order("created_at", { ascending: true })
-      .limit(oversample);
-    if (srcErr) throw srcErr;
+      .select("content_id", { count: "exact", head: true })
+      .not("content_id", "is", null);
 
-    let candidateIds = (srcRows ?? [])
-      .map((r: any) => r.content_id as string)
-      .filter(Boolean);
+    // 2) Suche fehlende Kandidaten paginiert. Stoppe sobald wir genug für diesen Batch
+    //    haben UND mindestens eine grobe Schätzung der Restmenge ermitteln können.
+    const missing: string[] = [];
+    let scanned = 0;
+    let scannedComplete = 0; // bereits vollständig übersetzte content_ids im gescannten Bereich
+    let pageStart = 0;
+    let exhausted = false;
 
-    let totalRemainingEstimate = candidateIds.length;
-
-    if (onlyMissing && !force && candidateIds.length > 0) {
-      const { data: existing } = await admin
-        .from("content_translations")
-        .select("content_id, language")
-        .in("content_id", candidateIds)
-        .in("language", target_languages);
-
-      const countByContent = new Map<string, Map<string, number>>();
-      for (const t of (existing ?? []) as any[]) {
-        const m = countByContent.get(t.content_id) ?? new Map();
-        m.set(t.language, (m.get(t.language) ?? 0) + 1);
-        countByContent.set(t.content_id, m);
+    while (pageStart < MAX_SCAN) {
+      const { data: srcRows, error: srcErr } = await admin
+        .from(tbl)
+        .select("content_id")
+        .not("content_id", "is", null)
+        .order("created_at", { ascending: true })
+        .range(pageStart, pageStart + PAGE_SIZE - 1);
+      if (srcErr) throw srcErr;
+      const ids = (srcRows ?? []).map((r: any) => r.content_id as string).filter(Boolean);
+      if (ids.length === 0) {
+        exhausted = true;
+        break;
       }
-      const expected = EXPECTED_FIELDS[ct] ?? 1;
-      candidateIds = candidateIds.filter((id) => {
-        const m = countByContent.get(id);
-        if (!m) return true;
-        return target_languages.some((lang) => (m.get(lang) ?? 0) < expected);
-      });
-      totalRemainingEstimate = candidateIds.length;
+      scanned += ids.length;
+
+      if (force || !onlyMissing) {
+        for (const id of ids) {
+          if (missing.length < limit) missing.push(id);
+        }
+      } else {
+        // Aggregiere existierende Übersetzungen für diese Seite.
+        const { data: existing } = await admin
+          .from("content_translations")
+          .select("content_id")
+          .in("content_id", ids)
+          .in("language", target_languages);
+        const counts = new Map<string, number>();
+        for (const t of (existing ?? []) as any[]) {
+          counts.set(t.content_id, (counts.get(t.content_id) ?? 0) + 1);
+        }
+        for (const id of ids) {
+          const c = counts.get(id) ?? 0;
+          if (c >= expectedTotalPerContent) {
+            scannedComplete += 1;
+          } else {
+            missing.push(id);
+          }
+        }
+      }
+
+      if (ids.length < PAGE_SIZE) {
+        exhausted = true;
+        break;
+      }
+      pageStart += PAGE_SIZE;
+
+      // Wenn wir genug Batch-Kandidaten haben UND bereits viel gescannt wurde,
+      // brechen wir früher ab — die remaining-Schätzung ist dann konservativ.
+      if (missing.length >= limit && scanned >= 1000) break;
     }
 
-    const batch = candidateIds.slice(0, limit);
+    // 3) Realistische remaining-Schätzung:
+    //    bekannte fehlende (missing.length) + hochgerechnete fehlende im noch nicht gescannten Bereich.
+    const total = totalCount ?? scanned;
+    const unscanned = Math.max(total - scanned, 0);
+    let remainingEstimate: number;
+    if (force || !onlyMissing) {
+      remainingEstimate = total;
+    } else if (exhausted) {
+      remainingEstimate = missing.length;
+    } else {
+      const missRate = scanned > 0 ? missing.length / scanned : 1;
+      remainingEstimate = missing.length + Math.round(unscanned * missRate);
+    }
+
+    const batch = missing.slice(0, limit);
     const summary: { content_id: string; ok: boolean; error?: string }[] = [];
 
     for (const id of batch) {
@@ -130,7 +179,8 @@ Deno.serve(async (req) => {
 
     const okCount = summary.filter((s) => s.ok).length;
     const processed = summary.length;
-    const remaining = Math.max(totalRemainingEstimate - processed, 0);
+    const remaining = Math.max(remainingEstimate - processed, 0);
+    const has_more = remaining > 0 && (missing.length > processed || !exhausted);
 
     return new Response(
       JSON.stringify({
@@ -139,7 +189,10 @@ Deno.serve(async (req) => {
         success: okCount,
         failed: processed - okCount,
         remaining,
-        has_more: remaining > 0 || (oversample === candidateIds.length + processed),
+        total,
+        already_complete: scannedComplete,
+        scanned,
+        has_more,
         details: summary,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
