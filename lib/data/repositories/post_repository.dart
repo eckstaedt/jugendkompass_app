@@ -171,9 +171,12 @@ class PostRepository {
         body: translatedBody ?? post.body,
         imageUrl: post.imageUrl,
         categoryId: post.categoryId,
+        categoryName: post.categoryName,
+        categoryNames: post.categoryNames,
         editionId: post.editionId,
         audioId: post.audioId,
         contentId: post.contentId,
+        createdAt: post.createdAt,
       );
     } catch (e) {
       throw Exception('Fehler beim Laden des lokalisierten Posts: $e');

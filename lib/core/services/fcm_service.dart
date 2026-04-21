@@ -111,7 +111,7 @@ class FCMService {
   Future<void> _storeToken(String fcmToken) async {
     try {
       final deviceId = DeviceRegistrationService.instance.deviceId;
-      final language = UserPreferencesService.instance.getLanguage();
+      final language = await UserPreferencesService.instance.getLanguage();
       final supabase = Supabase.instance.client;
 
       await supabase.from('device_tokens').upsert(
