@@ -49,6 +49,53 @@ Zentrale Tabelle für alle Inhaltstypen. Wird als FK von Posts, Impulsen, Versen
 
 ---
 
+### `content_translations`
+Speichert Übersetzungen für alle Content-Felder (en, es, ru). Deutsch (`de`) ist die Quellsprache und liegt direkt in den Quelltabellen.
+
+| Spalte | Typ | Nullable | Default |
+|--------|-----|----------|---------|
+| id | uuid | Nein | `gen_random_uuid()` |
+| content_id | uuid | Nein | – |
+| language | text | Nein | – |
+| field_name | text | Nein | – |
+| value | text | Nein | – |
+| source_hash | text | Ja | – |
+| status | text | Nein | `'auto'` |
+| created_at | timestamptz | Nein | `now()` |
+| updated_at | timestamptz | Nein | `now()` |
+
+**FK:** `content_id` → `content.id`
+
+**Sprachen:** `en`, `es`, `ru` (DE ist Quellsprache)
+
+**field_name Beispiele:** `title`, `body`, `impulse_text`, `verse`, `reference`, `question`, `message`, `description`, `option:<uuid>` (für Poll-Optionen)
+
+**Trigger:** `touch_content_translations_updated_at` aktualisiert `updated_at` bei UPDATE.
+
+**RLS:** Jeder kann lesen, nur Admins können erstellen/bearbeiten/löschen.
+
+---
+
+### `device_tokens`
+Geräte-Registrierung für Push-Notifications und Sprachpräferenz.
+
+| Spalte | Typ | Nullable | Default |
+|--------|-----|----------|---------|
+| id | uuid | Nein | `gen_random_uuid()` |
+| device_id | text | Nein | – |
+| platform | text | Nein | `'ios'` |
+| fcm_token | text | Ja | – |
+| language | text | Nein | `'de'` |
+| verse_notifications | boolean | Nein | `true` |
+| content_notifications | boolean | Nein | `true` |
+| notification_hour | integer | Nein | `7` |
+| notification_minute | integer | Nein | `0` |
+| created_at | timestamptz | Nein | `now()` |
+
+**RLS:** Vollzugriff für anonyme und authentifizierte Nutzer (Geräteregistrierung ohne Login).
+
+---
+
 ### `posts`
 | Spalte | Typ | Nullable | Default |
 |--------|-----|----------|---------|
@@ -100,8 +147,6 @@ Zentrale Tabelle für alle Inhaltstypen. Wird als FK von Posts, Impulsen, Versen
 | id | uuid | Nein | `uuid_generate_v4()` |
 | url | text | Nein | – |
 | created_at | timestamptz | Nein | `now()` |
-
-**HOW_TO_USE** audios sind nur eine ergänzung zu den posts und sollen nicht als einzelne verwendet werden. Immer nur in Kobination mit posts.
 
 **RLS:** Jeder kann lesen, authentifizierte User können CRUD.
 
@@ -195,6 +240,7 @@ Zentrale Tabelle für alle Inhaltstypen. Wird als FK von Posts, Impulsen, Versen
 | Spalte | Typ | Nullable | Default |
 |--------|-----|----------|---------|
 | id | integer | Nein | `nextval(...)` |
+| title | text | Ja | – |
 | message | text | Nein | – |
 | content_id | uuid | Ja | – |
 | image_url | text | Ja | – |
@@ -216,10 +262,10 @@ Zentrale Tabelle für alle Inhaltstypen. Wird als FK von Posts, Impulsen, Versen
 | title | text | Nein | – |
 | description | text | Ja | – |
 | url | text | Nein | – |
+| image_url | text | Ja | – |
 | content_id | uuid | Nein | – |
 | user_id | uuid | Ja | – |
 | created_at | timestamptz | Ja | `now()` |
-| image_url | timestamptz | Ja | – |
 
 **FK:** `content_id` → `content.id`
 
@@ -244,28 +290,46 @@ Zentrale Tabelle für alle Inhaltstypen. Wird als FK von Posts, Impulsen, Versen
 
 ---
 
-## Views
-
-| View | Beschreibung |
-|------|-------------|
-| `content_feed` | Aggregierter Content-Feed aller Inhaltstypen |
-
----
-
 ## Datenbank-Funktionen
 
+### Allgemein
 | Funktion | Rückgabe | Beschreibung |
 |----------|----------|-------------|
-| `is_admin()` | boolean | Prüft ob aktueller User Admin ist |
-| `is_admin(user_id)` | boolean | Prüft ob gegebener User Admin ist |
-| `get_current_user_role()` | text | Gibt Rolle des aktuellen Users zurück |
+| `is_admin()` / `is_admin(user_id)` | boolean | Prüft Admin-Status |
+| `get_current_user_role()` | text | Rolle des aktuellen Users |
 | `increment_poll_votes(option_id)` | void | Erhöht Stimmenanzahl einer Poll-Option |
-| `get_vers_des_tages_today_json()` | jsonb | Gibt heutigen Vers als JSON zurück |
-| `handle_impulse_content()` | trigger | Erstellt Content-Eintrag für neuen Impuls |
-| `handle_verse_content()` | trigger | Erstellt Content-Eintrag für neuen Vers |
-| `handle_message_content()` | trigger | Erstellt Content-Eintrag für neue Nachricht |
-| `handle_video_content()` | trigger | Erstellt Content-Eintrag für neues Video |
-| `handle_new_user_role()` | trigger | Backward-Compatibility Trigger für User-Rollen |
+| `get_vers_des_tages_today_json()` | jsonb | Heutiger Vers als JSON |
+
+### Content-Trigger (BEFORE INSERT, erstellen Content-Eintrag)
+| Funktion | Tabelle |
+|----------|---------|
+| `handle_impulse_content()` | impulses |
+| `handle_verse_content()` | verse_of_the_day |
+| `handle_message_content()` | messages |
+| `handle_video_content()` | videos |
+| `handle_new_user_role()` | users (Backward-Compat) |
+
+### Übersetzungen (i18n)
+| Funktion | Beschreibung |
+|----------|-------------|
+| `tr(content_id, lang, field, fallback)` | Liefert Übersetzung oder Fallback |
+| `get_posts_localized(lang)` | Posts in Zielsprache |
+| `get_impulses_localized(lang)` | Impulse in Zielsprache |
+| `get_verse_of_day_localized(lang)` | Verse in Zielsprache |
+| `get_messages_localized(lang)` | Messages in Zielsprache |
+| `get_polls_localized(lang)` | Polls in Zielsprache |
+| `get_poll_options_localized(lang)` | Poll-Optionen in Zielsprache |
+| `get_videos_localized(lang)` | Videos in Zielsprache |
+| `get_editions_localized(lang)` | Ausgaben in Zielsprache |
+| `get_categories_localized(lang)` | Kategorien in Zielsprache |
+| `touch_content_translations_updated_at()` | Trigger: aktualisiert `updated_at` |
+
+### Notifications & Auto-Translation (HTTP-Trigger)
+| Funktion | Beschreibung |
+|----------|-------------|
+| `notify_new_content()` | Sendet Push via Edge Function `send-push-notification` |
+| `notify_translate_content()` | Triggert Edge Function `translate-content` für `en`, `es`, `ru` |
+| `notify_translate_poll_option()` | Triggert Übersetzung neuer Poll-Optionen |
 
 ---
 
@@ -293,6 +357,16 @@ Alle Buckets sind **öffentlich** (public).
 | Funktion | JWT-Verifizierung | Beschreibung |
 |----------|-------------------|-------------|
 | `delete-user` | Ja | Löscht einen User (nur Admins) |
+| `send-push-notification` | Nein | Sendet Push-Benachrichtigungen via FCM |
+| `translate-content` | Nein | Übersetzt einen einzelnen Content-Eintrag |
+| `translate-backfill` | Ja | Backfill für fehlende Übersetzungen (batchweise) |
+
+---
+
+## Unterstützte Sprachen
+
+- **Quellsprache:** `de` (Deutsch) – direkt in Quelltabellen
+- **Übersetzungen:** `en` (Englisch), `es` (Spanisch), `ru` (Russisch) – in `content_translations`
 
 ---
 
