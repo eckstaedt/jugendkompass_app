@@ -14,7 +14,7 @@ enum AppLanguage {
   const AppLanguage(this.locale, this.displayName);
 
   /// Returns only the languages that should be shown in the language selector
-  static List<AppLanguage> get availableLanguages => [de, en, ru, es];
+  static List<AppLanguage> get availableLanguages => [de, en, ru, es, pl];
 }
 
 class Translations {
