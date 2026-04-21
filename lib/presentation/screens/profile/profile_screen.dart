@@ -443,7 +443,7 @@ class ProfileScreen extends ConsumerWidget {
         title: Text(translate('Sprache auswählen')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: AppLanguage.values.map((language) {
+          children: AppLanguage.availableLanguages.map((language) {
             return RadioListTile<AppLanguage>(
               title: Text(language.displayName),
               value: language,
