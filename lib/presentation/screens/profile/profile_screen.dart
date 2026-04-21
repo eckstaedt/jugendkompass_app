@@ -151,7 +151,7 @@ class ProfileScreen extends ConsumerWidget {
                     title: Text(translate('Vers des Tages')),
                     subtitle: verseEnabled
                         ? Text(
-                            'Um ${notificationTime.hour.toString().padLeft(2, '0')}:${notificationTime.minute.toString().padLeft(2, '0')} Uhr',
+                            '${translate('Um')} ${notificationTime.hour.toString().padLeft(2, '0')}:${notificationTime.minute.toString().padLeft(2, '0')} ${translate('Uhr')}',
                           )
                         : null,
                     trailing: Row(
@@ -168,9 +168,9 @@ class ProfileScreen extends ConsumerWidget {
                                   minute: notificationTime.minute,
                                 ),
                                 initialEntryMode: TimePickerEntryMode.input,
-                                helpText: 'Vers des Tages — Uhrzeit wählen',
-                                cancelText: 'Abbrechen',
-                                confirmText: 'Speichern',
+                                helpText: translate('Vers des Tages — Uhrzeit wählen'),
+                                cancelText: translate('Abbrechen'),
+                                confirmText: translate('Speichern'),
                               );
                               if (picked != null) {
                                 await ref
@@ -186,7 +186,7 @@ class ProfileScreen extends ConsumerWidget {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                        'Vers des Tages um ${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')} Uhr',
+                                        '${translate('Vers des Tages')} ${translate('um')} ${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')} ${translate('Uhr')}',
                                       ),
                                       behavior: SnackBarBehavior.floating,
                                     ),
