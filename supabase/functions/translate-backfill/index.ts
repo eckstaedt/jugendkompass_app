@@ -85,7 +85,10 @@ Deno.serve(async (req) => {
     // Map: content_id -> Set("<lang>:<field>")
     const present = new Map<string, Set<string>>();
     if (!force && expectedFields.length > 0) {
-      const CHUNK = 200;
+      // Supabase gibt standardmäßig max. 1000 Zeilen pro Query zurück.
+      // Darum Chunkgröße dynamisch so wählen, dass erwartete Übersetzungszeilen
+      // pro Chunk sicher darunter bleiben (z.B. posts: 112 * 8 = 896).
+      const CHUNK = Math.max(1, Math.floor(900 / Math.max(expectedTotalPerContent, 1)));
       for (let i = 0; i < allIds.length; i += CHUNK) {
         const chunk = allIds.slice(i, i + CHUNK);
         const { data, error } = await admin
