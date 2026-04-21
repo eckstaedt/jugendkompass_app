@@ -10,8 +10,10 @@ import 'package:jugendkompass_app/domain/providers/theme_provider.dart';
 import 'package:jugendkompass_app/domain/providers/favorites_provider.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/data/services/favorites_service.dart';
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 
 import 'package:jugendkompass_app/data/services/collection_service.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -30,6 +32,7 @@ class ProfileScreen extends ConsumerWidget {
     final verseEnabled = ref.watch(verseNotificationsProvider);
     final newContentEnabled = ref.watch(newContentNotificationsProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final currentLanguage = ref.watch(languageProvider);
     final translate = ref.watch(stringTranslatorProvider);
     final theme = Theme.of(context);
     final brightness = theme.brightness;
@@ -257,6 +260,22 @@ class ProfileScreen extends ConsumerWidget {
             ),
           ),
 
+          // Language selection
+          ListTile(
+            tileColor: DesignTokens.getGlassBackground(theme.brightness, 0.22),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+              side: BorderSide(color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            leading: const Icon(Icons.language_outlined),
+            title: Text(translate('Sprache')),
+            subtitle: Text(currentLanguage.displayName),
+            trailing: const Icon(Icons.chevron_right, size: 20),
+            onTap: () => _showLanguageDialog(context, ref, translate),
+          ),
+          SizedBox(height: DesignTokens.spacingSmall),
+
           // Dark mode toggle
           SwitchListTile(
             tileColor: DesignTokens.getGlassBackground(theme.brightness, 0.22),
@@ -413,6 +432,49 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _showLanguageDialog(BuildContext context, WidgetRef ref, String Function(String) translate) async {
+    final currentLanguage = ref.read(languageProvider);
+
+    final selectedLanguage = await showDialog<AppLanguage>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(translate('Sprache auswählen')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: AppLanguage.values.map((language) {
+            return RadioListTile<AppLanguage>(
+              title: Text(language.displayName),
+              value: language,
+              groupValue: currentLanguage,
+              activeColor: DesignTokens.primaryRed,
+              onChanged: (value) {
+                Navigator.pop(context, value);
+              },
+            );
+          }).toList(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(translate('Abbrechen')),
+          ),
+        ],
+      ),
+    );
+
+    if (selectedLanguage != null && selectedLanguage != currentLanguage && context.mounted) {
+      await ref.read(languageProvider.notifier).setLanguage(selectedLanguage);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(translate('Sprache geändert')),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _showNameEditDialog(BuildContext context, WidgetRef ref, String Function(String) translate) async {
