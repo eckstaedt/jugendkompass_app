@@ -59,8 +59,6 @@ Deno.serve(async (req) => {
     }
 
     const expectedFields = EXPECTED_FIELD_NAMES[ct] ?? [];
-    const expectedTotalPerLanguage = expectedFields.length;
-    const totalWorkUnits = 0;
 
     // 1) ALLE content_ids der Quelltabelle laden (paginiert).
     const allIds: string[] = [];
