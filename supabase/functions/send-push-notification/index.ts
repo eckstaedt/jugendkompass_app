@@ -52,44 +52,104 @@ interface ServiceAccountKey {
 
 // ─── Notification mapping ───────────────────────────────────────────────────
 
-/** Determine the notification title and body from the webhook payload. */
+/** Notification translations by language. */
+const NOTIFICATION_TRANSLATIONS: Record<string, Record<string, { title: string; fallback: string }>> = {
+  post_audio: {
+    de: { title: "Neuer Podcast", fallback: "Neuer Inhalt verfügbar" },
+    en: { title: "New Podcast", fallback: "New content available" },
+    ru: { title: "Новый подкаст", fallback: "Доступен новый контент" },
+    pl: { title: "Nowy podcast", fallback: "Dostępna nowa treść" },
+    tr: { title: "Yeni Podcast", fallback: "Yeni içerik mevcut" },
+  },
+  post: {
+    de: { title: "Neuer Artikel", fallback: "Neuer Inhalt verfügbar" },
+    en: { title: "New Article", fallback: "New content available" },
+    ru: { title: "Новая статья", fallback: "Доступен новый контент" },
+    pl: { title: "Nowy artykuł", fallback: "Dostępna nowa treść" },
+    tr: { title: "Yeni Makale", fallback: "Yeni içerik mevcut" },
+  },
+  video: {
+    de: { title: "Neues Video", fallback: "Neues Video verfügbar" },
+    en: { title: "New Video", fallback: "New video available" },
+    ru: { title: "Новое видео", fallback: "Доступно новое видео" },
+    pl: { title: "Nowe wideo", fallback: "Dostępne nowe wideo" },
+    tr: { title: "Yeni Video", fallback: "Yeni video mevcut" },
+  },
+  message: {
+    de: { title: "Neue Kurznachricht", fallback: "Neue Kurznachricht" },
+    en: { title: "New Message", fallback: "New message" },
+    ru: { title: "Новое сообщение", fallback: "Новое сообщение" },
+    pl: { title: "Nowa wiadomość", fallback: "Nowa wiadomość" },
+    tr: { title: "Yeni Mesaj", fallback: "Yeni mesaj" },
+  },
+  edition: {
+    de: { title: "Neue Ausgabe", fallback: "Neue Ausgabe verfügbar" },
+    en: { title: "New Edition", fallback: "New edition available" },
+    ru: { title: "Новый выпуск", fallback: "Доступен новый выпуск" },
+    pl: { title: "Nowe wydanie", fallback: "Dostępne nowe wydanie" },
+    tr: { title: "Yeni Baskı", fallback: "Yeni baskı mevcut" },
+  },
+  impulse: {
+    de: { title: "Neuer Impuls", fallback: "Neuer Impuls verfügbar" },
+    en: { title: "New Impulse", fallback: "New impulse available" },
+    ru: { title: "Новый импульс", fallback: "Доступен новый импульс" },
+    pl: { title: "Nowy impuls", fallback: "Dostępny nowy impuls" },
+    tr: { title: "Yeni İmpuls", fallback: "Yeni impuls mevcut" },
+  },
+};
+
+/** Determine the notification title and body from the webhook payload with language support. */
 function getNotificationContent(
   table: string,
-  record: Record<string, unknown>
+  record: Record<string, unknown>,
+  language: string = "de"
 ): { title: string; body: string; imageUrl: string | null } | null {
+  // Validate language and default to German
+  const lang = ["de", "en", "ru", "pl", "tr"].includes(language) ? language : "de";
+
   switch (table) {
     case "posts": {
       const hasAudio = record.audio_id != null;
+      const key = hasAudio ? "post_audio" : "post";
+      const translation = NOTIFICATION_TRANSLATIONS[key][lang];
       return {
-        title: hasAudio ? "Neuer Podcast" : "Neuer Artikel",
-        body: (record.title as string) || "Neuer Inhalt verfügbar",
+        title: translation.title,
+        body: (record.title as string) || translation.fallback,
         imageUrl: (record.image_url as string) || null,
       };
     }
-    case "videos":
+    case "videos": {
+      const translation = NOTIFICATION_TRANSLATIONS.video[lang];
       return {
-        title: "Neues Video",
-        body: (record.title as string) || "Neues Video verfügbar",
+        title: translation.title,
+        body: (record.title as string) || translation.fallback,
         imageUrl: (record.image_url as string) || null,
       };
-    case "messages":
+    }
+    case "messages": {
+      const translation = NOTIFICATION_TRANSLATIONS.message[lang];
       return {
-        title: "Neue Kurznachricht",
-        body: (record.title as string) || (record.message as string)?.substring(0, 100) || "Neue Kurznachricht",
+        title: translation.title,
+        body: (record.title as string) || (record.message as string)?.substring(0, 100) || translation.fallback,
         imageUrl: (record.image_url as string) || null,
       };
-    case "editions":
+    }
+    case "editions": {
+      const translation = NOTIFICATION_TRANSLATIONS.edition[lang];
       return {
-        title: "Neue Ausgabe",
-        body: (record.title as string) || (record.name as string) || "Neue Ausgabe verfügbar",
+        title: translation.title,
+        body: (record.title as string) || (record.name as string) || translation.fallback,
         imageUrl: (record.image_url as string) || null,
       };
-    case "impulses":
+    }
+    case "impulses": {
+      const translation = NOTIFICATION_TRANSLATIONS.impulse[lang];
       return {
-        title: "Neuer Impuls",
-        body: (record.title as string) || "Neuer Impuls verfügbar",
+        title: translation.title,
+        body: (record.title as string) || translation.fallback,
         imageUrl: (record.image_url as string) || null,
       };
+    }
     default:
       return null;
   }
@@ -181,25 +241,16 @@ serve(async (req) => {
       });
     }
 
-    // Determine notification content based on table
-    const notification = getNotificationContent(payload.table, payload.record);
-    if (!notification) {
-      return new Response(
-        JSON.stringify({ message: `No notification mapping for table: ${payload.table}` }),
-        { status: 200 }
-      );
-    }
+    console.log(`[send-push] Processing ${payload.table} notification`);
 
-    console.log(`[send-push] ${notification.title}: "${notification.body}"`);
-
-    // ── Get all FCM tokens from Supabase ──
+    // ── Get all FCM tokens from Supabase with language preference ──
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const { data: devices, error } = await supabase
       .from("device_tokens")
-      .select("fcm_token")
+      .select("fcm_token, language")
       .eq("content_notifications", true)
       .not("fcm_token", "is", null);
 
@@ -208,87 +259,104 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
 
-    const tokens = (devices ?? [])
-      .map((d: { fcm_token: string }) => d.fcm_token)
-      .filter(Boolean);
-
-    if (tokens.length === 0) {
+    if (!devices || devices.length === 0) {
       console.log("[send-push] No devices with FCM tokens found");
       return new Response(JSON.stringify({ message: "No devices" }), { status: 200 });
     }
 
-    console.log(`[send-push] Sending to ${tokens.length} devices`);
+    // ── Group devices by language ──
+    const devicesByLanguage: Record<string, string[]> = {};
+    for (const device of devices) {
+      const lang = device.language || "de";
+      if (!devicesByLanguage[lang]) devicesByLanguage[lang] = [];
+      devicesByLanguage[lang].push(device.fcm_token);
+    }
+
+    console.log(`[send-push] Devices by language:`, Object.keys(devicesByLanguage).map(lang => `${lang}: ${devicesByLanguage[lang].length}`).join(", "));
 
     // ── Get FCM access token via service account ──
     const projectId = FCM_PROJECT_ID;
     const serviceAccount = FCM_SERVICE_ACCOUNT;
     const accessToken = await getAccessToken(serviceAccount);
-
-    // ── Send notification to each device ──
     const fcmUrl = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
 
-    const results = await Promise.allSettled(
-      tokens.map(async (token: string) => {
-        const message: Record<string, unknown> = {
-          message: {
-            token,
-            notification: {
-              title: notification.title,
-              body: notification.body,
-              ...(notification.imageUrl ? { image: notification.imageUrl } : {}),
-            },
-            // iOS-specific: show image in notification
-            apns: {
-              payload: {
-                aps: {
-                  "mutable-content": 1,
-                  sound: "default",
-                },
-              },
-              ...(notification.imageUrl
-                ? {
-                    fcm_options: {
-                      image: notification.imageUrl,
-                    },
-                  }
-                : {}),
-            },
-            // Android-specific
-            android: {
+    // ── Send localized notifications per language group ──
+    const allResults: PromiseSettledResult<unknown>[] = [];
+
+    for (const [language, tokens] of Object.entries(devicesByLanguage)) {
+      const notification = getNotificationContent(payload.table, payload.record, language);
+      if (!notification) {
+        console.log(`[send-push] No notification mapping for table: ${payload.table}`);
+        continue;
+      }
+
+      console.log(`[send-push] Sending ${language}: ${notification.title} to ${tokens.length} devices`);
+
+      const results = await Promise.allSettled(
+        tokens.map(async (token: string) => {
+          const message: Record<string, unknown> = {
+            message: {
+              token,
               notification: {
-                sound: "default",
-                channel_id: "push_notifications",
+                title: notification.title,
+                body: notification.body,
                 ...(notification.imageUrl ? { image: notification.imageUrl } : {}),
               },
+              // iOS-specific: show image in notification
+              apns: {
+                payload: {
+                  aps: {
+                    "mutable-content": 1,
+                    sound: "default",
+                  },
+                },
+                ...(notification.imageUrl
+                  ? {
+                      fcm_options: {
+                        image: notification.imageUrl,
+                      },
+                    }
+                  : {}),
+              },
+              // Android-specific
+              android: {
+                notification: {
+                  sound: "default",
+                  channel_id: "push_notifications",
+                  ...(notification.imageUrl ? { image: notification.imageUrl } : {}),
+                },
+              },
             },
-          },
-        };
+          };
 
-        const res = await fetch(fcmUrl, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(message),
-        });
+          const res = await fetch(fcmUrl, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(message),
+          });
 
-        const result = await res.json();
-        if (!res.ok) {
-          console.error(`[send-push] FCM error for token ${token.substring(0, 15)}...:`, result);
-        }
-        return result;
-      })
-    );
+          const result = await res.json();
+          if (!res.ok) {
+            console.error(`[send-push] FCM error for token ${token.substring(0, 15)}...:`, result);
+          }
+          return result;
+        })
+      );
 
-    const succeeded = results.filter((r) => r.status === "fulfilled").length;
-    const failed = results.filter((r) => r.status === "rejected").length;
+      allResults.push(...results);
+    }
+
+    const succeeded = allResults.filter((r) => r.status === "fulfilled").length;
+    const failed = allResults.filter((r) => r.status === "rejected").length;
 
     console.log(`[send-push] Done: ${succeeded} succeeded, ${failed} failed`);
 
     return new Response(
       JSON.stringify({
-        message: `Sent to ${succeeded}/${tokens.length} devices`,
+        message: `Sent localized notifications to ${succeeded}/${succeeded + failed} devices`,
         succeeded,
         failed,
       }),
