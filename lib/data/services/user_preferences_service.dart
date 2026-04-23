@@ -13,6 +13,7 @@ class UserPreferencesService {
   static const String _keyUserName = 'user_name';
   static const String _keyOnboardingComplete = 'onboarding_complete';
   static const String _keyDarkMode = 'dark_mode';
+  static const String _keyThemeMode = 'theme_mode';
   static const String _keyNotifications = 'notifications_enabled';
   static const String _keyNotificationHour = 'notification_hour';
   static const String _keyNotificationMinute = 'notification_minute';
@@ -62,6 +63,21 @@ class UserPreferencesService {
 
   Future<void> setDarkMode(bool enabled) async {
     await _prefs.setBool(_keyDarkMode, enabled);
+  }
+
+  // Theme Mode (light / dark / system)
+  String getThemeMode() {
+    return _prefs.getString(_keyThemeMode) ?? 'system';
+  }
+
+  Future<void> setThemeModeString(String mode) async {
+    await _prefs.setString(_keyThemeMode, mode);
+    // keep legacy bool in sync
+    if (mode == 'dark') {
+      await _prefs.setBool(_keyDarkMode, true);
+    } else if (mode == 'light') {
+      await _prefs.setBool(_keyDarkMode, false);
+    }
   }
 
   // Language

@@ -14,11 +14,33 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
 
   /// Load theme mode from preferences
   Future<void> _loadThemeMode() async {
-    final isDarkMode = UserPreferencesService.instance.getDarkMode();
-    state = isDarkMode ? ThemeMode.dark : ThemeMode.light;
+    final modeStr = UserPreferencesService.instance.getThemeMode();
+    state = _fromString(modeStr);
   }
 
-  /// Toggle between light and dark mode
+  static ThemeMode _fromString(String s) {
+    switch (s) {
+      case 'dark':
+        return ThemeMode.dark;
+      case 'light':
+        return ThemeMode.light;
+      default:
+        return ThemeMode.system;
+    }
+  }
+
+  static String _toString(ThemeMode m) {
+    switch (m) {
+      case ThemeMode.dark:
+        return 'dark';
+      case ThemeMode.light:
+        return 'light';
+      default:
+        return 'system';
+    }
+  }
+
+  /// Toggle between light and dark mode (legacy)
   Future<void> toggle() async {
     if (state == ThemeMode.dark) {
       await setThemeMode(ThemeMode.light);
@@ -30,7 +52,7 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   /// Set theme mode
   Future<void> setThemeMode(ThemeMode mode) async {
     state = mode;
-    await UserPreferencesService.instance.setDarkMode(mode == ThemeMode.dark);
+    await UserPreferencesService.instance.setThemeModeString(_toString(mode));
   }
 
   /// Check if dark mode is enabled
