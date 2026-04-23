@@ -146,7 +146,7 @@ class ProfileScreen extends ConsumerWidget {
 
                   // Vers des Tages toggle + time picker
                   ListTile(
-                    contentPadding: const EdgeInsets.only(left: 16, right: 8),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                     leading: const Icon(Icons.auto_stories_outlined, size: 22),
                     title: Text(translate('Vers des Tages')),
                     subtitle: verseEnabled
