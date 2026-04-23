@@ -246,6 +246,8 @@ class _VideoCardState extends ConsumerState<VideoCard> {
             builder: (context) => VideoPlayerScreen(
               videoUrl: widget.video.url,
               title: widget.video.title,
+              description: widget.video.description,
+              imageUrl: widget.video.imageUrl,
             ),
           ),
         );

@@ -56,6 +56,8 @@ class ContentDetailScreen extends ConsumerWidget {
                       builder: (context) => VideoPlayerScreen(
                         videoUrl: video.videoUrl,
                         title: video.displayTitle,
+                        description: video.description,
+                        imageUrl: video.imageUrl,
                       ),
                     ),
                   );

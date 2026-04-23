@@ -512,6 +512,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             builder: (context) => VideoPlayerScreen(
               videoUrl: item.data.videoUrl,
               title: item.data.displayTitle,
+              description: item.data.description,
+              imageUrl: item.data.imageUrl,
             ),
           ),
         );

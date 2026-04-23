@@ -407,6 +407,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           builder: (context) => VideoPlayerScreen(
             videoUrl: item.video!.videoUrl,
             title: item.video!.displayTitle,
+            description: item.video!.description,
+            imageUrl: item.video!.imageUrl,
           ),
         ),
       );
