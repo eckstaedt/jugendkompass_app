@@ -276,88 +276,27 @@ class ProfileScreen extends ConsumerWidget {
           ),
           SizedBox(height: DesignTokens.spacingSmall),
 
-          // Theme mode selector (Light / Dark / System)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: DesignTokens.getGlassBackground(theme.brightness, 0.22),
+          // Dark mode toggle
+          SwitchListTile(
+            tileColor: DesignTokens.getGlassBackground(theme.brightness, 0.22),
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
-              border: Border.all(
-                color: theme.brightness == Brightness.dark
-                    ? Colors.white.withValues(alpha: 0.12)
-                    : Colors.black.withValues(alpha: 0.08),
-              ),
+              side: BorderSide(color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08)),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      themeMode == ThemeMode.dark
-                          ? Icons.dark_mode_rounded
-                          : themeMode == ThemeMode.light
-                              ? Icons.wb_sunny_rounded
-                              : Icons.phone_iphone_rounded,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                    const SizedBox(width: 16),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          translate('Erscheinungsbild'),
-                          style: theme.textTheme.bodyLarge,
-                        ),
-                        Text(
-                          themeMode == ThemeMode.dark
-                              ? translate('Dunkel')
-                              : themeMode == ThemeMode.light
-                                  ? translate('Hell')
-                                  : translate('Wie System'),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: DesignTokens.getTextSecondary(brightness),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _ThemeModeButton(
-                        icon: Icons.wb_sunny_rounded,
-                        label: translate('Hell'),
-                        selected: themeMode == ThemeMode.light,
-                        onTap: () => ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.light),
-                        brightness: brightness,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _ThemeModeButton(
-                        icon: Icons.dark_mode_rounded,
-                        label: translate('Dunkel'),
-                        selected: themeMode == ThemeMode.dark,
-                        onTap: () => ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.dark),
-                        brightness: brightness,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _ThemeModeButton(
-                        icon: Icons.phone_iphone_rounded,
-                        label: translate('System'),
-                        selected: themeMode == ThemeMode.system,
-                        onTap: () => ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.system),
-                        brightness: brightness,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            title: Text(translate('Dark Mode')),
+            subtitle: Text(translate('Dunkles Theme verwenden')),
+            value: themeMode == ThemeMode.dark,
+            onChanged: (value) {
+              ref.read(themeModeProvider.notifier).setThemeMode(
+                value ? ThemeMode.dark : ThemeMode.light,
+              );
+            },
+            activeThumbColor: DesignTokens.primaryRed,
+            secondary: Icon(
+              themeMode == ThemeMode.dark
+                  ? Icons.dark_mode
+                  : Icons.light_mode_outlined,
             ),
           ),
           SizedBox(height: DesignTokens.spacingSmall),
@@ -687,60 +626,5 @@ class ProfileScreen extends ConsumerWidget {
         ),
       );
     }
-  }
-}
-
-class _ThemeModeButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  final Brightness brightness;
-
-  const _ThemeModeButton({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-    required this.brightness,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final primaryRed = DesignTokens.primaryRed;
-    final bg = selected
-        ? primaryRed.withOpacity(0.12)
-        : DesignTokens.getGlassBackground(brightness, 0.10);
-    final borderColor = selected ? primaryRed : Colors.transparent;
-    final iconColor = selected ? primaryRed : DesignTokens.getTextSecondary(brightness);
-    final labelColor = selected ? primaryRed : DesignTokens.getTextSecondary(brightness);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(DesignTokens.radiusInputFields),
-          border: Border.all(color: borderColor, width: 2),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: iconColor, size: 22),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: labelColor,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
