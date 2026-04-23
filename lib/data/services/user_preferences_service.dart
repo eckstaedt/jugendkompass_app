@@ -14,6 +14,7 @@ class UserPreferencesService {
   static const String _keyOnboardingComplete = 'onboarding_complete';
   static const String _keyDarkMode = 'dark_mode';
   static const String _keyThemeMode = 'theme_mode';
+  static const String _keyHasChosenTheme = 'has_chosen_theme';
   static const String _keyNotifications = 'notifications_enabled';
   static const String _keyNotificationHour = 'notification_hour';
   static const String _keyNotificationMinute = 'notification_minute';
@@ -78,6 +79,15 @@ class UserPreferencesService {
     } else if (mode == 'light') {
       await _prefs.setBool(_keyDarkMode, false);
     }
+  }
+
+  // Has chosen theme
+  bool getHasChosenTheme() {
+    return _prefs.getBool(_keyHasChosenTheme) ?? false;
+  }
+
+  Future<void> setHasChosenTheme() async {
+    await _prefs.setBool(_keyHasChosenTheme, true);
   }
 
   // Language

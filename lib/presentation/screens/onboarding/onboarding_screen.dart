@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
-import 'package:jugendkompass_app/domain/providers/theme_provider.dart';
 import '../../../data/services/user_preferences_service.dart';
 import '../../navigation/bottom_nav_screen.dart';
 
@@ -50,8 +49,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     if (!mounted) return;
 
-    // Show theme picker dialog before entering app
-    await _showThemePickerDialog();
+    // Navigate to main app — theme dialog will appear there
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => const BottomNavScreen(),
+      ),
+    );
   }
 
   Future<void> _showThemePickerDialog() async {
@@ -314,61 +317,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _ThemeOption extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _ThemeOption({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    final primaryRed = DesignTokens.primaryRed;
-    final bg = selected
-        ? primaryRed.withOpacity(0.12)
-        : DesignTokens.getGlassBackground(brightness, 0.10);
-    final borderColor = selected ? primaryRed : Colors.transparent;
-    final iconColor = selected ? primaryRed : DesignTokens.getTextSecondary(brightness);
-    final labelColor = selected ? primaryRed : DesignTokens.getTextSecondary(brightness);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        width: 80,
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
-          border: Border.all(color: borderColor, width: 2),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: iconColor, size: 28),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: labelColor,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    );  
   }
 }
