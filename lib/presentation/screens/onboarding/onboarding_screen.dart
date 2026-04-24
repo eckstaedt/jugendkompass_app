@@ -49,113 +49,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     if (!mounted) return;
 
-    // Navigate to main app — theme dialog will appear there
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) => const BottomNavScreen(),
-      ),
-    );
-  }
-
-  Future<void> _showThemePickerDialog() async {
-    final brightness = Theme.of(context).brightness;
-    final cardBg = DesignTokens.getCardBackground(brightness);
-    final textPrimary = DesignTokens.getTextPrimary(brightness);
-    final textSecondary = DesignTokens.getTextSecondary(brightness);
-
-    ThemeMode? chosen = await showDialog<ThemeMode>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) {
-        ThemeMode selected = ThemeMode.system;
-        return StatefulBuilder(
-          builder: (ctx, setDialogState) {
-            return AlertDialog(
-              backgroundColor: cardBg,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
-              ),
-              contentPadding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Wie magst du die App?',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Du kannst das jederzeit in den Einstellungen ändern.',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _ThemeOption(
-                        icon: Icons.wb_sunny_rounded,
-                        label: 'Hell',
-                        selected: selected == ThemeMode.light,
-                        onTap: () => setDialogState(() => selected = ThemeMode.light),
-                      ),
-                      _ThemeOption(
-                        icon: Icons.dark_mode_rounded,
-                        label: 'Dunkel',
-                        selected: selected == ThemeMode.dark,
-                        onTap: () => setDialogState(() => selected = ThemeMode.dark),
-                      ),
-                      _ThemeOption(
-                        icon: Icons.phone_iphone_rounded,
-                        label: 'System',
-                        selected: selected == ThemeMode.system,
-                        onTap: () => setDialogState(() => selected = ThemeMode.system),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () => Navigator.of(ctx).pop(selected),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: DesignTokens.primaryRed,
-                        foregroundColor: Colors.white,
-                        minimumSize: const Size(double.infinity, 50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
-                        ),
-                      ),
-                      child: const Text(
-                        'Fertig',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-
-    if (!mounted) return;
-
-    // Apply chosen theme
-    if (chosen != null) {
-      await ref.read(themeModeProvider.notifier).setThemeMode(chosen);
-    }
-
-    // Navigate to main app
+    // Navigate to main app (theme dialog will appear there for first-time users)
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (context) => const BottomNavScreen(),
@@ -317,6 +211,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
         ),
       ),
-    );  
+    );
   }
 }
+
+

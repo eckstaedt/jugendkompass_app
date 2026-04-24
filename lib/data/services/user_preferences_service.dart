@@ -14,7 +14,6 @@ class UserPreferencesService {
   static const String _keyOnboardingComplete = 'onboarding_complete';
   static const String _keyDarkMode = 'dark_mode';
   static const String _keyThemeMode = 'theme_mode';
-  static const String _keyHasChosenTheme = 'has_chosen_theme';
   static const String _keyNotifications = 'notifications_enabled';
   static const String _keyNotificationHour = 'notification_hour';
   static const String _keyNotificationMinute = 'notification_minute';
@@ -24,6 +23,7 @@ class UserPreferencesService {
   static const String _keyVerseNotifications = 'verse_notifications_enabled';
   static const String _keyNewContentNotifications = 'new_content_notifications_enabled';
   static const String _keyDeviceId = 'device_id';
+  static const String _keyHasChosenTheme = 'has_chosen_theme';
 
   /// Initialize SharedPreferences
   Future<void> init() async {
@@ -81,7 +81,7 @@ class UserPreferencesService {
     }
   }
 
-  // Has chosen theme
+  // Has chosen theme (so the first-launch dialog is only shown once)
   bool getHasChosenTheme() {
     return _prefs.getBool(_keyHasChosenTheme) ?? false;
   }

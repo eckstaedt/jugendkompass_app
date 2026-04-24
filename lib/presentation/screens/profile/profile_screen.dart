@@ -146,7 +146,7 @@ class ProfileScreen extends ConsumerWidget {
 
                   // Vers des Tages toggle + time picker
                   ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                    contentPadding: const EdgeInsets.only(left: 16, right: 8),
                     leading: const Icon(Icons.auto_stories_outlined, size: 22),
                     title: Text(translate('Vers des Tages')),
                     subtitle: verseEnabled
@@ -288,9 +288,7 @@ class ProfileScreen extends ConsumerWidget {
             subtitle: Text(translate('Dunkles Theme verwenden')),
             value: themeMode == ThemeMode.dark,
             onChanged: (value) {
-              ref.read(themeModeProvider.notifier).setThemeMode(
-                value ? ThemeMode.dark : ThemeMode.light,
-              );
+              ref.read(themeModeProvider.notifier).toggle();
             },
             activeThumbColor: DesignTokens.primaryRed,
             secondary: Icon(
@@ -628,3 +626,5 @@ class ProfileScreen extends ConsumerWidget {
     }
   }
 }
+
+
