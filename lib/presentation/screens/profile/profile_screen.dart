@@ -14,6 +14,7 @@ import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/data/services/favorites_service.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
+import 'package:jugendkompass_app/core/services/local_verse_notification_service.dart';
 
 import 'package:jugendkompass_app/data/services/collection_service.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -33,6 +34,7 @@ class ProfileScreen extends ConsumerWidget {
     final newContentEnabled = ref.watch(newContentNotificationsProvider);
     final themeMode = ref.watch(themeModeProvider);
     final currentLanguage = ref.watch(languageProvider);
+    final currentTimezone = ref.watch(timezoneProvider);
     final translate = ref.watch(stringTranslatorProvider);
     final theme = Theme.of(context);
     final brightness = theme.brightness;
@@ -176,12 +178,6 @@ class ProfileScreen extends ConsumerWidget {
                                 await ref
                                     .read(notificationTimeProvider.notifier)
                                     .update(picked.hour, picked.minute);
-                                // Update server preferences
-                                await DeviceRegistrationService.instance
-                                    .updatePreferences(
-                                  notificationHour: picked.hour,
-                                  notificationMinute: picked.minute,
-                                );
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
@@ -201,10 +197,6 @@ class ProfileScreen extends ConsumerWidget {
                             ref
                                 .read(verseNotificationsProvider.notifier)
                                 .update(value);
-                            // Update server
-                            DeviceRegistrationService.instance
-                                .updatePreferences(
-                                    verseNotifications: value);
                           },
                           activeThumbColor: DesignTokens.primaryRed,
                         ),
@@ -273,6 +265,22 @@ class ProfileScreen extends ConsumerWidget {
             subtitle: Text(currentLanguage.displayName),
             trailing: const Icon(Icons.chevron_right, size: 20),
             onTap: () => _showLanguageDialog(context, ref, translate),
+          ),
+          SizedBox(height: DesignTokens.spacingSmall),
+
+          // Timezone selection
+          ListTile(
+            tileColor: DesignTokens.getGlassBackground(theme.brightness, 0.22),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+              side: BorderSide(color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            leading: const Icon(Icons.schedule_outlined),
+            title: Text(translate('Zeitzone')),
+            subtitle: Text(LocalVerseNotificationService.displayNameForId(currentTimezone)),
+            trailing: const Icon(Icons.chevron_right, size: 20),
+            onTap: () => _showTimezoneDialog(context, ref, translate),
           ),
           SizedBox(height: DesignTokens.spacingSmall),
 
@@ -432,6 +440,51 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _showTimezoneDialog(BuildContext context, WidgetRef ref, String Function(String) translate) async {
+    final currentTimezone = ref.read(timezoneProvider);
+
+    final selected = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(translate('Zeitzone wählen')),
+        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView(
+            shrinkWrap: true,
+            children: LocalVerseNotificationService.commonTimezones.map((tz) {
+              return RadioListTile<String>(
+                title: Text(tz.display),
+                value: tz.id,
+                groupValue: currentTimezone,
+                activeColor: DesignTokens.primaryRed,
+                onChanged: (value) => Navigator.pop(context, value),
+              );
+            }).toList(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(translate('Abbrechen')),
+          ),
+        ],
+      ),
+    );
+
+    if (selected != null && selected != currentTimezone && context.mounted) {
+      await ref.read(timezoneProvider.notifier).update(selected);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(LocalVerseNotificationService.displayNameForId(selected)),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _showLanguageDialog(BuildContext context, WidgetRef ref, String Function(String) translate) async {

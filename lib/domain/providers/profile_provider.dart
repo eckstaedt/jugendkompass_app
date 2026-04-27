@@ -4,6 +4,7 @@ import '../../data/models/profile_model.dart';
 import '../../data/repositories/profile_repository.dart';
 import '../../data/services/user_preferences_service.dart';
 import '../../core/services/device_registration_service.dart';
+import '../../core/services/local_verse_notification_service.dart';
 import 'supabase_provider.dart';
 
 /// Profile repository provider
@@ -48,17 +49,27 @@ class NotificationsNotifier extends StateNotifier<bool> {
 
     try {
       if (!enabled) {
-        // Unregister device from server — no more push notifications
+        // Cancel local verse notification
+        await LocalVerseNotificationService.instance.cancel();
+        // Unregister device from server (stops content notifications)
         await DeviceRegistrationService.instance.unregister();
       } else {
-        // Register device with server for push notifications
+        // Re-register for content notifications (server)
         final prefs = UserPreferencesService.instance;
         await DeviceRegistrationService.instance.register(
-          verseNotifications: prefs.getVerseNotificationsEnabled(),
+          verseNotifications: false, // verse is local-only now
           contentNotifications: prefs.getNewContentNotificationsEnabled(),
           notificationHour: prefs.getNotificationHour(),
           notificationMinute: prefs.getNotificationMinute(),
         );
+        // Reschedule local verse notification if sub-toggle is on
+        if (prefs.getVerseNotificationsEnabled()) {
+          await LocalVerseNotificationService.instance.scheduleDaily(
+            prefs.getNotificationHour(),
+            prefs.getNotificationMinute(),
+            prefs.getTimezone(),
+          );
+        }
       }
     } catch (e) {
       // Silently handle errors — the toggle state is already saved
@@ -84,6 +95,15 @@ class NotificationTimeNotifier
   Future<void> update(int hour, int minute) async {
     state = (hour: hour, minute: minute);
     await UserPreferencesService.instance.setNotificationTime(hour, minute);
+    // Reschedule local verse notification if enabled
+    final prefs = UserPreferencesService.instance;
+    if (prefs.getVerseNotificationsEnabled() && prefs.getNotificationsEnabled()) {
+      await LocalVerseNotificationService.instance.scheduleDaily(
+        hour,
+        minute,
+        prefs.getTimezone(),
+      );
+    }
   }
 }
 
@@ -105,9 +125,17 @@ class VerseNotificationsNotifier extends StateNotifier<bool> {
   Future<void> update(bool enabled) async {
     state = enabled;
     await UserPreferencesService.instance.setVerseNotificationsEnabled(enabled);
-    // Server reads this preference from device_tokens table
-    await DeviceRegistrationService.instance
-        .updatePreferences(verseNotifications: enabled);
+    // Local-only: schedule or cancel the daily notification
+    if (enabled) {
+      final prefs = UserPreferencesService.instance;
+      await LocalVerseNotificationService.instance.scheduleDaily(
+        prefs.getNotificationHour(),
+        prefs.getNotificationMinute(),
+        prefs.getTimezone(),
+      );
+    } else {
+      await LocalVerseNotificationService.instance.cancel();
+    }
   }
 }
 
@@ -131,5 +159,38 @@ class NewContentNotificationsNotifier extends StateNotifier<bool> {
     state = enabled;
     await UserPreferencesService.instance
         .setNewContentNotificationsEnabled(enabled);
+    // Keep server in sync for content notifications
+    await DeviceRegistrationService.instance
+        .updatePreferences(contentNotifications: enabled);
+  }
+}
+
+/// Timezone provider (IANA timezone id, e.g. 'Europe/Berlin')
+final timezoneProvider =
+    StateNotifierProvider<TimezoneNotifier, String>((ref) {
+  return TimezoneNotifier();
+});
+
+class TimezoneNotifier extends StateNotifier<String> {
+  TimezoneNotifier() : super('Europe/Berlin') {
+    _load();
+  }
+
+  void _load() {
+    state = UserPreferencesService.instance.getTimezone();
+  }
+
+  Future<void> update(String timezoneId) async {
+    state = timezoneId;
+    await UserPreferencesService.instance.setTimezone(timezoneId);
+    // Reschedule verse notification with new timezone
+    final prefs = UserPreferencesService.instance;
+    if (prefs.getVerseNotificationsEnabled() && prefs.getNotificationsEnabled()) {
+      await LocalVerseNotificationService.instance.scheduleDaily(
+        prefs.getNotificationHour(),
+        prefs.getNotificationMinute(),
+        timezoneId,
+      );
+    }
   }
 }

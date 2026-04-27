@@ -11,6 +11,7 @@ import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/data/services/web_audio_controller.dart';
 import 'package:jugendkompass_app/core/services/home_widget_service.dart'
     if (dart.library.html) 'package:jugendkompass_app/stubs/home_widget_service_stub.dart';
+import 'package:jugendkompass_app/core/services/local_verse_notification_service.dart';
 
 // Mobile-only imports
 import 'package:firebase_core/firebase_core.dart'
@@ -57,6 +58,21 @@ Future<void> main() async {
 
   // Initialize Home Widget Service (iOS only, no-op on web)
   await HomeWidgetService.initialize();
+
+  // Initialize local verse notification service (mobile only)
+  await LocalVerseNotificationService.instance.init();
+
+  // Schedule verse notification if enabled
+  {
+    final prefs = UserPreferencesService.instance;
+    if (prefs.getNotificationsEnabled() && prefs.getVerseNotificationsEnabled()) {
+      await LocalVerseNotificationService.instance.scheduleDaily(
+        prefs.getNotificationHour(),
+        prefs.getNotificationMinute(),
+        prefs.getTimezone(),
+      );
+    }
+  }
 
   // Initialize just_audio_background (mobile only) — this powers the native lock screen
   // controls (play/pause, skip ±10s, artwork, title) on iOS and Android.

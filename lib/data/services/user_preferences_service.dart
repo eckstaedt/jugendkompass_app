@@ -24,6 +24,7 @@ class UserPreferencesService {
   static const String _keyNewContentNotifications = 'new_content_notifications_enabled';
   static const String _keyDeviceId = 'device_id';
   static const String _keyHasChosenTheme = 'has_chosen_theme';
+  static const String _keyTimezone = 'timezone';
 
   /// Initialize SharedPreferences
   Future<void> init() async {
@@ -88,6 +89,15 @@ class UserPreferencesService {
 
   Future<void> setHasChosenTheme() async {
     await _prefs.setBool(_keyHasChosenTheme, true);
+  }
+
+  // Timezone (IANA id, e.g. 'Europe/Berlin')
+  String getTimezone() {
+    return _prefs.getString(_keyTimezone) ?? 'Europe/Berlin';
+  }
+
+  Future<void> setTimezone(String timezoneId) async {
+    await _prefs.setString(_keyTimezone, timezoneId);
   }
 
   // Language
