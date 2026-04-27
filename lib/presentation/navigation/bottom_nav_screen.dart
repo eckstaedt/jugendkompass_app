@@ -52,7 +52,7 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) {
-        ThemeMode selected = ThemeMode.system;
+        ThemeMode selected = ref.read(themeModeProvider);
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             return AlertDialog(

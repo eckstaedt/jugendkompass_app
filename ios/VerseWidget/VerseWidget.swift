@@ -178,7 +178,7 @@ struct VerseWidget: Widget {
                     .containerBackground(.fill.tertiary, for: .widget)
             } else {
                 VerseWidgetEntryView(entry: entry)
-                    .background(Color.white)
+                    .background(Color(UIColor.systemBackground))
             }
         }
         .configurationDisplayName("Vers des Tages")
@@ -206,7 +206,13 @@ struct VerseWidgetEntryView: View {
 }
 
 // MARK: - Widget Bundle
-// Note: @main entry point is defined in VerseWidgetBundle.swift
+
+@main
+struct VerseWidgetBundle: WidgetBundle {
+    var body: some Widget {
+        VerseWidget()
+    }
+}
 
 // MARK: - Preview
 

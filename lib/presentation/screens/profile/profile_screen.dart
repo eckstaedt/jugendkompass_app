@@ -147,22 +147,13 @@ class ProfileScreen extends ConsumerWidget {
                   ),
 
                   // Vers des Tages toggle + time picker
-                  ListTile(
-                    contentPadding: const EdgeInsets.only(left: 16, right: 8),
-                    leading: const Icon(Icons.auto_stories_outlined, size: 22),
+                  SwitchListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                    secondary: const Icon(Icons.auto_stories_outlined, size: 22),
                     title: Text(translate('Vers des Tages')),
                     subtitle: verseEnabled
-                        ? Text(
-                            '${translate('Um')} ${notificationTime.hour.toString().padLeft(2, '0')}:${notificationTime.minute.toString().padLeft(2, '0')} ${translate('Uhr')}',
-                          )
-                        : null,
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (verseEnabled)
-                          IconButton(
-                            icon: const Icon(Icons.access_time, size: 20),
-                            onPressed: () async {
+                        ? GestureDetector(
+                            onTap: () async {
                               final picked = await showTimePicker(
                                 context: context,
                                 initialTime: TimeOfDay(
@@ -185,23 +176,31 @@ class ProfileScreen extends ConsumerWidget {
                                         '${translate('Vers des Tages')} ${translate('um')} ${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')} ${translate('Uhr')}',
                                       ),
                                       behavior: SnackBarBehavior.floating,
+                                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 90),
                                     ),
                                   );
                                 }
                               }
                             },
-                          ),
-                        Switch(
-                          value: verseEnabled,
-                          onChanged: (value) {
-                            ref
-                                .read(verseNotificationsProvider.notifier)
-                                .update(value);
-                          },
-                          activeThumbColor: DesignTokens.primaryRed,
-                        ),
-                      ],
-                    ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '${translate('Um')} ${notificationTime.hour.toString().padLeft(2, '0')}:${notificationTime.minute.toString().padLeft(2, '0')} ${translate('Uhr')}',
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(Icons.edit_outlined, size: 14),
+                              ],
+                            ),
+                          )
+                        : null,
+                    value: verseEnabled,
+                    onChanged: (value) {
+                      ref
+                          .read(verseNotificationsProvider.notifier)
+                          .update(value);
+                    },
+                    activeThumbColor: DesignTokens.primaryRed,
                   ),
 
                   Divider(
@@ -481,6 +480,7 @@ class ProfileScreen extends ConsumerWidget {
           SnackBar(
             content: Text(LocalVerseNotificationService.displayNameForId(selected)),
             behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 90),
           ),
         );
       }
@@ -547,19 +547,27 @@ class ProfileScreen extends ConsumerWidget {
             border: const OutlineInputBorder(),
           ),
         ),
+        actionsAlignment: MainAxisAlignment.spaceEvenly,
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(translate('Abbrechen')),
+          Expanded(
+            child: TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(translate('Abbrechen')),
+            ),
           ),
-          FilledButton(
-            onPressed: () {
-              final name = controller.text.trim();
-              if (name.length >= 2) {
-                Navigator.pop(context, name);
-              }
-            },
-            child: Text(translate('Speichern')),
+          Expanded(
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: DesignTokens.primaryRed,
+              ),
+              onPressed: () {
+                final name = controller.text.trim();
+                if (name.length >= 2) {
+                  Navigator.pop(context, name);
+                }
+              },
+              child: Text(translate('Speichern')),
+            ),
           ),
         ],
       ),
@@ -573,6 +581,8 @@ class ProfileScreen extends ConsumerWidget {
           SnackBar(
             content: Text(translate('Name gespeichert')),
             backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 90),
           ),
         );
       }
