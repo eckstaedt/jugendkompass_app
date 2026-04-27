@@ -29,6 +29,8 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Always start on home screen
+      ref.read(bottomNavIndexProvider.notifier).setIndex(0);
       _maybeShowThemeDialog();
     });
   }
@@ -42,6 +44,9 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
     final cardBg = DesignTokens.getCardBackground(brightness);
     final textPrimary = DesignTokens.getTextPrimary(brightness);
     final textSecondary = DesignTokens.getTextSecondary(brightness);
+
+    // Remember original theme to allow live preview
+    final originalMode = ref.read(themeModeProvider);
 
     ThemeMode? chosen = await showDialog<ThemeMode>(
       context: context,
@@ -85,19 +90,28 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
                         icon: Icons.wb_sunny_rounded,
                         label: 'Hell',
                         selected: selected == ThemeMode.light,
-                        onTap: () => setDialogState(() => selected = ThemeMode.light),
+                        onTap: () {
+                          setDialogState(() => selected = ThemeMode.light);
+                          ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.light);
+                        },
                       ),
                       _ThemeOption(
                         icon: Icons.dark_mode_rounded,
                         label: 'Dunkel',
                         selected: selected == ThemeMode.dark,
-                        onTap: () => setDialogState(() => selected = ThemeMode.dark),
+                        onTap: () {
+                          setDialogState(() => selected = ThemeMode.dark);
+                          ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.dark);
+                        },
                       ),
                       _ThemeOption(
                         icon: Icons.phone_iphone_rounded,
                         label: 'System',
                         selected: selected == ThemeMode.system,
-                        onTap: () => setDialogState(() => selected = ThemeMode.system),
+                        onTap: () {
+                          setDialogState(() => selected = ThemeMode.system);
+                          ref.read(themeModeProvider.notifier).setThemeMode(ThemeMode.system);
+                        },
                       ),
                     ],
                   ),
@@ -130,7 +144,11 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
 
     if (!mounted) return;
     if (chosen != null) {
+      // Already applied live — just persist
       await ref.read(themeModeProvider.notifier).setThemeMode(chosen);
+    } else {
+      // Dialog dismissed without confirming — revert
+      await ref.read(themeModeProvider.notifier).setThemeMode(originalMode);
     }
     await prefs.setHasChosenTheme();
   }
