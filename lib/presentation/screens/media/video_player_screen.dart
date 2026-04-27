@@ -6,6 +6,7 @@ import 'package:chewie/chewie.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
+import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 
@@ -192,7 +193,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                         PopupMenuItem(
                           enabled: false,
                           child: Text(
-                            widget.description!,
+                            HtmlUtils.stripHtml(widget.description!),
                             style: const TextStyle(
                               color: Colors.white70,
                               fontSize: 14,
