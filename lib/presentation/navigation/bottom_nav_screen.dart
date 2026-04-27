@@ -144,7 +144,7 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
     final safeBottom = MediaQuery.of(context).padding.bottom;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(miniPlayerBottomOffsetProvider.notifier).state =
-          navBarHeight + safeBottom;
+          BottomNavScreen.navBarHeight + safeBottom;
       // Show the global navbar overlay.
       ref.read(navBarVisibleProvider.notifier).state = true;
     });
