@@ -549,25 +549,21 @@ class ProfileScreen extends ConsumerWidget {
         ),
         actionsAlignment: MainAxisAlignment.spaceEvenly,
         actions: [
-          Expanded(
-            child: TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(translate('Abbrechen')),
-            ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(translate('Abbrechen')),
           ),
-          Expanded(
-            child: FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: DesignTokens.primaryRed,
-              ),
-              onPressed: () {
-                final name = controller.text.trim();
-                if (name.length >= 2) {
-                  Navigator.pop(context, name);
-                }
-              },
-              child: Text(translate('Speichern')),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: DesignTokens.primaryRed,
             ),
+            onPressed: () {
+              final name = controller.text.trim();
+              if (name.length >= 2) {
+                Navigator.pop(context, name);
+              }
+            },
+            child: Text(translate('Speichern')),
           ),
         ],
       ),
