@@ -364,6 +364,26 @@ class ProfileScreen extends ConsumerWidget {
               borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
               side: BorderSide(color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08)),
             ),
+            leading: const Icon(Icons.music_note_outlined),
+            title: Text(translate('Jugendlieder')),
+            subtitle: const Text('liederschatz.web.app'),
+            trailing: const Icon(Icons.open_in_new, size: 18),
+            onTap: () async {
+              final uri = Uri.parse('https://liederschatz.web.app');
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            },
+          ),
+
+          const SizedBox(height: DesignTokens.spacingSmall),
+          // Shop – opens external website
+          ListTile(
+            tileColor: DesignTokens.getGlassBackground(theme.brightness, 0.22),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+              side: BorderSide(color: theme.brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08)),
+            ),
             leading: const Icon(Icons.storefront_outlined),
             title: Text(translate('Shop')),
             subtitle: const Text('stephanus-verlag.de'),
