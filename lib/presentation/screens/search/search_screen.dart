@@ -23,6 +23,7 @@ class _CombinedContentItem {
   final String contentType; // VIDEO, ARTIKEL
   final bool hasAudio; // Whether the article has audio
   final dynamic data; // Original data (Post, Video, etc.)
+  final String searchText; // title + body/description for full-text search
 
   _CombinedContentItem({
     required this.id,
@@ -31,7 +32,8 @@ class _CombinedContentItem {
     required this.contentType,
     this.hasAudio = false,
     required this.data,
-  });
+    String? searchText,
+  }) : searchText = searchText ?? title;
 }
 
 final _selectedDiscoverFilterProvider = StateProvider<String>((ref) => 'alle');
@@ -267,6 +269,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   contentType: 'ARTIKEL',
                   hasAudio: post.audioId != null,
                   data: post,
+                  searchText: '${HtmlUtils.stripHtml(post.title)} ${HtmlUtils.stripHtml(post.body)}',
                 ));
               }
             }
@@ -282,14 +285,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   contentType: 'VIDEO',
                   hasAudio: false,
                   data: video,
+                  searchText: '${HtmlUtils.stripHtml(video.displayTitle)} ${HtmlUtils.stripHtml(video.description ?? "")}',
                 ));
               }
             }
 
-            // Apply search filter
+            // Apply search filter (searches title + full body/description)
             if (_searchQuery.isNotEmpty) {
+              final query = _searchQuery.toLowerCase();
               combinedItems = combinedItems.where((item) {
-                return item.title.toLowerCase().contains(_searchQuery.toLowerCase());
+                return item.searchText.toLowerCase().contains(query);
               }).toList();
             }
 
