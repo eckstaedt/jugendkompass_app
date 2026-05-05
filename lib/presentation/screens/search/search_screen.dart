@@ -4,12 +4,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/domain/providers/post_provider.dart';
 import 'package:jugendkompass_app/domain/providers/video_provider.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
+import 'package:jugendkompass_app/domain/providers/impulse_provider.dart';
+import 'package:jugendkompass_app/domain/providers/message_provider.dart';
+import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier, kVideoPlayerRouteName;
 import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/impulse/impulse_detail_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/message/message_detail_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/kiosk/edition_detail_screen.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
@@ -20,10 +26,11 @@ class _CombinedContentItem {
   final String id;
   final String title;
   final String? imageUrl;
-  final String contentType; // VIDEO, ARTIKEL
+  final String contentType; // VIDEO, ARTIKEL, IMPULS, KURZNACHRICHT, AUSGABE
   final bool hasAudio; // Whether the article has audio
   final dynamic data; // Original data (Post, Video, etc.)
   final String searchText; // title + body/description for full-text search
+  final DateTime date;
 
   _CombinedContentItem({
     required this.id,
@@ -33,10 +40,12 @@ class _CombinedContentItem {
     this.hasAudio = false,
     required this.data,
     String? searchText,
+    required this.date,
   }) : searchText = searchText ?? title;
 }
 
 final _selectedDiscoverFilterProvider = StateProvider<String>((ref) => 'alle');
+final _sortDescendingProvider = StateProvider<bool>((ref) => true);
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
@@ -62,6 +71,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final textPrimary = DesignTokens.getTextPrimary(brightness);
     final textSecondary = DesignTokens.getTextSecondary(brightness);
     final selectedFilter = ref.watch(_selectedDiscoverFilterProvider);
+    final sortDescending = ref.watch(_sortDescendingProvider);
 
     return Scaffold(
       extendBody: true,
@@ -173,20 +183,45 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
             ),
 
-            // Filter Chips
-            SizedBox(
-              height: 50,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+            // Filter Chips + Sort
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Row(
                 children: [
-                  _buildFilterChip('Für Dich', 'für_dich', selectedFilter),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Alle', 'alle', selectedFilter),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Video', 'video', selectedFilter),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Audio', 'audio', selectedFilter),
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        children: [
+                          _buildFilterChip('Alle', 'alle', selectedFilter),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Artikel', 'artikel', selectedFilter),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Video', 'video', selectedFilter),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Audio', 'audio', selectedFilter),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Impuls', 'impuls', selectedFilter),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Kurznachricht', 'kurznachricht', selectedFilter),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('Ausgabe', 'ausgabe', selectedFilter),
+                        ],
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(
+                      sortDescending ? Icons.arrow_downward : Icons.arrow_upward,
+                      color: DesignTokens.primaryRed,
+                    ),
+                    tooltip: sortDescending ? 'Neueste zuerst' : 'Älteste zuerst',
+                    onPressed: () {
+                      ref.read(_sortDescendingProvider.notifier).state = !sortDescending;
+                    },
+                  ),
                 ],
               ),
             ),
@@ -243,110 +278,143 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final defaultFilter = PostFilter(limit: 100);
     final postsAsync = ref.watch(postsListProvider(defaultFilter));
     final videosAsync = ref.watch(videosListProvider);
+    final impulsesAsync = ref.watch(dailyImpulsesProvider);
+    final messagesAsync = ref.watch(messagesListProvider);
+    final editionsAsync = ref.watch(editionsListProvider);
+    final sortDescending = ref.watch(_sortDescendingProvider);
 
-    return postsAsync.when(
-      data: (posts) {
-        return videosAsync.when(
-          data: (videos) {
-            // Combine posts and videos into a unified list
-            List<_CombinedContentItem> combinedItems = [];
+    if (postsAsync.isLoading || videosAsync.isLoading ||
+        impulsesAsync.isLoading || messagesAsync.isLoading || editionsAsync.isLoading) {
+      return LoadingIndicator(message: AppTranslations.t('loading_content'));
+    }
 
-            // Add posts (all posts are shown as ARTIKEL, with hasAudio flag if they have audio)
-            for (var post in posts) {
-              // Apply filter
-              bool shouldAdd = false;
-              if (filter == 'alle' || filter == 'für_dich') {
-                shouldAdd = true;
-              } else if (filter == 'audio' && post.audioId != null) {
-                shouldAdd = true;
-              }
+    if (postsAsync.hasError) {
+      return Center(child: Text(AppTranslations.t('error_loading')));
+    }
 
-              if (shouldAdd) {
-                combinedItems.add(_CombinedContentItem(
-                  id: post.id,
-                  title: HtmlUtils.stripHtml(post.title),
-                  imageUrl: post.imageUrl,
-                  contentType: 'ARTIKEL',
-                  hasAudio: post.audioId != null,
-                  data: post,
-                  searchText: '${HtmlUtils.stripHtml(post.title)} ${HtmlUtils.stripHtml(post.body)}',
-                ));
-              }
-            }
+    final posts = postsAsync.value ?? [];
+    final videos = videosAsync.value ?? [];
+    final impulses = impulsesAsync.value ?? [];
+    final messages = messagesAsync.value ?? [];
+    final editions = editionsAsync.value ?? [];
 
-            // Add videos
-            for (var video in videos) {
-              // Apply filter
-              if (filter == 'alle' || filter == 'für_dich' || filter == 'video') {
-                combinedItems.add(_CombinedContentItem(
-                  id: video.id,
-                  title: HtmlUtils.stripHtml(video.displayTitle),
-                  imageUrl: video.thumbnailUrl,
-                  contentType: 'VIDEO',
-                  hasAudio: false,
-                  data: video,
-                  searchText: '${HtmlUtils.stripHtml(video.displayTitle)} ${HtmlUtils.stripHtml(video.description ?? "")}',
-                ));
-              }
-            }
+    List<_CombinedContentItem> combinedItems = [];
 
-            // Apply search filter (searches title + full body/description)
-            if (_searchQuery.isNotEmpty) {
-              final query = _searchQuery.toLowerCase();
-              combinedItems = combinedItems.where((item) {
-                return item.searchText.toLowerCase().contains(query);
-              }).toList();
-            }
+    // Posts / Artikel
+    for (var post in posts) {
+      bool shouldAdd = filter == 'alle' ||
+          (filter == 'artikel' && post.audioId == null) ||
+          (filter == 'audio' && post.audioId != null);
+      if (shouldAdd) {
+        combinedItems.add(_CombinedContentItem(
+          id: post.id,
+          title: HtmlUtils.stripHtml(post.title),
+          imageUrl: post.imageUrl,
+          contentType: post.audioId != null ? 'AUDIO' : 'ARTIKEL',
+          hasAudio: post.audioId != null,
+          data: post,
+          date: post.createdAt,
+          searchText: '${HtmlUtils.stripHtml(post.title)} ${HtmlUtils.stripHtml(post.body)}',
+        ));
+      }
+    }
 
-            if (combinedItems.isEmpty) {
-              return EmptyState(
-                icon: Icons.explore_outlined,
-                title: AppTranslations.t('no_content_found'),
-                message: AppTranslations.t('try_different_filter'),
-              );
-            }
+    // Videos
+    if (filter == 'alle' || filter == 'video') {
+      for (var video in videos) {
+        combinedItems.add(_CombinedContentItem(
+          id: video.id,
+          title: HtmlUtils.stripHtml(video.displayTitle),
+          imageUrl: video.thumbnailUrl,
+          contentType: 'VIDEO',
+          data: video,
+          date: video.createdAt,
+          searchText: '${HtmlUtils.stripHtml(video.displayTitle)} ${HtmlUtils.stripHtml(video.description ?? "")}',
+        ));
+      }
+    }
 
-            return Consumer(
-              builder: (context, ref, _) {
-                final hasAudio = ref.watch(currentAudioProvider) != null;
-                return ListView.separated(
-                  padding: EdgeInsets.fromLTRB(20, 8, 20,
-                    hasAudio
-                        ? DesignTokens.overlayPaddingWithMiniPlayer
-                        : DesignTokens.overlayPaddingBase),
-                  itemCount: combinedItems.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    return _buildContentTile(context, combinedItems[index]);
-                  },
-                );
-              },
-            );
+    // Impulse
+    if (filter == 'alle' || filter == 'impuls') {
+      for (var impulse in impulses) {
+        combinedItems.add(_CombinedContentItem(
+          id: impulse.id,
+          title: HtmlUtils.stripHtml(impulse.displayTitle),
+          imageUrl: impulse.imageUrl,
+          contentType: 'IMPULS',
+          data: impulse,
+          date: impulse.date,
+          searchText: '${HtmlUtils.stripHtml(impulse.displayTitle)} ${HtmlUtils.stripHtml(impulse.impulseText)}',
+        ));
+      }
+    }
+
+    // Kurznachrichten
+    if (filter == 'alle' || filter == 'kurznachricht') {
+      for (var message in messages) {
+        combinedItems.add(_CombinedContentItem(
+          id: message.id,
+          title: HtmlUtils.stripHtml(message.displayTitle),
+          imageUrl: message.imageUrl,
+          contentType: 'KURZNACHRICHT',
+          data: message,
+          date: message.createdAt,
+          searchText: '${HtmlUtils.stripHtml(message.displayTitle)} ${HtmlUtils.stripHtml(message.message)}',
+        ));
+      }
+    }
+
+    // Ausgaben
+    if (filter == 'alle' || filter == 'ausgabe') {
+      for (var edition in editions) {
+        combinedItems.add(_CombinedContentItem(
+          id: edition.id,
+          title: HtmlUtils.stripHtml(edition.displayTitle),
+          imageUrl: edition.coverImageUrl,
+          contentType: 'AUSGABE',
+          data: edition,
+          date: edition.publishedDate,
+          searchText: HtmlUtils.stripHtml(edition.displayTitle),
+        ));
+      }
+    }
+
+    // Search filter
+    if (_searchQuery.isNotEmpty) {
+      final query = _searchQuery.toLowerCase();
+      combinedItems = combinedItems.where((item) {
+        return item.searchText.toLowerCase().contains(query);
+      }).toList();
+    }
+
+    // Sort by date
+    combinedItems.sort((a, b) => sortDescending
+        ? b.date.compareTo(a.date)
+        : a.date.compareTo(b.date));
+
+    if (combinedItems.isEmpty) {
+      return EmptyState(
+        icon: Icons.explore_outlined,
+        title: AppTranslations.t('no_content_found'),
+        message: AppTranslations.t('try_different_filter'),
+      );
+    }
+
+    return Consumer(
+      builder: (context, ref, _) {
+        final hasAudio = ref.watch(currentAudioProvider) != null;
+        return ListView.separated(
+          padding: EdgeInsets.fromLTRB(20, 8, 20,
+            hasAudio
+                ? DesignTokens.overlayPaddingWithMiniPlayer
+                : DesignTokens.overlayPaddingBase),
+          itemCount: combinedItems.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            return _buildContentTile(context, combinedItems[index]);
           },
-          loading: () => LoadingIndicator(message: AppTranslations.t('loading_videos')),
-          error: (error, stack) => LoadingIndicator(message: AppTranslations.t('loading_content')),
         );
       },
-      loading: () => LoadingIndicator(message: AppTranslations.t('loading_content')),
-      error: (error, stack) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 64, color: Colors.red),
-            const SizedBox(height: 16),
-            Text(
-              AppTranslations.t('error_loading'),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              error.toString(),
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -488,6 +556,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         return Icons.headphones_rounded;
       case 'VIDEO':
         return Icons.play_circle_outline;
+      case 'IMPULS':
+        return Icons.lightbulb_outline;
+      case 'KURZNACHRICHT':
+        return Icons.message_outlined;
+      case 'AUSGABE':
+        return Icons.menu_book_outlined;
       case 'ARTIKEL':
       default:
         return Icons.article_outlined;
@@ -500,6 +574,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         return DesignTokens.successGreen;
       case 'VIDEO':
         return DesignTokens.primaryRed;
+      case 'IMPULS':
+        return Colors.orange;
+      case 'KURZNACHRICHT':
+        return Colors.blue;
+      case 'AUSGABE':
+        return Colors.purple;
       case 'ARTIKEL':
       default:
         return DesignTokens.getTextSecondary(Theme.of(context).brightness);
@@ -508,7 +588,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   void _handleItemTap(_CombinedContentItem item) async {
     if (item.contentType == 'VIDEO') {
-      // Play video
       if (mounted) {
         Navigator.push(
           context,
@@ -523,11 +602,36 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ),
         );
       }
+    } else if (item.contentType == 'IMPULS') {
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ImpulseDetailScreen(impulse: item.data),
+          ),
+        );
+      }
+    } else if (item.contentType == 'KURZNACHRICHT') {
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MessageDetailScreen(message: item.data),
+          ),
+        );
+      }
+    } else if (item.contentType == 'AUSGABE') {
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EditionDetailScreen(edition: item.data),
+          ),
+        );
+      }
     } else if (item.hasAudio && item.data.audioId != null) {
-      // Play audio - don't navigate, just play and show mini player
       await _playAudio(item.data);
     } else {
-      // Navigate to post detail (ARTIKEL without audio)
       if (mounted) {
         Navigator.push(
           context,
