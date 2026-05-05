@@ -31,7 +31,7 @@ class MessageDetailScreen extends ConsumerWidget {
       extendBody: true,
       appBar: AppBar(
         title: Text(
-          'Kurznachricht',
+          HtmlUtils.stripHtml(message.displayTitle),
           style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
         ),
         elevation: 0,

@@ -47,7 +47,7 @@ class PostDetailScreen extends ConsumerWidget {
       extendBody: true,
       appBar: AppBar(
         title: Text(
-          hasAudio ? 'Podcast' : 'Artikel',
+          HtmlUtils.stripHtml(displayTitle),
           style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
         ),
         elevation: 0,

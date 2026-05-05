@@ -44,7 +44,7 @@ class ImpulseDetailScreen extends ConsumerWidget {
       extendBody: true,
       appBar: AppBar(
         title: Text(
-          'Impuls',
+          HtmlUtils.stripHtml(displayTitle),
           style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
         ),
         elevation: 0,

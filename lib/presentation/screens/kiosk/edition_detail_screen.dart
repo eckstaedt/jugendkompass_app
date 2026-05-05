@@ -54,7 +54,7 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
       extendBody: true,
       appBar: AppBar(
         title: Text(
-          'Ausgabe',
+          HtmlUtils.stripHtml(edition.displayTitle),
           style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
         ),
         elevation: 0,
