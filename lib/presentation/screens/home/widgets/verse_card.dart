@@ -94,7 +94,7 @@ class _VerseCardState extends ConsumerState<VerseCard>
           const SizedBox(height: DesignTokens.spacingMedium),
           // Verse text itself uses Merriweather (serif) per design request.
           Text(
-            '"${translationAsync.whenOrNull(data: (d) => d.verse) ?? verse.verse}"',
+            '${translationAsync.whenOrNull(data: (d) => d.verse) ?? verse.verse}',
             style: GoogleFonts.merriweather(
               textStyle: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w600,

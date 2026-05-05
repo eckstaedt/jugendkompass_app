@@ -108,7 +108,7 @@ struct VerseWidgetMediumView: View {
             Spacer()
             
             // Verse text
-            Text("\"\(entry.verseText)\"")
+            Text(entry.verseText)
                 .font(.system(size: 14, weight: .medium, design: .serif))
                 .minimumScaleFactor(0.4)
                 .lineSpacing(2)
@@ -145,7 +145,7 @@ struct VerseWidgetLargeView: View {
             Spacer()
             
             // Verse text - full display
-            Text("\"\(entry.verseText)\"")
+            Text(entry.verseText)
                 .font(.system(size: 18, weight: .medium, design: .serif))
                 .lineSpacing(4)
                 .minimumScaleFactor(0.4)
