@@ -1,5 +1,4 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:jugendkompass_app/core/constants/supabase_constants.dart';
 
 /// Repository for fetching content translations from Supabase.
 ///

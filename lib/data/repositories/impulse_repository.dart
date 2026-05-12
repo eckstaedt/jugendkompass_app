@@ -160,14 +160,11 @@ class ImpulseRepository {
       final impulse = await getImpulseById(id);
       if (impulse == null) return null;
 
-      // If no content_id, return as-is
-      if (impulse.contentId == null) return impulse;
-
       // Fetch translations
       final translations = await _supabase
           .from('content_translations')
           .select('field_name, value')
-          .eq('content_id', impulse.contentId!)
+          .eq('content_id', impulse.contentId)
           .eq('language', language);
 
       String? translatedTitle;

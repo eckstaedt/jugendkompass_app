@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
-import 'package:jugendkompass_app/core/localization/localization_extension.dart';
 
 class ShopScreen extends ConsumerWidget {
   const ShopScreen({super.key});

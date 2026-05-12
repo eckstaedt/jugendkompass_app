@@ -53,3 +53,6 @@ app.*.map.json
 # Local build symlinks
 build/
 .flutter_build/
+
+# FVM Version Cache
+.fvm/
