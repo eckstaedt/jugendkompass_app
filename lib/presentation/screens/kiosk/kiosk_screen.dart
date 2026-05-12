@@ -70,7 +70,7 @@ class KioskScreen extends ConsumerWidget {
                     sliver: SliverGrid(
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        childAspectRatio: 0.65,
+                        mainAxisExtent: 295,
                         mainAxisSpacing: DesignTokens.spacingLarge,
                         crossAxisSpacing: DesignTokens.paddingHorizontal,
                       ),

@@ -35,9 +35,11 @@ class EditionCard extends StatelessWidget {
         width: double.infinity,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
           // Cover Image with rounded corners - LARGE BORDER RADIUS
-          Expanded(
+          AspectRatio(
+            aspectRatio: 0.72,
             child: Stack(
               children: [
                 Container(
