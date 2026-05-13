@@ -27,6 +27,7 @@ const NewVideoPage = () => {
   const [file, setFile] = useState<File | null>(null);
   const [url, setUrl] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [createdAt, setCreatedAt] = useState<Date | undefined>(new Date());
   const [mode, setMode] = useState<'upload' | 'url'>('upload');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
