@@ -94,7 +94,7 @@ export const useUpdateMessage = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, title, message, imageFile, userId }: { id: number; title?: string; message: string; imageFile?: File; userId?: string }) => {
+    mutationFn: async ({ id, title, message, imageFile, userId }: { id: number; title: string; message: string; imageFile?: File; userId?: string }) => {
       let image_url = undefined;
 
       if (imageFile) {
