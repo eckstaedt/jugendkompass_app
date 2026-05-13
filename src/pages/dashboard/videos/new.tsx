@@ -117,6 +117,34 @@ const NewVideoPage = () => {
             </div>
 
             <div>
+              <label className="block text-sm font-medium mb-1">Erstellungsdatum</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !createdAt && "text-muted-foreground"
+                    )}
+                    disabled={isUploading}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {createdAt ? format(createdAt, "dd.MM.yyyy") : <span>Datum wählen</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={createdAt}
+                    onSelect={setCreatedAt}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div>
               <label className="block text-sm font-medium mb-1">Beschreibung</label>
               <RichTextEditor content={description} onChange={setDescription} />
             </div>
