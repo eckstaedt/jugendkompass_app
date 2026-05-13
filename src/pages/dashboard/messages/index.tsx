@@ -30,7 +30,7 @@ const MessagesPage = () => {
     }
   };
 
-  const handleUpdate = async (data: { id: number; title?: string; message: string; imageFile?: File }) => {
+  const handleUpdate = async (data: { id: number; title: string; message: string; imageFile?: File }) => {
     try {
       await updateMessage.mutateAsync({ ...data, userId: user?.id });
       toast({
