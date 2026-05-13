@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -38,11 +39,31 @@ class LocalVerseNotificationService {
     _initialized = true;
   }
 
+  /// Request notification permission on Android 13+ (API 33+).
+  /// Returns true if permission granted, false otherwise.
+  /// On iOS this is a no-op (iOS permissions are handled via Firebase).
+  Future<bool> requestAndroidPermission() async {
+    if (kIsWeb || !Platform.isAndroid) return true;
+
+    final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    if (androidPlugin == null) return false;
+
+    final granted = await androidPlugin.requestNotificationsPermission();
+    return granted ?? false;
+  }
+
   /// Schedule (or reschedule) a daily notification at [hour]:[minute]
   /// in the given IANA [timezoneId] (e.g. 'Europe/Berlin').
-  Future<void> scheduleDaily(
-      int hour, int minute, String timezoneId) async {
+  /// On Android 13+, requests permission if not already granted.
+  Future<void> scheduleDaily(int hour, int minute, String timezoneId) async {
     if (kIsWeb) return;
+
+    // Request Android permission before scheduling
+    if (Platform.isAndroid) {
+      final granted = await requestAndroidPermission();
+      if (!granted) return;
+    }
 
     await cancel();
 
@@ -85,9 +106,6 @@ class LocalVerseNotificationService {
             UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time,
       );
-
-      debugPrint(
-          '[LocalVerse] Scheduled daily at $hour:${minute.toString().padLeft(2, '0')} ($timezoneId)');
     } catch (e) {
       debugPrint('[LocalVerse] Failed to schedule notification: $e');
     }
@@ -97,7 +115,6 @@ class LocalVerseNotificationService {
   Future<void> cancel() async {
     if (kIsWeb) return;
     await _plugin.cancel(_notificationId);
-    debugPrint('[LocalVerse] Cancelled');
   }
 
   // ── Timezone picker data ─────────────────────────────────────────────────

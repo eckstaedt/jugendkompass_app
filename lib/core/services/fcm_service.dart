@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -30,6 +31,11 @@ class FCMService {
 
     // Initialize local notifications for foreground display
     await _initLocalNotifications();
+
+    // Request Android 13+ notification permission
+    if (!kIsWeb && Platform.isAndroid) {
+      await _requestAndroidNotificationPermission();
+    }
 
     // Request permission (iOS shows a system dialog)
     final settings = await _messaging.requestPermission(
@@ -75,7 +81,18 @@ class FCMService {
     await _localNotifications.initialize(initSettings);
   }
 
+  /// Request notification permission on Android 13+ (API 33+).
+  Future<void> _requestAndroidNotificationPermission() async {
+    final androidPlugin = _localNotifications.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    if (androidPlugin != null) {
+      final granted = await androidPlugin.requestNotificationsPermission();
+      debugPrint('[FCM] Android notification permission granted: $granted');
+    }
+  }
+
   /// Get the current FCM token and store it in Supabase.
+  /// Retries on SERVICE_NOT_AVAILABLE errors (common on Android).
   Future<void> _getAndStoreToken() async {
     try {
       // On iOS, get the APNs token first
@@ -96,12 +113,28 @@ class FCMService {
         }
       }
 
-      final token = await _messaging.getToken();
+      // Retry logic for Android SERVICE_NOT_AVAILABLE errors
+      String? token;
+      for (int attempt = 1; attempt <= 3; attempt++) {
+        try {
+          token = await _messaging.getToken();
+          if (token != null) break;
+        } catch (e) {
+          final errorStr = e.toString();
+          if (errorStr.contains('SERVICE_NOT_AVAILABLE') && attempt < 3) {
+            debugPrint('[FCM] SERVICE_NOT_AVAILABLE, retry $attempt/3 in ${attempt * 2}s...');
+            await Future.delayed(Duration(seconds: attempt * 2));
+            continue;
+          }
+          rethrow;
+        }
+      }
+
       if (token != null) {
         debugPrint('[FCM] Token obtained: ${token.substring(0, 20)}...');
         await _storeToken(token);
       } else {
-        debugPrint('[FCM] Token is null');
+        debugPrint('[FCM] Token is null after retries');
       }
     } catch (e) {
       debugPrint('[FCM] Error getting token: $e');
