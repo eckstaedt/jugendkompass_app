@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/domain/providers/post_provider.dart';
 import 'package:jugendkompass_app/domain/providers/video_provider.dart';
 import 'package:jugendkompass_app/domain/providers/content_provider.dart';
+import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
     show kVideoPlayerRouteName;
 import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
@@ -21,14 +22,15 @@ class ContentDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final contentAsync = ref.watch(contentDetailProvider(contentId));
+    final translate = ref.watch(stringTranslatorProvider);
 
     return contentAsync.when(
       data: (content) {
         if (content == null) {
           return Scaffold(
-            appBar: AppBar(title: Text(context.tr('content'))),
+            appBar: AppBar(title: Text(translate('Inhalt'))),
             body: ErrorView(
-              message: context.tr('content_not_found'),
+              message: translate('Inhalt nicht gefunden'),
             ),
           );
         }
@@ -39,9 +41,9 @@ class ContentDetailScreen extends ConsumerWidget {
             data: (video) {
               if (video == null) {
                 return Scaffold(
-                  appBar: AppBar(title: Text(context.tr('video'))),
+                  appBar: AppBar(title: Text(translate('Video'))),
                   body: ErrorView(
-                    message: context.tr('video_not_found'),
+                    message: translate('Video nicht gefunden'),
                   ),
                 );
               }
@@ -64,18 +66,18 @@ class ContentDetailScreen extends ConsumerWidget {
                 }
               });
               return Scaffold(
-                appBar: AppBar(title: Text(context.tr('video'))),
-                body: LoadingIndicator(message: context.tr('loading_video')),
+                appBar: AppBar(title: Text(translate('Video'))),
+                body: LoadingIndicator(message: translate('Lade Video...')),
               );
             },
             loading: () => Scaffold(
-              appBar: AppBar(title: Text(context.tr('loading'))),
+              appBar: AppBar(title: Text(translate('Laden...'))),
               body: LoadingIndicator(
-                message: context.tr('loading_video'),
+                message: translate('Lade Video...'),
               ),
             ),
             error: (error, stack) => Scaffold(
-              appBar: AppBar(title: Text(context.tr('error'))),
+              appBar: AppBar(title: Text(translate('Fehler'))),
               body: ErrorView(
                 message: error.toString(),
                 onRetry: () {
@@ -94,22 +96,22 @@ class ContentDetailScreen extends ConsumerWidget {
           data: (posts) {
             if (posts.isEmpty) {
               return Scaffold(
-                appBar: AppBar(title: Text(context.tr('content'))),
+                appBar: AppBar(title: Text(translate('Inhalt'))),
                 body: ErrorView(
-                  message: context.tr('content_not_found'),
+                  message: translate('Inhalt nicht gefunden'),
                 ),
               );
             }
             return PostDetailScreen(post: posts.first);
           },
           loading: () => Scaffold(
-            appBar: AppBar(title: Text(context.tr('loading'))),
+            appBar: AppBar(title: Text(translate('Laden...'))),
             body: LoadingIndicator(
-              message: context.tr('loading_content'),
+              message: translate('Lade Inhalt...'),
             ),
           ),
           error: (error, stack) => Scaffold(
-            appBar: AppBar(title: Text(context.tr('error'))),
+            appBar: AppBar(title: Text(translate('Fehler'))),
             body: ErrorView(
               message: error.toString(),
               onRetry: () {
@@ -122,13 +124,13 @@ class ContentDetailScreen extends ConsumerWidget {
         );
       },
       loading: () => Scaffold(
-        appBar: AppBar(title: Text(context.tr('loading'))),
+        appBar: AppBar(title: Text(translate('Laden...'))),
         body: LoadingIndicator(
-          message: context.tr('loading_content'),
+          message: translate('Lade Inhalt...'),
         ),
       ),
       error: (error, stack) => Scaffold(
-        appBar: AppBar(title: Text(context.tr('error'))),
+        appBar: AppBar(title: Text(translate('Fehler'))),
         body: ErrorView(
           message: error.toString(),
           onRetry: () {

@@ -182,6 +182,23 @@ class UserPreferencesService {
     await _prefs.setString(_keyDeviceId, deviceId);
   }
 
+  // Generic getters for custom keys (for services like analytics)
+  bool? getBool(String key) {
+    return _prefs.getBool(key);
+  }
+
+  Future<void> setBool(String key, bool value) async {
+    await _prefs.setBool(key, value);
+  }
+
+  String? getString(String key) {
+    return _prefs.getString(key);
+  }
+
+  Future<void> setString(String key, String value) async {
+    await _prefs.setString(key, value);
+  }
+
   // Clear all data
   Future<void> clearAll() async {
     await _prefs.clear();

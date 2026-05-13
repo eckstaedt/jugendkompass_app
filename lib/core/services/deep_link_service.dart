@@ -5,12 +5,12 @@ import 'package:jugendkompass_app/domain/providers/post_provider.dart';
 import 'package:jugendkompass_app/domain/providers/verse_provider.dart';
 import 'package:jugendkompass_app/domain/providers/video_provider.dart';
 import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
+import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/content/content_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
     show kVideoPlayerRouteName;
-import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 /// Service for handling deep links from push notifications.
@@ -169,6 +169,7 @@ class _VerseDialog extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final translate = ref.watch(stringTranslatorProvider);
 
     // Translate verse content to the selected app language
     final translationAsync = ref.watch(
@@ -186,7 +187,7 @@ class _VerseDialog extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              context.tr('daily_verse'),
+              translate('Tagesvers'),
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -244,7 +245,7 @@ class _VerseDialog extends ConsumerWidget {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text(context.tr('close')),
+                child: Text(translate('Schließen')),
               ),
             ),
           ],

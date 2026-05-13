@@ -7,6 +7,7 @@ import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/profile_provider.dart';
 import 'package:jugendkompass_app/domain/providers/supabase_provider.dart';
+import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/data/models/profile_model.dart';
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
@@ -35,6 +36,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   }
 
   Future<void> _pickImage() async {
+    final translate = ref.read(stringTranslatorProvider);
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(
@@ -52,12 +54,12 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         try {
           final profileRepo = ref.read(profileRepositoryProvider);
           final imageFile = File(image.path);
-          
+
           // Verify file exists and is readable
           if (!imageFile.existsSync()) {
             throw Exception('Bild-Datei nicht gefunden');
           }
-          
+
           // Get user ID - use a fixed ID for anonymous users or auth user
           final user = ref.read(supabaseProvider).auth.currentUser;
           final userId = user?.id ?? 'anonymous_user';
@@ -81,7 +83,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(context.tr('image_uploaded')),
+              content: Text(translate('Bild erfolgreich hochgeladen')),
               backgroundColor: Colors.green,
             ),
           );
@@ -90,7 +92,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           print('Avatar upload error: $e');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('${context.tr('error_uploading')}: ${e.toString()}'),
+              content: Text('${translate('Fehler beim Hochladen')}: ${e.toString()}'),
               backgroundColor: Colors.red,
             ),
           );
@@ -106,7 +108,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${context.tr('error_selecting_image')}: $e'),
+          content: Text('${translate('Fehler beim Auswählen des Bildes')}: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -114,12 +116,13 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   }
 
   Future<void> _saveProfile() async {
+    final translate = ref.read(stringTranslatorProvider);
     final name = _nameController.text.trim();
 
     if (name.isEmpty || name.length < 2) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Bitte gib einen Namen mit mindestens 2 Zeichen ein'),
+          content: Text(translate('Bitte gib einen Namen mit mindestens 2 Zeichen ein')),
           backgroundColor: Colors.orange,
         ),
       );
@@ -172,7 +175,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(context.tr('profile_saved')),
+          content: Text(translate('Profil gespeichert')),
           backgroundColor: Colors.green,
         ),
       );
@@ -182,7 +185,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${context.tr('error_saving')}: $e'),
+          content: Text('${translate('Fehler beim Speichern')}: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -199,7 +202,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     ref.watch(languageProvider);
-    
+    final translate = ref.watch(stringTranslatorProvider);
+
     // Load avatar if not already loaded
     if (_avatarUrl == null) {
       final profileAsync = ref.watch(currentUserProfileProvider);
@@ -218,7 +222,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.tr('edit_profile')),
+        title: Text(translate('Profil bearbeiten')),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -268,7 +272,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             TextField(
               controller: _nameController,
               decoration: InputDecoration(
-                labelText: 'Name',
+                labelText: translate('Name'),
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.person_outline),
               ),
@@ -291,7 +295,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                         color: Colors.white,
                       ),
                     )
-                  : Text(context.tr('save')),
+                  : Text(translate('Speichern')),
             ),
           ],
         ),

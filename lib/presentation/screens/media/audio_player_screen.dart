@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:just_audio/just_audio.dart' as just_audio;
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
+import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
@@ -21,10 +22,11 @@ class AudioPlayerScreen extends ConsumerWidget {
     final positionAsync = ref.watch(audioPositionProvider);
     final durationAsync = ref.watch(audioDurationProvider);
     final playerStateAsync = ref.watch(audioPlayerStateProvider);
+    final translate = ref.watch(stringTranslatorProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(context.tr('audios')),
+        title: Text(translate('Audios')),
         centerTitle: true,
       ),
       body: audioListAsync.when(
@@ -32,8 +34,8 @@ class AudioPlayerScreen extends ConsumerWidget {
           if (audioList.isEmpty) {
             return EmptyState(
               icon: Icons.headphones_outlined,
-              title: context.tr('no_audio_available'),
-              message: context.tr('no_audio_available_message'),
+              title: translate('Keine Audios verfügbar'),
+              message: translate('Es sind noch keine Audio-Inhalte vorhanden.'),
             );
           }
 
@@ -77,7 +79,7 @@ class AudioPlayerScreen extends ConsumerWidget {
 
                       // Title and Artist
                       Text(
-                        currentAudio.title ?? currentAudio.post?.title ?? 'Unbekannter Titel',
+                        currentAudio.title ?? currentAudio.post?.title ?? translate('Unbekannter Titel'),
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -192,7 +194,7 @@ class AudioPlayerScreen extends ConsumerWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('Wiedergabegeschwindigkeit: '),
+                          Text('${translate('Wiedergabegeschwindigkeit')}: '),
                           SegmentedButton<double>(
                             segments: const [
                               ButtonSegment(value: 0.75, label: Text('0.75x')),
@@ -247,7 +249,7 @@ class AudioPlayerScreen extends ConsumerWidget {
                                 ),
                               ),
                         title: Text(
-                          audio.title ?? 'Unbekannter Titel',
+                          audio.title ?? translate('Unbekannter Titel'),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: isCurrentlyPlaying
@@ -284,7 +286,7 @@ class AudioPlayerScreen extends ConsumerWidget {
           );
         },
         loading: () => LoadingIndicator(
-          message: 'Lade Audios...',
+          message: translate('Lade Audios...'),
         ),
         error: (error, stack) => ErrorView(
           message: error.toString(),

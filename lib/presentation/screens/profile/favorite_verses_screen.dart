@@ -19,7 +19,7 @@ class FavoriteVersesScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Favorisierte Verse'),
+        title: Text(translate('Favorisierte Verse')),
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
@@ -60,20 +60,20 @@ class FavoriteVersesScreen extends ConsumerWidget {
                     onLongPress: () {
                       showDialog(
                         context: context,
-                        builder: (context) => AlertDialog(
-                          title: Text(context.tr('remove_verse')),
-                          content: Text(context.tr('remove_verse_confirmation')),
+                        builder: (dialogContext) => AlertDialog(
+                          title: Text(translate('Vers entfernen')),
+                          content: Text(translate('Diesen Vers aus Favoriten entfernen?')),
                           actions: [
                             TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: Text(context.tr('cancel')),
+                              onPressed: () => Navigator.pop(dialogContext),
+                              child: Text(translate('Abbrechen')),
                             ),
                             FilledButton.tonal(
                               onPressed: () {
                                 ref.read(favoriteVersesProvider.notifier).removeFavoriteVerse(verse.id);
-                                Navigator.pop(context);
+                                Navigator.pop(dialogContext);
                               },
-                              child: Text(context.tr('delete')),
+                              child: Text(translate('Löschen')),
                             ),
                           ],
                         ),

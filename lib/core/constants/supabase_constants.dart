@@ -10,6 +10,7 @@ class SupabaseConstants {
   static const String activitiesTable = 'activities';
   static const String editionsTable = 'editions';
   static const String messagesTable = 'messages';
+  static const String appAnalyticsTable = 'app_analytics';
 
   // Column names for current_verse
   static const String verseId = 'id';

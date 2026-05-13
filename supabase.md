@@ -96,6 +96,30 @@ Geräte-Registrierung für Push-Notifications und Sprachpräferenz.
 
 ---
 
+### `app_analytics`
+Analytics tracking für App-Installationen und App-Öffnungen.
+
+| Spalte | Typ | Nullable | Default |
+|--------|-----|----------|---------|
+| id | uuid | Nein | `gen_random_uuid()` |
+| device_id | text | Nein | – |
+| event_type | text | Nein | – |
+| platform | text | Nein | `'unknown'` |
+| app_version | text | Ja | – |
+| created_at | timestamptz | Nein | `now()` |
+
+**event_type Werte:** `install` (erste App-Installation), `app_open` (App-Öffnung)
+
+**platform Werte:** `ios`, `android`, `web`
+
+**Indizes:** `device_id`, `event_type`, `created_at DESC`
+
+**RLS:** Jeder kann insert (anonyme Analytics), nur Admins können lesen.
+
+**RPC Funktion:** `get_analytics_summary()` liefert aggregierte Analytics-Daten (nur für Admins).
+
+---
+
 ### `posts`
 | Spalte | Typ | Nullable | Default |
 |--------|-----|----------|---------|

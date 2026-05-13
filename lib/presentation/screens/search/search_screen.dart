@@ -1,4 +1,3 @@
-import 'package:jugendkompass_app/core/localization/localization_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/domain/providers/post_provider.dart';
