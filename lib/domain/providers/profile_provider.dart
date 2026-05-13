@@ -4,7 +4,6 @@ import '../../data/models/profile_model.dart';
 import '../../data/repositories/profile_repository.dart';
 import '../../data/services/user_preferences_service.dart';
 import '../../core/services/device_registration_service.dart';
-import '../../core/services/local_verse_notification_service.dart';
 import 'supabase_provider.dart';
 
 /// Profile repository provider
@@ -49,8 +48,6 @@ class NotificationsNotifier extends StateNotifier<bool> {
 
     try {
       if (!enabled) {
-        // Cancel local verse notification fallback
-        await LocalVerseNotificationService.instance.cancel();
         // Unregister device from server (stops all server notifications)
         await DeviceRegistrationService.instance.unregister();
       } else {
@@ -122,10 +119,6 @@ class VerseNotificationsNotifier extends StateNotifier<bool> {
     await DeviceRegistrationService.instance.updatePreferences(
       verseNotifications: enabled,
     );
-    // Local fallback: cancel when disabled
-    if (!enabled) {
-      await LocalVerseNotificationService.instance.cancel();
-    }
   }
 }
 

@@ -146,7 +146,7 @@ class ProfileScreen extends ConsumerWidget {
                         : Colors.black.withValues(alpha: 0.06),
                   ),
 
-                  // Vers des Tages toggle + time picker
+                  // Vers des Tages toggle + hour picker
                   SwitchListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                     secondary: const Icon(Icons.auto_stories_outlined, size: 22),
@@ -154,26 +154,24 @@ class ProfileScreen extends ConsumerWidget {
                     subtitle: verseEnabled
                         ? GestureDetector(
                             onTap: () async {
-                              final picked = await showTimePicker(
+                              final selectedHour = await showDialog<int>(
                                 context: context,
-                                initialTime: TimeOfDay(
-                                  hour: notificationTime.hour,
-                                  minute: notificationTime.minute,
+                                builder: (context) => _HourPickerDialog(
+                                  initialHour: notificationTime.hour,
+                                  title: translate('Vers des Tages — Uhrzeit wählen'),
+                                  cancelText: translate('Abbrechen'),
+                                  confirmText: translate('Speichern'),
                                 ),
-                                initialEntryMode: TimePickerEntryMode.input,
-                                helpText: translate('Vers des Tages — Uhrzeit wählen'),
-                                cancelText: translate('Abbrechen'),
-                                confirmText: translate('Speichern'),
                               );
-                              if (picked != null) {
+                              if (selectedHour != null) {
                                 await ref
                                     .read(notificationTimeProvider.notifier)
-                                    .update(picked.hour, picked.minute);
+                                    .update(selectedHour, 0);
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                        '${translate('Vers des Tages')} ${translate('um')} ${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')} ${translate('Uhr')}',
+                                        '${translate('Vers des Tages')} ${translate('um')} ${selectedHour.toString().padLeft(2, '0')}:00 ${translate('Uhr')}',
                                       ),
                                       behavior: SnackBarBehavior.floating,
                                       margin: const EdgeInsets.fromLTRB(16, 0, 16, 90),
@@ -186,7 +184,7 @@ class ProfileScreen extends ConsumerWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  '${translate('Um')} ${notificationTime.hour.toString().padLeft(2, '0')}:${notificationTime.minute.toString().padLeft(2, '0')} ${translate('Uhr')}',
+                                  '${translate('Um')} ${notificationTime.hour.toString().padLeft(2, '0')}:00 ${translate('Uhr')}',
                                 ),
                                 const SizedBox(width: 4),
                                 const Icon(Icons.edit_outlined, size: 14),
@@ -695,5 +693,111 @@ class ProfileScreen extends ConsumerWidget {
         ),
       );
     }
+  }
+}
+
+/// Dialog for selecting an hour (0-23) for verse notifications.
+class _HourPickerDialog extends StatefulWidget {
+  final int initialHour;
+  final String title;
+  final String cancelText;
+  final String confirmText;
+
+  const _HourPickerDialog({
+    required this.initialHour,
+    required this.title,
+    required this.cancelText,
+    required this.confirmText,
+  });
+
+  @override
+  State<_HourPickerDialog> createState() => _HourPickerDialogState();
+}
+
+class _HourPickerDialogState extends State<_HourPickerDialog> {
+  late int _selectedHour;
+  late FixedExtentScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedHour = widget.initialHour;
+    _scrollController = FixedExtentScrollController(initialItem: _selectedHour);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final brightness = theme.brightness;
+
+    return AlertDialog(
+      backgroundColor: DesignTokens.getCardBackground(brightness),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+      ),
+      title: Text(
+        widget.title,
+        style: GoogleFonts.inter(
+          fontWeight: FontWeight.w600,
+          fontSize: 16,
+        ),
+      ),
+      content: SizedBox(
+        height: 200,
+        width: 100,
+        child: ListWheelScrollView.useDelegate(
+          controller: _scrollController,
+          itemExtent: 50,
+          perspective: 0.005,
+          diameterRatio: 1.2,
+          physics: const FixedExtentScrollPhysics(),
+          onSelectedItemChanged: (index) {
+            setState(() {
+              _selectedHour = index;
+            });
+          },
+          childDelegate: ListWheelChildBuilderDelegate(
+            childCount: 24,
+            builder: (context, index) {
+              final isSelected = index == _selectedHour;
+              return Center(
+                child: Text(
+                  '${index.toString().padLeft(2, '0')}:00',
+                  style: GoogleFonts.inter(
+                    fontSize: isSelected ? 24 : 18,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                    color: isSelected
+                        ? DesignTokens.primaryRed
+                        : DesignTokens.getTextSecondary(brightness),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(
+            widget.cancelText,
+            style: TextStyle(color: DesignTokens.getTextSecondary(brightness)),
+          ),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_selectedHour),
+          style: FilledButton.styleFrom(
+            backgroundColor: DesignTokens.primaryRed,
+          ),
+          child: Text(widget.confirmText),
+        ),
+      ],
+    );
   }
 }
