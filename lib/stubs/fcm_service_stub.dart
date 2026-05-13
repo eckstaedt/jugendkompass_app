@@ -4,3 +4,15 @@
 Future<void> firebaseMessagingBackgroundHandler(dynamic message) async {
   // No-op on web
 }
+
+/// No-op stub for FCMService on web.
+class FCMService {
+  static final FCMService _instance = FCMService._internal();
+  factory FCMService() => _instance;
+  FCMService._internal();
+
+  Future<void> init() async {}
+
+  // ignore: avoid_setters_without_getters
+  set onNotificationTap(Future<void> Function(Map<String, dynamic>) handler) {}
+}

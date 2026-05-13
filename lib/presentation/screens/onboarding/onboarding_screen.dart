@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
-import 'package:jugendkompass_app/core/services/fcm_service.dart';
+import 'package:jugendkompass_app/core/services/fcm_service.dart'
+    if (dart.library.html) 'package:jugendkompass_app/stubs/fcm_service_stub.dart';
 import 'package:jugendkompass_app/core/services/device_registration_service.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
