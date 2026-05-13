@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:jugendkompass_app/data/models/post_model.dart';
+import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier;
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
