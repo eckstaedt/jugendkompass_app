@@ -25,7 +25,7 @@ import { RetranslateButton } from '@/components/translations/RetranslateButton';
 
 interface MessageItemProps {
   message: Message;
-  onUpdate: (data: { id: number; title?: string; message: string; imageFile?: File }) => Promise<void>;
+  onUpdate: (data: { id: number; title: string; message: string; imageFile?: File }) => Promise<void>;
   onDelete: (id: number) => Promise<void>;
 }
 
@@ -37,9 +37,7 @@ const MessageItem = ({ message, onUpdate, onDelete }: MessageItemProps) => {
   return (
     <Card>
       <CardHeader>
-        {message.title && (
-          <h3 className="font-semibold text-lg">{message.title}</h3>
-        )}
+        <h3 className="font-semibold text-lg">{message.title}</h3>
         <div className="text-sm text-muted-foreground">
           {formatDistanceToNow(new Date(message.created_at), { addSuffix: true, locale: de })}
         </div>

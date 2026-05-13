@@ -10,7 +10,7 @@ interface MessageFormProps {
   initialTitle?: string;
   initialMessage?: string;
   initialImageUrl?: string | null;
-  onSubmit: (data: { title?: string; message: string; imageFile?: File }) => Promise<void>;
+  onSubmit: (data: { title: string; message: string; imageFile?: File }) => Promise<void>;
   isSubmitting: boolean;
 }
 
@@ -22,8 +22,16 @@ const MessageForm = ({ initialTitle = '', initialMessage = '', initialImageUrl, 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!title.trim()) {
+      toast({
+        title: "Fehler",
+        description: "Der Titel ist erforderlich.",
+        variant: "destructive",
+      });
+      return;
+    }
     try {
-      await onSubmit({ title: title || undefined, message, imageFile });
+      await onSubmit({ title: title.trim(), message, imageFile });
       setTitle('');
       setMessage('');
       setImageFile(undefined);
@@ -39,7 +47,7 @@ const MessageForm = ({ initialTitle = '', initialMessage = '', initialImageUrl, 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="title">Titel (optional)</Label>
+        <Label htmlFor="title">Titel</Label>
         <Input
           id="title"
           value={title}

@@ -9,7 +9,7 @@ export type Message = {
   content_id: string | null;
   created_by: string | null;
   created_at: string | null;
-  title: string | null;
+  title: string;
   message: string;
   image_url: string | null;
 };
@@ -45,7 +45,7 @@ export const useCreateMessage = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ title, message, imageFile, userId }: { title?: string; message: string; imageFile?: File; userId?: string }) => {
+    mutationFn: async ({ title, message, imageFile, userId }: { title: string; message: string; imageFile?: File; userId?: string }) => {
       let image_url = null;
 
       if (imageFile) {
@@ -66,7 +66,7 @@ export const useCreateMessage = () => {
 
       const { data, error } = await supabase
         .from('messages')
-        .insert([{ title: title || null, message, image_url }])
+        .insert([{ title, message, image_url }])
         .select()
         .single();
 
@@ -94,7 +94,7 @@ export const useUpdateMessage = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, title, message, imageFile, userId }: { id: number; title?: string; message: string; imageFile?: File; userId?: string }) => {
+    mutationFn: async ({ id, title, message, imageFile, userId }: { id: number; title: string; message: string; imageFile?: File; userId?: string }) => {
       let image_url = undefined;
 
       if (imageFile) {
