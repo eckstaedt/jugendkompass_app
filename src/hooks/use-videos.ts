@@ -96,7 +96,7 @@ export const useUploadVideo = () => {
 
         const { data: videoData, error: insertError } = await supabase
           .from('videos')
-          .insert(insertPayload)
+          .insert([insertPayload])
           .select('*, content:content_id(*)')
           .single();
 
