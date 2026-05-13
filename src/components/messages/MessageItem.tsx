@@ -37,9 +37,7 @@ const MessageItem = ({ message, onUpdate, onDelete }: MessageItemProps) => {
   return (
     <Card>
       <CardHeader>
-        {message.title && (
-          <h3 className="font-semibold text-lg">{message.title}</h3>
-        )}
+        <h3 className="font-semibold text-lg">{message.title}</h3>
         <div className="text-sm text-muted-foreground">
           {formatDistanceToNow(new Date(message.created_at), { addSuffix: true, locale: de })}
         </div>
