@@ -130,6 +130,58 @@ class LocalVerseNotificationService {
     await _plugin.cancel(_notificationId);
   }
 
+  /// Fire a test notification in 5 seconds so the user can background the app.
+  /// Pass [verseText] and [verseRef] to show the real verse content.
+  Future<void> sendTestNotification({
+    String? verseText,
+    String? verseRef,
+  }) async {
+    if (kIsWeb) return;
+
+    if (Platform.isAndroid) {
+      final granted = await requestAndroidPermission();
+      if (!granted) return;
+    }
+
+    final body = (verseText != null && verseRef != null)
+        ? '$verseText — $verseRef'
+        : 'Dein täglicher Bibelvers wartet auf dich.';
+
+    final scheduledDate = DateTime.now().add(const Duration(seconds: 5));
+
+    tz_data.initializeTimeZones();
+    final utc = tz.getLocation('UTC');
+    final tzDate = tz.TZDateTime.from(scheduledDate, utc);
+
+    try {
+      await _plugin.zonedSchedule(
+        _notificationId + 1, // different id so it doesn't cancel the daily one
+        'Vers des Tages 📖',
+        body,
+        tzDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            _channelId,
+            _channelName,
+            channelDescription: 'Tägliche Bibelvers-Erinnerung',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+      );
+    } catch (e) {
+      debugPrint('[LocalVerse] Failed to send test notification: $e');
+    }
+  }
+
   // ── Timezone picker data ─────────────────────────────────────────────────
 
   static const List<({String id, String display})> commonTimezones = [
