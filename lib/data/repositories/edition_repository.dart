@@ -24,7 +24,8 @@ class EditionRepository {
             image_url,
             pdf_url,
             published_at
-          ''');
+          ''')
+          .order('published_at', ascending: false);
 
       developer.log('Raw response type: ${response.runtimeType}', name: 'EditionRepository');
 
