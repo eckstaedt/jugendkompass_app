@@ -1,6 +1,7 @@
 // Supabase Edge Function: Send Daily Verse Notifications
-// This function should be triggered by a cron job that runs every hour
-// and sends verse notifications to devices based on their notification_hour setting
+// Triggered by a cron job every hour.
+// Filters devices whose notification_hour matches the current local hour
+// in the device's stored timezone. Sends the localized verse via FCM.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
@@ -10,19 +11,32 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const FCM_PROJECT_ID = Deno.env.get('FCM_PROJECT_ID')!
 const FCM_SERVICE_ACCOUNT_KEY = Deno.env.get('FCM_SERVICE_ACCOUNT_KEY')!
 
-serve(async (req) => {
+/** Returns the current local hour (0-23) in the given IANA timezone. */
+function localHourInTimezone(date: Date, timezone: string): number {
   try {
-    // Initialize Supabase client
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      hour: 'numeric',
+      hour12: false,
+    })
+    const str = formatter.format(date)
+    // "en-US" hour12:false returns "0"–"23"; "24" means midnight in some locales
+    const h = parseInt(str, 10)
+    return isNaN(h) ? 0 : h % 24
+  } catch {
+    // Unknown timezone – fall back to UTC
+    return date.getUTCHours()
+  }
+}
+
+serve(async (_req) => {
+  try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-
-    // Get current hour in UTC (Supabase stores times in UTC)
-    // Note: Device notification times are stored in local time, so we need to handle timezone conversion
     const now = new Date()
-    const currentHour = now.getUTCHours()
 
-    console.log(`Running verse notification check for hour: ${currentHour}`)
+    console.log(`Running verse notification check at UTC ${now.toISOString()}`)
 
-    // Get today's verse
+    // ── 1. Fetch today's German base verse ──────────────────────────────────
     const today = now.toISOString().split('T')[0] // YYYY-MM-DD
     const { data: verseData, error: verseError } = await supabase
       .from('verse_of_the_day')
@@ -40,14 +54,10 @@ serve(async (req) => {
       return new Response(JSON.stringify({ message: 'No verse for today' }), { status: 200 })
     }
 
-    // Get all devices that:
-    // 1. Have verse_notifications enabled
-    // 2. Have fcm_token (registered for push)
-    // 3. Have notification_hour matching current hour (accounting for timezone)
-    // Note: This is simplified - in production you'd want to handle timezones properly
+    // ── 2. Fetch all devices with verse notifications enabled ───────────────
     const { data: devices, error: devicesError } = await supabase
       .from('device_tokens')
-      .select('fcm_token, language, notification_hour, notification_minute')
+      .select('fcm_token, language, notification_hour, timezone')
       .eq('verse_notifications', true)
       .not('fcm_token', 'is', null)
 
@@ -61,36 +71,61 @@ serve(async (req) => {
       return new Response(JSON.stringify({ message: 'No devices to notify' }), { status: 200 })
     }
 
-    // Filter devices by current hour (simplified - assumes all devices in same timezone)
-    const devicesToNotify = devices.filter(d => d.notification_hour === currentHour)
+    // ── 3. Filter by timezone-aware local hour ──────────────────────────────
+    const devicesToNotify = devices.filter(d => {
+      const tz = d.timezone || 'Europe/Berlin'
+      const localHour = localHourInTimezone(now, tz)
+      return localHour === d.notification_hour
+    })
 
     if (devicesToNotify.length === 0) {
-      console.log(`No devices scheduled for hour ${currentHour}`)
-      return new Response(JSON.stringify({ message: `No devices for hour ${currentHour}` }), { status: 200 })
+      console.log('No devices scheduled for this hour')
+      return new Response(JSON.stringify({ message: 'No devices for this hour' }), { status: 200 })
     }
 
     console.log(`Sending verse notification to ${devicesToNotify.length} devices`)
 
-    // Get FCM access token
+    // ── 4. Get FCM access token ─────────────────────────────────────────────
     const accessToken = await getAccessToken()
 
-    // Group devices by language
+    // ── 5. Group by language ────────────────────────────────────────────────
     const devicesByLanguage: Record<string, string[]> = {}
     for (const device of devicesToNotify) {
       const lang = device.language || 'de'
-      if (!devicesByLanguage[lang]) {
-        devicesByLanguage[lang] = []
-      }
+      if (!devicesByLanguage[lang]) devicesByLanguage[lang] = []
       devicesByLanguage[lang].push(device.fcm_token)
     }
 
-    // Send notifications per language group
+    // ── 6. Send per language group with localized verse ─────────────────────
     let successCount = 0
     let failureCount = 0
 
+    // Cache localized verses to avoid duplicate RPC calls
+    const verseCache: Record<string, { verse: string; reference: string }> = {
+      de: { verse: verseData.verse, reference: verseData.reference },
+    }
+
     for (const [language, tokens] of Object.entries(devicesByLanguage)) {
       const title = getLocalizedTitle(language)
-      const body = `${verseData.verse} - ${verseData.reference}`
+
+      // Fetch localized verse if not German and not yet cached
+      if (language !== 'de' && !verseCache[language]) {
+        try {
+          const { data: localized } = await supabase
+            .rpc('get_verse_of_day_localized', { lang: language })
+          if (localized && localized.verse) {
+            verseCache[language] = { verse: localized.verse, reference: localized.reference }
+          } else {
+            verseCache[language] = verseCache['de'] // fallback to German
+          }
+        } catch (e) {
+          console.error(`Could not fetch localized verse for ${language}:`, e)
+          verseCache[language] = verseCache['de']
+        }
+      }
+
+      const { verse, reference } = verseCache[language] ?? verseCache['de']
+      const body = `${verse} — ${reference}`
 
       try {
         const result = await sendFCMMessages(tokens, title, body, null, accessToken)
@@ -106,6 +141,7 @@ serve(async (req) => {
       JSON.stringify({
         message: 'Verse notifications sent',
         verse: verseData.reference,
+        devicesMatched: devicesToNotify.length,
         success: successCount,
         failure: failureCount,
       }),

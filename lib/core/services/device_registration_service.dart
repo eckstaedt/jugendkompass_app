@@ -53,6 +53,7 @@ class DeviceRegistrationService {
     int notificationMinute = 0,
     String? fcmToken,
     String? language,
+    String? timezone,
   }) async {
     try {
       final supabase = Supabase.instance.client;
@@ -69,6 +70,9 @@ class DeviceRegistrationService {
       }
       if (language != null) {
         data['language'] = language;
+      }
+      if (timezone != null) {
+        data['timezone'] = timezone;
       }
       await supabase.from(_table).upsert(
         data,
@@ -87,6 +91,7 @@ class DeviceRegistrationService {
     int? notificationHour,
     int? notificationMinute,
     String? language,
+    String? timezone,
   }) async {
     try {
       final supabase = Supabase.instance.client;
@@ -105,6 +110,9 @@ class DeviceRegistrationService {
       }
       if (language != null) {
         updates['language'] = language;
+      }
+      if (timezone != null) {
+        updates['timezone'] = timezone;
       }
       if (updates.isEmpty) return;
 

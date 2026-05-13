@@ -49,20 +49,22 @@ class NotificationsNotifier extends StateNotifier<bool> {
 
     try {
       if (!enabled) {
-        // Cancel local verse notification
+        // Cancel local verse notification fallback
         await LocalVerseNotificationService.instance.cancel();
-        // Unregister device from server (stops content notifications)
+        // Unregister device from server (stops all server notifications)
         await DeviceRegistrationService.instance.unregister();
       } else {
-        // Re-register for content notifications (server)
+        // Re-register on server with current settings
         final prefs = UserPreferencesService.instance;
         await DeviceRegistrationService.instance.register(
-          verseNotifications: false, // verse is local-only now
+          verseNotifications: prefs.getVerseNotificationsEnabled(),
           contentNotifications: prefs.getNewContentNotificationsEnabled(),
           notificationHour: prefs.getNotificationHour(),
           notificationMinute: prefs.getNotificationMinute(),
+          timezone: prefs.getTimezone(),
+          language: prefs.getLanguage(),
         );
-        // Reschedule local verse notification if sub-toggle is on
+        // Schedule local verse notification as offline fallback
         if (prefs.getVerseNotificationsEnabled()) {
           await LocalVerseNotificationService.instance.scheduleDaily(
             prefs.getNotificationHour(),
@@ -95,9 +97,14 @@ class NotificationTimeNotifier
   Future<void> update(int hour, int minute) async {
     state = (hour: hour, minute: minute);
     await UserPreferencesService.instance.setNotificationTime(hour, minute);
-    // Reschedule local verse notification if enabled
     final prefs = UserPreferencesService.instance;
     if (prefs.getVerseNotificationsEnabled() && prefs.getNotificationsEnabled()) {
+      // Sync to server so the Edge Function uses the correct hour
+      await DeviceRegistrationService.instance.updatePreferences(
+        notificationHour: hour,
+        notificationMinute: minute,
+      );
+      // Keep local notification as offline fallback
       await LocalVerseNotificationService.instance.scheduleDaily(
         hour,
         minute,
@@ -125,7 +132,11 @@ class VerseNotificationsNotifier extends StateNotifier<bool> {
   Future<void> update(bool enabled) async {
     state = enabled;
     await UserPreferencesService.instance.setVerseNotificationsEnabled(enabled);
-    // Local-only: schedule or cancel the daily notification
+    // Sync to server
+    await DeviceRegistrationService.instance.updatePreferences(
+      verseNotifications: enabled,
+    );
+    // Local fallback: schedule or cancel
     if (enabled) {
       final prefs = UserPreferencesService.instance;
       await LocalVerseNotificationService.instance.scheduleDaily(
@@ -183,9 +194,13 @@ class TimezoneNotifier extends StateNotifier<String> {
   Future<void> update(String timezoneId) async {
     state = timezoneId;
     await UserPreferencesService.instance.setTimezone(timezoneId);
-    // Reschedule verse notification with new timezone
     final prefs = UserPreferencesService.instance;
     if (prefs.getVerseNotificationsEnabled() && prefs.getNotificationsEnabled()) {
+      // Sync timezone to server so the Edge Function filters correctly
+      await DeviceRegistrationService.instance.updatePreferences(
+        timezone: timezoneId,
+      );
+      // Keep local fallback in sync
       await LocalVerseNotificationService.instance.scheduleDaily(
         prefs.getNotificationHour(),
         prefs.getNotificationMinute(),

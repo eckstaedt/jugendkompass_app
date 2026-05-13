@@ -137,6 +137,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           notificationHour: prefs.getNotificationHour(),
           notificationMinute: prefs.getNotificationMinute(),
           language: prefs.getLanguage(),
+          timezone: prefs.getTimezone(),
         );
       }
     } catch (e) {
