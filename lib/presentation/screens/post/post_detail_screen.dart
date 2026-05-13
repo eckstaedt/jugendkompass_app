@@ -230,7 +230,7 @@ class PostDetailScreen extends ConsumerWidget {
                   ),
 
                   // Audio play / pause button
-                  if (hasAudio) ...[  
+                  if (hasAudio) ...[
                     const SizedBox(height: 24),
                     Consumer(
                       builder: (context, ref, _) {
@@ -240,42 +240,57 @@ class PostDetailScreen extends ConsumerWidget {
                             current != null && current.id == post.audioId;
                         final isThisPlaying = isThisAudio && isPlaying;
 
-                        return SizedBox(
-                          width: double.infinity,
-                          child: FilledButton.icon(
-                            onPressed: () async {
-                              if (isThisPlaying) {
-                                // Pause via audioService
-                                await ref
-                                    .read(audioServiceProvider)
-                                    .pause();
-                              } else if (isThisAudio) {
-                                // Resume same audio
-                                await ref
-                                    .read(audioServiceProvider)
-                                    .resume();
-                              } else {
-                                // Load + play this article's audio
-                                await _playAudio(context, ref);
-                              }
-                            },
-                            icon: Icon(
-                              isThisPlaying
-                                  ? Icons.pause
-                                  : Icons.play_arrow,
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: FilledButton.icon(
+                                onPressed: () async {
+                                  if (isThisPlaying) {
+                                    // Pause via audioService
+                                    await ref
+                                        .read(audioServiceProvider)
+                                        .pause();
+                                  } else if (isThisAudio) {
+                                    // Resume same audio
+                                    await ref
+                                        .read(audioServiceProvider)
+                                        .resume();
+                                  } else {
+                                    // Load + play this article's audio
+                                    await _playAudio(context, ref);
+                                  }
+                                },
+                                icon: Icon(
+                                  isThisPlaying
+                                      ? Icons.pause
+                                      : Icons.play_arrow,
+                                ),
+                                label: Text(
+                                  isThisPlaying
+                                      ? 'Pausieren'
+                                      : isThisAudio
+                                          ? 'Weiter anhören'
+                                          : 'Artikel anhören',
+                                ),
+                                style: FilledButton.styleFrom(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                ),
+                              ),
                             ),
-                            label: Text(
-                              isThisPlaying
-                                  ? 'Pausieren'
-                                  : isThisAudio
-                                      ? 'Weiter anhören'
-                                      : 'Artikel anhören',
+                            const SizedBox(width: 12),
+                            // Add to queue button
+                            FilledButton.icon(
+                              onPressed: () => _addToQueue(context, ref),
+                              icon: const Icon(Icons.playlist_add),
+                              label: const Text('Warteschlange'),
+                              style: FilledButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                                backgroundColor: theme.colorScheme.secondaryContainer,
+                                foregroundColor: theme.colorScheme.onSecondaryContainer,
+                              ),
                             ),
-                            style: FilledButton.styleFrom(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 16),
-                            ),
-                          ),
+                          ],
                         );
                       },
                     ),
@@ -432,6 +447,62 @@ class PostDetailScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${AppTranslations.t('error_playing')}: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Add audio to queue
+  Future<void> _addToQueue(BuildContext context, WidgetRef ref) async {
+    if (post.audioId == null) return;
+
+    try {
+      // Fetch the audio
+      final audioRepository = ref.read(audioRepositoryProvider);
+      final audio = await audioRepository.getAudioById(post.audioId!);
+
+      if (audio == null) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(AppTranslations.t('audio_not_found')),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Enrich audio with the current post's metadata
+      final enrichedAudio = audio.copyWith(
+        title: audio.title?.isNotEmpty == true ? audio.title : post.title,
+        thumbnailUrl: audio.imageUrl?.isNotEmpty == true
+            ? audio.imageUrl
+            : post.imageUrl,
+      );
+
+      // Add to queue
+      final audioService = ref.read(audioServiceProvider);
+      audioService.addToQueue(enrichedAudio);
+      ref.read(audioQueueProvider.notifier).state = List<AudioModel>.from(audioService.queue);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${HtmlUtils.stripHtml(post.title)} zur Warteschlange hinzugefügt'),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 90),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Fehler: $e'),
             backgroundColor: Colors.red,
           ),
         );

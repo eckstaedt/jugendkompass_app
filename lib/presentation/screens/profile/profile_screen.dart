@@ -519,12 +519,14 @@ class ProfileScreen extends ConsumerWidget {
       await ref.read(languageProvider.notifier).setLanguage(selectedLanguage);
       // Only show language notice when switching to a non-German language
       if (context.mounted && selectedLanguage != AppLanguage.de) {
+        // Get translator with the NEW language for the dialog
+        final newTranslate = ref.read(stringTranslatorProvider);
         await showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text(translate('Hinweis zur Sprache')),
+            title: Text(newTranslate('Hinweis zur Sprache')),
             content: Text(
-              translate('Bitte beachte, dass nicht alle Inhalte (z. B. Videos und Podcasts) in die gewählte Sprache übersetzt sind. Einige Inhalte werden weiterhin in der Originalsprache angezeigt.'),
+              newTranslate('Bitte beachte, dass nicht alle Inhalte (z. B. Videos und Podcasts) in die gewählte Sprache übersetzt sind. Einige Inhalte werden weiterhin in der Originalsprache angezeigt.'),
             ),
             actions: [
               FilledButton(
@@ -532,7 +534,7 @@ class ProfileScreen extends ConsumerWidget {
                 style: FilledButton.styleFrom(
                   backgroundColor: DesignTokens.primaryRed,
                 ),
-                child: Text(translate('Verstanden')),
+                child: Text(newTranslate('Verstanden')),
               ),
             ],
           ),

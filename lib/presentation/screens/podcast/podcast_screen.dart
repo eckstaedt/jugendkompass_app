@@ -431,7 +431,7 @@ class PodcastScreen extends ConsumerWidget {
                             ),
                         ],
                       ),
-                    if (audio.durationSeconds != null) ...[  
+                    if (audio.durationSeconds != null) ...[
                       const SizedBox(height: 6),
                       Text(
                         _formatDuration(audio.durationSeconds!),
@@ -442,6 +442,12 @@ class PodcastScreen extends ConsumerWidget {
                     ],
                   ],
                 ),
+              ),
+              // Add to queue button
+              IconButton(
+                icon: const Icon(Icons.playlist_add),
+                onPressed: () => _addToQueue(context, ref, audio),
+                tooltip: 'Zur Warteschlange hinzufügen',
               ),
             ],
           ),
@@ -459,6 +465,23 @@ class PodcastScreen extends ConsumerWidget {
 
     // Start playback (setQueue calls playAudio internally)
     await audioService.setQueue([audio], startIndex: 0);
+  }
+
+  void _addToQueue(BuildContext context, WidgetRef ref, AudioModel audio) {
+    final audioService = ref.read(audioServiceProvider);
+    final translate = ref.read(stringTranslatorProvider);
+
+    audioService.addToQueue(audio);
+    ref.read(audioQueueProvider.notifier).state = List<AudioModel>.from(audioService.queue);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${audio.title ?? audio.post?.title ?? "Audio"} ${translate('zur Warteschlange hinzugefügt')}'),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 90),
+      ),
+    );
   }
 
   String _formatDuration(int seconds) {

@@ -5,6 +5,7 @@ import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 
 class VerseCard extends ConsumerStatefulWidget {
   final VerseModel verse;
@@ -87,7 +88,7 @@ class _VerseCardState extends ConsumerState<VerseCard>
         children: [
           // Header with label and favorite icon
           BadgeWidget(
-                label: 'VERS DES TAGES',
+                label: context.tr('verse_of_day_badge'),
                 backgroundColor: DesignTokens.getRedBackground(theme.brightness),
                 textColor: DesignTokens.primaryRed,
               ),

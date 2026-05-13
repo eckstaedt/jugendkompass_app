@@ -204,10 +204,27 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
                               runSpacing: 4,
                               children: [
                                 if (widget.isNewest)
-                                  BadgeWidget(label: 'NEU', backgroundColor: DesignTokens.primaryRed, textColor: Colors.white),
-                                BadgeWidget(label: item.isVideo ? 'VIDEO' : item.isKurznachricht ? 'KURZNACHRICHT' : 'ARTIKEL', backgroundColor: DesignTokens.getRedBackground(Theme.of(context).brightness), textColor: DesignTokens.primaryRed),
+                                  BadgeWidget(
+                                    label: context.tr('new_badge'),
+                                    backgroundColor: DesignTokens.primaryRed,
+                                    textColor: Colors.white,
+                                  ),
+                                BadgeWidget(
+                                  label: item.isVideo
+                                    ? context.tr('video_badge')
+                                    : item.isKurznachricht
+                                      ? context.tr('short_message_badge')
+                                      : context.tr('article_badge'),
+                                  backgroundColor: DesignTokens.getRedBackground(Theme.of(context).brightness),
+                                  textColor: DesignTokens.primaryRed,
+                                ),
                                 if (item.hasAudio)
-                                  BadgeWidget(label: 'AUDIO', backgroundColor: DesignTokens.successGreen.withOpacity(0.12), textColor: DesignTokens.successGreen, icon: Icons.headphones),
+                                  BadgeWidget(
+                                    label: context.tr('audio_badge'),
+                                    backgroundColor: DesignTokens.successGreen.withOpacity(0.12),
+                                    textColor: DesignTokens.successGreen,
+                                    icon: Icons.headphones,
+                                  ),
                               ],
                             ),
                           ],

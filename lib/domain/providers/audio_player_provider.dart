@@ -107,18 +107,22 @@ final hasPreviousAudioProvider = Provider<bool>((ref) {
 // Recommended audios provider
 final recommendedAudiosProvider = FutureProvider<List<AudioModel>>((ref) async {
   final audioRepository = ref.watch(audioRepositoryProvider);
-  final currentAudio = ref.watch(currentAudioProvider);
-
-  if (currentAudio == null) {
-    return [];
-  }
+  final currentQueue = ref.watch(audioQueueProvider);
 
   try {
-    return await audioRepository.getRecommendedAudios(
-      categoryId: currentAudio.post?.categoryId,
-      excludeAudioId: currentAudio.id,
-      limit: 10,
-    );
+    // Get IDs of all audios currently in the queue
+    final queueAudioIds = currentQueue.map((audio) => audio.id).toSet();
+
+    // Get all available audios (fetch more than 10 to ensure we have enough after filtering)
+    final allAudios = await audioRepository.getAudioList(limit: 50);
+
+    // Filter out audios that are already in the queue
+    final recommendedAudios = allAudios
+        .where((audio) => !queueAudioIds.contains(audio.id))
+        .toList();
+
+    // Ensure we have at least 10, or return all available if less than 10
+    return recommendedAudios;
   } catch (e) {
     // Return empty list on error
     return [];
