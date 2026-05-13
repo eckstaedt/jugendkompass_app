@@ -62,18 +62,6 @@ Future<void> main() async {
   // Initialize local verse notification service (mobile only)
   await LocalVerseNotificationService.instance.init();
 
-  // Schedule verse notification if enabled
-  {
-    final prefs = UserPreferencesService.instance;
-    if (prefs.getNotificationsEnabled() && prefs.getVerseNotificationsEnabled()) {
-      await LocalVerseNotificationService.instance.scheduleDaily(
-        prefs.getNotificationHour(),
-        prefs.getNotificationMinute(),
-        prefs.getTimezone(),
-      );
-    }
-  }
-
   // Initialize just_audio_background (mobile only) — this powers the native lock screen
   // controls (play/pause, skip ±10s, artwork, title) on iOS and Android.
   if (!kIsWeb) {

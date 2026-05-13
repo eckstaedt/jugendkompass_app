@@ -64,14 +64,6 @@ class NotificationsNotifier extends StateNotifier<bool> {
           timezone: prefs.getTimezone(),
           language: prefs.getLanguage(),
         );
-        // Schedule local verse notification as offline fallback
-        if (prefs.getVerseNotificationsEnabled()) {
-          await LocalVerseNotificationService.instance.scheduleDaily(
-            prefs.getNotificationHour(),
-            prefs.getNotificationMinute(),
-            prefs.getTimezone(),
-          );
-        }
       }
     } catch (e) {
       // Silently handle errors — the toggle state is already saved
@@ -104,12 +96,6 @@ class NotificationTimeNotifier
         notificationHour: hour,
         notificationMinute: minute,
       );
-      // Keep local notification as offline fallback
-      await LocalVerseNotificationService.instance.scheduleDaily(
-        hour,
-        minute,
-        prefs.getTimezone(),
-      );
     }
   }
 }
@@ -136,15 +122,8 @@ class VerseNotificationsNotifier extends StateNotifier<bool> {
     await DeviceRegistrationService.instance.updatePreferences(
       verseNotifications: enabled,
     );
-    // Local fallback: schedule or cancel
-    if (enabled) {
-      final prefs = UserPreferencesService.instance;
-      await LocalVerseNotificationService.instance.scheduleDaily(
-        prefs.getNotificationHour(),
-        prefs.getNotificationMinute(),
-        prefs.getTimezone(),
-      );
-    } else {
+    // Local fallback: cancel when disabled
+    if (!enabled) {
       await LocalVerseNotificationService.instance.cancel();
     }
   }
@@ -199,12 +178,6 @@ class TimezoneNotifier extends StateNotifier<String> {
       // Sync timezone to server so the Edge Function filters correctly
       await DeviceRegistrationService.instance.updatePreferences(
         timezone: timezoneId,
-      );
-      // Keep local fallback in sync
-      await LocalVerseNotificationService.instance.scheduleDaily(
-        prefs.getNotificationHour(),
-        prefs.getNotificationMinute(),
-        timezoneId,
       );
     }
   }
