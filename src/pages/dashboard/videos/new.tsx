@@ -64,7 +64,8 @@ const NewVideoPage = () => {
         description,
         imageUrl: imageUrl!,
         ...(mode === 'upload' ? { file: file! } : { url }),
-        userId: user.id
+        userId: user.id,
+        createdAt: createdAt ? createdAt.toISOString() : undefined,
       });
 
       setUploadProgress(100);
@@ -73,6 +74,7 @@ const NewVideoPage = () => {
       setFile(null);
       setUrl('');
       setImageUrl(null);
+      setCreatedAt(new Date());
       toast({
         title: "Video hinzugefügt",
         description: mode === 'upload'
