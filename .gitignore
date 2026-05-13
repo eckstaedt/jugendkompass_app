@@ -55,4 +55,4 @@ build/
 .flutter_build/
 
 # FVM Version Cache
-.fvm/
+.fvm/supabase/.temp/
