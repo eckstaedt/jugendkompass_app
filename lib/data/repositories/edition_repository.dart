@@ -8,6 +8,50 @@ class EditionRepository {
 
   EditionRepository(this._supabaseClient);
 
+  /// Get all editions with localization
+  Future<List<EditionModel>> getAllEditionsLocalized(String language) async {
+    try {
+      developer.log('Fetching all editions for language: $language', name: 'EditionRepository');
+
+      // For German, use regular method
+      if (language == 'de') {
+        return getAllEditions();
+      }
+
+      // Use RPC function to get localized editions
+      final response = await _supabaseClient.rpc(
+        'get_editions_localized',
+        params: {'lang': language},
+      );
+
+      if (response == null || (response is List && response.isEmpty)) {
+        // Fallback to German if no translations
+        return getAllEditions();
+      }
+
+      final responseList = response as List;
+      developer.log('Got ${responseList.length} localized editions', name: 'EditionRepository');
+
+      final editions = responseList
+          .map((json) => EditionModel.fromJson(json))
+          .toList();
+
+      // Sort in code
+      editions.sort((a, b) {
+        if (a.publishedAt == null && b.publishedAt == null) return 0;
+        if (a.publishedAt == null) return 1;
+        if (b.publishedAt == null) return -1;
+        return b.publishedAt!.compareTo(a.publishedAt!);
+      });
+
+      return editions;
+    } catch (e, stackTrace) {
+      developer.log('Error fetching localized editions: $e', name: 'EditionRepository', error: e, stackTrace: stackTrace);
+      // Fallback to German on error
+      return getAllEditions();
+    }
+  }
+
   /// Get all editions with direct fields from editions table
   Future<List<EditionModel>> getAllEditions() async {
     try {
@@ -56,6 +100,33 @@ class EditionRepository {
     } catch (e, stackTrace) {
       developer.log('Error fetching editions: $e', name: 'EditionRepository', error: e, stackTrace: stackTrace);
       throw Exception('Failed to fetch editions: $e');
+    }
+  }
+
+  /// Get edition by ID with localization
+  Future<EditionModel?> getEditionByIdLocalized(String id, String language) async {
+    try {
+      // For German, use regular method
+      if (language == 'de') {
+        return getEditionById(id);
+      }
+
+      // Use RPC function to get localized edition
+      final response = await _supabaseClient.rpc(
+        'get_edition_by_id_localized',
+        params: {'edition_id': id, 'lang': language},
+      );
+
+      if (response == null) {
+        // Fallback to German if no translation
+        return getEditionById(id);
+      }
+
+      return EditionModel.fromJson(response);
+    } catch (e) {
+      developer.log('Error fetching localized edition: $e', name: 'EditionRepository', error: e);
+      // Fallback to German on error
+      return getEditionById(id);
     }
   }
 

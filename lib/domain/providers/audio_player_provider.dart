@@ -6,6 +6,7 @@ import 'package:jugendkompass_app/data/services/audio_service.dart';
 import 'package:jugendkompass_app/data/services/media_notification_service.dart';
 import 'package:jugendkompass_app/data/services/web_media_session_handler.dart';
 import 'package:jugendkompass_app/domain/providers/supabase_provider.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 
 final audioRepositoryProvider = Provider<AudioRepository>((ref) {
   final supabase = ref.watch(supabaseProvider);
@@ -32,7 +33,8 @@ final webMediaSessionHandlerProvider = Provider<WebMediaSessionHandler>((ref) {
 
 final audioListProvider = FutureProvider<List<AudioModel>>((ref) async {
   final repository = ref.watch(audioRepositoryProvider);
-  return await repository.getAudioList();
+  final language = ref.watch(languageProvider).locale.languageCode;
+  return await repository.getAudioListLocalized(language);
 });
 
 final currentAudioProvider = StateProvider<AudioModel?>((ref) => null);

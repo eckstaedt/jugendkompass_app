@@ -15,6 +15,7 @@ import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/animated_equalizer.dart';
 import 'widgets/featured_episode_card.dart';
+import 'dart:math' as math;
 
 class PodcastScreen extends ConsumerWidget {
   const PodcastScreen({super.key});
@@ -70,9 +71,9 @@ class PodcastScreen extends ConsumerWidget {
                         });
                       }).toList();
 
-              // Get featured episode (first in list)
+              // Get featured episode (random one from the list)
               final featuredEpisode = audioList.isNotEmpty
-                  ? audioList.first
+                  ? audioList[math.Random().nextInt(audioList.length)]
                   : null;
 
               return CustomScrollView(

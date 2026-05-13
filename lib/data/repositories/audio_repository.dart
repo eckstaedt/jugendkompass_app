@@ -1,11 +1,70 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/core/constants/supabase_constants.dart';
+import 'dart:developer' as developer;
 
 class AudioRepository {
   final SupabaseClient _supabase;
 
   AudioRepository(this._supabase);
+
+  /// Get audio list with localized metadata from posts table
+  Future<List<AudioModel>> getAudioListLocalized(String language, {
+    String? categoryId,
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    try {
+      developer.log('Fetching audio list for language: $language', name: 'AudioRepository');
+
+      // For German, use regular method
+      if (language == 'de') {
+        return getAudioList(categoryId: categoryId, limit: limit, offset: offset);
+      }
+
+      // Get all audios first
+      final audios = await getAudioList(categoryId: categoryId, limit: limit, offset: offset);
+
+      // For each audio with a post, get the localized post data
+      final localizedAudios = <AudioModel>[];
+      for (final audio in audios) {
+        if (audio.post?.contentId != null) {
+          try {
+            // Get localized post title and body using content_id
+            final translatedPost = await _supabase.rpc(
+              'tr',
+              params: {
+                'content_id': audio.post!.contentId,
+                'lang': language,
+                'field': 'title',
+                'fallback': audio.post!.title,
+              },
+            );
+
+            // Create a copy with translated title
+            final updatedPost = audio.post!.copyWith(
+              title: translatedPost ?? audio.post!.title,
+            );
+
+            localizedAudios.add(audio.copyWith(
+              title: updatedPost.title,
+            ));
+          } catch (e) {
+            developer.log('Error translating audio post: $e', name: 'AudioRepository');
+            localizedAudios.add(audio);
+          }
+        } else {
+          localizedAudios.add(audio);
+        }
+      }
+
+      return localizedAudios;
+    } catch (e) {
+      developer.log('Error fetching localized audios: $e', name: 'AudioRepository', error: e);
+      // Fallback to German on error
+      return getAudioList(categoryId: categoryId, limit: limit, offset: offset);
+    }
+  }
 
   /// Get audio list with metadata from posts table
   /// Joins audios with posts where posts.audio_id = audios.id

@@ -4,6 +4,7 @@ import '../../data/models/post_model.dart';
 import '../../data/models/audio_model.dart';
 import '../../data/repositories/edition_repository.dart';
 import 'supabase_provider.dart';
+import 'language_provider.dart';
 
 /// Edition repository provider
 final editionRepositoryProvider = Provider<EditionRepository>((ref) {
@@ -11,24 +12,29 @@ final editionRepositoryProvider = Provider<EditionRepository>((ref) {
   return EditionRepository(supabase);
 });
 
-/// All editions provider
+/// All editions provider - returns localized editions based on current language
 final editionsListProvider = FutureProvider<List<EditionModel>>((ref) async {
   final repository = ref.watch(editionRepositoryProvider);
-  return repository.getAllEditions();
+  final language = ref.watch(languageProvider).locale.languageCode;
+  return repository.getAllEditionsLocalized(language);
 });
 
-/// Edition detail provider (by ID)
+/// Edition detail provider (by ID) - returns localized edition
 final editionDetailProvider =
     FutureProvider.family<EditionModel?, String>((ref, editionId) async {
   final repository = ref.watch(editionRepositoryProvider);
-  return repository.getEditionById(editionId);
+  final language = ref.watch(languageProvider).locale.languageCode;
+  return repository.getEditionByIdLocalized(editionId, language);
 });
 
-/// Recent editions provider
+/// Recent editions provider - returns localized recent editions
 final recentEditionsProvider =
     FutureProvider<List<EditionModel>>((ref) async {
   final repository = ref.watch(editionRepositoryProvider);
-  return repository.getRecentEditions(limit: 10);
+  final language = ref.watch(languageProvider).locale.languageCode;
+  // Get all localized editions and take first 10
+  final allEditions = await repository.getAllEditionsLocalized(language);
+  return allEditions.take(10).toList();
 });
 
 /// Edition posts provider - get all posts for a specific edition
