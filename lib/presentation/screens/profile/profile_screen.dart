@@ -425,7 +425,7 @@ class ProfileScreen extends ConsumerWidget {
           // App Version (optional)
           Center(
             child: Text(
-              'Version 1.0.0',
+              'Version 2.0.1',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -545,7 +545,7 @@ class ProfileScreen extends ConsumerWidget {
   Future<void> _showNameEditDialog(BuildContext context, WidgetRef ref, String Function(String) translate) async {
     final currentName = ref.watch(userNameProvider) ?? '';
     final controller = TextEditingController(text: currentName);
-    
+
     final newName = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -580,7 +580,7 @@ class ProfileScreen extends ConsumerWidget {
         ],
       ),
     );
-    
+
     if (newName != null && newName.isNotEmpty && context.mounted) {
       await UserPreferencesService.instance.setUserName(newName);
       ref.read(userNameProvider.notifier).state = newName;

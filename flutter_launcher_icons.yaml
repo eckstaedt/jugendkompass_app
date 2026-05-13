@@ -11,6 +11,7 @@ flutter_launcher_icons:
   # Android specific
   adaptive_icon_background: "#ffffff"
   adaptive_icon_foreground: "assets/images/logo.png"
+  adaptive_icon_foreground_inset: 64
 
   # iOS specific
   ios_content_padding: 0.15

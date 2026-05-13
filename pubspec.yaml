@@ -1,7 +1,7 @@
 name: jugendkompass_app
-description: "A new Flutter project."
+description: "Dein täglicher Begleiter"
 publish_to: 'none'
-version: 0.1.0
+version: 2.0.1+43
 
 environment:
   sdk: ^3.10.8

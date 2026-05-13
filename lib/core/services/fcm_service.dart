@@ -62,7 +62,7 @@ class FCMService {
 
   /// Set up local notifications so we can display foreground messages.
   Future<void> _initLocalNotifications() async {
-    const androidSettings = AndroidInitializationSettings('app_icon');
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: false, // FCM handles this
       requestBadgePermission: false,
@@ -165,7 +165,37 @@ class FCMService {
 /// Top-level function to handle background messages.
 ///
 /// Must be a top-level function (not a class method).
+/// Shows notification manually since Firebase doesn't auto-show in background.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint('[FCM] Background message: ${message.messageId}');
+
+  // Firebase doesn't automatically show notifications when app is in background
+  // on Android, so we need to show them manually.
+  final notification = message.notification;
+  if (notification != null) {
+    final plugin = FlutterLocalNotificationsPlugin();
+
+    // Initialize plugin first (required for background handler)
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    await plugin.initialize(
+      const InitializationSettings(android: androidSettings),
+    );
+
+    // Show the notification
+    await plugin.show(
+      notification.hashCode,
+      notification.title,
+      notification.body,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'push_notifications',
+          'Push-Benachrichtigungen',
+          channelDescription: 'Benachrichtigungen für neue Beiträge',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+      ),
+    );
+  }
 }

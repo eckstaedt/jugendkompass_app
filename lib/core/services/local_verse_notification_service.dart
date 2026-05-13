@@ -26,7 +26,7 @@ class LocalVerseNotificationService {
     // Load the timezone database
     tz_data.initializeTimeZones();
 
-    const android = AndroidInitializationSettings('app_icon');
+    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
     const ios = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -60,33 +60,37 @@ class LocalVerseNotificationService {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
 
-    await _plugin.zonedSchedule(
-      _notificationId,
-      'Vers des Tages 📖',
-      'Dein täglicher Bibelvers wartet auf dich.',
-      scheduledDate,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          _channelId,
-          _channelName,
-          channelDescription: 'Tägliche Bibelvers-Erinnerung',
-          importance: Importance.high,
-          priority: Priority.high,
+    try {
+      await _plugin.zonedSchedule(
+        _notificationId,
+        'Vers des Tages 📖',
+        'Dein täglicher Bibelvers wartet auf dich.',
+        scheduledDate,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            _channelId,
+            _channelName,
+            channelDescription: 'Tägliche Bibelvers-Erinnerung',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
         ),
-        iOS: DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
-        ),
-      ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time,
-    );
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
 
-    debugPrint(
-        '[LocalVerse] Scheduled daily at $hour:${minute.toString().padLeft(2, '0')} ($timezoneId)');
+      debugPrint(
+          '[LocalVerse] Scheduled daily at $hour:${minute.toString().padLeft(2, '0')} ($timezoneId)');
+    } catch (e) {
+      debugPrint('[LocalVerse] Failed to schedule notification: $e');
+    }
   }
 
   /// Cancel the verse notification.
