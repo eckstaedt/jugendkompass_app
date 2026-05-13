@@ -44,7 +44,7 @@ export const useUploadVideo = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ title, description, file, url, imageUrl, userId }: { title: string, description?: string, file?: File, url?: string, imageUrl: string, userId: string }) => {
+    mutationFn: async ({ title, description, file, url, imageUrl, userId, createdAt }: { title: string, description?: string, file?: File, url?: string, imageUrl: string, userId: string, createdAt?: string }) => {
       try {
         let videoUrl: string;
 
@@ -84,16 +84,19 @@ export const useUploadVideo = () => {
 
         if (contentError) throw contentError;
 
+        const insertPayload: Record<string, any> = { 
+          title, 
+          description: description || null,
+          url: videoUrl,
+          image_url: imageUrl,
+          user_id: userId,
+          content_id: contentData.id,
+        };
+        if (createdAt) insertPayload.created_at = createdAt;
+
         const { data: videoData, error: insertError } = await supabase
           .from('videos')
-          .insert({ 
-            title, 
-            description: description || null,
-            url: videoUrl,
-            image_url: imageUrl,
-            user_id: userId,
-            content_id: contentData.id,
-          })
+          .insert(insertPayload)
           .select('*, content:content_id(*)')
           .single();
 
