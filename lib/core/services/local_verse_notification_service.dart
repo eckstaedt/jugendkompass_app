@@ -1,6 +1,8 @@
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 
@@ -94,11 +96,59 @@ class LocalVerseNotificationService {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
 
+    // Fetch today's verse for a meaningful notification body
+    String notificationBody = 'Dein täglicher Bibelvers wartet auf dich.';
+    try {
+      final language = UserPreferencesService.instance.getLanguage();
+      final supabase = Supabase.instance.client;
+      final today = DateTime.now();
+      final todayStr =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+      Map<String, dynamic>? row;
+      if (language == 'de') {
+        row = await supabase
+            .from('verse_of_the_day')
+            .select('verse, reference')
+            .eq('date', todayStr)
+            .maybeSingle();
+        row ??= await supabase
+            .from('verse_of_the_day')
+            .select('verse, reference')
+            .order('date', ascending: false)
+            .limit(1)
+            .maybeSingle();
+      } else {
+        final result = await supabase
+            .rpc('get_verse_of_day_localized', params: {'lang': language});
+        if (result != null && result is List && result.isNotEmpty) {
+          row = result.first as Map<String, dynamic>;
+        }
+        row ??= await supabase
+            .from('verse_of_the_day')
+            .select('verse, reference')
+            .eq('date', todayStr)
+            .maybeSingle();
+      }
+
+      if (row != null) {
+        final verse = row['verse'] as String?;
+        final reference = row['reference'] as String?;
+        if (verse != null && verse.isNotEmpty) {
+          notificationBody = reference != null && reference.isNotEmpty
+              ? '$verse — $reference'
+              : verse;
+        }
+      }
+    } catch (e) {
+      debugPrint('[LocalVerse] Could not fetch verse for notification: $e');
+    }
+
     try {
       await _plugin.zonedSchedule(
         _notificationId,
         'Vers des Tages 📖',
-        'Dein täglicher Bibelvers wartet auf dich.',
+        notificationBody,
         scheduledDate,
         const NotificationDetails(
           android: AndroidNotificationDetails(
