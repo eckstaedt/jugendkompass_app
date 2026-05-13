@@ -29,7 +29,7 @@ class FCMService {
 
   /// Callback for handling notification tap navigation.
   /// Set this from the app's root widget to enable deep linking.
-  void Function(Map<String, dynamic> data)? onNotificationTap;
+  Future<void> Function(Map<String, dynamic> data)? onNotificationTap;
 
   /// Initialize FCM: request permissions, get token, listen for refresh.
   Future<void> init() async {

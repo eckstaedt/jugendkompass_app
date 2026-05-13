@@ -38,7 +38,7 @@ class _AppState extends ConsumerState<App> {
   }
 
   /// Handle notification tap and navigate to appropriate content.
-  void _handleNotificationTap(Map<String, dynamic> data) {
+  Future<void> _handleNotificationTap(Map<String, dynamic> data) async {
     // Wait for the navigator to be ready
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final context = _navigatorKey.currentContext;
