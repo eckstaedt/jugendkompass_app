@@ -18,6 +18,14 @@ class FullPlayerScreen extends ConsumerStatefulWidget {
 
 class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
   double _currentSpeed = 1.0;
+  final ScrollController _scrollController = ScrollController();
+  double _dragOffset = 0.0;
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   void _showSpeedPicker(BuildContext context) {
     const speeds = [0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0];
@@ -165,10 +173,40 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
             ),
           ),
           // Main content
-          SafeArea(
-            child: Column(
-              children: [
-                // Top bar
+          GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onVerticalDragUpdate: (details) {
+              // Only accumulate downward drags when the scroll view is at the top.
+              if (_scrollController.hasClients && _scrollController.offset > 0) return;
+              if (details.delta.dy > 0) {
+                setState(() => _dragOffset += details.delta.dy);
+                if (_dragOffset > 100) {
+                  _dragOffset = 0;
+                  Navigator.pop(context);
+                }
+              } else {
+                setState(() => _dragOffset = 0);
+              }
+            },
+            onVerticalDragEnd: (_) {
+              if (mounted) setState(() => _dragOffset = 0);
+            },
+            child: SafeArea(
+              child: Column(
+                children: [
+                  // Drag handle pill (iOS-style)
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      margin: const EdgeInsets.only(top: 8, bottom: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.35),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  // Top bar
                 Padding(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 20, vertical: 12),
@@ -226,6 +264,8 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                 // Scrollable content
                 Expanded(
                   child: SingleChildScrollView(
+                    controller: _scrollController,
+                    physics: const ClampingScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
                       children: [
@@ -761,6 +801,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
               ],
             ),
           ),
+        ), // closes GestureDetector
         ],
       ),
     );
