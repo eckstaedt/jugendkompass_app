@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { useUploadVideo } from '@/hooks/use-videos';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,6 +13,9 @@ import { FileVideoIcon, LinkIcon, LoaderCircle, UploadIcon } from 'lucide-react'
 import { ImageUploader } from '@/components/posts/ImageUploader';
 import RichTextEditor from '@/components/editor/RichTextEditor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 const NewVideoPage = () => {
   const { user } = useAuth();
