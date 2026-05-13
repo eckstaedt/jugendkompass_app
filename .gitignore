@@ -56,3 +56,6 @@ build/
 
 # FVM Version Cache
 .fvm/supabase/.temp/
+
+.fvm/
+supabase/.temp/
