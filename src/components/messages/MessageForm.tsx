@@ -22,8 +22,16 @@ const MessageForm = ({ initialTitle = '', initialMessage = '', initialImageUrl, 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!title.trim()) {
+      toast({
+        title: "Fehler",
+        description: "Der Titel ist erforderlich.",
+        variant: "destructive",
+      });
+      return;
+    }
     try {
-      await onSubmit({ title: title || undefined, message, imageFile });
+      await onSubmit({ title: title.trim(), message, imageFile });
       setTitle('');
       setMessage('');
       setImageFile(undefined);
