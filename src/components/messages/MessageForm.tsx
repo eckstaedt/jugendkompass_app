@@ -10,7 +10,7 @@ interface MessageFormProps {
   initialTitle?: string;
   initialMessage?: string;
   initialImageUrl?: string | null;
-  onSubmit: (data: { title?: string; message: string; imageFile?: File }) => Promise<void>;
+  onSubmit: (data: { title: string; message: string; imageFile?: File }) => Promise<void>;
   isSubmitting: boolean;
 }
 
