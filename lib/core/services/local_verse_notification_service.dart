@@ -1,6 +1,8 @@
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz_data;
 
@@ -94,11 +96,59 @@ class LocalVerseNotificationService {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
 
+    // Try to fetch today's verse for a meaningful notification body
+    String notificationBody = 'Dein täglicher Bibelvers wartet auf dich.';
+    try {
+      final language = UserPreferencesService.instance.getLanguage();
+      final supabase = Supabase.instance.client;
+      final today = DateTime.now();
+      final todayStr =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+      Map<String, dynamic>? row;
+      if (language == 'de') {
+        row = await supabase
+            .from('verse_of_the_day')
+            .select('verse, reference')
+            .eq('date', todayStr)
+            .maybeSingle();
+        row ??= await supabase
+            .from('verse_of_the_day')
+            .select('verse, reference')
+            .order('date', ascending: false)
+            .limit(1)
+            .maybeSingle();
+      } else {
+        final result = await supabase
+            .rpc('get_verse_of_day_localized', params: {'lang': language});
+        if (result != null && result is List && result.isNotEmpty) {
+          row = result.first as Map<String, dynamic>;
+        }
+        row ??= await supabase
+            .from('verse_of_the_day')
+            .select('verse, reference')
+            .eq('date', todayStr)
+            .maybeSingle();
+      }
+
+      if (row != null) {
+        final verse = row['verse'] as String?;
+        final reference = row['reference'] as String?;
+        if (verse != null && verse.isNotEmpty) {
+          notificationBody = reference != null && reference.isNotEmpty
+              ? '$verse — $reference'
+              : verse;
+        }
+      }
+    } catch (e) {
+      debugPrint('[LocalVerse] Could not fetch verse for notification: $e');
+    }
+
     try {
       await _plugin.zonedSchedule(
         _notificationId,
         'Vers des Tages 📖',
-        'Dein täglicher Bibelvers wartet auf dich.',
+        notificationBody,
         scheduledDate,
         const NotificationDetails(
           android: AndroidNotificationDetails(
@@ -128,58 +178,6 @@ class LocalVerseNotificationService {
   Future<void> cancel() async {
     if (kIsWeb) return;
     await _plugin.cancel(_notificationId);
-  }
-
-  /// Fire a test notification in 5 seconds so the user can background the app.
-  /// Pass [verseText] and [verseRef] to show the real verse content.
-  Future<void> sendTestNotification({
-    String? verseText,
-    String? verseRef,
-  }) async {
-    if (kIsWeb) return;
-
-    if (Platform.isAndroid) {
-      final granted = await requestAndroidPermission();
-      if (!granted) return;
-    }
-
-    final body = (verseText != null && verseRef != null)
-        ? '$verseText — $verseRef'
-        : 'Dein täglicher Bibelvers wartet auf dich.';
-
-    final scheduledDate = DateTime.now().add(const Duration(seconds: 5));
-
-    tz_data.initializeTimeZones();
-    final utc = tz.getLocation('UTC');
-    final tzDate = tz.TZDateTime.from(scheduledDate, utc);
-
-    try {
-      await _plugin.zonedSchedule(
-        _notificationId + 1, // different id so it doesn't cancel the daily one
-        'Vers des Tages 📖',
-        body,
-        tzDate,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            _channelId,
-            _channelName,
-            channelDescription: 'Tägliche Bibelvers-Erinnerung',
-            importance: Importance.high,
-            priority: Priority.high,
-          ),
-          iOS: DarwinNotificationDetails(
-            presentAlert: true,
-            presentBadge: true,
-            presentSound: true,
-          ),
-        ),
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-      );
-    } catch (e) {
-      debugPrint('[LocalVerse] Failed to send test notification: $e');
-    }
   }
 
   // ── Timezone picker data ─────────────────────────────────────────────────

@@ -15,7 +15,6 @@ import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/data/services/favorites_service.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/services/local_verse_notification_service.dart';
-import 'package:jugendkompass_app/domain/providers/verse_provider.dart';
 
 import 'package:jugendkompass_app/data/services/collection_service.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -203,14 +202,6 @@ class ProfileScreen extends ConsumerWidget {
                     },
                     activeThumbColor: DesignTokens.primaryRed,
                   ),
-
-                  // Test-notification button (only visible when verse notifications are on)
-                  if (verseEnabled) ...[
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(56, 0, 16, 10),
-                      child: _TestVerseNotificationButton(translate: translate),
-                    ),
-                  ],
 
                   Divider(
                     height: 1,
@@ -704,85 +695,5 @@ class ProfileScreen extends ConsumerWidget {
         ),
       );
     }
-  }
-}
-
-/// Small button that sends a test "Vers des Tages" notification in 5 seconds.
-/// Allows the user to verify local notifications work without waiting until 07:00.
-class _TestVerseNotificationButton extends ConsumerStatefulWidget {
-  final String Function(String) translate;
-  const _TestVerseNotificationButton({required this.translate});
-
-  @override
-  ConsumerState<_TestVerseNotificationButton> createState() =>
-      _TestVerseNotificationButtonState();
-}
-
-class _TestVerseNotificationButtonState
-    extends ConsumerState<_TestVerseNotificationButton> {
-  bool _sending = false;
-
-  Future<void> _send() async {
-    setState(() => _sending = true);
-
-    // Try to get the current verse for a richer notification body
-    String? verseText;
-    String? verseRef;
-    try {
-      final verseAsync = ref.read(dailyVerseProvider);
-      verseAsync.whenData((verse) {
-        if (verse != null) {
-          verseText = verse.verse;
-          verseRef = verse.reference;
-        }
-      });
-    } catch (_) {}
-
-    await LocalVerseNotificationService.instance.sendTestNotification(
-      verseText: verseText,
-      verseRef: verseRef,
-    );
-
-    if (!mounted) return;
-    setState(() => _sending = false);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(widget.translate('Test-Benachrichtigung wird in 5 Sekunden angezeigt')),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 90),
-        duration: const Duration(seconds: 4),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _sending ? null : _send,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (_sending)
-            const SizedBox(
-              width: 12,
-              height: 12,
-              child: CircularProgressIndicator(strokeWidth: 1.5),
-            )
-          else
-            const Icon(Icons.send_outlined, size: 13),
-          const SizedBox(width: 5),
-          Text(
-            widget.translate('Test senden'),
-            style: TextStyle(
-              fontSize: 12,
-              color: DesignTokens.primaryRed,
-              decoration: TextDecoration.underline,
-              decorationColor: DesignTokens.primaryRed,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
