@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/data/models/verse_model.dart';
-import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 
-class VerseCard extends ConsumerStatefulWidget {
+class VerseCard extends StatefulWidget {
   final VerseModel verse;
 
   const VerseCard({
@@ -16,10 +14,10 @@ class VerseCard extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<VerseCard> createState() => _VerseCardState();
+  State<VerseCard> createState() => _VerseCardState();
 }
 
-class _VerseCardState extends ConsumerState<VerseCard>
+class _VerseCardState extends State<VerseCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
@@ -65,11 +63,8 @@ class _VerseCardState extends ConsumerState<VerseCard>
     final theme = Theme.of(context);
     final verse = widget.verse;
 
-    // Translate verse content to the selected app language
-    final translationAsync = ref.watch(
-      translateVerseProvider((verse: verse.verse, reference: verse.reference)),
-    );
-
+    // The verse is already localized from the RPC function get_verse_of_day_localized
+    // in verse_repository.dart, so we just display it directly without additional translation
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
@@ -95,7 +90,7 @@ class _VerseCardState extends ConsumerState<VerseCard>
           const SizedBox(height: DesignTokens.spacingMedium),
           // Verse text itself uses Merriweather (serif) per design request.
           Text(
-            translationAsync.whenOrNull(data: (d) => d.verse) ?? verse.verse,
+            verse.verse,
             style: GoogleFonts.merriweather(
               textStyle: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w600,
@@ -106,7 +101,7 @@ class _VerseCardState extends ConsumerState<VerseCard>
           ),
           const SizedBox(height: DesignTokens.spacingMedium),
           Text(
-            '— ${translationAsync.whenOrNull(data: (d) => d.reference) ?? verse.reference}',
+            '— ${verse.reference}',
             style: theme.textTheme.titleMedium?.copyWith(
               color: DesignTokens.getTextSecondary(theme.brightness),
               fontStyle: FontStyle.italic,

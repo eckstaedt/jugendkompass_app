@@ -114,6 +114,33 @@ class VerseRepository {
     }
   }
 
+  /// Get a specific verse by ID with localization.
+  Future<VerseModel?> getVerseByIdLocalized(String verseId, String language) async {
+    try {
+      // For German, use regular method
+      if (language == 'de') {
+        return getVerseById(verseId);
+      }
+
+      // Use RPC function to get localized verse
+      // The RPC function should accept verseId parameter
+      final response = await _supabase.rpc(
+        'get_verse_by_id_localized',
+        params: {'verse_id': verseId, 'lang': language},
+      );
+
+      if (response == null) {
+        // Fallback to German if no translation
+        return getVerseById(verseId);
+      }
+
+      return VerseModel.fromJson(response);
+    } catch (e) {
+      // Fallback to German on error
+      return getVerseById(verseId);
+    }
+  }
+
   /// Get a specific verse by ID.
   Future<VerseModel?> getVerseById(String verseId) async {
     try {

@@ -4,7 +4,6 @@ import 'package:jugendkompass_app/data/models/verse_model.dart';
 import 'package:jugendkompass_app/domain/providers/post_provider.dart';
 import 'package:jugendkompass_app/domain/providers/verse_provider.dart';
 import 'package:jugendkompass_app/domain/providers/video_provider.dart';
-import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
@@ -171,11 +170,8 @@ class _VerseDialog extends ConsumerWidget {
     final theme = Theme.of(context);
     final translate = ref.watch(stringTranslatorProvider);
 
-    // Translate verse content to the selected app language
-    final translationAsync = ref.watch(
-      translateVerseProvider((verse: verse.verse, reference: verse.reference)),
-    );
-
+    // The verse is already localized from verseByIdProvider
+    // which uses verse_repository.dart's getVerseById that should use localized data
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(32),
@@ -193,51 +189,19 @@ class _VerseDialog extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 16),
-            translationAsync.when(
-              data: (translated) => Text(
-                translated.verse,
-                style: GoogleFonts.merriweather(
-                  textStyle: theme.textTheme.bodyLarge?.copyWith(
-                    height: 1.6,
-                  ),
-                ),
-              ),
-              loading: () => Text(
-                verse.verse,
-                style: GoogleFonts.merriweather(
-                  textStyle: theme.textTheme.bodyLarge?.copyWith(
-                    height: 1.6,
-                  ),
-                ),
-              ),
-              error: (_, __) => Text(
-                verse.verse,
-                style: GoogleFonts.merriweather(
-                  textStyle: theme.textTheme.bodyLarge?.copyWith(
-                    height: 1.6,
-                  ),
+            Text(
+              verse.verse,
+              style: GoogleFonts.merriweather(
+                textStyle: theme.textTheme.bodyLarge?.copyWith(
+                  height: 1.6,
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            translationAsync.when(
-              data: (translated) => Text(
-                '— ${translated.reference}',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-              loading: () => Text(
-                '— ${verse.reference}',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-              error: (_, __) => Text(
-                '— ${verse.reference}',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontStyle: FontStyle.italic,
-                ),
+            Text(
+              '— ${verse.reference}',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontStyle: FontStyle.italic,
               ),
             ),
             const SizedBox(height: 24),
