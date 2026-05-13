@@ -15,6 +15,9 @@ import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/bottom_nav_provider.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/podcast/widgets/mini_player_bar.dart';
+import 'package:jugendkompass_app/core/services/fcm_service.dart'
+    if (dart.library.html) 'package:jugendkompass_app/stubs/fcm_service_stub.dart';
+import 'package:jugendkompass_app/core/services/deep_link_service.dart';
 
 class App extends ConsumerStatefulWidget {
   const App({super.key});
@@ -26,6 +29,28 @@ class App extends ConsumerStatefulWidget {
 class _AppState extends ConsumerState<App> {
   final _routeObserver = FullPlayerRouteObserver();
   final _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Set up notification tap handler for deep linking
+    FCMService().onNotificationTap = _handleNotificationTap;
+  }
+
+  /// Handle notification tap and navigate to appropriate content.
+  void _handleNotificationTap(Map<String, dynamic> data) {
+    // Wait for the navigator to be ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = _navigatorKey.currentContext;
+      if (context != null && context.mounted) {
+        DeepLinkService.instance.handleNotificationTap(
+          context: context,
+          ref: ref,
+          data: data,
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

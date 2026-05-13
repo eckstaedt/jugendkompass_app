@@ -7,6 +7,7 @@ import 'package:just_audio/just_audio.dart' as just_audio;
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
+import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 
 class FullPlayerScreen extends ConsumerStatefulWidget {
@@ -372,7 +373,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                       DesignTokens.primaryRed.withOpacity(0.15),
                                   timeLabelTextStyle:
                                       theme.textTheme.bodySmall?.copyWith(
-                                    color: DesignTokens.getTextSecondary(
+                                    color: DesignTokens.getTextPrimary(
                                         brightness),
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -680,6 +681,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                             const EdgeInsets.only(right: 12),
                                         child: GestureDetector(
                                           onTap: () {
+                                            final translate = ref.read(stringTranslatorProvider);
                                             audioService.addToQueue(audio);
                                             ref
                                                 .read(
@@ -690,7 +692,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                             ScaffoldMessenger.of(context)
                                                 .showSnackBar(SnackBar(
                                               content: Text(
-                                                  '${audio.title ?? "Audio"} zur Warteschlange hinzugefügt'),
+                                                  '${audio.title ?? "Audio"} ${translate('zur Warteschlange hinzugefügt')}'),
                                               duration:
                                                   const Duration(seconds: 2),
                                             ));

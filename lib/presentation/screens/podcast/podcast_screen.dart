@@ -82,7 +82,7 @@ class PodcastScreen extends ConsumerWidget {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
                       child: Text(
-                        'Podcast',
+                        translate('Podcast'),
                         style: theme.textTheme.displaySmall?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: DesignTokens.getTextPrimary(brightness),

@@ -62,6 +62,11 @@ Future<void> main() async {
   // Initialize local verse notification service (mobile only)
   await LocalVerseNotificationService.instance.init();
 
+  // Initialize FCM for push notifications (mobile only)
+  if (!kIsWeb) {
+    await FCMService().init();
+  }
+
   // Initialize just_audio_background (mobile only) — this powers the native lock screen
   // controls (play/pause, skip ±10s, artwork, title) on iOS and Android.
   if (!kIsWeb) {

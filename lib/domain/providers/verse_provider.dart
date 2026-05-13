@@ -30,3 +30,11 @@ final recentVersesProvider = FutureProvider<List<VerseModel>>((ref) async {
 
   return await repository.getRecentVersesLocalized(language);
 });
+
+/// Single verse provider by ID
+final verseByIdProvider = FutureProvider.family<VerseModel?, String>(
+  (ref, verseId) async {
+    final repository = ref.watch(verseRepositoryProvider);
+    return repository.getVerseById(verseId);
+  },
+);

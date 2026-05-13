@@ -134,7 +134,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         DesignTokens.spacingMedium,
                       ),
                       child: Text(
-                        'Shalom, ${userName ?? "User"}',
+                        '${translate('Shalom')}, ${userName ?? translate('Benutzer')}',
                         style: GoogleFonts.poppins(
                           textStyle: theme.textTheme.displaySmall?.copyWith(
                                 fontWeight: FontWeight.w800,
@@ -156,7 +156,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             return SizedBox(
                               height: 200,
                               child: Center(
-                                child: Text('Kein Vers für heute verfügbar'),
+                                child: Text(translate('Kein Vers für heute verfügbar')),
                               ),
                             );
                           }

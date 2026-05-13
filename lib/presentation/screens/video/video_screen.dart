@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:video_player/video_player.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/domain/providers/video_provider.dart';
+import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
     show kVideoPlayerRouteName;
@@ -37,6 +38,7 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
     final brightness = theme.brightness;
     final textPrimary = DesignTokens.getTextPrimary(brightness);
     final textSecondary = DesignTokens.getTextSecondary(brightness);
+    final translate = ref.watch(stringTranslatorProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -49,7 +51,7 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Videos',
+                  translate('Videos'),
                   style: theme.textTheme.displaySmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: textPrimary,
@@ -74,7 +76,7 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                     });
                   },
                   decoration: InputDecoration(
-                    hintText: 'Videos suchen...',
+                    hintText: translate('Videos suchen...'),
                     hintStyle: TextStyle(
                       color: textSecondary,
                       fontSize: 16,

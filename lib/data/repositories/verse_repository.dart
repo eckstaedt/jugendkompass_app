@@ -113,4 +113,23 @@ class VerseRepository {
       return getRecentVerses(limit: limit);
     }
   }
+
+  /// Get a specific verse by ID.
+  Future<VerseModel?> getVerseById(String verseId) async {
+    try {
+      final response = await _supabase
+          .from(SupabaseConstants.verseOfTheDayTable)
+          .select()
+          .eq('id', verseId)
+          .maybeSingle();
+
+      if (response != null) {
+        return VerseModel.fromJson(response);
+      }
+
+      return null;
+    } catch (e) {
+      throw Exception('Fehler beim Laden des Verses: $e');
+    }
+  }
 }

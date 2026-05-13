@@ -26,7 +26,7 @@ final postsListProvider = FutureProvider.family<List<PostModel>, PostFilter>(
 );
 
 /// Single post provider by ID (localized)
-final postDetailProvider = FutureProvider.family<PostModel?, String>(
+final postByIdProvider = FutureProvider.family<PostModel?, String>(
   (ref, postId) async {
     final repository = ref.watch(postRepositoryProvider);
     final language = ref.watch(languageProvider).locale.languageCode;
@@ -34,6 +34,9 @@ final postDetailProvider = FutureProvider.family<PostModel?, String>(
     return await repository.getPostByIdLocalized(postId, language);
   },
 );
+
+/// Single post provider by ID (localized) - alias for consistency
+final postDetailProvider = postByIdProvider;
 
 /// Posts by edition provider
 final postsByEditionProvider = FutureProvider.family<List<PostModel>, String>(

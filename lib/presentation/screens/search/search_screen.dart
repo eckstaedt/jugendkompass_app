@@ -7,6 +7,7 @@ import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/impulse_provider.dart';
 import 'package:jugendkompass_app/domain/providers/message_provider.dart';
 import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
+import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier, kVideoPlayerRouteName;
 import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
@@ -72,6 +73,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final textSecondary = DesignTokens.getTextSecondary(brightness);
     final selectedFilter = ref.watch(_selectedDiscoverFilterProvider);
     final sortDescending = ref.watch(_sortDescendingProvider);
+    final translate = ref.watch(stringTranslatorProvider);
 
     return Scaffold(
       extendBody: true,
@@ -80,7 +82,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('search'.tr),
+        title: Text(translate('Suche')),
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
@@ -96,7 +98,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 children: [
                   // Title
                   Text(
-                    'Entdecken',
+                    translate('Entdecken'),
                     style: theme.textTheme.displaySmall?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: textPrimary,
@@ -114,7 +116,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     child: TextField(
                       controller: _searchController,
                       decoration: InputDecoration(
-                      hintText: 'Wonach suchst du?',
+                      hintText: translate('Wonach suchst du?'),
                       hintStyle: TextStyle(
                         color: textSecondary,
                         fontSize: 16,
@@ -195,19 +197,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         children: [
-                          _buildFilterChip('Alle', 'alle', selectedFilter),
+                          _buildFilterChip(translate('Alle'), 'alle', selectedFilter),
                           const SizedBox(width: 8),
-                          _buildFilterChip('Artikel', 'artikel', selectedFilter),
+                          _buildFilterChip(translate('Artikel'), 'artikel', selectedFilter),
                           const SizedBox(width: 8),
-                          _buildFilterChip('Video', 'video', selectedFilter),
+                          _buildFilterChip(translate('Video'), 'video', selectedFilter),
                           const SizedBox(width: 8),
-                          _buildFilterChip('Audio', 'audio', selectedFilter),
+                          _buildFilterChip(translate('Audio'), 'audio', selectedFilter),
                           const SizedBox(width: 8),
-                          _buildFilterChip('Impuls', 'impuls', selectedFilter),
+                          _buildFilterChip(translate('Impuls'), 'impuls', selectedFilter),
                           const SizedBox(width: 8),
-                          _buildFilterChip('Kurznachricht', 'kurznachricht', selectedFilter),
+                          _buildFilterChip(translate('Kurznachricht'), 'kurznachricht', selectedFilter),
                           const SizedBox(width: 8),
-                          _buildFilterChip('Ausgabe', 'ausgabe', selectedFilter),
+                          _buildFilterChip(translate('Ausgabe'), 'ausgabe', selectedFilter),
                         ],
                       ),
                     ),
@@ -217,7 +219,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       sortDescending ? Icons.arrow_downward : Icons.arrow_upward,
                       color: DesignTokens.primaryRed,
                     ),
-                    tooltip: sortDescending ? 'Neueste zuerst' : 'Älteste zuerst',
+                    tooltip: sortDescending ? translate('Neueste zuerst') : translate('Älteste zuerst'),
                     onPressed: () {
                       ref.read(_sortDescendingProvider.notifier).state = !sortDescending;
                     },

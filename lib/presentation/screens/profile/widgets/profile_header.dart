@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 
-class ProfileHeaderWidget extends StatelessWidget {
+class ProfileHeaderWidget extends ConsumerWidget {
   final String? userName;
   final String? avatarUrl;
   final VoidCallback onEditPressed;
@@ -16,8 +18,9 @@ class ProfileHeaderWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final translate = ref.watch(stringTranslatorProvider);
 
     return RoundedCard(
       glass: true,
@@ -49,7 +52,7 @@ class ProfileHeaderWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  userName ?? 'Benutzer',
+                  userName ?? translate('Benutzer'),
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -67,7 +70,7 @@ class ProfileHeaderWidget extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'Online',
+                      translate('Online'),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),

@@ -232,7 +232,11 @@ serve(async (_req) => {
             message: {
               token,
               notification: { title, body },
-              data: { type: 'verse' },
+              // Data payload for deep linking
+              data: {
+                contentType: 'verse',
+                contentId: verseData.id,
+              },
               android: {
                 notification: {
                   sound: "default",

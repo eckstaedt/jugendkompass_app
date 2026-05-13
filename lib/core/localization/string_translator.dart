@@ -28,6 +28,23 @@ class StringTranslator {
     'Neueste Inhalte': 'latest_content',
     'Kürzliche Inhalte': 'recent_content',
     'Artikel': 'articles',
+    'Kurznachricht': 'short_message',
+    'Benutzer': 'user',
+    'Online': 'online',
+    'zur Warteschlange hinzugefügt': 'added_to_queue',
+    'Podcast': 'podcast',
+    'Shalom': 'shalom',
+    'Aktiviert': 'enabled',
+    'Deaktiviert': 'disabled',
+    'Push-Benachrichtigungen': 'push_notifications',
+    'Vers des Tages': 'verse_of_day',
+    'Neue Beiträge': 'new_posts',
+    'Zeitzone': 'timezone',
+    'Zeitzone wählen': 'select_timezone',
+    'Name ändern': 'change_name',
+    'Dein Name': 'your_name',
+    'Name gespeichert': 'name_saved',
+    'Nicht festgelegt': 'not_set',
     'Alle Ausgaben': 'all_editions',
     'Keine Artikel gefunden': 'no_articles_found',
     'Artikel in dieser Ausgabe': 'articles_in_edition',
@@ -38,6 +55,9 @@ class StringTranslator {
     // Settings
     'Sprache': 'language',
     'Benachrichtigungen': 'notifications',
+    'Damit du täglich deinen Bibelvers und Infos über neue Beiträge erhältst, benötigen wir deine Erlaubnis für Benachrichtigungen.': 'notification_permission_info',
+    'Überspringen': 'skip',
+    'Erlauben': 'allow',
     'Push-Benachrichtigungen erhalten': 'enable_notifications',
     'Dark Mode': 'dark_mode',
     'Dunkles Theme verwenden': 'use_dark_theme',
@@ -69,7 +89,7 @@ class StringTranslator {
     'Min': 'min',
     
     // Empty states
-    'Keine Verse verfügbar': 'no_verses_available',
+    'Keine Verse verfügbar': 'no_verses_today',
     'Keine Impulse verfügbar': 'no_impulses',
     'No Content Available': 'no_content_available',
     'No More Content': 'no_more_content',
@@ -193,6 +213,8 @@ class StringTranslator {
     'Player': 'player',
     'Suche': 'search',
     'Rückgängig': 'undo',
+    'Neueste zuerst': 'newest_first',
+    'Älteste zuerst': 'oldest_first',
   };
 
   /// Translates a German string to the current language

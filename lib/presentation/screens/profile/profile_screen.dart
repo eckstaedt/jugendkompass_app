@@ -517,7 +517,8 @@ class ProfileScreen extends ConsumerWidget {
 
     if (selectedLanguage != null && selectedLanguage != currentLanguage && context.mounted) {
       await ref.read(languageProvider.notifier).setLanguage(selectedLanguage);
-      if (context.mounted) {
+      // Only show language notice when switching to a non-German language
+      if (context.mounted && selectedLanguage != AppLanguage.de) {
         await showDialog(
           context: context,
           builder: (context) => AlertDialog(

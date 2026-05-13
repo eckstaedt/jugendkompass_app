@@ -6,6 +6,7 @@ import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/services/fcm_service.dart';
 import 'package:jugendkompass_app/core/services/device_registration_service.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
+import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import '../../../data/services/user_preferences_service.dart';
 import '../../navigation/bottom_nav_screen.dart';
 
@@ -70,6 +71,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Future<void> _showNotificationPermissionDialog() async {
     final theme = Theme.of(context);
     final brightness = theme.brightness;
+    final translate = ref.read(stringTranslatorProvider);
 
     await showDialog<void>(
       context: context,
@@ -84,7 +86,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             Icon(Icons.notifications_outlined, color: DesignTokens.primaryRed),
             const SizedBox(width: 12),
             Text(
-              'Benachrichtigungen',
+              translate('Benachrichtigungen'),
               style: GoogleFonts.inter(
                 fontWeight: FontWeight.w700,
                 fontSize: 18,
@@ -93,7 +95,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ],
         ),
         content: Text(
-          'Damit du täglich deinen Bibelvers und Infos über neue Beiträge erhältst, benötigen wir deine Erlaubnis für Benachrichtigungen.',
+          translate('Damit du täglich deinen Bibelvers und Infos über neue Beiträge erhältst, benötigen wir deine Erlaubnis für Benachrichtigungen.'),
           style: GoogleFonts.inter(
             fontSize: 15,
             color: DesignTokens.getTextSecondary(brightness),
@@ -104,7 +106,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
-              'Überspringen',
+              translate('Überspringen'),
               style: TextStyle(color: DesignTokens.getTextSecondary(brightness)),
             ),
           ),
@@ -116,7 +118,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             style: FilledButton.styleFrom(
               backgroundColor: DesignTokens.primaryRed,
             ),
-            child: const Text('Erlauben'),
+            child: Text(translate('Erlauben')),
           ),
         ],
       ),
@@ -149,6 +151,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final brightness = theme.brightness;
+    final translate = ref.watch(stringTranslatorProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -197,7 +200,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
                       // Headline
                       Text(
-                        'Der Jugendkompass',
+                        translate('Der Jugendkompass'),
                         textAlign: TextAlign.center,
                         style: GoogleFonts.inter(
                           textStyle: theme.textTheme.titleLarge?.copyWith(
@@ -216,7 +219,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
                       // Subtitle
                       Text(
-                        'Dein täglicher Begleiter für dein Glaubensleben.',
+                        translate('Dein täglicher Begleiter für dein Glaubensleben.'),
                         textAlign: TextAlign.center,
                         style: GoogleFonts.inter(
                           textStyle: theme.textTheme.bodyMedium?.copyWith(
@@ -242,7 +245,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             ),
                           ),
                           decoration: InputDecoration(
-                            hintText: 'Wie heißt du?',
+                            hintText: translate('Wie heißt du?'),
                             hintStyle: GoogleFonts.inter(
                               textStyle: TextStyle(
                                 color: DesignTokens.getTextSecondary(brightness),
@@ -283,7 +286,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             disabledForegroundColor: Colors.white.withOpacity(0.7),
                           ),
                           child: Text(
-                            'Los geht\'s 🚀',
+                            translate('Los geht\'s 🚀'),
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,

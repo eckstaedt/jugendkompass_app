@@ -5,6 +5,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jugendkompass_app/core/services/device_registration_service.dart';
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
+import 'package:jugendkompass_app/core/services/deep_link_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Handles Firebase Cloud Messaging (FCM) for server-sent push notifications.
 ///
@@ -24,6 +26,10 @@ class FCMService {
   /// Local notifications plugin for showing foreground messages.
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
+
+  /// Callback for handling notification tap navigation.
+  /// Set this from the app's root widget to enable deep linking.
+  void Function(Map<String, dynamic> data)? onNotificationTap;
 
   /// Initialize FCM: request permissions, get token, listen for refresh.
   Future<void> init() async {
@@ -61,9 +67,56 @@ class FCMService {
 
       // Handle foreground messages — show as local notification
       FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+
+      // Handle notification taps when app is in background or terminated
+      _setupNotificationTapHandlers();
     }
 
     _isInitialized = true;
+  }
+
+  /// Set up handlers for notification taps from different app states.
+  void _setupNotificationTapHandlers() {
+    // Handle notification tap when app was in background
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleBackgroundNotificationTap);
+
+    // Handle notification tap when app was terminated
+    FirebaseMessaging.instance
+        .getInitialMessage()
+        .then((message) {
+      if (message != null) {
+        _handleBackgroundNotificationTap(message);
+      }
+    });
+  }
+
+  /// Handle notification tap from background or terminated state.
+  void _handleBackgroundNotificationTap(RemoteMessage message) {
+    debugPrint('[FCM] Notification tapped: ${message.messageId}');
+    final data = message.data;
+    if (data.isNotEmpty && onNotificationTap != null) {
+      onNotificationTap!(data);
+    }
+  }
+
+  /// Handle notification tap from local notification (foreground).
+  void _handleNotificationTap(NotificationResponse response) {
+    debugPrint('[FCM] Local notification tapped: ${response.payload}');
+    // Payload contains the serialized data from the notification
+    if (response.payload != null && onNotificationTap != null) {
+      try {
+        // Parse the payload - we'll store the data as JSON string
+        final data = <String, dynamic>{};
+        final parts = response.payload!.split('|');
+        if (parts.length >= 2) {
+          data['contentType'] = parts[0];
+          data['contentId'] = parts[1];
+        }
+        onNotificationTap!(data);
+      } catch (e) {
+        debugPrint('[FCM] Error parsing notification payload: $e');
+      }
+    }
   }
 
   /// Set up local notifications so we can display foreground messages.
@@ -78,7 +131,10 @@ class FCMService {
       android: androidSettings,
       iOS: iosSettings,
     );
-    await _localNotifications.initialize(initSettings);
+    await _localNotifications.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: _handleNotificationTap,
+    );
   }
 
   /// Request notification permission on Android 13+ (API 33+).
@@ -173,17 +229,23 @@ class FCMService {
     final notification = message.notification;
     if (notification == null) return;
 
+    // Create payload string for tap handling
+    final data = message.data;
+    final payload = data.containsKey('contentType') && data.containsKey('contentId')
+        ? '${data['contentType']}|${data['contentId']}'
+        : null;
+
     _localNotifications.show(
       notification.hashCode,
       notification.title,
       notification.body,
-      const NotificationDetails(
-        iOS: DarwinNotificationDetails(
+      NotificationDetails(
+        iOS: const DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
         ),
-        android: AndroidNotificationDetails(
+        android: const AndroidNotificationDetails(
           'push_notifications',
           'Push-Benachrichtigungen',
           channelDescription: 'Benachrichtigungen für neue Beiträge',
@@ -191,6 +253,7 @@ class FCMService {
           priority: Priority.high,
         ),
       ),
+      payload: payload,
     );
   }
 }

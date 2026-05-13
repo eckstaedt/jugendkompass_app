@@ -314,15 +314,15 @@ class CollectionScreen extends ConsumerWidget {
   String _getTypeLabel(CollectionItemType type, String Function(String) translate) {
     switch (type) {
       case CollectionItemType.impulse:
-        return 'Impuls';
+        return translate('Impuls');
       case CollectionItemType.video:
-        return 'Video';
+        return translate('Video');
       case CollectionItemType.post:
         return translate('Artikel');
       case CollectionItemType.edition:
-        return 'Ausgabe';
+        return translate('Ausgabe');
       case CollectionItemType.message:
-        return 'Kurznachricht';
+        return translate('Kurznachricht');
     }
   }
 }

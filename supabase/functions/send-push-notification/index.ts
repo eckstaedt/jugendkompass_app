@@ -96,6 +96,13 @@ const NOTIFICATION_TRANSLATIONS: Record<string, Record<string, { title: string; 
     pl: { title: "Nowy impuls", fallback: "Dostępny nowy impuls" },
     tr: { title: "Yeni İmpuls", fallback: "Yeni impuls mevcut" },
   },
+  verse: {
+    de: { title: "Vers des Tages", fallback: "Neuer Bibelvers verfügbar" },
+    en: { title: "Verse of the Day", fallback: "New Bible verse available" },
+    ru: { title: "Стих дня", fallback: "Доступен новый библейский стих" },
+    pl: { title: "Werset dnia", fallback: "Dostępny nowy werset biblijny" },
+    tr: { title: "Günün Ayeti", fallback: "Yeni İncil ayeti mevcut" },
+  },
 };
 
 /** Determine the notification title and body from the webhook payload with language support. */
@@ -103,9 +110,12 @@ function getNotificationContent(
   table: string,
   record: Record<string, unknown>,
   language: string = "de"
-): { title: string; body: string; imageUrl: string | null } | null {
+): { title: string; body: string; imageUrl: string | null; data: { contentType: string; contentId: string } } | null {
   // Validate language and default to German
   const lang = ["de", "en", "ru", "pl", "tr"].includes(language) ? language : "de";
+
+  // Extract content ID - could be content_id or id depending on table
+  const contentId = (record.content_id as string) || (record.id as string);
 
   switch (table) {
     case "posts": {
@@ -116,6 +126,7 @@ function getNotificationContent(
         title: translation.title,
         body: (record.title as string) || translation.fallback,
         imageUrl: (record.image_url as string) || null,
+        data: { contentType: "post", contentId },
       };
     }
     case "videos": {
@@ -124,6 +135,7 @@ function getNotificationContent(
         title: translation.title,
         body: (record.title as string) || translation.fallback,
         imageUrl: (record.image_url as string) || null,
+        data: { contentType: "video", contentId },
       };
     }
     case "messages": {
@@ -132,6 +144,7 @@ function getNotificationContent(
         title: translation.title,
         body: (record.title as string) || (record.message as string)?.substring(0, 100) || translation.fallback,
         imageUrl: (record.image_url as string) || null,
+        data: { contentType: "message", contentId },
       };
     }
     case "editions": {
@@ -140,6 +153,7 @@ function getNotificationContent(
         title: translation.title,
         body: (record.title as string) || (record.name as string) || translation.fallback,
         imageUrl: (record.image_url as string) || null,
+        data: { contentType: "edition", contentId },
       };
     }
     case "impulses": {
@@ -148,6 +162,16 @@ function getNotificationContent(
         title: translation.title,
         body: (record.title as string) || translation.fallback,
         imageUrl: (record.image_url as string) || null,
+        data: { contentType: "impulse", contentId },
+      };
+    }
+    case "verse_of_the_day": {
+      const translation = NOTIFICATION_TRANSLATIONS.verse[lang];
+      return {
+        title: translation.title,
+        body: (record.reference as string) || translation.fallback,
+        imageUrl: null,
+        data: { contentType: "verse", contentId },
       };
     }
     default:
@@ -301,6 +325,11 @@ serve(async (req) => {
                 title: notification.title,
                 body: notification.body,
                 ...(notification.imageUrl ? { image: notification.imageUrl } : {}),
+              },
+              // Data payload for deep linking
+              data: {
+                contentType: notification.data.contentType,
+                contentId: notification.data.contentId,
               },
               // iOS-specific: show image in notification
               apns: {
