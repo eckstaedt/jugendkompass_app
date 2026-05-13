@@ -128,10 +128,11 @@ export const useUpdateVideo = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, title, description, url, imageUrl }: { id: number, title: string, description?: string, url?: string, imageUrl?: string }) => {
+    mutationFn: async ({ id, title, description, url, imageUrl, createdAt }: { id: number, title: string, description?: string, url?: string, imageUrl?: string, createdAt?: string }) => {
       const updateData: Record<string, any> = { title, description: description || null };
       if (url) updateData.url = url;
       if (imageUrl !== undefined) updateData.image_url = imageUrl;
+      if (createdAt !== undefined) updateData.created_at = createdAt;
 
       const { data, error } = await supabase
         .from('videos')
