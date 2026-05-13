@@ -37,9 +37,11 @@ class _BottomNavScreenState extends ConsumerState<BottomNavScreen> {
 
     // Tell the persistent mini player how far above the bottom to sit.
     final safeBottom = MediaQuery.of(context).padding.bottom;
+    // Mirror the navbar's own bottom margin: `safeBottom > 0 ? safeBottom : 16`
+    final navBottomMargin = safeBottom > 0 ? safeBottom : 16.0;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(miniPlayerBottomOffsetProvider.notifier).state =
-          BottomNavScreen.navBarHeight + safeBottom;
+          BottomNavScreen.navBarHeight + navBottomMargin;
       // Show the global navbar overlay.
       ref.read(navBarVisibleProvider.notifier).state = true;
     });

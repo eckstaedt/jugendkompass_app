@@ -186,11 +186,15 @@ class _MiniPlayerScaffoldState extends ConsumerState<_MiniPlayerScaffold> {
     final showBar = currentAudio != null && !isFullPlayer && showNav;
     final selectedIndex = ref.watch(bottomNavIndexProvider);
     final safeBottom = MediaQuery.paddingOf(context).bottom;
+    // The navbar uses `max(safeBottom, 16)` as its own bottom margin
+    // (see _PersistentNavBar: `safeBottom > 0 ? safeBottom : 16`).
+    // We mirror that here so the mini player always clears the navbar.
+    final navBottomMargin = safeBottom > 0 ? safeBottom : 16.0;
 
     // Mini bar sits above the navbar when it is visible.
     final miniBarBottom = showNav
         ? (_routeDepth > 0
-            ? safeBottom + BottomNavScreen.navBarHeight
+            ? navBottomMargin + BottomNavScreen.navBarHeight
             : navBarOffset)
         : safeBottom;
 
