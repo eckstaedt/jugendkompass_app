@@ -25,6 +25,7 @@ const EditVideoDialog = ({ video, open, onOpenChange }: EditVideoDialogProps) =>
   const [description, setDescription] = useState('');
   const [url, setUrl] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [createdAt, setCreatedAt] = useState<Date | undefined>(undefined);
   const updateVideoMutation = useUpdateVideo();
   const { toast } = useToast();
 
@@ -34,6 +35,7 @@ const EditVideoDialog = ({ video, open, onOpenChange }: EditVideoDialogProps) =>
       setDescription(video.description || '');
       setUrl(video.url);
       setImageUrl(video.image_url || null);
+      setCreatedAt(video.created_at ? new Date(video.created_at) : undefined);
     }
   }, [video]);
 
