@@ -84,7 +84,7 @@ export const useUploadVideo = () => {
 
         if (contentError) throw contentError;
 
-        const insertPayload: Record<string, any> = { 
+        const insertPayload: any = { 
           title, 
           description: description || null,
           url: videoUrl,
@@ -96,7 +96,7 @@ export const useUploadVideo = () => {
 
         const { data: videoData, error: insertError } = await supabase
           .from('videos')
-          .insert([insertPayload])
+          .insert(insertPayload)
           .select('*, content:content_id(*)')
           .single();
 
