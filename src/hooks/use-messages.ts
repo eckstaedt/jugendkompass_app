@@ -9,7 +9,7 @@ export type Message = {
   content_id: string | null;
   created_by: string | null;
   created_at: string | null;
-  title: string | null;
+  title: string;
   message: string;
   image_url: string | null;
 };
