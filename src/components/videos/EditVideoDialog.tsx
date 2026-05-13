@@ -49,6 +49,7 @@ const EditVideoDialog = ({ video, open, onOpenChange }: EditVideoDialogProps) =>
         description,
         url,
         imageUrl: imageUrl!,
+        createdAt: createdAt ? createdAt.toISOString() : undefined,
       });
 
       toast({
