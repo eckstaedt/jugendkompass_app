@@ -1,5 +1,4 @@
 import 'dart:ui';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,8 +13,6 @@ import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/domain/providers/theme_provider.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/bottom_nav_provider.dart';
-import 'package:jugendkompass_app/core/services/device_registration_service.dart';
-import 'package:jugendkompass_app/core/services/fcm_service.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/podcast/widgets/mini_player_bar.dart';
 
@@ -29,39 +26,6 @@ class App extends ConsumerStatefulWidget {
 class _AppState extends ConsumerState<App> {
   final _routeObserver = FullPlayerRouteObserver();
   final _navigatorKey = GlobalKey<NavigatorState>();
-
-  @override
-  void initState() {
-    super.initState();
-    // Initialise notification permissions & register device with server
-    _initPushNotifications();
-  }
-
-  /// Request notification permission and ensure the device is registered
-  /// in Supabase so the server can send push notifications (Vers des Tages,
-  /// Neue Beiträge, etc.).
-  Future<void> _initPushNotifications() async {
-    if (kIsWeb) return; // Push notifications not supported on web
-    try {
-      // Initialize Firebase Cloud Messaging (handles permissions + token)
-      await FCMService().init();
-
-      // Make sure device is registered (respects current toggle states)
-      final prefs = UserPreferencesService.instance;
-      if (prefs.getNotificationsEnabled()) {
-        final language = prefs.getLanguage();
-        await DeviceRegistrationService.instance.register(
-          verseNotifications: prefs.getVerseNotificationsEnabled(),
-          contentNotifications: prefs.getNewContentNotificationsEnabled(),
-          notificationHour: prefs.getNotificationHour(),
-          notificationMinute: prefs.getNotificationMinute(),
-          language: language,
-        );
-      }
-    } catch (e) {
-      debugPrint('Push notification init error: $e');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

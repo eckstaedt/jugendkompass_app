@@ -1,7 +1,10 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/core/services/fcm_service.dart';
+import 'package:jugendkompass_app/core/services/device_registration_service.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import '../../../data/services/user_preferences_service.dart';
 import '../../navigation/bottom_nav_screen.dart';
@@ -49,12 +52,96 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
     if (!mounted) return;
 
-    // Navigate to main app (theme dialog will appear there for first-time users)
+    // Show notification permission info dialog and request permission
+    if (!kIsWeb) {
+      await _showNotificationPermissionDialog();
+    }
+
+    if (!mounted) return;
+
+    // Navigate to main app
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (context) => const BottomNavScreen(),
       ),
     );
+  }
+
+  Future<void> _showNotificationPermissionDialog() async {
+    final theme = Theme.of(context);
+    final brightness = theme.brightness;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: DesignTokens.getCardBackground(brightness),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.notifications_outlined, color: DesignTokens.primaryRed),
+            const SizedBox(width: 12),
+            Text(
+              'Benachrichtigungen',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Damit du täglich deinen Bibelvers und Infos über neue Beiträge erhältst, benötigen wir deine Erlaubnis für Benachrichtigungen.',
+          style: GoogleFonts.inter(
+            fontSize: 15,
+            color: DesignTokens.getTextSecondary(brightness),
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Überspringen',
+              style: TextStyle(color: DesignTokens.getTextSecondary(brightness)),
+            ),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await _requestNotificationPermission();
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: DesignTokens.primaryRed,
+            ),
+            child: const Text('Erlauben'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _requestNotificationPermission() async {
+    try {
+      // Initialize FCM and request permission
+      await FCMService().init();
+
+      // Register device if notifications enabled
+      final prefs = UserPreferencesService.instance;
+      if (prefs.getNotificationsEnabled()) {
+        await DeviceRegistrationService.instance.register(
+          verseNotifications: prefs.getVerseNotificationsEnabled(),
+          contentNotifications: prefs.getNewContentNotificationsEnabled(),
+          notificationHour: prefs.getNotificationHour(),
+          notificationMinute: prefs.getNotificationMinute(),
+          language: prefs.getLanguage(),
+        );
+      }
+    } catch (e) {
+      debugPrint('Notification permission request error: $e');
+    }
   }
 
   @override
