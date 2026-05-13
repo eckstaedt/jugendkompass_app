@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { format } from 'date-fns';
+import { CalendarIcon, LoaderCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,9 +8,11 @@ import { useUpdateVideo } from '@/hooks/use-videos';
 import { useToast } from '@/hooks/use-toast';
 import { Video } from '@/lib/supabase';
 import RichTextEditor from '@/components/editor/RichTextEditor';
-import { LoaderCircle } from 'lucide-react';
 import { ImageUploader } from '@/components/posts/ImageUploader';
 import { RetranslateButton } from '@/components/translations/RetranslateButton';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 type EditVideoDialogProps = {
   video: Video | null;
