@@ -53,16 +53,29 @@ class LocalVerseNotificationService {
     return granted ?? false;
   }
 
+  /// Check if notification permission is granted on Android (without requesting).
+  /// Returns true if granted or not on Android.
+  Future<bool> hasAndroidPermission() async {
+    if (kIsWeb || !Platform.isAndroid) return true;
+
+    final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    if (androidPlugin == null) return false;
+
+    final enabled = await androidPlugin.areNotificationsEnabled();
+    return enabled ?? false;
+  }
+
   /// Schedule (or reschedule) a daily notification at [hour]:[minute]
   /// in the given IANA [timezoneId] (e.g. 'Europe/Berlin').
-  /// On Android 13+, requests permission if not already granted.
+  /// Only schedules if permission is already granted (does not request).
   Future<void> scheduleDaily(int hour, int minute, String timezoneId) async {
     if (kIsWeb) return;
 
-    // Request Android permission before scheduling
+    // Check if permission is granted (don't request at startup)
     if (Platform.isAndroid) {
-      final granted = await requestAndroidPermission();
-      if (!granted) return;
+      final hasPermission = await hasAndroidPermission();
+      if (!hasPermission) return;
     }
 
     await cancel();
