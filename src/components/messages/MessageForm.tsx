@@ -47,7 +47,7 @@ const MessageForm = ({ initialTitle = '', initialMessage = '', initialImageUrl, 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="title">Titel (optional)</Label>
+        <Label htmlFor="title">Titel</Label>
         <Input
           id="title"
           value={title}
