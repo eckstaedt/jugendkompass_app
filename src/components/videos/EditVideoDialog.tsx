@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { format } from 'date-fns';
+import { CalendarIcon, LoaderCircle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,9 +8,11 @@ import { useUpdateVideo } from '@/hooks/use-videos';
 import { useToast } from '@/hooks/use-toast';
 import { Video } from '@/lib/supabase';
 import RichTextEditor from '@/components/editor/RichTextEditor';
-import { LoaderCircle } from 'lucide-react';
 import { ImageUploader } from '@/components/posts/ImageUploader';
 import { RetranslateButton } from '@/components/translations/RetranslateButton';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 type EditVideoDialogProps = {
   video: Video | null;
@@ -21,6 +25,7 @@ const EditVideoDialog = ({ video, open, onOpenChange }: EditVideoDialogProps) =>
   const [description, setDescription] = useState('');
   const [url, setUrl] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [createdAt, setCreatedAt] = useState<Date | undefined>(undefined);
   const updateVideoMutation = useUpdateVideo();
   const { toast } = useToast();
 
@@ -30,6 +35,7 @@ const EditVideoDialog = ({ video, open, onOpenChange }: EditVideoDialogProps) =>
       setDescription(video.description || '');
       setUrl(video.url);
       setImageUrl(video.image_url || null);
+      setCreatedAt(video.created_at ? new Date(video.created_at) : undefined);
     }
   }, [video]);
 
@@ -43,6 +49,7 @@ const EditVideoDialog = ({ video, open, onOpenChange }: EditVideoDialogProps) =>
         description,
         url,
         imageUrl: imageUrl!,
+        createdAt: createdAt ? createdAt.toISOString() : undefined,
       });
 
       toast({
@@ -85,6 +92,32 @@ const EditVideoDialog = ({ video, open, onOpenChange }: EditVideoDialogProps) =>
               onChange={(e) => setUrl(e.target.value)}
               placeholder="Video-URL"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Erstellungsdatum</label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !createdAt && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {createdAt ? format(createdAt, "dd.MM.yyyy") : <span>Datum wählen</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={createdAt}
+                  onSelect={setCreatedAt}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                />
+              </PopoverContent>
+            </Popover>
           </div>
           <ImageUploader
             value={imageUrl}

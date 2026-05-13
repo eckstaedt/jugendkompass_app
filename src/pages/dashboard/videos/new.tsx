@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { useUploadVideo } from '@/hooks/use-videos';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,6 +13,9 @@ import { FileVideoIcon, LinkIcon, LoaderCircle, UploadIcon } from 'lucide-react'
 import { ImageUploader } from '@/components/posts/ImageUploader';
 import RichTextEditor from '@/components/editor/RichTextEditor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 const NewVideoPage = () => {
   const { user } = useAuth();
@@ -22,6 +27,7 @@ const NewVideoPage = () => {
   const [file, setFile] = useState<File | null>(null);
   const [url, setUrl] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [createdAt, setCreatedAt] = useState<Date | undefined>(new Date());
   const [mode, setMode] = useState<'upload' | 'url'>('upload');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -58,7 +64,8 @@ const NewVideoPage = () => {
         description,
         imageUrl: imageUrl!,
         ...(mode === 'upload' ? { file: file! } : { url }),
-        userId: user.id
+        userId: user.id,
+        createdAt: createdAt ? createdAt.toISOString() : undefined,
       });
 
       setUploadProgress(100);
@@ -67,6 +74,7 @@ const NewVideoPage = () => {
       setFile(null);
       setUrl('');
       setImageUrl(null);
+      setCreatedAt(new Date());
       toast({
         title: "Video hinzugefügt",
         description: mode === 'upload'
@@ -106,6 +114,34 @@ const NewVideoPage = () => {
                 onChange={(e) => setTitle(e.target.value)}
                 disabled={isUploading}
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Erstellungsdatum</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !createdAt && "text-muted-foreground"
+                    )}
+                    disabled={isUploading}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {createdAt ? format(createdAt, "dd.MM.yyyy") : <span>Datum wählen</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={createdAt}
+                    onSelect={setCreatedAt}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div>

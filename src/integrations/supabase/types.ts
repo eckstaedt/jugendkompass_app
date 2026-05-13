@@ -171,6 +171,7 @@ export type Database = {
           notification_hour: number
           notification_minute: number
           platform: string
+          timezone: string
           verse_notifications: boolean
         }
         Insert: {
@@ -183,6 +184,7 @@ export type Database = {
           notification_hour?: number
           notification_minute?: number
           platform?: string
+          timezone?: string
           verse_notifications?: boolean
         }
         Update: {
@@ -195,6 +197,7 @@ export type Database = {
           notification_hour?: number
           notification_minute?: number
           platform?: string
+          timezone?: string
           verse_notifications?: boolean
         }
         Relationships: []
