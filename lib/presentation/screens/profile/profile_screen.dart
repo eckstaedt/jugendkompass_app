@@ -495,8 +495,23 @@ class ProfileScreen extends ConsumerWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: AppLanguage.availableLanguages.map((language) {
+            // Get disclaimer text in the respective language
+            final Translations languageTranslations = Translations(language);
+            final disclaimer = language != AppLanguage.de
+                ? languageTranslations.get('language_disclaimer')
+                : null;
+
             return RadioListTile<AppLanguage>(
               title: Text(language.displayName),
+              subtitle: disclaimer != null
+                  ? Text(
+                      disclaimer,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    )
+                  : null,
               value: language,
               groupValue: currentLanguage,
               activeColor: DesignTokens.primaryRed,
@@ -517,38 +532,7 @@ class ProfileScreen extends ConsumerWidget {
 
     if (selectedLanguage != null && selectedLanguage != currentLanguage) {
       if (!context.mounted) return;
-
       await ref.read(languageProvider.notifier).setLanguage(selectedLanguage);
-
-      // Only show language notice when switching to a non-German language
-      if (selectedLanguage != AppLanguage.de) {
-        if (!context.mounted) return;
-
-        // Use AppTranslations.t directly with the new language
-        showDialog(
-          context: context,
-          builder: (context) => Consumer(
-            builder: (context, ref, _) {
-              final newTranslate = ref.watch(stringTranslatorProvider);
-              return AlertDialog(
-                title: Text(newTranslate('Hinweis zur Sprache')),
-                content: Text(
-                  newTranslate('Bitte beachte, dass nicht alle Inhalte (z. B. Videos und Podcasts) in die gewählte Sprache übersetzt sind. Einige Inhalte werden weiterhin in der Originalsprache angezeigt.'),
-                ),
-                actions: [
-                  FilledButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: DesignTokens.primaryRed,
-                    ),
-                    child: Text(newTranslate('Verstanden')),
-                  ),
-                ],
-              );
-            },
-          ),
-        );
-      }
     }
   }
 
