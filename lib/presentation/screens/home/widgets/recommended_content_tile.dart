@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/domain/providers/recommendation_provider.dart';
 import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
+import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
+import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
@@ -92,6 +94,14 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
       ref.read(currentAudioProvider.notifier).state = audio;
       currentAudioNotifier.value = audio;
 
+      // Mark audio as listened
+      ref.read(readHistoryProvider.notifier).markAsRead(
+        audio.id,
+        ReadContentType.audio,
+        title: audio.title ?? audio.post?.title,
+        imageUrl: audio.imageUrl,
+      );
+
       // Start playback (setQueue calls playAudio internally)
       final audioService = ref.read(audioServiceProvider);
       await audioService.setQueue([audio], startIndex: 0);
@@ -113,124 +123,139 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
     final titleAsync = ref.watch(translateTextProvider(item.title));
     final displayTitle = HtmlUtils.stripHtml(titleAsync.whenOrNull(data: (t) => t) ?? item.title);
 
+    // Determine content type for read history check
+    final ReadContentType contentType;
+    if (item.isVideo) {
+      contentType = ReadContentType.video;
+    } else if (item.isMessage) {
+      contentType = ReadContentType.message;
+    } else {
+      // Posts (including those with audio) are tracked as posts
+      contentType = ReadContentType.post;
+    }
+
+    // Check if content is read
+    final isRead = ref.watch(isContentReadProvider((id: item.id, type: contentType)));
+
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: FadeTransition(
-          opacity: _opacityAnimation,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(
-                  sigmaX: DesignTokens.glassBlurSigma,
-                  sigmaY: DesignTokens.glassBlurSigma),
-              child: Container(
-                width: double.infinity,
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: DesignTokens.getGlassBackground(Theme.of(context).brightness, 0.26),
-                  borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
-                  border: DesignTokens.cardBorder(Theme.of(context).brightness),
-                  boxShadow: [DesignTokens.shadowGlass],
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(DesignTokens.spacingSmall),
-                  child: Row(
-                    children: [
-                      // Thumbnail with play overlay
-                      GestureDetector(
-                        onTap: item.hasAudio
-                            ? () => _playAudio(context)
-                            : null,
-                        child: Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: DesignTokens.getAppBackground(Theme.of(context).brightness),
-                            borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
-                            boxShadow: [DesignTokens.shadowSubtle],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
-                            child: Stack(
-                              children: [
-                                item.imageUrl != null && item.imageUrl!.isNotEmpty
-                                    ? CorsNetworkImage(imageUrl: item.imageUrl!, width: 80, height: 80, fit: BoxFit.cover)
-                                    : SizedBox(
-                                        width: 80,
-                                        height: 80,
-                                        child: Icon(
-                                          item.isVideo ? Icons.play_circle_outline : item.isMessage ? Icons.message_outlined : Icons.article_outlined,
-                                          size: 32,
-                                          color: DesignTokens.primaryRed,
+      child: Opacity(
+        opacity: isRead ? 0.6 : 1.0,
+        child: ScaleTransition(
+          scale: _scaleAnimation,
+          child: FadeTransition(
+            opacity: _opacityAnimation,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(
+                    sigmaX: DesignTokens.glassBlurSigma,
+                    sigmaY: DesignTokens.glassBlurSigma),
+                child: Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: DesignTokens.getGlassBackground(Theme.of(context).brightness, 0.26),
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+                    border: DesignTokens.cardBorder(Theme.of(context).brightness),
+                    boxShadow: [DesignTokens.shadowGlass],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(DesignTokens.spacingSmall),
+                    child: Row(
+                      children: [
+                        // Thumbnail with play overlay
+                        GestureDetector(
+                          onTap: item.hasAudio ? () => _playAudio(context) : null,
+                          child: Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: DesignTokens.getAppBackground(Theme.of(context).brightness),
+                              borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
+                              boxShadow: [DesignTokens.shadowSubtle],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
+                              child: Stack(
+                                children: [
+                                  item.imageUrl != null && item.imageUrl!.isNotEmpty
+                                      ? CorsNetworkImage(imageUrl: item.imageUrl!, width: 80, height: 80, fit: BoxFit.cover)
+                                      : SizedBox(
+                                          width: 80,
+                                          height: 80,
+                                          child: Icon(
+                                            item.isVideo ? Icons.play_circle_outline : item.isMessage ? Icons.message_outlined : Icons.article_outlined,
+                                            size: 32,
+                                            color: DesignTokens.primaryRed,
+                                          ),
+                                        ),
+                                  if (item.hasAudio)
+                                    Positioned.fill(
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.35),
+                                        ),
+                                        child: const Icon(
+                                          Icons.play_arrow_rounded,
+                                          color: Colors.white,
+                                          size: 36,
                                         ),
                                       ),
-                                if (item.hasAudio)
-                                  Positioned.fill(
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withOpacity(0.35),
-                                      ),
-                                      child: const Icon(
-                                        Icons.play_arrow_rounded,
-                                        color: Colors.white,
-                                        size: 36,
-                                      ),
                                     ),
-                                  ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: DesignTokens.spacingMedium),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              displayTitle,
-                              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 4,
-                              children: [
-                                if (widget.isNewest)
+                        const SizedBox(width: DesignTokens.spacingMedium),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                displayTitle,
+                                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 4,
+                                children: [
+                                  if (widget.isNewest)
+                                    BadgeWidget(
+                                      label: context.tr('new_badge'),
+                                      backgroundColor: DesignTokens.primaryRed,
+                                      textColor: Colors.white,
+                                    ),
                                   BadgeWidget(
-                                    label: context.tr('new_badge'),
-                                    backgroundColor: DesignTokens.primaryRed,
-                                    textColor: Colors.white,
+                                    label: item.isVideo
+                                      ? context.tr('video_badge')
+                                      : item.isKurznachricht
+                                        ? context.tr('short_message_badge')
+                                        : context.tr('article_badge'),
+                                    backgroundColor: DesignTokens.getRedBackground(Theme.of(context).brightness),
+                                    textColor: DesignTokens.primaryRed,
                                   ),
-                                BadgeWidget(
-                                  label: item.isVideo
-                                    ? context.tr('video_badge')
-                                    : item.isKurznachricht
-                                      ? context.tr('short_message_badge')
-                                      : context.tr('article_badge'),
-                                  backgroundColor: DesignTokens.getRedBackground(Theme.of(context).brightness),
-                                  textColor: DesignTokens.primaryRed,
-                                ),
-                                if (item.hasAudio)
-                                  BadgeWidget(
-                                    label: context.tr('audio_badge'),
-                                    backgroundColor: DesignTokens.successGreen.withOpacity(0.12),
-                                    textColor: DesignTokens.successGreen,
-                                    icon: Icons.headphones,
-                                  ),
-                              ],
-                            ),
-                          ],
+                                  if (item.hasAudio)
+                                    BadgeWidget(
+                                      label: context.tr('audio_badge'),
+                                      backgroundColor: DesignTokens.successGreen.withOpacity(0.12),
+                                      textColor: DesignTokens.successGreen,
+                                      icon: Icons.headphones,
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

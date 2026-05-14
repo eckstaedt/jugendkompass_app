@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
+import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/data/repositories/audio_repository.dart';
 import 'package:jugendkompass_app/data/services/audio_service.dart';
 import 'package:jugendkompass_app/data/services/media_notification_service.dart';
+import 'package:jugendkompass_app/data/services/read_history_service.dart';
 import 'package:jugendkompass_app/data/services/web_media_session_handler.dart';
 import 'package:jugendkompass_app/domain/providers/supabase_provider.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
@@ -19,9 +21,28 @@ final audioServiceProvider = Provider<AudioService>((ref) {
   service.onTrackChanged = (newIndex, newAudio) {
     ref.read(currentQueueIndexProvider.notifier).state = newIndex;
     ref.read(currentAudioProvider.notifier).state = newAudio;
+    // Mark auto-advanced audio as listened
+    if (newAudio != null) {
+      _markAudioAsListened(newAudio);
+    }
+  };
+  // Reset state when playback completes (no next track)
+  service.onPlaybackComplete = () {
+    // Seek to beginning so replay shows progress at 0
+    service.seek(Duration.zero);
   };
   return service;
 });
+
+/// Mark an audio track as listened in read history
+void _markAudioAsListened(AudioModel audio) {
+  ReadHistoryService.instance.markAsRead(
+    audio.id,
+    ReadContentType.audio,
+    title: audio.title ?? audio.post?.title,
+    imageUrl: audio.imageUrl,
+  );
+}
 
 final mediaNotificationServiceProvider = Provider<MediaNotificationService>((ref) {
   return MediaNotificationService();

@@ -61,7 +61,7 @@ class KioskScreen extends ConsumerWidget {
                   SliverPadding(
                     padding: EdgeInsets.fromLTRB(
                       DesignTokens.paddingHorizontal,
-                      DesignTokens.spacingMedium,
+                      0,
                       DesignTokens.paddingHorizontal,
                       ref.watch(currentAudioProvider) != null
                           ? DesignTokens.overlayPaddingWithMiniPlayer

@@ -86,8 +86,8 @@ class DesignTokens {
   //
   // When ONLY navbar is visible: overlayPaddingBase
   // When BOTH navbar + mini player visible: overlayPaddingWithMiniPlayer
-  static const double overlayPaddingBase = 100;
-  static const double overlayPaddingWithMiniPlayer = 180;
+  static const double overlayPaddingBase = 120;
+  static const double overlayPaddingWithMiniPlayer = 200;
 
   // Input background color used across app
   static const Color inputBackground = Color(0xFFE1E3E6);

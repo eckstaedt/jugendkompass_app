@@ -16,6 +16,10 @@ class AudioService {
   /// completion).  Riverpod providers hook into this so they stay in sync.
   void Function(int newIndex, AudioModel? newAudio)? onTrackChanged;
 
+  /// Called when audio playback completes and there's no next track.
+  /// Used to reset UI state (e.g., play button, mini player).
+  void Function()? onPlaybackComplete;
+
   AudioService._() {
     _player = AudioPlayer();
     _setupPlayerStateListener();
@@ -40,6 +44,9 @@ class AudioService {
       if (state.processingState == ProcessingState.completed) {
         if (hasNext) {
           _autoPlayNext();
+        } else {
+          // No next track - notify that playback is complete
+          onPlaybackComplete?.call();
         }
       }
     });

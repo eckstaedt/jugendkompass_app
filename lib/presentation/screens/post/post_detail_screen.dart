@@ -4,9 +4,11 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:jugendkompass_app/data/models/post_model.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
+import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier;
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
+import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
 import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
@@ -16,7 +18,7 @@ import 'package:jugendkompass_app/core/utils/html_utils.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 
-class PostDetailScreen extends ConsumerWidget {
+class PostDetailScreen extends ConsumerStatefulWidget {
   final PostModel post;
 
   const PostDetailScreen({
@@ -25,7 +27,27 @@ class PostDetailScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PostDetailScreen> createState() => _PostDetailScreenState();
+}
+
+class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Mark post as read when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(readHistoryProvider.notifier).markAsRead(
+        widget.post.id,
+        ReadContentType.post,
+        title: HtmlUtils.stripHtml(widget.post.title),
+        imageUrl: widget.post.imageUrl,
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final post = widget.post;
     final theme = Theme.of(context);
     final hasAudio = post.audioId != null;
     ref.watch(languageProvider);
@@ -409,12 +431,12 @@ class PostDetailScreen extends ConsumerWidget {
 
   /// Play audio for this post
   Future<void> _playAudio(BuildContext context, WidgetRef ref) async {
-    if (post.audioId == null) return;
+    if (widget.post.audioId == null) return;
 
     try {
       // Fetch the audio
       final audioRepository = ref.read(audioRepositoryProvider);
-      final audio = await audioRepository.getAudioById(post.audioId!);
+      final audio = await audioRepository.getAudioById(widget.post.audioId!);
 
       if (audio == null) {
         if (context.mounted) {
@@ -431,10 +453,10 @@ class PostDetailScreen extends ConsumerWidget {
       // Enrich audio with the current post's metadata so the mini bar
       // always shows the correct title and thumbnail image.
       final enrichedAudio = audio.copyWith(
-        title: audio.title?.isNotEmpty == true ? audio.title : post.title,
+        title: audio.title?.isNotEmpty == true ? audio.title : widget.post.title,
         thumbnailUrl: audio.imageUrl?.isNotEmpty == true
             ? audio.imageUrl
-            : post.imageUrl,
+            : widget.post.imageUrl,
       );
 
       // Update providers immediately so the mini player bar appears instantly
@@ -460,12 +482,12 @@ class PostDetailScreen extends ConsumerWidget {
 
   /// Add audio to queue
   Future<void> _addToQueue(BuildContext context, WidgetRef ref) async {
-    if (post.audioId == null) return;
+    if (widget.post.audioId == null) return;
 
     try {
       // Fetch the audio
       final audioRepository = ref.read(audioRepositoryProvider);
-      final audio = await audioRepository.getAudioById(post.audioId!);
+      final audio = await audioRepository.getAudioById(widget.post.audioId!);
 
       if (audio == null) {
         if (context.mounted) {
@@ -481,10 +503,10 @@ class PostDetailScreen extends ConsumerWidget {
 
       // Enrich audio with the current post's metadata
       final enrichedAudio = audio.copyWith(
-        title: audio.title?.isNotEmpty == true ? audio.title : post.title,
+        title: audio.title?.isNotEmpty == true ? audio.title : widget.post.title,
         thumbnailUrl: audio.imageUrl?.isNotEmpty == true
             ? audio.imageUrl
-            : post.imageUrl,
+            : widget.post.imageUrl,
       );
 
       // Add to queue
@@ -495,7 +517,7 @@ class PostDetailScreen extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${HtmlUtils.stripHtml(post.title)} zur Warteschlange hinzugefügt'),
+            content: Text('${HtmlUtils.stripHtml(widget.post.title)} zur Warteschlange hinzugefügt'),
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.fromLTRB(16, 0, 16, 90),

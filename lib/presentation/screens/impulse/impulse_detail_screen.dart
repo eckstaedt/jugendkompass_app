@@ -4,8 +4,10 @@ import 'package:flutter_html/flutter_html.dart';
 import 'package:intl/intl.dart';
 import 'package:jugendkompass_app/data/models/impulse_model.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
+import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
+import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
 import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
@@ -13,7 +15,7 @@ import 'package:jugendkompass_app/core/utils/html_utils.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 
-class ImpulseDetailScreen extends ConsumerWidget {
+class ImpulseDetailScreen extends ConsumerStatefulWidget {
   final ImpulseModel impulse;
 
   const ImpulseDetailScreen({
@@ -22,7 +24,27 @@ class ImpulseDetailScreen extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ImpulseDetailScreen> createState() => _ImpulseDetailScreenState();
+}
+
+class _ImpulseDetailScreenState extends ConsumerState<ImpulseDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Mark impulse as read when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(readHistoryProvider.notifier).markAsRead(
+        widget.impulse.id,
+        ReadContentType.impulse,
+        title: HtmlUtils.stripHtml(widget.impulse.displayTitle),
+        imageUrl: widget.impulse.imageUrl,
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final impulse = widget.impulse;
     final theme = Theme.of(context);
     final dateFormat = DateFormat('dd. MMMM yyyy', 'de_DE');
     final isInCollection = ref.watch(collectionProvider).any(

@@ -5,10 +5,12 @@ import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
+import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
+import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
 
 class VideoPlayerScreen extends ConsumerStatefulWidget {
   final String videoUrl;
@@ -46,6 +48,16 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       audioService.pause();
     }
     _checkVideoType();
+
+    // Mark video as watched
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(readHistoryProvider.notifier).markAsRead(
+        widget.videoUrl,
+        ReadContentType.video,
+        title: HtmlUtils.stripHtml(widget.title),
+        imageUrl: widget.imageUrl,
+      );
+    });
   }
 
   void _checkVideoType() {

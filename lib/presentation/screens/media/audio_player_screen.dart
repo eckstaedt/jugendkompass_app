@@ -222,7 +222,8 @@ class AudioPlayerScreen extends ConsumerWidget {
                   itemCount: audioList.length,
                   itemBuilder: (context, index) {
                     final audio = audioList[index];
-                    final isCurrentlyPlaying = currentAudio?.id == audio.id;
+                    final isActuallyPlaying = ref.watch(isPlayingProvider);
+                    final isCurrentlyPlaying = currentAudio?.id == audio.id && isActuallyPlaying;
 
                     return Card(
                       child: ListTile(

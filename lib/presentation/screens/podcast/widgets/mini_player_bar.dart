@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:just_audio/just_audio.dart' as just_audio;
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/presentation/screens/podcast/full_player_screen.dart';
@@ -225,10 +226,16 @@ class MiniPlayerBar extends ConsumerWidget {
                           playerStateAsync.when(
                             data: (state) {
                               final isPlaying = state.playing;
+                              final isCompleted = state.processingState ==
+                                  just_audio.ProcessingState.completed;
                               return GestureDetector(
-                                onTap: () {
+                                onTap: () async {
                                   if (isPlaying) {
                                     audioService.pause();
+                                  } else if (isCompleted) {
+                                    // Seek to beginning and replay
+                                    await audioService.seek(Duration.zero);
+                                    audioService.resume();
                                   } else {
                                     audioService.resume();
                                   }

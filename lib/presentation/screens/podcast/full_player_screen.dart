@@ -440,6 +440,8 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                 playerStateAsync.when(
                                   data: (state) {
                                     final isPlaying = state.playing;
+                                    final isCompleted = state.processingState ==
+                                        just_audio.ProcessingState.completed;
                                     final isBuffering = state.processingState ==
                                             just_audio.ProcessingState.loading ||
                                         state.processingState ==
@@ -456,9 +458,17 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                       );
                                     }
                                     return GestureDetector(
-                                      onTap: () => isPlaying
-                                          ? audioService.pause()
-                                          : audioService.resume(),
+                                      onTap: () async {
+                                        if (isPlaying) {
+                                          audioService.pause();
+                                        } else if (isCompleted) {
+                                          // Seek to beginning and replay
+                                          await audioService.seek(Duration.zero);
+                                          audioService.resume();
+                                        } else {
+                                          audioService.resume();
+                                        }
+                                      },
                                       child: _PlayPauseShell(
                                         child: Icon(
                                           isPlaying

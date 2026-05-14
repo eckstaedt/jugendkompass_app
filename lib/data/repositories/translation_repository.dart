@@ -22,7 +22,7 @@ class TranslationRepository {
           .from('content_translations')
           .select('language, field_name, value')
           .eq('content_id', contentId)
-          .in_('language', languages);
+          .inFilter('language', languages);
 
       final Map<String, Map<String, String>> translations = {};
 

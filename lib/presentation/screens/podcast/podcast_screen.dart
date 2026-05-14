@@ -4,11 +4,13 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
+import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier;
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/category_provider.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/podcast_provider.dart';
+import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
@@ -230,7 +232,8 @@ class PodcastScreen extends ConsumerWidget {
                       child: Consumer(
                         builder: (context, ref, _) {
                           final currentAudio = ref.watch(currentAudioProvider);
-                          final isFeaturedPlaying = currentAudio?.id == featuredEpisode.id;
+                          final isActuallyPlaying = ref.watch(isPlayingProvider);
+                          final isFeaturedPlaying = currentAudio?.id == featuredEpisode.id && isActuallyPlaying;
                           return FeaturedEpisodeCard(
                             audio: featuredEpisode,
                             isPlaying: isFeaturedPlaying,
@@ -261,13 +264,14 @@ class PodcastScreen extends ConsumerWidget {
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final audio = filteredList[index];
                       final currentAudio = ref.watch(currentAudioProvider);
-                      final isPlaying = currentAudio?.id == audio.id;
+                      final isActuallyPlaying = ref.watch(isPlayingProvider);
+                      final isCurrentAndPlaying = currentAudio?.id == audio.id && isActuallyPlaying;
 
                       return _buildEpisodeListItem(
                         context,
                         ref,
                         audio,
-                        isPlaying,
+                        isCurrentAndPlaying,
                       );
                     }, childCount: filteredList.length),
                   ),
@@ -308,46 +312,51 @@ class PodcastScreen extends ConsumerWidget {
   ) {
     final theme = Theme.of(context);
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        // Tapping anywhere on the tile plays the audio instantly
-        onTap: () => _playAudio(context, ref, audio),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              // Thumbnail
-              ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: SizedBox(
-                    width: 60,
-                    height: 60,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        if (audio.imageUrl != null)
-                          CachedNetworkImage(
-                            imageUrl: audio.imageUrl!,
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
+    // Check if audio has been listened to
+    final isListened = ref.watch(isContentReadProvider((id: audio.id, type: ReadContentType.audio)));
+
+    return Opacity(
+      opacity: isListened && !isPlaying ? 0.6 : 1.0,
+      child: Card(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          // Tapping anywhere on the tile plays the audio instantly
+          onTap: () => _playAudio(context, ref, audio),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                // Thumbnail
+                ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: SizedBox(
+                      width: 60,
+                      height: 60,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          if (audio.imageUrl != null)
+                            CachedNetworkImage(
+                              imageUrl: audio.imageUrl!,
                               width: 60,
                               height: 60,
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              child: const Center(
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                width: 60,
+                                height: 60,
+                                color: theme.colorScheme.surfaceContainerHighest,
+                                child: const Center(
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
                               ),
-                            ),
-                            errorWidget: (context, url, error) => Container(
-                              width: 60,
-                              height: 60,
-                              color: theme.colorScheme.surfaceContainerHighest,
-                              child: const Icon(Icons.podcasts),
-                            ),
-                          )
+                              errorWidget: (context, url, error) => Container(
+                                width: 60,
+                                height: 60,
+                                color: theme.colorScheme.surfaceContainerHighest,
+                                child: const Icon(Icons.podcasts),
+                              ),
+                            )
                         else
                           Container(
                             width: 60,
@@ -454,6 +463,7 @@ class PodcastScreen extends ConsumerWidget {
           ),
         ),
       ),
+    ),
     );
   }  Future<void> _playAudio(BuildContext context, WidgetRef ref, AudioModel audio) async {
     final audioService = ref.read(audioServiceProvider);
@@ -463,6 +473,14 @@ class PodcastScreen extends ConsumerWidget {
     ref.read(currentQueueIndexProvider.notifier).state = 0;
     ref.read(currentAudioProvider.notifier).state = audio;
     currentAudioNotifier.value = audio;
+
+    // Mark audio as listened
+    ref.read(readHistoryProvider.notifier).markAsRead(
+      audio.id,
+      ReadContentType.audio,
+      title: audio.title ?? audio.post?.title,
+      imageUrl: audio.imageUrl,
+    );
 
     // Start playback (setQueue calls playAudio internally)
     await audioService.setQueue([audio], startIndex: 0);

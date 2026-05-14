@@ -5,6 +5,8 @@ import 'package:video_player/video_player.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/domain/providers/video_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
+import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
+import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
     show kVideoPlayerRouteName;
@@ -132,8 +134,8 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                           : DesignTokens.overlayPaddingBase),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      childAspectRatio: 0.75,
-                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.85,
+                      mainAxisSpacing: 16,
                       crossAxisSpacing: 12,
                     ),
                     itemCount: filteredVideos.length,
@@ -239,46 +241,51 @@ class _VideoCardState extends ConsumerState<VideoCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            settings: const RouteSettings(name: kVideoPlayerRouteName),
-            builder: (context) => VideoPlayerScreen(
-              videoUrl: widget.video.url,
-              title: widget.video.title,
-              description: widget.video.description,
-              imageUrl: widget.video.imageUrl,
-            ),
-          ),
-        );
-      },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // YouTube-style Thumbnail (16:9 aspect ratio)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Thumbnail Image
-                  widget.video.imageUrl != null
-                      ? CorsNetworkImage(
-                          imageUrl: widget.video.imageUrl!,
-                          fit: BoxFit.cover,
-                        )
-                      : Container(
-                          color: DesignTokens.getGlassBackground(Theme.of(context).brightness, 0.3),
-                          child: const Icon(Icons.video_library, size: 48),
-                        ),
+    // Check if video has been watched - use URL as ID since that's how videos are tracked
+    final isWatched = ref.watch(isContentReadProvider((id: widget.video.url, type: ReadContentType.video)));
 
-                  // Duration Badge (bottom right) - only show if duration > 0
-                  if (_duration > 0)
-                    Positioned(
+    return Opacity(
+      opacity: isWatched ? 0.6 : 1.0,
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              settings: const RouteSettings(name: kVideoPlayerRouteName),
+              builder: (context) => VideoPlayerScreen(
+                videoUrl: widget.video.url,
+                title: widget.video.title,
+                description: widget.video.description,
+                imageUrl: widget.video.imageUrl,
+              ),
+            ),
+          );
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // YouTube-style Thumbnail (16:9 aspect ratio)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Thumbnail Image
+                    widget.video.imageUrl != null
+                        ? CorsNetworkImage(
+                            imageUrl: widget.video.imageUrl!,
+                            fit: BoxFit.cover,
+                          )
+                        : Container(
+                            color: DesignTokens.getGlassBackground(Theme.of(context).brightness, 0.3),
+                            child: const Icon(Icons.video_library, size: 48),
+                          ),
+
+                    // Duration Badge (bottom right) - only show if duration > 0
+                    if (_duration > 0)
+                      Positioned(
                       bottom: 8,
                       right: 8,
                       child: Container(
@@ -335,6 +342,7 @@ class _VideoCardState extends ConsumerState<VideoCard> {
           ),
         ],
       ),
+    ),
     );
   }
 }

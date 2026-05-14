@@ -3,21 +3,43 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:jugendkompass_app/data/models/message_model.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
+import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
+import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-class MessageDetailScreen extends ConsumerWidget {
+class MessageDetailScreen extends ConsumerStatefulWidget {
   final MessageModel message;
 
   const MessageDetailScreen({super.key, required this.message});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MessageDetailScreen> createState() => _MessageDetailScreenState();
+}
+
+class _MessageDetailScreenState extends ConsumerState<MessageDetailScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Mark message as read when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(readHistoryProvider.notifier).markAsRead(
+        widget.message.id,
+        ReadContentType.message,
+        title: HtmlUtils.stripHtml(widget.message.displayTitle),
+        imageUrl: widget.message.imageUrl,
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final message = widget.message;
     final theme = Theme.of(context);
     final brightness = theme.brightness;
     final dateFormat = DateFormat('dd. MMMM yyyy, HH:mm', 'de_DE');
@@ -116,6 +138,13 @@ class MessageDetailScreen extends ConsumerWidget {
                 "p": Style(
                   margin: Margins.only(bottom: 12),
                   padding: HtmlPaddings.zero,
+                  color: textColor,
+                ),
+                "span": Style(
+                  color: textColor,
+                ),
+                "div": Style(
+                  color: textColor,
                 ),
                 "a": Style(
                   color: DesignTokens.primaryRed,
@@ -123,6 +152,9 @@ class MessageDetailScreen extends ConsumerWidget {
                 ),
                 "img": Style(
                   display: Display.none,
+                ),
+                "*": Style(
+                  color: textColor,
                 ),
               },
             ),

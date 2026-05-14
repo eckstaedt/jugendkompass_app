@@ -9,6 +9,7 @@ import 'package:jugendkompass_app/data/services/supabase_service.dart';
 import 'package:jugendkompass_app/data/services/favorites_service.dart';
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/data/services/web_audio_controller.dart';
+import 'package:jugendkompass_app/data/services/read_history_service.dart';
 import 'package:jugendkompass_app/core/services/home_widget_service.dart'
     if (dart.library.html) 'package:jugendkompass_app/stubs/home_widget_service_stub.dart';
 import 'package:jugendkompass_app/core/services/local_verse_notification_service.dart';
@@ -56,6 +57,9 @@ Future<void> main() async {
 
   // Initialize Favorites Service
   await FavoritesService.instance.initialize();
+
+  // Initialize Read History Service
+  await ReadHistoryService.instance.init();
 
   // Initialize Home Widget Service (iOS only, no-op on web)
   await HomeWidgetService.initialize();
