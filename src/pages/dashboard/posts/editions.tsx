@@ -20,6 +20,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Upload, FileText, ExternalLink, Pencil } from 'lucide-react';
+import { BackfillButton } from '@/components/translations/BackfillButton';
+import { RetranslateButton } from '@/components/translations/RetranslateButton';
+import { TranslationStatusList } from '@/components/translations/TranslationStatusBadge';
+import { useTranslationsForContents, summarizeLang, SUPPORTED_LANGS } from '@/hooks/use-translations';
 
 const AusgabenPage = () => {
   const [name, setName] = useState('');
@@ -39,6 +43,8 @@ const AusgabenPage = () => {
   const editPdfInputRef = useRef<HTMLInputElement>(null);
 
   const { editions, createEdition, isCreating, updateEdition, isUpdating } = useEditions();
+  const { data: translationsByContent } = useTranslationsForContents(editions.map((e) => e.content_id));
+  const EXPECTED_FIELDS = ['title', 'body'];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,13 +135,21 @@ const AusgabenPage = () => {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Bestehende Ausgaben</CardTitle>
-            <CardDescription>Liste aller verfügbaren Ausgaben</CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+            <div>
+              <CardTitle>Bestehende Ausgaben</CardTitle>
+              <CardDescription>Liste aller verfügbaren Ausgaben</CardDescription>
+            </div>
+            <BackfillButton contentType="edition" invalidateKeys={['editions']} />
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
-              {editions.map((edition) => (
+              {editions.map((edition) => {
+                const byLang = edition.content_id ? translationsByContent?.[edition.content_id] : undefined;
+                const statuses = Object.fromEntries(
+                  SUPPORTED_LANGS.map((l) => [l, summarizeLang(byLang, l, EXPECTED_FIELDS)])
+                );
+                return (
                 <div key={edition.id} className="flex items-start gap-4 rounded-lg border p-4">
                   {edition.image_url && (
                     <img src={edition.image_url} alt={edition.name} className="w-20 h-28 object-cover rounded border" />
@@ -149,14 +163,19 @@ const AusgabenPage = () => {
                         <FileText className="h-3 w-3" />PDF anzeigen<ExternalLink className="h-3 w-3" />
                       </a>
                     )}
+                    <div className="mt-2">
+                      <TranslationStatusList statuses={statuses} />
+                    </div>
                   </div>
-                  <div className="flex gap-2 shrink-0">
+                  <div className="flex flex-col gap-2 shrink-0">
                     <Button variant="outline" size="icon" onClick={() => openEditDialog(edition)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
+                    <RetranslateButton contentId={edition.content_id} size="icon" />
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>

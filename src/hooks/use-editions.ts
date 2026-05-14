@@ -11,6 +11,7 @@ export type Edition = {
   body: string | null;
   image_url: string | null;
   pdf_url: string | null;
+  content_id: string | null;
 };
 
 export type CreateEditionParams = {
