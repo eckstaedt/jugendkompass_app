@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
         .from(tbl)
         .select("content_id")
         .not("content_id", "is", null)
-        .order("created_at", { ascending: true })
+        .order("content_id", { ascending: true })
         .range(pageStart, pageStart + PAGE_SIZE - 1);
       if (error) throw error;
       const ids = (data ?? []).map((r: any) => r.content_id as string).filter(Boolean);
