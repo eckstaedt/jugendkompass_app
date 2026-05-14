@@ -515,28 +515,37 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
 
-    if (selectedLanguage != null && selectedLanguage != currentLanguage && context.mounted) {
+    if (selectedLanguage != null && selectedLanguage != currentLanguage) {
+      if (!context.mounted) return;
+
       await ref.read(languageProvider.notifier).setLanguage(selectedLanguage);
+
       // Only show language notice when switching to a non-German language
-      if (context.mounted && selectedLanguage != AppLanguage.de) {
-        // Get translator with the NEW language for the dialog
-        final newTranslate = ref.read(stringTranslatorProvider);
-        await showDialog(
+      if (selectedLanguage != AppLanguage.de) {
+        if (!context.mounted) return;
+
+        // Use AppTranslations.t directly with the new language
+        showDialog(
           context: context,
-          builder: (context) => AlertDialog(
-            title: Text(newTranslate('Hinweis zur Sprache')),
-            content: Text(
-              newTranslate('Bitte beachte, dass nicht alle Inhalte (z. B. Videos und Podcasts) in die gewählte Sprache übersetzt sind. Einige Inhalte werden weiterhin in der Originalsprache angezeigt.'),
-            ),
-            actions: [
-              FilledButton(
-                onPressed: () => Navigator.pop(context),
-                style: FilledButton.styleFrom(
-                  backgroundColor: DesignTokens.primaryRed,
+          builder: (context) => Consumer(
+            builder: (context, ref, _) {
+              final newTranslate = ref.watch(stringTranslatorProvider);
+              return AlertDialog(
+                title: Text(newTranslate('Hinweis zur Sprache')),
+                content: Text(
+                  newTranslate('Bitte beachte, dass nicht alle Inhalte (z. B. Videos und Podcasts) in die gewählte Sprache übersetzt sind. Einige Inhalte werden weiterhin in der Originalsprache angezeigt.'),
                 ),
-                child: Text(newTranslate('Verstanden')),
-              ),
-            ],
+                actions: [
+                  FilledButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: DesignTokens.primaryRed,
+                    ),
+                    child: Text(newTranslate('Verstanden')),
+                  ),
+                ],
+              );
+            },
           ),
         );
       }
