@@ -59,6 +59,33 @@ export type Database = {
           },
         ]
       }
+      app_analytics: {
+        Row: {
+          app_version: string | null
+          created_at: string
+          device_id: string
+          event_type: string
+          id: string
+          platform: string
+        }
+        Insert: {
+          app_version?: string | null
+          created_at?: string
+          device_id: string
+          event_type: string
+          id?: string
+          platform?: string
+        }
+        Update: {
+          app_version?: string | null
+          created_at?: string
+          device_id?: string
+          event_type?: string
+          id?: string
+          platform?: string
+        }
+        Relationships: []
+      }
       audios: {
         Row: {
           created_at: string
@@ -618,6 +645,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_analytics_summary: { Args: never; Returns: Json }
       get_categories_localized: {
         Args: { lang: string }
         Returns: {
@@ -699,12 +727,31 @@ export type Database = {
           title: string
         }[]
       }
+      get_recent_verses_localized: {
+        Args: { lang: string; verse_limit?: number }
+        Returns: {
+          content_id: string
+          date: string
+          id: string
+          reference: string
+          verse: string
+        }[]
+      }
       get_vers_des_tages_today_json: { Args: never; Returns: Json }
+      get_verse_by_id_localized: {
+        Args: { lang: string; verse_id: string }
+        Returns: {
+          content_id: string
+          date: string
+          id: string
+          reference: string
+          verse: string
+        }[]
+      }
       get_verse_of_day_localized: {
         Args: { lang: string }
         Returns: {
           content_id: string
-          created_at: string
           date: string
           id: string
           reference: string
