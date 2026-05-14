@@ -43,6 +43,8 @@ const AusgabenPage = () => {
   const editPdfInputRef = useRef<HTMLInputElement>(null);
 
   const { editions, createEdition, isCreating, updateEdition, isUpdating } = useEditions();
+  const { data: translationsByContent } = useTranslationsForContents(editions.map((e) => e.content_id));
+  const EXPECTED_FIELDS = ['title', 'body'];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
