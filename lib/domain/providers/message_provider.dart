@@ -15,10 +15,18 @@ final messagesListProvider = FutureProvider<List<MessageModel>>((ref) async {
   return await repository.getMessageList(limit: 50);
 });
 
-/// Single message provider by ID
+/// Single message provider by ID (integer id)
 final messageDetailProvider = FutureProvider.family<MessageModel?, String>(
   (ref, messageId) async {
     final repository = ref.watch(messageRepositoryProvider);
     return await repository.getMessageById(messageId);
+  },
+);
+
+/// Single message provider by content_id (UUID)
+final messageByContentIdProvider = FutureProvider.family<MessageModel?, String>(
+  (ref, contentId) async {
+    final repository = ref.watch(messageRepositoryProvider);
+    return await repository.getMessageByContentId(contentId);
   },
 );

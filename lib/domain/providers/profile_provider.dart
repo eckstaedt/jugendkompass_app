@@ -1,9 +1,12 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../data/models/profile_model.dart';
 import '../../data/repositories/profile_repository.dart';
 import '../../data/services/user_preferences_service.dart';
 import '../../core/services/device_registration_service.dart';
+import '../../core/services/fcm_service.dart';
 import 'supabase_provider.dart';
 
 /// Profile repository provider
@@ -30,20 +33,80 @@ final userNameProvider = StateProvider<String?>((ref) {
 /// Notifications enabled provider
 final notificationsProvider =
     StateNotifierProvider<NotificationsNotifier, bool>((ref) {
-  return NotificationsNotifier();
+  return NotificationsNotifier(ref);
 });
 
 class NotificationsNotifier extends StateNotifier<bool> {
-  NotificationsNotifier() : super(true) {
+  final Ref _ref;
+
+  NotificationsNotifier(this._ref) : super(false) {
     _loadNotificationSettings();
   }
 
   Future<void> _loadNotificationSettings() async {
-    state = UserPreferencesService.instance.getNotificationsEnabled();
+    // Check actual system permission, not just local preference
+    final hasPermission = await _checkPermissionStatus();
+    final localEnabled = UserPreferencesService.instance.getNotificationsEnabled();
+
+    // State is true only if both permission is granted AND user enabled it
+    state = hasPermission && localEnabled;
+  }
+
+  Future<bool> _checkPermissionStatus() async {
+    try {
+      final settings = await FirebaseMessaging.instance.getNotificationSettings();
+      return settings.authorizationStatus == AuthorizationStatus.authorized ||
+             settings.authorizationStatus == AuthorizationStatus.provisional;
+    } catch (e) {
+      return false;
+    }
   }
 
   Future<void> update(bool enabled) async {
+    debugPrint('[NotificationsNotifier] update called with enabled: $enabled');
+
+    if (enabled) {
+      // Request permission when enabling
+      try {
+        final settings = await FirebaseMessaging.instance.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+          provisional: false,
+        );
+
+        final granted = settings.authorizationStatus == AuthorizationStatus.authorized ||
+                       settings.authorizationStatus == AuthorizationStatus.provisional;
+
+        debugPrint('[NotificationsNotifier] Permission granted: $granted');
+
+        if (!granted) {
+          // Permission denied, keep state as false
+          state = false;
+          return;
+        }
+
+        // Permission granted, initialize FCM if needed
+        try {
+          await FCMService().init();
+        } catch (e) {
+          debugPrint('[NotificationsNotifier] FCMService init error (ignored): $e');
+          // Don't return - continue even if FCM init fails
+        }
+
+        // Enable sub-toggles when main toggle is enabled
+        await _ref.read(verseNotificationsProvider.notifier).update(true);
+        await _ref.read(newContentNotificationsProvider.notifier).update(true);
+      } catch (e) {
+        // Permission request failed
+        debugPrint('[NotificationsNotifier] Permission request failed: $e');
+        state = false;
+        return;
+      }
+    }
+
     state = enabled;
+    debugPrint('[NotificationsNotifier] State set to: $enabled');
     await UserPreferencesService.instance.setNotificationsEnabled(enabled);
 
     try {
@@ -63,6 +126,7 @@ class NotificationsNotifier extends StateNotifier<bool> {
         );
       }
     } catch (e) {
+      debugPrint('[NotificationsNotifier] Server registration error: $e');
       // Silently handle errors — the toggle state is already saved
     }
   }

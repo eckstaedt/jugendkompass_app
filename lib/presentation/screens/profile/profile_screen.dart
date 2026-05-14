@@ -293,7 +293,10 @@ class ProfileScreen extends ConsumerWidget {
             subtitle: Text(translate('Dunkles Theme verwenden')),
             value: themeMode == ThemeMode.dark,
             onChanged: (value) {
-              ref.read(themeModeProvider.notifier).toggle();
+              // When toggling, set explicit light or dark (not system)
+              ref.read(themeModeProvider.notifier).setThemeMode(
+                value ? ThemeMode.dark : ThemeMode.light,
+              );
             },
             activeThumbColor: DesignTokens.primaryRed,
             secondary: Icon(

@@ -2,11 +2,14 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_messaging/firebase_messaging.dart'
+    if (dart.library.html) 'package:jugendkompass_app/stubs/firebase_messaging_stub.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/services/fcm_service.dart'
     if (dart.library.html) 'package:jugendkompass_app/stubs/fcm_service_stub.dart';
 import 'package:jugendkompass_app/core/services/device_registration_service.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
+import 'package:jugendkompass_app/domain/providers/profile_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import '../../../data/services/user_preferences_service.dart';
 import '../../navigation/bottom_nav_screen.dart';
@@ -131,12 +134,25 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       // Initialize FCM and request permission
       await FCMService().init();
 
-      // Register device if notifications enabled
-      final prefs = UserPreferencesService.instance;
-      if (prefs.getNotificationsEnabled()) {
+      // Check if permission was granted
+      final settings = await FirebaseMessaging.instance.getNotificationSettings();
+      final granted = settings.authorizationStatus == AuthorizationStatus.authorized ||
+                     settings.authorizationStatus == AuthorizationStatus.provisional;
+
+      if (granted) {
+        // Update local preferences
+        await UserPreferencesService.instance.setNotificationsEnabled(true);
+        await UserPreferencesService.instance.setVerseNotificationsEnabled(true);
+        await UserPreferencesService.instance.setNewContentNotificationsEnabled(true);
+
+        // Update providers to reflect the enabled state
+        ref.read(notificationsProvider.notifier).update(true);
+
+        // Register device
+        final prefs = UserPreferencesService.instance;
         await DeviceRegistrationService.instance.register(
-          verseNotifications: prefs.getVerseNotificationsEnabled(),
-          contentNotifications: prefs.getNewContentNotificationsEnabled(),
+          verseNotifications: true,
+          contentNotifications: true,
           notificationHour: prefs.getNotificationHour(),
           notificationMinute: prefs.getNotificationMinute(),
           language: prefs.getLanguage(),

@@ -4,10 +4,12 @@ import 'package:jugendkompass_app/data/models/verse_model.dart';
 import 'package:jugendkompass_app/domain/providers/post_provider.dart';
 import 'package:jugendkompass_app/domain/providers/verse_provider.dart';
 import 'package:jugendkompass_app/domain/providers/video_provider.dart';
+import 'package:jugendkompass_app/domain/providers/message_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/content/content_detail_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/message/message_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
     show kVideoPlayerRouteName;
 import 'package:google_fonts/google_fonts.dart';
@@ -36,6 +38,9 @@ class DeepLinkService {
     final contentType = data['contentType'] as String?;
     final contentId = data['contentId'] as String?;
 
+    debugPrint('[DeepLink] handleNotificationTap called with data: $data');
+    debugPrint('[DeepLink] contentType: $contentType, contentId: $contentId');
+
     if (contentType == null || contentId == null) {
       debugPrint('[DeepLink] Missing contentType or contentId: $data');
       return;
@@ -54,8 +59,10 @@ class DeepLinkService {
         case 'verse':
           await _navigateToVerse(context, ref, contentId);
           break;
-        case 'impulse':
         case 'message':
+          await _navigateToMessage(context, ref, contentId);
+          break;
+        case 'impulse':
         case 'poll':
           // Generic content screen handles these types
           _navigateToContent(context, contentId);
@@ -149,13 +156,49 @@ class DeepLinkService {
     );
   }
 
+  /// Navigate to a message detail screen.
+  Future<void> _navigateToMessage(
+    BuildContext context,
+    WidgetRef ref,
+    String contentId,
+  ) async {
+    debugPrint('[DeepLink] _navigateToMessage called with contentId: $contentId');
+
+    // Fetch message data by content_id (not by message id)
+    final messageAsync = ref.read(messageByContentIdProvider(contentId).future);
+    final message = await messageAsync;
+
+    if (message == null) {
+      debugPrint('[DeepLink] Message not found for contentId: $contentId');
+      return;
+    }
+
+    if (!context.mounted) return;
+
+    debugPrint('[DeepLink] Pushing MessageDetailScreen');
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => MessageDetailScreen(message: message),
+      ),
+    );
+  }
+
   /// Navigate to generic content detail screen.
   void _navigateToContent(BuildContext context, String contentId) {
+    debugPrint('[DeepLink] _navigateToContent called with contentId: $contentId');
+
+    if (!context.mounted) {
+      debugPrint('[DeepLink] Context not mounted, cannot navigate');
+      return;
+    }
+
+    debugPrint('[DeepLink] Pushing ContentDetailScreen');
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => ContentDetailScreen(contentId: contentId),
       ),
     );
+    debugPrint('[DeepLink] ContentDetailScreen push completed');
   }
 }
 

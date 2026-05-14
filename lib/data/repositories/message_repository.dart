@@ -27,13 +27,30 @@ class MessageRepository {
     }
   }
 
-  /// Fetch a single message by ID
+  /// Fetch a single message by ID (integer id from messages table)
   Future<MessageModel?> getMessageById(String id) async {
     try {
       final response = await _supabase
           .from(SupabaseConstants.messagesTable)
           .select()
           .eq('id', id)
+          .maybeSingle();
+
+      if (response == null) return null;
+
+      return MessageModel.fromJson(response);
+    } catch (e) {
+      throw Exception('Fehler beim Laden der Kurznachricht: $e');
+    }
+  }
+
+  /// Fetch a single message by content_id (UUID from content table)
+  Future<MessageModel?> getMessageByContentId(String contentId) async {
+    try {
+      final response = await _supabase
+          .from(SupabaseConstants.messagesTable)
+          .select()
+          .eq('content_id', contentId)
           .maybeSingle();
 
       if (response == null) return null;

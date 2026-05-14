@@ -22,70 +22,144 @@ class FCMService {
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   bool _isInitialized = false;
+  bool _listenersSetup = false;
 
   /// Local notifications plugin for showing foreground messages.
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
+  /// Stored initial message from cold start (before callback is set)
+  RemoteMessage? _pendingInitialMessage;
+
   /// Callback for handling notification tap navigation.
   /// Set this from the app's root widget to enable deep linking.
-  Future<void> Function(Map<String, dynamic> data)? onNotificationTap;
+  Future<void> Function(Map<String, dynamic> data)? _onNotificationTap;
 
-  /// Initialize FCM: request permissions, get token, listen for refresh.
+  set onNotificationTap(Future<void> Function(Map<String, dynamic> data)? callback) {
+    _onNotificationTap = callback;
+    debugPrint('[FCM] onNotificationTap callback set');
+
+    // Process any pending initial message from cold start
+    if (_pendingInitialMessage != null && callback != null) {
+      debugPrint('[FCM] Processing pending initial message');
+      final data = _pendingInitialMessage!.data;
+      if (data.isNotEmpty) {
+        callback(data);
+      }
+      _pendingInitialMessage = null;
+    }
+  }
+
+  Future<void> Function(Map<String, dynamic> data)? get onNotificationTap => _onNotificationTap;
+
+  /// Initialize FCM without requesting permissions.
+  /// Only sets up listeners for notification taps and checks if already authorized.
+  /// Call this at app startup.
+  Future<void> initWithoutPermissionRequest() async {
+    if (_listenersSetup) return;
+
+    try {
+      // Initialize local notifications for foreground display
+      try {
+        await _initLocalNotifications();
+      } catch (e) {
+        debugPrint('[FCM] Could not init local notifications: $e');
+      }
+
+      // Set up notification tap handlers (works even without permission)
+      _setupNotificationTapHandlers();
+
+      // Check if we already have permission
+      final settings = await _messaging.getNotificationSettings();
+      debugPrint('[FCM] Current permission status: ${settings.authorizationStatus}');
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional) {
+        // Already authorized, get token and set up listeners
+        await _setupAfterPermissionGranted();
+      }
+
+      _listenersSetup = true;
+    } catch (e) {
+      debugPrint('[FCM] Error during initWithoutPermissionRequest: $e');
+    }
+  }
+
+  /// Initialize FCM with permission request.
+  /// This requests permission from the user and should only be called
+  /// when the user explicitly enables notifications.
   Future<void> init() async {
     if (_isInitialized) return;
 
-    // Initialize local notifications for foreground display
-    await _initLocalNotifications();
+    try {
+      // Ensure listeners are set up
+      if (!_listenersSetup) {
+        await initWithoutPermissionRequest();
+      }
 
-    // Request Android 13+ notification permission
-    if (!kIsWeb && Platform.isAndroid) {
-      await _requestAndroidNotificationPermission();
+      // Request Android 13+ notification permission
+      if (!kIsWeb && Platform.isAndroid) {
+        try {
+          await _requestAndroidNotificationPermission();
+        } catch (e) {
+          debugPrint('[FCM] Could not request Android permission: $e');
+        }
+      }
+
+      // Request permission (iOS shows a system dialog)
+      final settings = await _messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
+      );
+
+      debugPrint('[FCM] Permission status after request: ${settings.authorizationStatus}');
+
+      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional) {
+        await _setupAfterPermissionGranted();
+      }
+
+      _isInitialized = true;
+    } catch (e) {
+      debugPrint('[FCM] Error during init: $e');
     }
+  }
 
-    // Request permission (iOS shows a system dialog)
-    final settings = await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-      provisional: false,
-    );
+  /// Set up FCM after permission is granted (get token, listen for messages)
+  Future<void> _setupAfterPermissionGranted() async {
+    // Get the FCM token
+    await _getAndStoreToken();
 
-    debugPrint(
-      '[FCM] Permission status: ${settings.authorizationStatus}',
-    );
+    // Listen for token refreshes
+    _messaging.onTokenRefresh.listen((newToken) {
+      _storeToken(newToken);
+    });
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized ||
-        settings.authorizationStatus == AuthorizationStatus.provisional) {
-      // Get the FCM token
-      await _getAndStoreToken();
-
-      // Listen for token refreshes
-      _messaging.onTokenRefresh.listen((newToken) {
-        _storeToken(newToken);
-      });
-
-      // Handle foreground messages — show as local notification
-      FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-
-      // Handle notification taps when app is in background or terminated
-      _setupNotificationTapHandlers();
-    }
-
-    _isInitialized = true;
+    // Handle foreground messages — show as local notification
+    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
   }
 
   /// Set up handlers for notification taps from different app states.
   void _setupNotificationTapHandlers() {
+    debugPrint('[FCM] Setting up notification tap handlers');
+
     // Handle notification tap when app was in background
     FirebaseMessaging.onMessageOpenedApp.listen(_handleBackgroundNotificationTap);
 
-    // Handle notification tap when app was terminated
-    FirebaseMessaging.instance
-        .getInitialMessage()
-        .then((message) {
+    // Handle notification tap when app was terminated (cold start)
+    FirebaseMessaging.instance.getInitialMessage().then((message) {
+      debugPrint('[FCM] getInitialMessage returned: ${message?.messageId}');
       if (message != null) {
-        _handleBackgroundNotificationTap(message);
+        if (_onNotificationTap != null) {
+          // Callback already set, process immediately
+          _handleBackgroundNotificationTap(message);
+        } else {
+          // Store for later when callback is set
+          debugPrint('[FCM] Storing initial message for later processing');
+          _pendingInitialMessage = message;
+        }
       }
     });
   }
@@ -93,9 +167,13 @@ class FCMService {
   /// Handle notification tap from background or terminated state.
   void _handleBackgroundNotificationTap(RemoteMessage message) {
     debugPrint('[FCM] Notification tapped: ${message.messageId}');
+    debugPrint('[FCM] Notification data: ${message.data}');
     final data = message.data;
-    if (data.isNotEmpty && onNotificationTap != null) {
-      onNotificationTap!(data);
+    if (data.isNotEmpty && _onNotificationTap != null) {
+      debugPrint('[FCM] Calling onNotificationTap callback');
+      _onNotificationTap!(data);
+    } else {
+      debugPrint('[FCM] Cannot process tap: data.isEmpty=${data.isEmpty}, callback=${_onNotificationTap != null}');
     }
   }
 
@@ -103,7 +181,7 @@ class FCMService {
   void _handleNotificationTap(NotificationResponse response) {
     debugPrint('[FCM] Local notification tapped: ${response.payload}');
     // Payload contains the serialized data from the notification
-    if (response.payload != null && onNotificationTap != null) {
+    if (response.payload != null && _onNotificationTap != null) {
       try {
         // Parse the payload - we'll store the data as JSON string
         final data = <String, dynamic>{};
@@ -112,10 +190,13 @@ class FCMService {
           data['contentType'] = parts[0];
           data['contentId'] = parts[1];
         }
-        onNotificationTap!(data);
+        debugPrint('[FCM] Parsed local notification data: $data');
+        _onNotificationTap!(data);
       } catch (e) {
         debugPrint('[FCM] Error parsing notification payload: $e');
       }
+    } else {
+      debugPrint('[FCM] Cannot process local tap: payload=${response.payload}, callback=${_onNotificationTap != null}');
     }
   }
 
@@ -261,37 +342,23 @@ class FCMService {
 /// Top-level function to handle background messages.
 ///
 /// Must be a top-level function (not a class method).
-/// Shows notification manually since Firebase doesn't auto-show in background.
+/// Firebase automatically shows notifications when app is in background if the
+/// message includes a notification payload, so we don't need to manually show them.
+/// This handler is for data processing only.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   debugPrint('[FCM] Background message: ${message.messageId}');
 
-  // Firebase doesn't automatically show notifications when app is in background
-  // on Android, so we need to show them manually.
+  // Note: Firebase automatically displays notifications with notification payload
+  // when the app is in background or terminated. We don't need to show them manually.
+  // This handler is just for processing data or performing background tasks.
+
   final notification = message.notification;
-  if (notification != null) {
-    final plugin = FlutterLocalNotificationsPlugin();
+  final data = message.data;
 
-    // Initialize plugin first (required for background handler)
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-    await plugin.initialize(
-      const InitializationSettings(android: androidSettings),
-    );
+  debugPrint('[FCM] Background notification: ${notification?.title}');
+  debugPrint('[FCM] Background data: $data');
 
-    // Show the notification
-    await plugin.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'push_notifications',
-          'Push-Benachrichtigungen',
-          channelDescription: 'Benachrichtigungen für neue Beiträge',
-          importance: Importance.high,
-          priority: Priority.high,
-        ),
-      ),
-    );
-  }
+  // Any background data processing can be done here
+  // Do NOT manually show the notification - Firebase already did that
 }

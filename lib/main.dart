@@ -64,8 +64,9 @@ Future<void> main() async {
   await LocalVerseNotificationService.instance.init();
 
   // Initialize FCM for push notifications (mobile only)
+  // Only set up listeners, don't request permission yet
   if (!kIsWeb) {
-    await FCMService().init();
+    await FCMService().initWithoutPermissionRequest();
   }
 
   // Track app analytics (install on first launch, app open on every launch)

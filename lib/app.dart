@@ -29,6 +29,8 @@ class App extends ConsumerStatefulWidget {
 class _AppState extends ConsumerState<App> {
   final _routeObserver = FullPlayerRouteObserver();
   final _navigatorKey = GlobalKey<NavigatorState>();
+  Map<String, dynamic>? _pendingNotificationData;
+  bool _isAppReady = false;
 
   @override
   void initState() {
@@ -39,17 +41,60 @@ class _AppState extends ConsumerState<App> {
 
   /// Handle notification tap and navigate to appropriate content.
   Future<void> _handleNotificationTap(Map<String, dynamic> data) async {
-    // Wait for the navigator to be ready
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    debugPrint('[App] Notification tap received with data: $data');
+
+    if (!_isAppReady) {
+      // Store pending data to process after app is ready
+      debugPrint('[App] App not ready yet, storing pending notification');
+      _pendingNotificationData = data;
+      return;
+    }
+
+    await _navigateToContent(data);
+  }
+
+  Future<void> _navigateToContent(Map<String, dynamic> data) async {
+    // Try multiple times with increasing delays
+    for (int attempt = 0; attempt < 5; attempt++) {
+      await Future.delayed(Duration(milliseconds: 200 + (attempt * 200)));
+
+      final navigatorState = _navigatorKey.currentState;
       final context = _navigatorKey.currentContext;
-      if (context != null && context.mounted) {
-        DeepLinkService.instance.handleNotificationTap(
-          context: context,
-          ref: ref,
-          data: data,
-        );
+
+      if (navigatorState != null && context != null && context.mounted) {
+        debugPrint('[App] Navigator ready on attempt ${attempt + 1}, handling deep link');
+        try {
+          await DeepLinkService.instance.handleNotificationTap(
+            context: context,
+            ref: ref,
+            data: data,
+          );
+          debugPrint('[App] Deep link handling completed');
+          return;
+        } catch (e, stack) {
+          debugPrint('[App] Error handling deep link: $e');
+          debugPrint('[App] Stack trace: $stack');
+          return;
+        }
+      } else {
+        debugPrint('[App] Navigator not ready on attempt ${attempt + 1}');
       }
-    });
+    }
+
+    debugPrint('[App] Failed to navigate after all attempts');
+  }
+
+  void _onAppReady() {
+    debugPrint('[App] App is ready');
+    _isAppReady = true;
+
+    // Process any pending notification
+    if (_pendingNotificationData != null) {
+      debugPrint('[App] Processing pending notification');
+      final data = _pendingNotificationData!;
+      _pendingNotificationData = null;
+      _navigateToContent(data);
+    }
   }
 
   @override
@@ -90,6 +135,14 @@ class _AppState extends ConsumerState<App> {
               );
             }
             final hasCompletedOnboarding = snapshot.data ?? false;
+
+            // Mark app as ready after the first frame is rendered
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!_isAppReady) {
+                _onAppReady();
+              }
+            });
+
             return hasCompletedOnboarding
                 ? BottomNavScreen(key: ValueKey(language))
                 : const OnboardingScreen();

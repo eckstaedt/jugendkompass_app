@@ -111,7 +111,7 @@ class UserPreferencesService {
 
   // Notifications
   bool getNotificationsEnabled() {
-    return _prefs.getBool(_keyNotifications) ?? true;
+    return _prefs.getBool(_keyNotifications) ?? false;
   }
 
   Future<void> setNotificationsEnabled(bool enabled) async {
