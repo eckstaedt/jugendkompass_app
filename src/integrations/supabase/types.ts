@@ -232,6 +232,7 @@ export type Database = {
       editions: {
         Row: {
           body: string | null
+          content_id: string | null
           id: string
           image_url: string | null
           name: string
@@ -241,6 +242,7 @@ export type Database = {
         }
         Insert: {
           body?: string | null
+          content_id?: string | null
           id?: string
           image_url?: string | null
           name: string
@@ -250,6 +252,7 @@ export type Database = {
         }
         Update: {
           body?: string | null
+          content_id?: string | null
           id?: string
           image_url?: string | null
           name?: string
@@ -659,6 +662,7 @@ export type Database = {
         Args: { lang: string }
         Returns: {
           body: string
+          content_id: string
           id: string
           image_url: string
           name: string
