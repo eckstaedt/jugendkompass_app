@@ -80,7 +80,9 @@ class VerseRepository {
 
       // RPC returns a list, get the first (today's) verse
       final verseData = response is List ? response.first : response;
-      return VerseModel.fromJson(verseData);
+      final verse = VerseModel.fromJson(verseData);
+
+      return verse;
     } catch (e) {
       // Fallback to German on error
       return getTodaysVerse();
@@ -99,15 +101,20 @@ class VerseRepository {
       }
 
       final response = await _supabase.rpc(
-        'get_verse_of_day_localized',
-        params: {'lang': language},
+        'get_recent_verses_localized',
+        params: {'lang': language, 'verse_limit': limit},
       );
+
+      if (response == null || (response is List && response.isEmpty)) {
+        // Fallback to German if no translations
+        return getRecentVerses(limit: limit);
+      }
 
       final verses = (response as List)
           .map((json) => VerseModel.fromJson(json))
           .toList();
 
-      return verses.take(limit).toList();
+      return verses;
     } catch (e) {
       // Fallback to German on error
       return getRecentVerses(limit: limit);
@@ -122,19 +129,45 @@ class VerseRepository {
         return getVerseById(verseId);
       }
 
-      // Use RPC function to get localized verse
-      // The RPC function should accept verseId parameter
-      final response = await _supabase.rpc(
-        'get_verse_by_id_localized',
-        params: {'verse_id': verseId, 'lang': language},
-      );
-
-      if (response == null) {
-        // Fallback to German if no translation
-        return getVerseById(verseId);
+      // Get the verse first
+      final verse = await getVerseById(verseId);
+      if (verse == null || verse.contentId == null) {
+        return verse;
       }
 
-      return VerseModel.fromJson(response);
+      // Use tr() RPC function to get translated verse and reference
+      try {
+        final translatedVerse = await _supabase.rpc(
+          'tr',
+          params: {
+            'content_id': verse.contentId,
+            'lang': language,
+            'field': 'verse',
+            'fallback': verse.verse,
+          },
+        );
+
+        final translatedReference = await _supabase.rpc(
+          'tr',
+          params: {
+            'content_id': verse.contentId,
+            'lang': language,
+            'field': 'reference',
+            'fallback': verse.reference,
+          },
+        );
+
+        return VerseModel(
+          id: verse.id,
+          contentId: verse.contentId,
+          verse: translatedVerse ?? verse.verse,
+          reference: translatedReference ?? verse.reference,
+          date: verse.date,
+        );
+      } catch (e) {
+        // If translation fails, return original verse
+        return verse;
+      }
     } catch (e) {
       // Fallback to German on error
       return getVerseById(verseId);

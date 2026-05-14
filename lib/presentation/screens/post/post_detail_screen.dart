@@ -280,16 +280,19 @@ class PostDetailScreen extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            // Add to queue button
-                            FilledButton.icon(
+                            // Add to queue button (icon only)
+                            FilledButton(
                               onPressed: () => _addToQueue(context, ref),
-                              icon: const Icon(Icons.playlist_add),
-                              label: const Text('Warteschlange'),
                               style: FilledButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                                padding: const EdgeInsets.all(16),
                                 backgroundColor: theme.colorScheme.secondaryContainer,
                                 foregroundColor: theme.colorScheme.onSecondaryContainer,
+                                minimumSize: const Size(56, 56),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
+                              child: const Icon(Icons.playlist_add),
                             ),
                           ],
                         );
