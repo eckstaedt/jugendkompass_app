@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 
 interface BackfillButtonProps {
-  contentType: 'post' | 'impulse' | 'verse' | 'message' | 'poll' | 'video';
+  contentType: 'post' | 'impulse' | 'verse' | 'message' | 'poll' | 'video' | 'edition';
   label?: string;
   invalidateKeys?: string[];
 }

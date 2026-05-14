@@ -24,6 +24,7 @@ const SOURCE_TABLE: Record<string, string> = {
   message: "messages",
   poll: "polls",
   video: "videos",
+  edition: "editions",
 };
 
 // Erwartete Feldnamen je content_type (müssen zu translate-content passen).
@@ -34,6 +35,7 @@ const EXPECTED_FIELD_NAMES: Record<string, string[]> = {
   message: ["title", "message"],
   poll: ["question"],
   video: ["title", "description"],
+  edition: ["title", "body"],
 };
 
 const PAGE_SIZE = 1000;
