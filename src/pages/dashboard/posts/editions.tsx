@@ -20,6 +20,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Upload, FileText, ExternalLink, Pencil } from 'lucide-react';
+import { BackfillButton } from '@/components/translations/BackfillButton';
+import { RetranslateButton } from '@/components/translations/RetranslateButton';
+import { TranslationStatusList } from '@/components/translations/TranslationStatusBadge';
+import { useTranslationsForContents, summarizeLang, SUPPORTED_LANGS } from '@/hooks/use-translations';
 
 const AusgabenPage = () => {
   const [name, setName] = useState('');
