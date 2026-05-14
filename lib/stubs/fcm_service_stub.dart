@@ -13,6 +13,8 @@ class FCMService {
 
   Future<void> init() async {}
 
+  Future<void> initWithoutPermissionRequest() async {}
+
   // ignore: avoid_setters_without_getters
   set onNotificationTap(Future<void> Function(Map<String, dynamic>) handler) {}
 }

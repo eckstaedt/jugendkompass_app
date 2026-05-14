@@ -2,8 +2,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_messaging/firebase_messaging.dart'
-    if (dart.library.html) 'package:jugendkompass_app/stubs/firebase_messaging_stub.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/services/fcm_service.dart'
     if (dart.library.html) 'package:jugendkompass_app/stubs/fcm_service_stub.dart';
@@ -13,6 +11,10 @@ import 'package:jugendkompass_app/domain/providers/profile_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import '../../../data/services/user_preferences_service.dart';
 import '../../navigation/bottom_nav_screen.dart';
+
+// Conditional import for Firebase Messaging
+import 'package:firebase_messaging/firebase_messaging.dart'
+    if (dart.library.html) 'package:jugendkompass_app/stubs/firebase_messaging_stub.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
