@@ -23,12 +23,16 @@ function berlinDayBoundsUtc(): { startUtc: string; endUtc: string; label: string
   // Determine Berlin's UTC offset right now via the difference of formatted vs UTC.
   const asUtc = Date.UTC(+y, +m - 1, +d, +parts.hour, +parts.minute, +parts.second);
   const offsetMs = asUtc - now.getTime();
-  const startUtc = new Date(Date.UTC(+y, +m - 1, +d, 0, 0, 0) - offsetMs);
-  const endUtc = new Date(startUtc.getTime() + 24 * 60 * 60 * 1000);
+  // Yesterday's full Berlin day
+  const endUtc = new Date(Date.UTC(+y, +m - 1, +d, 0, 0, 0) - offsetMs);
+  const startUtc = new Date(endUtc.getTime() - 24 * 60 * 60 * 1000);
+  const yLabel = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(startUtc).split("-");
   return {
     startUtc: startUtc.toISOString(),
     endUtc: endUtc.toISOString(),
-    label: `${d}.${m}.${y}`,
+    label: `${yLabel[2]}.${yLabel[1]}.${yLabel[0]}`,
   };
 }
 
@@ -83,7 +87,7 @@ Deno.serve(async (req) => {
     const uniqueOpeners = new Set((openRows ?? []).map((r: any) => r.device_id)).size;
 
     const text =
-      `📊 <b>Jugendkompass – Tagesreport ${label}</b>\n\n` +
+      `📊 <b>Jugendkompass – Tagesreport für ${label}</b>\n\n` +
       `📥 Neue Installationen: <b>${installs}</b>\n` +
       `📱 App-Öffnungen: <b>${opens}</b>\n` +
       `👥 Aktive Geräte: <b>${uniqueOpeners}</b>`;
