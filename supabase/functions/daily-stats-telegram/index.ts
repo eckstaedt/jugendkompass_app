@@ -87,7 +87,7 @@ Deno.serve(async (req) => {
     const uniqueOpeners = new Set((openRows ?? []).map((r: any) => r.device_id)).size;
 
     const text =
-      `📊 <b>Jugendkompass – Tagesreport ${label}</b>\n\n` +
+      `📊 <b>Jugendkompass – Tagesreport für ${label}</b>\n\n` +
       `📥 Neue Installationen: <b>${installs}</b>\n` +
       `📱 App-Öffnungen: <b>${opens}</b>\n` +
       `👥 Aktive Geräte: <b>${uniqueOpeners}</b>`;
