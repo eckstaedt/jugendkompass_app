@@ -32,8 +32,23 @@ function berlinDayBoundsUtc(): { startUtc: string; endUtc: string; label: string
   };
 }
 
-Deno.serve(async (_req) => {
+Deno.serve(async (req) => {
   try {
+    // Berlin-hour gate: only run at 08:00 local. Allows ?force=1 for manual runs.
+    const url = new URL(req.url);
+    const force = url.searchParams.get("force") === "1";
+    const berlinHour = parseInt(
+      new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", hour12: false })
+        .format(new Date()),
+      10,
+    );
+    if (!force && berlinHour !== 8) {
+      return new Response(JSON.stringify({ skipped: true, berlinHour }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const TELEGRAM_API_KEY = Deno.env.get("TELEGRAM_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
