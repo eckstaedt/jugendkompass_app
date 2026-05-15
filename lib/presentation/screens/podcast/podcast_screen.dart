@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
+import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier;
@@ -12,18 +13,31 @@ import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/podcast_provider.dart';
 import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/animated_equalizer.dart';
-import 'widgets/featured_episode_card.dart';
-import 'dart:math' as math;
 
-class PodcastScreen extends ConsumerWidget {
+class PodcastScreen extends ConsumerStatefulWidget {
   const PodcastScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PodcastScreen> createState() => _PodcastScreenState();
+}
+
+class _PodcastScreenState extends ConsumerState<PodcastScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     ref.watch(languageProvider);
     final translate = ref.watch(stringTranslatorProvider);
     final audioListAsync = ref.watch(audioListProvider);
@@ -31,6 +45,7 @@ class PodcastScreen extends ConsumerWidget {
     final selectedCategory = ref.watch(selectedPodcastCategoryProvider);
     final theme = Theme.of(context);
     final brightness = theme.brightness;
+    final textSecondary = DesignTokens.getTextSecondary(brightness);
 
     return Scaffold(
       body: SafeArea(
@@ -49,9 +64,9 @@ class PodcastScreen extends ConsumerWidget {
                 );
               }
 
-              // Filter audio list based on selected category
-              final filteredList = selectedCategory == null
-                  ? audioList
+              // Filter audio list based on selected category and search query
+              var filteredList = selectedCategory == null
+                  ? List.of(audioList)
                       : audioList.where((audio) {
                         // Get list of category names from post (support multi tags)
                         final post = audio.post;
@@ -73,22 +88,74 @@ class PodcastScreen extends ConsumerWidget {
                         });
                       }).toList();
 
-              // Get featured episode (random one from the list)
-              final featuredEpisode = audioList.isNotEmpty
-                  ? audioList[math.Random().nextInt(audioList.length)]
-                  : null;
+              // Apply search filter
+              if (_searchQuery.isNotEmpty) {
+                filteredList = filteredList.where((audio) {
+                  final title = (audio.title ?? audio.post?.title ?? '').toLowerCase();
+                  final description = (audio.description ?? '').toLowerCase();
+                  return title.contains(_searchQuery) || description.contains(_searchQuery);
+                }).toList();
+              }
+
+              // Sort by creation date (newest first)
+              filteredList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
               return CustomScrollView(
                 slivers: [
                   // Header
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
                       child: Text(
                         translate('Podcast'),
                         style: theme.textTheme.displaySmall?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: DesignTokens.getTextPrimary(brightness),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Search Bar
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+                      child: RoundedCard(
+                        glass: true,
+                        backgroundColor: DesignTokens.glassBackgroundDeep(0.20),
+                        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+                        withShadow: false,
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (value) {
+                            setState(() {
+                              _searchQuery = value.toLowerCase();
+                            });
+                          },
+                          decoration: InputDecoration(
+                            hintText: translate('Podcasts suchen...'),
+                            hintStyle: TextStyle(
+                              color: textSecondary,
+                              fontSize: 16,
+                            ),
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: textSecondary,
+                            ),
+                            suffixIcon: _searchController.text.isNotEmpty
+                                ? IconButton(
+                                    icon: Icon(Icons.clear, color: textSecondary),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() {
+                                        _searchQuery = '';
+                                      });
+                                    },
+                                  )
+                                : null,
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
                         ),
                       ),
                     ),
@@ -226,55 +293,36 @@ class PodcastScreen extends ConsumerWidget {
                         const SliverToBoxAdapter(child: SizedBox.shrink()),
                   ),
 
-                  // Featured Episode
-                  if (featuredEpisode != null)
-                    SliverToBoxAdapter(
-                      child: Consumer(
-                        builder: (context, ref, _) {
-                          final currentAudio = ref.watch(currentAudioProvider);
-                          final isActuallyPlaying = ref.watch(isPlayingProvider);
-                          final isFeaturedPlaying = currentAudio?.id == featuredEpisode.id && isActuallyPlaying;
-                          return FeaturedEpisodeCard(
-                            audio: featuredEpisode,
-                            isPlaying: isFeaturedPlaying,
-                            onPlay: () => _playAudio(context, ref, featuredEpisode),
-                          );
-                        },
+                  // Empty state when no podcasts match filter/search
+                  if (filteredList.isEmpty)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: EmptyState(
+                        icon: Icons.podcasts_outlined,
+                        title: translate('Keine Podcasts gefunden'),
+                        message: _searchQuery.isNotEmpty
+                            ? translate('Versuche eine andere Suche')
+                            : translate('Keine Podcasts in dieser Kategorie'),
                       ),
                     ),
-
-                  // "ALLE FOLGEN" Header
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
-                      child: Text(
-                        'ALLE FOLGEN',
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.2,
-                          color: DesignTokens.getTextPrimary(brightness),
-                        ),
-                      ),
-                    ),
-                  ),
 
                   // Episode List
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final audio = filteredList[index];
-                      final currentAudio = ref.watch(currentAudioProvider);
-                      final isActuallyPlaying = ref.watch(isPlayingProvider);
-                      final isCurrentAndPlaying = currentAudio?.id == audio.id && isActuallyPlaying;
+                  if (filteredList.isNotEmpty)
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final audio = filteredList[index];
+                        final currentAudio = ref.watch(currentAudioProvider);
+                        final isActuallyPlaying = ref.watch(isPlayingProvider);
+                        final isCurrentAndPlaying = currentAudio?.id == audio.id && isActuallyPlaying;
 
-                      return _buildEpisodeListItem(
-                        context,
-                        ref,
-                        audio,
-                        isCurrentAndPlaying,
-                      );
-                    }, childCount: filteredList.length),
-                  ),
+                        return _buildEpisodeListItem(
+                          context,
+                          ref,
+                          audio,
+                          isCurrentAndPlaying,
+                        );
+                      }, childCount: filteredList.length),
+                    ),
 
                   // Bottom spacing: add extra height when the mini player
                   // bar is visible so the last item is not hidden behind it.
@@ -465,7 +513,9 @@ class PodcastScreen extends ConsumerWidget {
       ),
     ),
     );
-  }  Future<void> _playAudio(BuildContext context, WidgetRef ref, AudioModel audio) async {
+  }
+
+  Future<void> _playAudio(BuildContext context, WidgetRef ref, AudioModel audio) async {
     final audioService = ref.read(audioServiceProvider);
 
     // Update providers immediately so the mini player bar appears instantly
@@ -493,13 +543,10 @@ class PodcastScreen extends ConsumerWidget {
     audioService.addToQueue(audio);
     ref.read(audioQueueProvider.notifier).state = List<AudioModel>.from(audioService.queue);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${audio.title ?? audio.post?.title ?? "Audio"} ${translate('zur Warteschlange hinzugefügt')}'),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 90),
-      ),
+    SnackBarUtils.show(
+      context,
+      '${audio.title ?? audio.post?.title ?? "Audio"} ${translate('zur Warteschlange hinzugefügt')}',
+      duration: const Duration(seconds: 2),
     );
   }
 

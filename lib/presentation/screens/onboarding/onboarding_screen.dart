@@ -273,11 +273,30 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             ),
                             filled: true,
                             fillColor: brightness == Brightness.dark
-                                ? DesignTokens.darkCardBackground
+                                ? Colors.white.withValues(alpha: 0.08)
                                 : DesignTokens.inputBackground,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(DesignTokens.radiusInputFields),
-                              borderSide: BorderSide.none,
+                              borderSide: BorderSide(
+                                color: brightness == Brightness.dark
+                                    ? Colors.white.withValues(alpha: 0.15)
+                                    : Colors.transparent,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(DesignTokens.radiusInputFields),
+                              borderSide: BorderSide(
+                                color: brightness == Brightness.dark
+                                    ? Colors.white.withValues(alpha: 0.15)
+                                    : Colors.transparent,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(DesignTokens.radiusInputFields),
+                              borderSide: BorderSide(
+                                color: DesignTokens.primaryRed,
+                                width: 1.5,
+                              ),
                             ),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                           ),
@@ -301,8 +320,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
                             ),
-                            disabledBackgroundColor: DesignTokens.primaryRed.withOpacity(0.5),
-                            disabledForegroundColor: Colors.white.withOpacity(0.7),
+                            disabledBackgroundColor: DesignTokens.primaryRed.withValues(alpha: 0.5),
+                            disabledForegroundColor: Colors.white.withValues(alpha: 0.7),
                           ),
                           child: Text(
                             translate('Los geht\'s 🚀'),

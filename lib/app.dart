@@ -231,7 +231,7 @@ class _MiniPlayerScaffoldState extends ConsumerState<_MiniPlayerScaffold> {
     // The navbar uses `max(safeBottom, 16)` as its own bottom margin
     // (see _PersistentNavBar: `safeBottom > 0 ? safeBottom : 16`).
     // We mirror that here so the mini player always clears the navbar.
-    final navBottomMargin = safeBottom > 0 ? safeBottom : 16.0;
+    final navBottomMargin = (safeBottom > 0 ? safeBottom : 16.0) + 3;
 
     // Mini bar sits above the navbar when it is visible.
     final miniBarBottom = showNav
@@ -307,7 +307,7 @@ class _PersistentNavBar extends ConsumerWidget {
     final safeBottom = MediaQuery.paddingOf(context).bottom;
 
     return Container(
-      margin: EdgeInsets.fromLTRB(16, 4, 16, safeBottom > 0 ? safeBottom : 16),
+      margin: EdgeInsets.fromLTRB(16, 4, 16, (safeBottom > 0 ? safeBottom : 16) + 3),
       height: 60,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(DesignTokens.radiusNavBar),

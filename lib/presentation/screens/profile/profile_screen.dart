@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/services/device_registration_service.dart';
+import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jugendkompass_app/domain/providers/profile_provider.dart';
@@ -168,14 +169,9 @@ class ProfileScreen extends ConsumerWidget {
                                     .read(notificationTimeProvider.notifier)
                                     .update(selectedHour, 0);
                                 if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        '${translate('Vers des Tages')} ${translate('um')} ${selectedHour.toString().padLeft(2, '0')}:00 ${translate('Uhr')}',
-                                      ),
-                                      behavior: SnackBarBehavior.floating,
-                                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 90),
-                                    ),
+                                  SnackBarUtils.show(
+                                    context,
+                                    '${translate('Vers des Tages')} ${translate('um')} ${selectedHour.toString().padLeft(2, '0')}:00 ${translate('Uhr')}',
                                   );
                                 }
                               }
@@ -477,12 +473,9 @@ class ProfileScreen extends ConsumerWidget {
     if (selected != null && selected != currentTimezone && context.mounted) {
       await ref.read(timezoneProvider.notifier).update(selected);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(LocalVerseNotificationService.displayNameForId(selected)),
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 90),
-          ),
+        SnackBarUtils.show(
+          context,
+          LocalVerseNotificationService.displayNameForId(selected),
         );
       }
     }
@@ -582,14 +575,7 @@ class ProfileScreen extends ConsumerWidget {
       await UserPreferencesService.instance.setUserName(newName);
       ref.read(userNameProvider.notifier).state = newName;
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(translate('Name gespeichert')),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 90),
-          ),
-        );
+        SnackBarUtils.showSuccess(context, translate('Name gespeichert'));
       }
     }
   }
@@ -670,12 +656,7 @@ class ProfileScreen extends ConsumerWidget {
       final successMessage = translate('Alle Daten wurden gelöscht');
       Future.delayed(const Duration(milliseconds: 500), () {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(successMessage),
-              backgroundColor: Colors.green,
-            ),
-          );
+          SnackBarUtils.showSuccess(context, successMessage);
         }
       });
     } catch (e) {
@@ -685,12 +666,7 @@ class ProfileScreen extends ConsumerWidget {
       Navigator.pop(context);
 
       final errorMessage = '${translate('Fehler beim Löschen')}: $e';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage),
-          backgroundColor: Colors.red,
-        ),
-      );
+      SnackBarUtils.showError(context, errorMessage);
     }
   }
 }

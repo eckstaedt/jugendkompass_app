@@ -21,6 +21,7 @@ import 'package:jugendkompass_app/presentation/screens/kiosk/edition_detail_scre
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
+import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 
 // Combined content item for unified display
@@ -680,12 +681,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
       if (audio == null) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppTranslations.t('audio_not_found')),
-              backgroundColor: Colors.red,
-            ),
-          );
+          SnackBarUtils.showError(context, AppTranslations.t('audio_not_found'));
         }
         return;
       }
@@ -703,12 +699,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       // Don't navigate to full player - let the mini player bar handle it
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${AppTranslations.t('error_playing')}: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        SnackBarUtils.showError(context, '${AppTranslations.t('error_playing')}: $e');
       }
     }
   }

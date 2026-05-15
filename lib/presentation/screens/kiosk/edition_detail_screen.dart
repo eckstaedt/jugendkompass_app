@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
+import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier;
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
@@ -298,7 +299,7 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
       await audioService.setQueue(audios, startIndex: 0);
       // Mini player bar appears automatically – no navigation needed
     } catch (e) {
-      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppTranslations.t('error_playing')}: $e'), backgroundColor: Colors.red));
+      if (context.mounted) SnackBarUtils.showError(context, '${AppTranslations.t('error_playing')}: $e');
     }
   }
 
@@ -308,7 +309,7 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
       final audioRepository = ref.read(audioRepositoryProvider);
       final audio = await audioRepository.getAudioById(post.audioId!);
       if (audio == null) {
-        if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppTranslations.t('audio_not_found')), backgroundColor: Colors.red));
+        if (context.mounted) SnackBarUtils.showError(context, AppTranslations.t('audio_not_found'));
         return;
       }
       // Update providers immediately so mini player appears instantly
@@ -322,7 +323,7 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
       await audioService.setQueue([audio], startIndex: 0);
       // Mini player bar appears automatically – no navigation needed
     } catch (e) {
-      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppTranslations.t('error_playing')}: $e'), backgroundColor: Colors.red));
+      if (context.mounted) SnackBarUtils.showError(context, '${AppTranslations.t('error_playing')}: $e');
     }
   }
 
@@ -337,7 +338,7 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${AppTranslations.t('error_opening_pdf')}: $e'), backgroundColor: Colors.red));
+        SnackBarUtils.showError(context, '${AppTranslations.t('error_opening_pdf')}: $e');
       }
     }
   }

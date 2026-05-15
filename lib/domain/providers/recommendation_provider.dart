@@ -85,6 +85,9 @@ class RecommendedItem {
   VideoModel? get video => contentType == 'video' ? data as VideoModel : null;
   MessageModel? get message => contentType == 'message' ? data as MessageModel : null;
 
+  /// Get the URL for videos (used for read history tracking)
+  String? get videoUrl => contentType == 'video' ? (data as VideoModel).url : null;
+
   bool get hasAudio => contentType == 'post' && (data as PostModel).audioId != null;
   bool get isVideo => contentType == 'video';
   bool get isArticle => contentType == 'post' && !hasAudio;

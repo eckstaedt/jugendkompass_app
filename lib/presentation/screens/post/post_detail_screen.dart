@@ -15,6 +15,7 @@ import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
+import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 
@@ -440,12 +441,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
 
       if (audio == null) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppTranslations.t('audio_not_found')),
-              backgroundColor: Colors.red,
-            ),
-          );
+          SnackBarUtils.showError(context, AppTranslations.t('audio_not_found'));
         }
         return;
       }
@@ -470,12 +466,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
       await audioService.setQueue([enrichedAudio], startIndex: 0);
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${AppTranslations.t('error_playing')}: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        SnackBarUtils.showError(context, '${AppTranslations.t('error_playing')}: $e');
       }
     }
   }
@@ -491,12 +482,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
 
       if (audio == null) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppTranslations.t('audio_not_found')),
-              backgroundColor: Colors.red,
-            ),
-          );
+          SnackBarUtils.showError(context, AppTranslations.t('audio_not_found'));
         }
         return;
       }
@@ -515,23 +501,15 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
       ref.read(audioQueueProvider.notifier).state = List<AudioModel>.from(audioService.queue);
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${HtmlUtils.stripHtml(widget.post.title)} zur Warteschlange hinzugefügt'),
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 90),
-          ),
+        SnackBarUtils.show(
+          context,
+          '${HtmlUtils.stripHtml(widget.post.title)} zur Warteschlange hinzugefügt',
+          duration: const Duration(seconds: 2),
         );
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Fehler: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        SnackBarUtils.showError(context, 'Fehler: $e');
       }
     }
   }

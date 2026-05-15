@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/data/models/impulse_model.dart';
+import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
+import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
@@ -71,97 +73,103 @@ class _ImpulseCardState extends ConsumerState<ImpulseCard>
     final displayTitle =
         titleAsync.whenOrNull(data: (t) => t) ?? impulse.displayTitle;
 
+    // Check if impulse is read
+    final isRead = ref.watch(isContentReadProvider((id: impulse.id, type: ReadContentType.impulse)));
+
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: FadeTransition(
-          opacity: _opacityAnimation,
-          child: Container(
-            width: 240,
-            height: 320,
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
-              boxShadow: [DesignTokens.shadowGlass],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Background image
-                  if (impulse.imageUrl != null)
-                    CorsNetworkImage(
-                      imageUrl: impulse.imageUrl!,
-                      fit: BoxFit.cover,
-                      placeholder: Container(
+      child: Opacity(
+        opacity: isRead ? 0.6 : 1.0,
+        child: ScaleTransition(
+          scale: _scaleAnimation,
+          child: FadeTransition(
+            opacity: _opacityAnimation,
+            child: Container(
+              width: 240,
+              height: 320,
+              margin: const EdgeInsets.only(right: 16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
+                boxShadow: [DesignTokens.shadowGlass],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Background image
+                    if (impulse.imageUrl != null)
+                      CorsNetworkImage(
+                        imageUrl: impulse.imageUrl!,
+                        fit: BoxFit.cover,
+                        placeholder: Container(
+                          color: DesignTokens.getAppBackground(Theme.of(context).brightness),
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: DesignTokens.primaryRed,
+                            ),
+                          ),
+                        ),
+                        errorWidget: Container(
+                          color: DesignTokens.getAppBackground(Theme.of(context).brightness),
+                          child: const Icon(
+                            Icons.broken_image_outlined,
+                            color: DesignTokens.primaryRed,
+                            size: 48,
+                          ),
+                        ),
+                      )
+                    else
+                      Container(
                         color: DesignTokens.getAppBackground(Theme.of(context).brightness),
                         child: const Center(
-                          child: CircularProgressIndicator(
+                          child: Icon(
+                            Icons.image_outlined,
                             color: DesignTokens.primaryRed,
+                            size: 48,
                           ),
                         ),
                       ),
-                      errorWidget: Container(
-                        color: DesignTokens.getAppBackground(Theme.of(context).brightness),
-                        child: const Icon(
-                          Icons.broken_image_outlined,
-                          color: DesignTokens.primaryRed,
-                          size: 48,
-                        ),
-                      ),
-                    )
-                  else
+                    // Gradient overlay
                     Container(
-                      color: DesignTokens.getAppBackground(Theme.of(context).brightness),
-                      child: const Center(
-                        child: Icon(
-                          Icons.image_outlined,
-                          color: DesignTokens.primaryRed,
-                          size: 48,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.8),
+                          ],
                         ),
                       ),
                     ),
-                  // Gradient overlay
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withOpacity(0.8),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Text content (bottom)
-                  Align(
-                    alignment: Alignment.bottomLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            displayTitle,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              height: 1.2,
+                    // Text content (bottom)
+                    Align(
+                      alignment: Alignment.bottomLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              displayTitle,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                height: 1.2,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

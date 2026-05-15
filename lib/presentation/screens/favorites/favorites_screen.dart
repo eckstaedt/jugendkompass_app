@@ -2,6 +2,7 @@ import 'package:jugendkompass_app/core/localization/localization_extension.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
+import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 import 'package:jugendkompass_app/domain/providers/favorites_provider.dart';
 import 'package:jugendkompass_app/domain/providers/content_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/content/widgets/content_card.dart';
@@ -71,15 +72,14 @@ class FavoritesScreen extends ConsumerWidget {
                           ),
                           onDismissed: (direction) {
                             ref.read(favoritesProvider.notifier).removeFavorite(content.id);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('${content.displayTitle} ${AppTranslations.t('removed_from_favorites')}'),
-                                action: SnackBarAction(
-                                  label: AppTranslations.t('undo'),
-                                  onPressed: () {
-                                    ref.read(favoritesProvider.notifier).toggleFavorite(content.id);
-                                  },
-                                ),
+                            SnackBarUtils.show(
+                              context,
+                              '${content.displayTitle} ${AppTranslations.t('removed_from_favorites')}',
+                              action: SnackBarAction(
+                                label: AppTranslations.t('undo'),
+                                onPressed: () {
+                                  ref.read(favoritesProvider.notifier).toggleFavorite(content.id);
+                                },
                               ),
                             );
                           },

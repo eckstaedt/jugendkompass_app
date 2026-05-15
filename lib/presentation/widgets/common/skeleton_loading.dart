@@ -113,15 +113,18 @@ class PodcastListSkeleton extends StatelessWidget {
       child: CustomScrollView(
         physics: const NeverScrollableScrollPhysics(),
         slivers: [
-          // Featured card skeleton
+          // Header skeleton
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(DesignTokens.spacingMedium),
-              child: SkeletonBox(
-                width: double.infinity,
-                height: 220,
-                radius: DesignTokens.radiusLargeCards,
-              ),
+              padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
+              child: SkeletonBox(width: 120, height: 32, radius: 8),
+            ),
+          ),
+          // Search bar skeleton
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+              child: SkeletonBox(width: double.infinity, height: 48, radius: 12),
             ),
           ),
           // Category chips skeleton

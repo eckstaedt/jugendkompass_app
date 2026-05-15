@@ -26,7 +26,7 @@ class StringTranslator {
     'Tagesvers': 'daily_verse',
     'Täglicher Impuls': 'daily_impulse',
     'Neueste Inhalte': 'latest_content',
-    'Kürzliche Inhalte': 'recent_content',
+    'Neueste Beiträge': 'recent_content',
     'Artikel': 'articles',
     'Kurznachricht': 'short_message',
     'Benutzer': 'user',
@@ -94,7 +94,7 @@ class StringTranslator {
     'No Content Available': 'no_content_available',
     'No More Content': 'no_more_content',
     'Latest Content': 'latest_content',
-    'Recent Content': 'recent_content',
+    'Latest Posts': 'recent_content',
     'Error': 'error',
     
     // Search & Settings UI

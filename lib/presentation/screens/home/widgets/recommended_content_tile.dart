@@ -8,6 +8,7 @@ import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
+import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier;
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
@@ -16,13 +17,11 @@ import 'package:jugendkompass_app/presentation/widgets/common/design_system_widg
 class RecommendedContentTile extends ConsumerStatefulWidget {
   final RecommendedItem item;
   final VoidCallback? onTap;
-  final bool isNewest;
 
   const RecommendedContentTile({
     super.key,
     required this.item,
     this.onTap,
-    this.isNewest = false,
   });
 
   @override
@@ -81,9 +80,7 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
 
       if (audio == null) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppTranslations.t('audio_not_found'))),
-          );
+          SnackBarUtils.showError(context, AppTranslations.t('audio_not_found'));
         }
         return;
       }
@@ -107,9 +104,7 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
       await audioService.setQueue([audio], startIndex: 0);
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${AppTranslations.t('error_playing')}: $e')),
-        );
+        SnackBarUtils.showError(context, '${AppTranslations.t('error_playing')}: $e');
       }
     }
   }
@@ -125,17 +120,24 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
 
     // Determine content type for read history check
     final ReadContentType contentType;
+    final String readId;
     if (item.isVideo) {
       contentType = ReadContentType.video;
+      readId = item.videoUrl ?? item.id; // Videos tracked by URL
     } else if (item.isMessage) {
       contentType = ReadContentType.message;
+      readId = item.id;
     } else {
       // Posts (including those with audio) are tracked as posts
       contentType = ReadContentType.post;
+      readId = item.id;
     }
 
     // Check if content is read
-    final isRead = ref.watch(isContentReadProvider((id: item.id, type: contentType)));
+    final isRead = ref.watch(isContentReadProvider((id: readId, type: contentType)));
+
+    // Show NEW badge if: not read AND created within last 2 days
+    final isNew = !isRead && DateTime.now().difference(item.createdAt).inDays < 2;
 
     return GestureDetector(
       onTapDown: _onTapDown,
@@ -227,7 +229,7 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
                                 spacing: 8,
                                 runSpacing: 4,
                                 children: [
-                                  if (widget.isNewest)
+                                  if (isNew)
                                     BadgeWidget(
                                       label: context.tr('new_badge'),
                                       backgroundColor: DesignTokens.primaryRed,

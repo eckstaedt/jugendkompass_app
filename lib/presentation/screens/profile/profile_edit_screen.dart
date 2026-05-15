@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/profile_provider.dart';
@@ -81,21 +82,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           });
 
           if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(translate('Bild erfolgreich hochgeladen')),
-              backgroundColor: Colors.green,
-            ),
-          );
+          SnackBarUtils.showSuccess(context, translate('Bild erfolgreich hochgeladen'));
         } catch (e) {
           if (!mounted) return;
           print('Avatar upload error: $e');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${translate('Fehler beim Hochladen')}: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          SnackBarUtils.showError(context, '${translate('Fehler beim Hochladen')}: ${e.toString()}');
         } finally {
           if (mounted) {
             setState(() {
@@ -106,12 +97,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${translate('Fehler beim Auswählen des Bildes')}: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      SnackBarUtils.showError(context, '${translate('Fehler beim Auswählen des Bildes')}: $e');
     }
   }
 
@@ -120,11 +106,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     final name = _nameController.text.trim();
 
     if (name.isEmpty || name.length < 2) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(translate('Bitte gib einen Namen mit mindestens 2 Zeichen ein')),
-          backgroundColor: Colors.orange,
-        ),
+      SnackBarUtils.show(
+        context,
+        translate('Bitte gib einen Namen mit mindestens 2 Zeichen ein'),
+        backgroundColor: Colors.orange,
       );
       return;
     }
@@ -173,22 +158,12 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(translate('Profil gespeichert')),
-          backgroundColor: Colors.green,
-        ),
-      );
+      SnackBarUtils.showSuccess(context, translate('Profil gespeichert'));
 
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${translate('Fehler beim Speichern')}: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      SnackBarUtils.showError(context, '${translate('Fehler beim Speichern')}: $e');
     } finally {
       if (mounted) {
         setState(() {

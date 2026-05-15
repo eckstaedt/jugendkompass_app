@@ -6,6 +6,7 @@ import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:just_audio/just_audio.dart' as just_audio;
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
+import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
@@ -699,13 +700,11 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                                 .state =
                                                 List<AudioModel>.from(
                                                     audioService.queue);
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(SnackBar(
-                                              content: Text(
-                                                  '${audio.title ?? "Audio"} ${translate('zur Warteschlange hinzugefügt')}'),
-                                              duration:
-                                                  const Duration(seconds: 2),
-                                            ));
+                                            SnackBarUtils.show(
+                                              context,
+                                              '${audio.title ?? "Audio"} ${translate('zur Warteschlange hinzugefügt')}',
+                                              duration: const Duration(seconds: 2),
+                                            );
                                           },
                                           child: ClipRRect(
                                             borderRadius: BorderRadius.circular(

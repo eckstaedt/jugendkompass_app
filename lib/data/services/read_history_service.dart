@@ -38,9 +38,7 @@ class ReadHistoryService {
   /// Check if a specific content item has been read/played
   bool isRead(String id, ReadContentType type) {
     final key = '${type.name}_$id';
-    final result = _readKeys.contains(key);
-    print('[ReadHistory] isRead check: key=$key, result=$result, allKeys=$_readKeys');
-    return result;
+    return _readKeys.contains(key);
   }
 
   /// Check if a specific content item has been read/played (async version)
@@ -59,13 +57,9 @@ class ReadHistoryService {
     if (_prefs == null) await init();
 
     final key = '${type.name}_$id';
-    print('[ReadHistory] markAsRead called: key=$key, title=$title');
 
     // Skip if already marked as read
-    if (_readKeys.contains(key)) {
-      print('[ReadHistory] Already read, skipping');
-      return;
-    }
+    if (_readKeys.contains(key)) return;
 
     final item = ReadHistoryItem(
       id: id,
@@ -81,7 +75,6 @@ class ReadHistoryService {
 
     // Update in-memory cache
     _readKeys.add(key);
-    print('[ReadHistory] Marked as read. Total keys: ${_readKeys.length}');
   }
 
   /// Get all read IDs for a specific content type

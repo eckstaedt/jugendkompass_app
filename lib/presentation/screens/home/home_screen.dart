@@ -281,7 +281,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                   const SliverToBoxAdapter(child: SizedBox(height: 32)),
 
-                  // ── Unified "Kürzliche Inhalte" Section ──────────────
+                  // ── Unified "Neueste Beiträge" Section ──────────────
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
@@ -291,7 +291,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         DesignTokens.spacingSmall,
                       ),
                       child: Text(
-                        translate('Kürzliche Inhalte'),
+                        translate('Neueste Beiträge'),
                         style: GoogleFonts.poppins(
                           textStyle: theme.textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.w700,
@@ -358,7 +358,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               padding: const EdgeInsets.only(bottom: 12),
                               child: RecommendedContentTile(
                                 item: item,
-                                isNewest: index == 0,
                                 onTap: () => _navigateToContent(context, item),
                               ),
                             );

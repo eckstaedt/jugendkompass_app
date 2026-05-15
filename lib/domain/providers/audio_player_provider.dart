@@ -9,6 +9,7 @@ import 'package:jugendkompass_app/data/services/read_history_service.dart';
 import 'package:jugendkompass_app/data/services/web_media_session_handler.dart';
 import 'package:jugendkompass_app/domain/providers/supabase_provider.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
+import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier;
 
 final audioRepositoryProvider = Provider<AudioRepository>((ref) {
   final supabase = ref.watch(supabaseProvider);
@@ -28,8 +29,13 @@ final audioServiceProvider = Provider<AudioService>((ref) {
   };
   // Reset state when playback completes (no next track)
   service.onPlaybackComplete = () {
-    // Seek to beginning so replay shows progress at 0
-    service.seek(Duration.zero);
+    // Stop playback and clear audio state
+    service.stop();
+    service.clearQueue();
+    ref.read(currentAudioProvider.notifier).state = null;
+    ref.read(audioQueueProvider.notifier).state = [];
+    ref.read(currentQueueIndexProvider.notifier).state = 0;
+    currentAudioNotifier.value = null;
   };
   return service;
 });
