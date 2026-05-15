@@ -422,7 +422,7 @@ class ProfileScreen extends ConsumerWidget {
           // App Version (optional)
           Center(
             child: Text(
-              'Version 2.0.2',
+              'Version 2.0.3',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
