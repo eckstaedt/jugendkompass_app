@@ -2,7 +2,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const TELEGRAM_GATEWAY = "https://connector-gateway.lovable.dev/telegram";
-const CHAT_ID = "63117481";
+const CHAT_IDS = ["63117481", "8027531086"];
 const TZ = "Europe/Berlin";
 
 function berlinDayBoundsUtc(): { startUtc: string; endUtc: string; label: string } {
