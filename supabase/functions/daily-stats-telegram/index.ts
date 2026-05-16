@@ -2,7 +2,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const TELEGRAM_GATEWAY = "https://connector-gateway.lovable.dev/telegram";
-const CHAT_ID = "63117481";
+const CHAT_IDS = ["63117481", "8027531086"];
 const TZ = "Europe/Berlin";
 
 function berlinDayBoundsUtc(): { startUtc: string; endUtc: string; label: string } {
@@ -92,22 +92,26 @@ Deno.serve(async (req) => {
       `📱 App-Öffnungen: <b>${opens}</b>\n` +
       `👥 Aktive Geräte: <b>${uniqueOpeners}</b>`;
 
-    const tgRes = await fetch(`${TELEGRAM_GATEWAY}/sendMessage`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": TELEGRAM_API_KEY,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ chat_id: CHAT_ID, text, parse_mode: "HTML" }),
-    });
-    const tgData = await tgRes.json();
-    if (!tgRes.ok) {
-      throw new Error(`Telegram failed [${tgRes.status}]: ${JSON.stringify(tgData)}`);
+    const results = [];
+    for (const chatId of CHAT_IDS) {
+      const tgRes = await fetch(`${TELEGRAM_GATEWAY}/sendMessage`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "X-Connection-Api-Key": TELEGRAM_API_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
+      });
+      const tgData = await tgRes.json();
+      results.push({ chatId, ok: tgRes.ok, status: tgRes.status, data: tgData });
+      if (!tgRes.ok) {
+        console.error(`Telegram failed for ${chatId} [${tgRes.status}]:`, tgData);
+      }
     }
 
     return new Response(
-      JSON.stringify({ success: true, installs, opens, uniqueOpeners, label }),
+      JSON.stringify({ success: true, installs, opens, uniqueOpeners, label, results }),
       { status: 200, headers: { "Content-Type": "application/json" } },
     );
   } catch (e) {
