@@ -10,6 +10,7 @@ import {
   PieChartIcon, 
   FileVideoIcon, 
   UsersIcon,
+  LineChartIcon,
   LogOut,
   Moon,
   Sun,
@@ -95,6 +96,11 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
       label: 'Benutzer',
       path: '/dashboard/users',
       icon: UsersIcon,
+    },
+    {
+      label: 'Berichte',
+      path: '/dashboard/reports',
+      icon: LineChartIcon,
     },
   ];
   
