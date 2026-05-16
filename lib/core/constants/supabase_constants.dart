@@ -11,6 +11,7 @@ class SupabaseConstants {
   static const String editionsTable = 'editions';
   static const String messagesTable = 'messages';
   static const String appAnalyticsTable = 'app_analytics';
+  static const String contentInteractionsTable = 'content_interactions';
 
   // Column names for current_verse
   static const String verseId = 'id';

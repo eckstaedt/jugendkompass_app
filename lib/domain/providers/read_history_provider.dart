@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/data/services/read_history_service.dart';
+import 'package:jugendkompass_app/core/services/content_interaction_service.dart';
 
 /// Provider for the ReadHistoryService singleton
 final readHistoryServiceProvider = Provider<ReadHistoryService>((ref) {
@@ -49,7 +50,16 @@ class ReadHistoryNotifier extends StateNotifier<List<ReadHistoryItem>> {
     String? title,
     String? imageUrl,
   }) async {
+    // Track locally
     await _service.markAsRead(id, type, title: title, imageUrl: imageUrl);
+
+    // Track to database (fire and forget, won't block UI)
+    ContentInteractionService.instance.trackInteraction(
+      contentId: id,
+      contentType: type.name,
+      title: title,
+    );
+
     state = await _service.getReadHistory();
   }
 

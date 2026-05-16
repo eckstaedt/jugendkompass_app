@@ -314,6 +314,24 @@ Analytics tracking für App-Installationen und App-Öffnungen.
 
 ---
 
+### `content_interactions`
+| Spalte | Typ | Nullable | Default |
+|--------|-----|----------|---------|
+| id | uuid | Nein | `gen_random_uuid()` |
+| device_id | text | Nein | – |
+| content_type | text | Nein | – |
+| content_id | text | Nein | – |
+| content_title | text | Ja | – |
+| platform | text | Nein | – |
+| app_version | text | Ja | – |
+| created_at | timestamptz | Nein | `now()` |
+
+**Beschreibung:** Anonymes Tracking von Content-Interaktionen (Klicks/Views). Verwendet `device_id` statt `user_id` für anonyme Nutzer.
+
+**RLS:** Jeder kann einfügen, nur Admins können lesen.
+
+---
+
 ## Datenbank-Funktionen
 
 ### Allgemein
