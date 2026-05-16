@@ -147,13 +147,14 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
       );
     }
 
+    final screenHeight = MediaQuery.of(context).size.height;
+    final dragProgress = (_dragOffset / screenHeight).clamp(0.0, 1.0);
+
     return Scaffold(
-      backgroundColor: brightness == Brightness.dark
-          ? DesignTokens.darkAppBackground
-          : const Color(0xFFF0EEF5),
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          // Blurred background image
+          // Blurred background image (stays fixed)
           if (currentAudio.imageUrl != null)
             Positioned.fill(
               child: ImageFiltered(
@@ -161,20 +162,24 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                 child: CachedNetworkImage(
                   imageUrl: currentAudio.imageUrl!,
                   fit: BoxFit.cover,
-                  errorWidget: (_, _, _) => const SizedBox.shrink(),
+                  errorWidget: (_, _, _) => Container(
+                    color: brightness == Brightness.dark
+                        ? DesignTokens.darkAppBackground
+                        : const Color(0xFFF0EEF5),
+                  ),
                 ),
               ),
             ),
-          // Scrim overlay
+          // Scrim overlay (fades out as user swipes)
           Positioned.fill(
             child: Container(
               color: (brightness == Brightness.dark
                       ? Colors.black
                       : Colors.white)
-                  .withOpacity(0.52),
+                  .withOpacity(0.52 * (1 - dragProgress * 0.5)),
             ),
           ),
-          // Main content
+          // Main content (moves with swipe)
           GestureDetector(
             behavior: HitTestBehavior.translucent,
             onVerticalDragUpdate: (details) {
@@ -182,18 +187,25 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
               if (_scrollController.hasClients && _scrollController.offset > 0) return;
               if (details.delta.dy > 0) {
                 setState(() => _dragOffset += details.delta.dy);
-                if (_dragOffset > 100) {
-                  _dragOffset = 0;
-                  Navigator.pop(context);
-                }
+              } else if (_dragOffset > 0) {
+                // Allow dragging back up
+                setState(() => _dragOffset = (_dragOffset + details.delta.dy).clamp(0.0, double.infinity));
+              }
+            },
+            onVerticalDragEnd: (details) {
+              if (_dragOffset > 120 || (details.primaryVelocity ?? 0) > 800) {
+                // Dismiss if dragged far enough or with enough velocity
+                Navigator.pop(context);
               } else {
+                // Animate back to original position
                 setState(() => _dragOffset = 0);
               }
             },
-            onVerticalDragEnd: (_) {
-              if (mounted) setState(() => _dragOffset = 0);
-            },
-            child: SafeArea(
+            child: AnimatedContainer(
+              duration: _dragOffset == 0 ? const Duration(milliseconds: 200) : Duration.zero,
+              curve: Curves.easeOut,
+              transform: Matrix4.translationValues(0, _dragOffset, 0),
+              child: SafeArea(
               child: Column(
                 children: [
                   // Drag handle pill (iOS-style)
@@ -812,6 +824,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
               ],
             ),
           ),
+        ), // closes AnimatedContainer
         ), // closes GestureDetector
         ],
       ),

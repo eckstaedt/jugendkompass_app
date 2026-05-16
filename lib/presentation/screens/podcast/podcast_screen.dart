@@ -65,28 +65,31 @@ class _PodcastScreenState extends ConsumerState<PodcastScreen> {
               }
 
               // Filter audio list based on selected category and search query
-              var filteredList = selectedCategory == null
-                  ? List.of(audioList)
-                      : audioList.where((audio) {
-                        // Get list of category names from post (support multi tags)
-                        final post = audio.post;
-                        if (post == null) return false;
-                        final categories = post.categoryNames ??
-                          (post.categoryName != null ? [post.categoryName!] : []);
-                        if (categories.isEmpty) return false;
+              List<AudioModel> filteredList;
+              if (selectedCategory == null) {
+                filteredList = List<AudioModel>.from(audioList);
+              } else {
+                filteredList = audioList.where((audio) {
+                  // Get list of category names from post (support multi tags)
+                  final post = audio.post;
+                  if (post == null) return false;
+                  final categories = post.categoryNames ??
+                    (post.categoryName != null ? [post.categoryName!] : []);
+                  if (categories.isEmpty) return false;
 
-                        final normalizedSelectedCategory = selectedCategory
-                          .toLowerCase()
-                          .replaceAll(' ', '_');
+                  final normalizedSelectedCategory = selectedCategory
+                    .toLowerCase()
+                    .replaceAll(' ', '_');
 
-                        // check any tag matches
-                        return categories.any((categoryName) {
-                        final normalizedPostCategory = categoryName
-                          .toLowerCase()
-                          .replaceAll(' ', '_');
-                        return normalizedPostCategory == normalizedSelectedCategory;
-                        });
-                      }).toList();
+                  // check any tag matches
+                  return categories.any((categoryName) {
+                  final normalizedPostCategory = categoryName
+                    .toLowerCase()
+                    .replaceAll(' ', '_');
+                  return normalizedPostCategory == normalizedSelectedCategory;
+                  });
+                }).toList();
+              }
 
               // Apply search filter
               if (_searchQuery.isNotEmpty) {
@@ -97,8 +100,15 @@ class _PodcastScreenState extends ConsumerState<PodcastScreen> {
                 }).toList();
               }
 
-              // Sort by creation date (newest first)
-              filteredList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+              // Sort by creation date (newest first), then by title alphabetically
+              filteredList.sort((a, b) {
+                final dateCompare = b.createdAt.compareTo(a.createdAt);
+                if (dateCompare != 0) return dateCompare;
+                // Secondary sort by title if same date
+                final titleA = (a.title ?? a.post?.title ?? '').toLowerCase();
+                final titleB = (b.title ?? b.post?.title ?? '').toLowerCase();
+                return titleA.compareTo(titleB);
+              });
 
               return CustomScrollView(
                 slivers: [
