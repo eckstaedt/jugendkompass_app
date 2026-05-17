@@ -1,8 +1,19 @@
 // Supabase Edge Function: send-push-notification
 //
-// Triggered by Database Webhooks when new content is created.
-// Sends push notifications to ALL registered devices via Firebase Cloud
-// Messaging (FCM) HTTP v1 API.
+// Manually triggered by user/admin to send push notifications.
+// NOT automatically triggered by database inserts.
+//
+// Call via HTTP POST with JSON body:
+//   {
+//     "table": "posts" | "videos" | "messages" | "editions" | "impulses" | "verse_of_the_day",
+//     "record": { ... record data ... }
+//   }
+//
+// Or for convenience, just pass content_type and content_id to fetch the record:
+//   {
+//     "content_type": "post" | "video" | "message" | "edition" | "impulse" | "verse",
+//     "content_id": "uuid-here"
+//   }
 //
 // Supported tables & notification titles:
 //   posts (with audio_id)  → "Neuer Podcast"
@@ -36,12 +47,13 @@ const FCM_SERVICE_ACCOUNT: ServiceAccountKey = {
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-interface WebhookPayload {
-  type: "INSERT" | "UPDATE" | "DELETE";
-  table: string;
-  record: Record<string, unknown>;
-  schema: string;
-  old_record: null | Record<string, unknown>;
+interface ManualTriggerPayload {
+  // Option 1: Direct table/record (like old webhook format)
+  table?: string;
+  record?: Record<string, unknown>;
+  // Option 2: Fetch by content type and ID
+  content_type?: string;
+  content_id?: string;
 }
 
 interface ServiceAccountKey {
@@ -49,6 +61,16 @@ interface ServiceAccountKey {
   private_key: string;
   token_uri: string;
 }
+
+// Map content_type to table name
+const CONTENT_TYPE_TO_TABLE: Record<string, string> = {
+  post: "posts",
+  video: "videos",
+  message: "messages",
+  edition: "editions",
+  impulse: "impulses",
+  verse: "verse_of_the_day",
+};
 
 // ─── Notification mapping ───────────────────────────────────────────────────
 
@@ -254,23 +276,59 @@ async function getAccessToken(sa: ServiceAccountKey): Promise<string> {
 
 serve(async (req) => {
   try {
-    // Parse the webhook payload
-    const payload: WebhookPayload = await req.json();
-    console.log(`[send-push] Received ${payload.type} on ${payload.table}`);
+    // Parse the request payload
+    const payload: ManualTriggerPayload = await req.json();
+    console.log(`[send-push] Received manual trigger request`);
 
-    // Only process INSERT events
-    if (payload.type !== "INSERT") {
-      return new Response(JSON.stringify({ message: "Ignoring non-INSERT event" }), {
-        status: 200,
-      });
-    }
-
-    console.log(`[send-push] Processing ${payload.table} notification`);
-
-    // ── Get all FCM tokens from Supabase with language preference ──
+    // ── Initialize Supabase client ──
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // ── Determine table and record ──
+    let table: string;
+    let record: Record<string, unknown>;
+
+    if (payload.table && payload.record) {
+      // Option 1: Direct table/record provided
+      table = payload.table;
+      record = payload.record;
+    } else if (payload.content_type && payload.content_id) {
+      // Option 2: Fetch record by content_type and content_id
+      table = CONTENT_TYPE_TO_TABLE[payload.content_type];
+      if (!table) {
+        return new Response(
+          JSON.stringify({ error: `Unknown content_type: ${payload.content_type}` }),
+          { status: 400 }
+        );
+      }
+
+      const { data, error } = await supabase
+        .from(table)
+        .select("*")
+        .eq("id", payload.content_id)
+        .single();
+
+      if (error || !data) {
+        console.error("[send-push] Error fetching record:", error);
+        return new Response(
+          JSON.stringify({ error: `Record not found: ${payload.content_id}` }),
+          { status: 404 }
+        );
+      }
+      record = data;
+    } else {
+      return new Response(
+        JSON.stringify({
+          error: "Invalid payload. Provide either {table, record} or {content_type, content_id}"
+        }),
+        { status: 400 }
+      );
+    }
+
+    console.log(`[send-push] Processing ${table} notification for record:`, record.id || record.title);
+
+    // ── Get all FCM tokens from Supabase with language preference ──
 
     const { data: devices, error } = await supabase
       .from("device_tokens")
@@ -308,7 +366,7 @@ serve(async (req) => {
     const allResults: PromiseSettledResult<unknown>[] = [];
 
     for (const [language, tokens] of Object.entries(devicesByLanguage)) {
-      const notification = getNotificationContent(payload.table, payload.record, language);
+      const notification = getNotificationContent(table, record, language);
       if (!notification) {
         console.log(`[send-push] No notification mapping for table: ${payload.table}`);
         continue;
