@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jugendkompass_app/core/services/device_registration_service.dart';
+import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 /// Service for tracking content interactions (clicks/views) to Supabase.
@@ -49,6 +50,7 @@ class ContentInteractionService {
         'content_type': contentType,
         'content_id': contentId,
         'content_title': title,
+        'language': UserPreferencesService.instance.getLanguage(),
         'platform': platform,
         'app_version': appVersion,
       });

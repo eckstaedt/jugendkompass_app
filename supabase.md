@@ -322,11 +322,12 @@ Analytics tracking für App-Installationen und App-Öffnungen.
 | content_type | text | Nein | – |
 | content_id | text | Nein | – |
 | content_title | text | Ja | – |
+| language | text | Ja | `'de'` |
 | platform | text | Nein | – |
 | app_version | text | Ja | – |
 | created_at | timestamptz | Nein | `now()` |
 
-**Beschreibung:** Anonymes Tracking von Content-Interaktionen (Klicks/Views). Verwendet `device_id` statt `user_id` für anonyme Nutzer.
+**Beschreibung:** Anonymes Tracking von Content-Interaktionen (Klicks/Views). Verwendet `device_id` statt `user_id` für anonyme Nutzer. `language` speichert die App-Sprache beim Aufruf ('de', 'en', etc.).
 
 **RLS:** Jeder kann einfügen, nur Admins können lesen.
 

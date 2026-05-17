@@ -7,6 +7,7 @@ CREATE TABLE content_interactions (
   content_type text NOT NULL,      -- 'post', 'video', 'audio', 'impulse', 'message'
   content_id text NOT NULL,        -- The content's ID
   content_title text,              -- Optional title for analytics
+  language text DEFAULT 'de',      -- App language when content was viewed ('de', 'en', etc.)
   platform text NOT NULL,          -- 'ios', 'android', 'web'
   app_version text,
   created_at timestamptz NOT NULL DEFAULT now()
