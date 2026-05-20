@@ -3,7 +3,6 @@ import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import TextStyle from '@tiptap/extension-text-style';
-import Color from '@tiptap/extension-color';
 import Image from '@tiptap/extension-image';
 import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
@@ -14,16 +13,7 @@ import {
   AlignCenter,
   AlignRight,
   Image as ImageIcon,
-  Palette,
 } from 'lucide-react';
-
-// A simple color palette
-const COLORS = [
-  "#221F26", "#6E59A5", "#D946EF", "#F97316",
-  "#0EA5E9", "#8B5CF6", "#403E43", "#8E9196",
-  "#F2FCE2", "#FEF7CD", "#FEC6A1", "#E5DEFF",
-  "#FFDEE2", "#FDE1D3", "#D3E4FD", "#F1F0FB"
-];
 
 interface RichTextEditorProps {
   content: string;
@@ -42,7 +32,7 @@ const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
         alignments: ['left', 'center', 'right'],
         defaultAlignment: 'left',
       }),
-      Color.configure({ types: ['textStyle'] }),
+      
       Image.configure({
         inline: false,
         allowBase64: true,
@@ -56,11 +46,6 @@ const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
 
   if (!editor) {
     return null;
-  }
-
-  // Fix the setColor function to use the editor's chain API correctly
-  function setColor(color: string) {
-    editor.chain().focus().setColor(color).run();
   }
 
   function handleImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
@@ -105,22 +90,6 @@ const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
         >
           <Italic className="h-4 w-4" />
         </Button>
-        {/* Color Picker */}
-        <div className="flex items-center gap-1">
-          <Palette className="h-4 w-4 text-primary" />
-          <div className="flex gap-0.5">
-            {COLORS.map((color) => (
-              <button
-                key={color}
-                type="button"
-                className="w-4 h-4 rounded-full border border-gray-200 hover:border-black"
-                style={{ background: color }}
-                onClick={() => setColor(color)}
-                aria-label={`Farbe ${color}`}
-              />
-            ))}
-          </div>
-        </div>
         {/* Image Upload */}
         <Button
           variant="ghost"
