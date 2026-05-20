@@ -119,9 +119,14 @@ const AusgabenPage = () => {
                 <Input placeholder="Titel der Ausgabe" value={title} onChange={(e) => setTitle(e.target.value)} />
               </div>
               <div>
+                <label className="block font-medium mb-1">Release-Datum</label>
+                <Input type="date" value={releaseDate} onChange={(e) => setReleaseDate(e.target.value)} />
+              </div>
+              <div>
                 <label className="block font-medium mb-1">Beschreibung</label>
                 <Textarea placeholder="Beschreibung der Ausgabe..." value={body} onChange={(e) => setBody(e.target.value)} rows={4} />
               </div>
+
               <ImageUploader value={imageUrl} onChange={setImageUrl} label="Titelbild (JPEG, PNG, max. 3MB)" />
               <div>
                 <label className="block font-medium mb-1">PDF-Dokument</label>
