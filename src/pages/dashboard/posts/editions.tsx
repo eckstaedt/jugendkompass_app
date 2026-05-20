@@ -29,18 +29,22 @@ const AusgabenPage = () => {
   const [name, setName] = useState('');
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [releaseDate, setReleaseDate] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
+
 
   const [editingEdition, setEditingEdition] = useState<Edition | null>(null);
   const [editName, setEditName] = useState('');
   const [editTitle, setEditTitle] = useState('');
   const [editBody, setEditBody] = useState('');
+  const [editReleaseDate, setEditReleaseDate] = useState('');
   const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
   const [editPdfFile, setEditPdfFile] = useState<File | null>(null);
   const [keepExistingPdf, setKeepExistingPdf] = useState(true);
   const editPdfInputRef = useRef<HTMLInputElement>(null);
+
 
   const { editions, createEdition, isCreating, updateEdition, isUpdating } = useEditions();
   const { data: translationsByContent } = useTranslationsForContents(editions.map((e) => e.content_id));
@@ -55,10 +59,12 @@ const AusgabenPage = () => {
         body: body.trim() || undefined,
         image_url: imageUrl,
         pdfFile,
+        release_date: releaseDate || null,
       });
       setName('');
       setTitle('');
       setBody('');
+      setReleaseDate('');
       setImageUrl(null);
       setPdfFile(null);
     }
@@ -69,6 +75,7 @@ const AusgabenPage = () => {
     setEditName(edition.name);
     setEditTitle(edition.title || '');
     setEditBody(edition.body || '');
+    setEditReleaseDate(edition.release_date || '');
     setEditImageUrl(edition.image_url);
     setEditPdfFile(null);
     setKeepExistingPdf(!!edition.pdf_url);
@@ -85,11 +92,13 @@ const AusgabenPage = () => {
         image_url: editImageUrl,
         pdfFile: editPdfFile,
         keepExistingPdf,
+        release_date: editReleaseDate || null,
       }, {
         onSuccess: () => setEditingEdition(null),
       });
     }
   };
+
 
   return (
     <DashboardLayout title="Ausgaben verwalten">
@@ -110,9 +119,14 @@ const AusgabenPage = () => {
                 <Input placeholder="Titel der Ausgabe" value={title} onChange={(e) => setTitle(e.target.value)} />
               </div>
               <div>
+                <label className="block font-medium mb-1">Release-Datum</label>
+                <Input type="date" value={releaseDate} onChange={(e) => setReleaseDate(e.target.value)} />
+              </div>
+              <div>
                 <label className="block font-medium mb-1">Beschreibung</label>
                 <Textarea placeholder="Beschreibung der Ausgabe..." value={body} onChange={(e) => setBody(e.target.value)} rows={4} />
               </div>
+
               <ImageUploader value={imageUrl} onChange={setImageUrl} label="Titelbild (JPEG, PNG, max. 3MB)" />
               <div>
                 <label className="block font-medium mb-1">PDF-Dokument</label>
@@ -157,12 +171,18 @@ const AusgabenPage = () => {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold">{edition.name}</p>
                     {edition.title && <p className="text-sm text-muted-foreground">{edition.title}</p>}
+                    {edition.release_date && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Release: {new Date(edition.release_date).toLocaleDateString('de-DE')}
+                      </p>
+                    )}
                     {edition.body && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{edition.body}</p>}
                     {edition.pdf_url && (
                       <a href={edition.pdf_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2">
                         <FileText className="h-3 w-3" />PDF anzeigen<ExternalLink className="h-3 w-3" />
                       </a>
                     )}
+
                     <div className="mt-2">
                       <TranslationStatusList statuses={statuses} />
                     </div>
@@ -197,9 +217,14 @@ const AusgabenPage = () => {
               <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
             </div>
             <div>
+              <label className="block font-medium mb-1">Release-Datum</label>
+              <Input type="date" value={editReleaseDate} onChange={(e) => setEditReleaseDate(e.target.value)} />
+            </div>
+            <div>
               <label className="block font-medium mb-1">Beschreibung</label>
               <Textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} rows={4} />
             </div>
+
             <ImageUploader value={editImageUrl} onChange={setEditImageUrl} label="Titelbild (JPEG, PNG, max. 3MB)" />
             <div>
               <label className="block font-medium mb-1">PDF-Dokument</label>
