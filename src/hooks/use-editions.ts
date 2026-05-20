@@ -7,6 +7,7 @@ export type Edition = {
   id: string;
   name: string;
   published_at: string | null;
+  release_date: string | null;
   title: string | null;
   body: string | null;
   image_url: string | null;
@@ -20,6 +21,7 @@ export type CreateEditionParams = {
   body?: string;
   image_url?: string | null;
   pdfFile?: File | null;
+  release_date?: string | null;
 };
 
 export type UpdateEditionParams = {
@@ -30,6 +32,7 @@ export type UpdateEditionParams = {
   image_url?: string | null;
   pdfFile?: File | null;
   keepExistingPdf?: boolean;
+  release_date?: string | null;
 };
 
 export function useEditions() {
@@ -42,7 +45,7 @@ export function useEditions() {
       const { data, error } = await supabase
         .from('editions')
         .select('*')
-        .order('name');
+        .order('release_date', { ascending: false, nullsFirst: false });
 
       if (error) throw error;
       return data as Edition[];
@@ -73,6 +76,7 @@ export function useEditions() {
           body: params.body || null,
           image_url: params.image_url || null,
           pdf_url,
+          release_date: params.release_date || null,
         }]);
       
       if (error) throw error;
@@ -101,6 +105,7 @@ export function useEditions() {
         title: params.title || null,
         body: params.body || null,
         image_url: params.image_url || null,
+        release_date: params.release_date || null,
       };
 
       if (pdf_url !== undefined) {
