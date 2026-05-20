@@ -51,11 +51,34 @@ export default function ImpulsesPage() {
   const { user } = useAuth();
 
   const handleSubmit = async (data: any) => {
+    if (!user?.id) return;
     try {
       if (editingImpulse) {
-        await updateImpulse.mutateAsync({ id: editingImpulse.id, ...data });
+        let image_url = data.image_url ?? editingImpulse.image_url;
+        if (data.image) {
+          const { v4: uuidv4 } = await import('uuid');
+          const { supabase } = await import('@/integrations/supabase/client');
+          const fileExt = data.image.name.split('.').pop();
+          const fileName = `${uuidv4()}.${fileExt}`;
+          const { error: uploadError } = await supabase.storage
+            .from('impulses')
+            .upload(fileName, data.image);
+          if (uploadError) throw uploadError;
+          const { data: { publicUrl } } = supabase.storage
+            .from('impulses')
+            .getPublicUrl(fileName);
+          image_url = publicUrl;
+        }
+        await updateImpulse.mutateAsync({
+          id: editingImpulse.id,
+          date: data.date,
+          title: data.title,
+          impulse_text: data.impulse_text,
+          image_url,
+          user_id: user.id,
+        });
       } else {
-        await createImpulse.mutateAsync(data);
+        await createImpulse.mutateAsync({ ...data, user_id: user.id });
       }
     } catch (error) {
       console.error("Error saving impulse:", error);
