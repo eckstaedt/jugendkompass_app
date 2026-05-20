@@ -39,10 +39,12 @@ const AusgabenPage = () => {
   const [editName, setEditName] = useState('');
   const [editTitle, setEditTitle] = useState('');
   const [editBody, setEditBody] = useState('');
+  const [editReleaseDate, setEditReleaseDate] = useState('');
   const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
   const [editPdfFile, setEditPdfFile] = useState<File | null>(null);
   const [keepExistingPdf, setKeepExistingPdf] = useState(true);
   const editPdfInputRef = useRef<HTMLInputElement>(null);
+
 
   const { editions, createEdition, isCreating, updateEdition, isUpdating } = useEditions();
   const { data: translationsByContent } = useTranslationsForContents(editions.map((e) => e.content_id));
