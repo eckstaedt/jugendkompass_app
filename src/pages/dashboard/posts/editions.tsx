@@ -171,12 +171,18 @@ const AusgabenPage = () => {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold">{edition.name}</p>
                     {edition.title && <p className="text-sm text-muted-foreground">{edition.title}</p>}
+                    {edition.release_date && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Release: {new Date(edition.release_date).toLocaleDateString('de-DE')}
+                      </p>
+                    )}
                     {edition.body && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{edition.body}</p>}
                     {edition.pdf_url && (
                       <a href={edition.pdf_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2">
                         <FileText className="h-3 w-3" />PDF anzeigen<ExternalLink className="h-3 w-3" />
                       </a>
                     )}
+
                     <div className="mt-2">
                       <TranslationStatusList statuses={statuses} />
                     </div>
