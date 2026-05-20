@@ -3,7 +3,6 @@ import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import TextStyle from '@tiptap/extension-text-style';
-import Color from '@tiptap/extension-color';
 import Image from '@tiptap/extension-image';
 import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
@@ -14,16 +13,7 @@ import {
   AlignCenter,
   AlignRight,
   Image as ImageIcon,
-  Palette,
 } from 'lucide-react';
-
-// A simple color palette
-const COLORS = [
-  "#221F26", "#6E59A5", "#D946EF", "#F97316",
-  "#0EA5E9", "#8B5CF6", "#403E43", "#8E9196",
-  "#F2FCE2", "#FEF7CD", "#FEC6A1", "#E5DEFF",
-  "#FFDEE2", "#FDE1D3", "#D3E4FD", "#F1F0FB"
-];
 
 interface RichTextEditorProps {
   content: string;
