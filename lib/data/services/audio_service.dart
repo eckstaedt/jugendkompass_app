@@ -56,7 +56,11 @@ class AudioService {
   void _setupPlayerStateListener() {
     _playerStateSubscription = _player.playerStateStream.listen((state) {
       if (state.processingState == ProcessingState.completed) {
-        onPlaybackComplete?.call();
+        // With ConcatenatingAudioSource, completed fires after the last track.
+        // Only notify completion when there is truly no next track.
+        if (!hasNext) {
+          onPlaybackComplete?.call();
+        }
       }
     });
   }
