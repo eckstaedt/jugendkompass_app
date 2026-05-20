@@ -141,11 +141,15 @@ class ImpulseRepository {
           .map((json) => ImpulseModel.fromJson(json))
           .toList();
 
+      // Filter out future impulses
+      final now = DateTime.now();
+      final published = impulses.where((i) => !i.date.isAfter(now)).toList();
+
       // Sort by date descending (newest first)
-      impulses.sort((a, b) => b.date.compareTo(a.date));
+      published.sort((a, b) => b.date.compareTo(a.date));
 
       // Apply limit and offset client-side
-      return impulses.skip(offset).take(limit).toList();
+      return published.skip(offset).take(limit).toList();
     } catch (e) {
       throw Exception('Fehler beim Laden der lokalisierten Impulse: $e');
     }
