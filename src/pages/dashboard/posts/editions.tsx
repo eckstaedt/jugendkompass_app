@@ -217,9 +217,14 @@ const AusgabenPage = () => {
               <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
             </div>
             <div>
+              <label className="block font-medium mb-1">Release-Datum</label>
+              <Input type="date" value={editReleaseDate} onChange={(e) => setEditReleaseDate(e.target.value)} />
+            </div>
+            <div>
               <label className="block font-medium mb-1">Beschreibung</label>
               <Textarea value={editBody} onChange={(e) => setEditBody(e.target.value)} rows={4} />
             </div>
+
             <ImageUploader value={editImageUrl} onChange={setEditImageUrl} label="Titelbild (JPEG, PNG, max. 3MB)" />
             <div>
               <label className="block font-medium mb-1">PDF-Dokument</label>
