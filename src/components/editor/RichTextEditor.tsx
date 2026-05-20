@@ -90,22 +90,6 @@ const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
         >
           <Italic className="h-4 w-4" />
         </Button>
-        {/* Color Picker */}
-        <div className="flex items-center gap-1">
-          <Palette className="h-4 w-4 text-primary" />
-          <div className="flex gap-0.5">
-            {COLORS.map((color) => (
-              <button
-                key={color}
-                type="button"
-                className="w-4 h-4 rounded-full border border-gray-200 hover:border-black"
-                style={{ background: color }}
-                onClick={() => setColor(color)}
-                aria-label={`Farbe ${color}`}
-              />
-            ))}
-          </div>
-        </div>
         {/* Image Upload */}
         <Button
           variant="ghost"
