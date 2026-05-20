@@ -29,9 +29,11 @@ const AusgabenPage = () => {
   const [name, setName] = useState('');
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [releaseDate, setReleaseDate] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
+
 
   const [editingEdition, setEditingEdition] = useState<Edition | null>(null);
   const [editName, setEditName] = useState('');
