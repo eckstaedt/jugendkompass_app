@@ -81,17 +81,6 @@ const AusgabenPage = () => {
     setKeepExistingPdf(!!edition.pdf_url);
   };
 
-
-  const openEditDialog = (edition: Edition) => {
-    setEditingEdition(edition);
-    setEditName(edition.name);
-    setEditTitle(edition.title || '');
-    setEditBody(edition.body || '');
-    setEditImageUrl(edition.image_url);
-    setEditPdfFile(null);
-    setKeepExistingPdf(!!edition.pdf_url);
-  };
-
   const handleUpdate = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingEdition && editName.trim()) {
@@ -103,11 +92,13 @@ const AusgabenPage = () => {
         image_url: editImageUrl,
         pdfFile: editPdfFile,
         keepExistingPdf,
+        release_date: editReleaseDate || null,
       }, {
         onSuccess: () => setEditingEdition(null),
       });
     }
   };
+
 
   return (
     <DashboardLayout title="Ausgaben verwalten">
