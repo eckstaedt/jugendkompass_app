@@ -101,7 +101,7 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[750px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[750px] max-h-[90vh] overflow-y-auto flex flex-col">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
