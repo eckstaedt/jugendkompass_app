@@ -32,7 +32,7 @@ const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
         alignments: ['left', 'center', 'right'],
         defaultAlignment: 'left',
       }),
-      Color.configure({ types: ['textStyle'] }),
+      
       Image.configure({
         inline: false,
         allowBase64: true,
