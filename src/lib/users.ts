@@ -31,12 +31,8 @@ interface CreateUserParams {
 
 export const createUser = async ({ email, password, firstName, lastName, role }: CreateUserParams) => {
   try {
-    const { data, error } = await supabase.auth.signUp({
-      email: email,
-      password: password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/`,
-      }
+    const { data, error } = await supabase.functions.invoke('create-user', {
+      body: { email, password, firstName, lastName, role },
     });
 
     if (error) {
@@ -44,22 +40,8 @@ export const createUser = async ({ email, password, firstName, lastName, role }:
       return { error: error.message };
     }
 
-    // Insert user data directly into users table
-    if (data.user) {
-      const { error: insertError } = await supabase
-        .from('users')
-        .insert({ 
-          id: data.user.id,
-          email: email,
-          role,
-          firstName,
-          lastName
-        });
-
-      if (insertError) {
-        console.error('Error inserting user data:', insertError);
-        return { error: insertError.message };
-      }
+    if (data?.error) {
+      return { error: data.error };
     }
 
     return { data };

@@ -3,6 +3,9 @@ project_id = "vdcdibvclaulqxfjyzpq"
 [functions.delete-user]
 verify_jwt = true
 
+[functions.create-user]
+verify_jwt = true
+
 [functions.translate-content]
 verify_jwt = false
 
