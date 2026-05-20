@@ -13,7 +13,7 @@ final dailyImpulsesProvider = FutureProvider<List<ImpulseModel>>((ref) async {
   final repository = ref.watch(impulseRepositoryProvider);
   final language = ref.watch(languageProvider).locale.languageCode;
 
-  return await repository.getImpulsesLocalized(language, limit: 10);
+  return await repository.getImpulsesLocalized(language, limit: 1000);
 });
 
 final impulseDetailProvider = FutureProvider.family<ImpulseModel?, String>((

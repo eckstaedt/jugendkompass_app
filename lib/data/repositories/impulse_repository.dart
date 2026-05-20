@@ -141,6 +141,9 @@ class ImpulseRepository {
           .map((json) => ImpulseModel.fromJson(json))
           .toList();
 
+      // Sort by date descending (newest first)
+      impulses.sort((a, b) => b.date.compareTo(a.date));
+
       // Apply limit and offset client-side
       return impulses.skip(offset).take(limit).toList();
     } catch (e) {
