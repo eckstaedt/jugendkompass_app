@@ -16,6 +16,7 @@ import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
+import 'package:jugendkompass_app/domain/providers/post_view_count_provider.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 
@@ -230,7 +231,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                     ],
                   ),
 
-                  // Reading time
+                  // Reading time + live view count
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -240,16 +241,44 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                       const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          _calculateReadingTime(displayBody),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                      Text(
+                        _calculateReadingTime(displayBody),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
+                      // View count badge (only when post has a content_id to track by)
+                      if (post.id.isNotEmpty) ...[
+                        const SizedBox(width: 12),
+                        Consumer(
+                          builder: (context, ref, _) {
+                            final viewCountAsync = ref.watch(postViewCountProvider(post.id));
+                            return viewCountAsync.when(
+                              data: (count) => Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.visibility_outlined,
+                                    size: 14,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _formatViewCount(count),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              loading: () => const SizedBox.shrink(),
+                              error: (_, __) => const SizedBox.shrink(),
+                            );
+                          },
+                        ),
+                      ],
                     ],
                   ),
 
@@ -406,6 +435,16 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
         ),
       ),
     );
+  }
+
+  /// Format a view count for display (e.g. 1200 → "1,2k")
+  String _formatViewCount(int count) {
+    if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(1)}M Aufrufe';
+    } else if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}k Aufrufe';
+    }
+    return '$count Aufrufe';
   }
 
   /// Calculate reading time from HTML content
