@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,7 +34,7 @@ type ImpulseFormData = {
 type ImpulseDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: { date: string; title: string; impulse_text: string; image: File }) => Promise<void>;
+  onSubmit: (data: { date: string; title: string; impulse_text: string; image?: File; image_url?: string }) => Promise<void>;
   defaultValues?: Partial<Impulse>;
   title: string;
 };
@@ -42,6 +42,7 @@ type ImpulseDialogProps = {
 export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, title }: ImpulseDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const isEdit = Boolean(defaultValues?.id);
   const form = useForm<ImpulseFormData>({
     defaultValues: {
       date: defaultValues?.date || new Date().toISOString().split('T')[0],
@@ -50,8 +51,21 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
     },
   });
 
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        date: defaultValues?.date || new Date().toISOString().split('T')[0],
+        title: defaultValues?.title || '',
+        impulse_text: defaultValues?.impulse_text || '',
+        image: undefined as any,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, defaultValues?.id]);
+
   const handleSubmit = async (data: ImpulseFormData) => {
-    if (!data.image?.[0]) {
+    const file = data.image?.[0];
+    if (!isEdit && !file) {
       toast({
         title: "Error",
         description: "Please select an image",
@@ -66,7 +80,7 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
         date: data.date,
         title: data.title,
         impulse_text: data.impulse_text,
-        image: data.image[0]
+        ...(file ? { image: file } : { image_url: defaultValues?.image_url }),
       });
       onOpenChange(false);
       toast({
@@ -87,7 +101,7 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[750px]">
+      <DialogContent className="sm:max-w-[750px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
@@ -137,15 +151,18 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
               name="image"
               render={({ field: { onChange, value, ...field } }) => (
                 <FormItem>
-                  <FormLabel>Image (required)</FormLabel>
+                  <FormLabel>{isEdit ? 'Bild ersetzen (optional)' : 'Image (required)'}</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="file" 
+                    <Input
+                      type="file"
                       accept="image/*"
                       onChange={(e) => onChange(e.target.files)}
                       {...field}
                     />
                   </FormControl>
+                  {isEdit && defaultValues?.image_url && (
+                    <img src={defaultValues.image_url} alt="aktuell" className="mt-2 h-20 w-20 rounded object-cover" />
+                  )}
                   <FormMessage />
                 </FormItem>
               )}

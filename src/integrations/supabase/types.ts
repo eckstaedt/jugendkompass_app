@@ -143,6 +143,42 @@ export type Database = {
         }
         Relationships: []
       }
+      content_interactions: {
+        Row: {
+          app_version: string | null
+          content_id: string
+          content_title: string | null
+          content_type: string
+          created_at: string
+          device_id: string
+          id: string
+          language: string | null
+          platform: string
+        }
+        Insert: {
+          app_version?: string | null
+          content_id: string
+          content_title?: string | null
+          content_type: string
+          created_at?: string
+          device_id: string
+          id?: string
+          language?: string | null
+          platform: string
+        }
+        Update: {
+          app_version?: string | null
+          content_id?: string
+          content_title?: string | null
+          content_type?: string
+          created_at?: string
+          device_id?: string
+          id?: string
+          language?: string | null
+          platform?: string
+        }
+        Relationships: []
+      }
       content_translations: {
         Row: {
           content_id: string
