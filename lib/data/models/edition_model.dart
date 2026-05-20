@@ -69,7 +69,7 @@ class EditionModel {
   String? get description => body;
   String? get coverImageUrl => imageUrl;
   String? get issueNumber => name; // Use name as issue number (e.g., "JK 01.2021")
-  DateTime get publishedDate => publishedAt ?? DateTime.now();
+  DateTime get publishedDate => publishedAt ?? DateTime(1970);
 
   @override
   String toString() {
