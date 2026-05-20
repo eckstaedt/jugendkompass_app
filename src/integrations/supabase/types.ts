@@ -274,6 +274,7 @@ export type Database = {
           name: string
           pdf_url: string | null
           published_at: string | null
+          release_date: string | null
           title: string | null
         }
         Insert: {
@@ -284,6 +285,7 @@ export type Database = {
           name: string
           pdf_url?: string | null
           published_at?: string | null
+          release_date?: string | null
           title?: string | null
         }
         Update: {
@@ -294,6 +296,7 @@ export type Database = {
           name?: string
           pdf_url?: string | null
           published_at?: string | null
+          release_date?: string | null
           title?: string | null
         }
         Relationships: []
