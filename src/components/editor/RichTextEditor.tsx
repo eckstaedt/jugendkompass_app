@@ -48,11 +48,6 @@ const RichTextEditor = ({ content, onChange }: RichTextEditorProps) => {
     return null;
   }
 
-  // Fix the setColor function to use the editor's chain API correctly
-  function setColor(color: string) {
-    editor.chain().focus().setColor(color).run();
-  }
-
   function handleImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
