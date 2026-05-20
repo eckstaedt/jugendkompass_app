@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
+import 'package:jugendkompass_app/domain/providers/post_view_count_provider.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier;
@@ -362,6 +363,12 @@ class _PodcastScreenState extends ConsumerState<PodcastScreen> {
     );
   }
 
+  String _formatViewCount(int count) {
+    if (count >= 1000000) return '${(count / 1000000).toStringAsFixed(1)}M';
+    if (count >= 1000) return '${(count / 1000).toStringAsFixed(1)}k';
+    return '$count';
+  }
+
   Widget _buildEpisodeListItem(
     BuildContext context,
     WidgetRef ref,
@@ -497,6 +504,38 @@ class _PodcastScreenState extends ConsumerState<PodcastScreen> {
                                 ),
                               ),
                             ),
+                          // View count tag
+                          Consumer(
+                            builder: (context, ref, _) {
+                              final viewCountAsync = ref.watch(postViewCountProvider(audio.id));
+                              return viewCountAsync.whenOrNull(
+                                data: (count) => count == 0
+                                    ? const SizedBox.shrink()
+                                    : Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: theme.colorScheme.secondaryContainer,
+                                          borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(Icons.visibility_outlined, size: 10, color: theme.colorScheme.onSecondaryContainer),
+                                            const SizedBox(width: 3),
+                                            Text(
+                                              _formatViewCount(count),
+                                              style: theme.textTheme.labelSmall?.copyWith(
+                                                color: theme.colorScheme.onSecondaryContainer,
+                                                fontWeight: FontWeight.bold,
+                                                letterSpacing: 0.5,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                              ) ?? const SizedBox.shrink();
+                            },
+                          ),
                         ],
                       ),
                     if (audio.durationSeconds != null) ...[

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:video_player/video_player.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/domain/providers/post_view_count_provider.dart';
 import 'package:jugendkompass_app/domain/providers/video_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
@@ -212,6 +213,12 @@ class _VideoCardState extends ConsumerState<VideoCard> {
     super.dispose();
   }
 
+  String _formatViewCount(int count) {
+    if (count >= 1000000) return '${(count / 1000000).toStringAsFixed(1)}M Aufrufe';
+    if (count >= 1000) return '${(count / 1000).toStringAsFixed(1)}k Aufrufe';
+    return '$count Aufrufe';
+  }
+
   String _formatDuration(int seconds) {
     if (seconds == 0) return '';
     final duration = Duration(seconds: seconds);
@@ -332,13 +339,24 @@ class _VideoCardState extends ConsumerState<VideoCard> {
 
           const SizedBox(height: 4),
 
-          // Upload Date
-          Text(
-            _formatDate(widget.video.createdAt),
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: DesignTokens.getTextSecondary(Theme.of(context).brightness),
-              fontSize: 12,
-            ),
+          // Upload Date + live view count
+          Builder(
+            builder: (context) {
+              final viewCountAsync = ref.watch(postViewCountProvider(widget.video.url));
+              final dateStr = _formatDate(widget.video.createdAt);
+              final textStyle = theme.textTheme.labelSmall?.copyWith(
+                color: DesignTokens.getTextSecondary(Theme.of(context).brightness),
+                fontSize: 12,
+              );
+              return viewCountAsync.when(
+                data: (count) => Text(
+                  count > 0 ? '$dateStr · ${_formatViewCount(count)}' : dateStr,
+                  style: textStyle,
+                ),
+                loading: () => Text(dateStr, style: textStyle),
+                error: (_, __) => Text(dateStr, style: textStyle),
+              );
+            },
           ),
         ],
       ),

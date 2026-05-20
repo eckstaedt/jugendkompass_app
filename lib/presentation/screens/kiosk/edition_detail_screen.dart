@@ -13,9 +13,11 @@ import 'package:jugendkompass_app/data/models/collection_item_model.dart';
 import 'package:jugendkompass_app/data/models/edition_model.dart';
 import 'package:jugendkompass_app/data/models/post_model.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
+import 'package:jugendkompass_app/core/services/content_interaction_service.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
+import 'package:jugendkompass_app/domain/providers/post_view_count_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
@@ -38,6 +40,20 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
   @override
   void initState() {
     super.initState();
+    // Track edition view
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ContentInteractionService.instance.trackInteraction(
+        contentId: widget.edition.id,
+        contentType: 'edition',
+        title: widget.edition.displayTitle,
+      );
+    });
+  }
+
+  String _formatViewCount(int count) {
+    if (count >= 1000000) return '${(count / 1000000).toStringAsFixed(1)}M Aufrufe';
+    if (count >= 1000) return '${(count / 1000).toStringAsFixed(1)}k Aufrufe';
+    return '$count Aufrufe';
   }
 
   @override
@@ -161,6 +177,26 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
             "strong": Style(fontWeight: FontWeight.bold),
             "em": Style(fontStyle: FontStyle.italic),
           }),
+          // Edition view count (Vorwort)
+          Consumer(
+            builder: (context, ref, _) {
+              final viewCountAsync = ref.watch(postViewCountProvider(edition.id));
+              return viewCountAsync.whenOrNull(
+                data: (count) => count == 0
+                    ? const SizedBox.shrink()
+                    : Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Row(
+                          children: [
+                            Icon(Icons.visibility_outlined, size: 14, color: textSecondary),
+                            const SizedBox(width: 4),
+                            Text(_formatViewCount(count), style: TextStyle(fontSize: 12, color: textSecondary)),
+                          ],
+                        ),
+                      ),
+              ) ?? const SizedBox.shrink();
+            },
+          ),
           const SizedBox(height: 32),
         ],
         Row(children: [Icon(Icons.article, size: 20, color: textPrimary), const SizedBox(width: 8), Text('articles_in_edition'.tr, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: textPrimary))]),

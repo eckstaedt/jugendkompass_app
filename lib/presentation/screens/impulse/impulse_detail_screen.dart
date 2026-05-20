@@ -12,6 +12,7 @@ import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
+import 'package:jugendkompass_app/domain/providers/post_view_count_provider.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 
@@ -40,6 +41,12 @@ class _ImpulseDetailScreenState extends ConsumerState<ImpulseDetailScreen> {
         imageUrl: widget.impulse.imageUrl,
       );
     });
+  }
+
+  String _formatViewCount(int count) {
+    if (count >= 1000000) return '${(count / 1000000).toStringAsFixed(1)}M Aufrufe';
+    if (count >= 1000) return '${(count / 1000).toStringAsFixed(1)}k Aufrufe';
+    return '$count Aufrufe';
   }
 
   @override
@@ -191,6 +198,34 @@ class _ImpulseDetailScreenState extends ConsumerState<ImpulseDetailScreen> {
                             ),
                           ],
                         ),
+                      ),
+                      // View count badge
+                      Consumer(
+                        builder: (context, ref, _) {
+                          final viewCountAsync = ref.watch(postViewCountProvider(impulse.id));
+                          return viewCountAsync.whenOrNull(
+                            data: (count) => count == 0
+                                ? const SizedBox.shrink()
+                                : Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.tertiaryContainer,
+                                      borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.visibility_outlined, size: 16, color: theme.colorScheme.onTertiaryContainer),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          _formatViewCount(count),
+                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: theme.colorScheme.onTertiaryContainer),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                          ) ?? const SizedBox.shrink();
+                        },
                       ),
                     ],
                   ),

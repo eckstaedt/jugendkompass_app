@@ -9,6 +9,7 @@ import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
+import 'package:jugendkompass_app/domain/providers/post_view_count_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -35,6 +36,12 @@ class _MessageDetailScreenState extends ConsumerState<MessageDetailScreen> {
         imageUrl: widget.message.imageUrl,
       );
     });
+  }
+
+  String _formatViewCount(int count) {
+    if (count >= 1000000) return '${(count / 1000000).toStringAsFixed(1)}M Aufrufe';
+    if (count >= 1000) return '${(count / 1000).toStringAsFixed(1)}k Aufrufe';
+    return '$count Aufrufe';
   }
 
   @override
@@ -114,14 +121,35 @@ class _MessageDetailScreenState extends ConsumerState<MessageDetailScreen> {
               ),
               const SizedBox(height: 8),
             ],
-            // Date
-            Text(
-              dateFormat.format(message.createdAt),
-              style: GoogleFonts.poppins(
-                textStyle: theme.textTheme.bodySmall?.copyWith(
-                  color: textSecondary,
+            // Date + live view count
+            Row(
+              children: [
+                Text(
+                  dateFormat.format(message.createdAt),
+                  style: GoogleFonts.poppins(
+                    textStyle: theme.textTheme.bodySmall?.copyWith(
+                      color: textSecondary,
+                    ),
+                  ),
                 ),
-              ),
+                Consumer(
+                  builder: (context, ref, _) {
+                    final viewCountAsync = ref.watch(postViewCountProvider(message.id));
+                    return viewCountAsync.whenOrNull(
+                      data: (count) => count == 0
+                          ? const SizedBox.shrink()
+                          : Text(
+                              ' · ${_formatViewCount(count)}',
+                              style: GoogleFonts.poppins(
+                                textStyle: theme.textTheme.bodySmall?.copyWith(
+                                  color: textSecondary,
+                                ),
+                              ),
+                            ),
+                    ) ?? const SizedBox.shrink();
+                  },
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             // Message body rendered as HTML
