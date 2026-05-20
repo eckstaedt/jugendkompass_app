@@ -59,14 +59,28 @@ const AusgabenPage = () => {
         body: body.trim() || undefined,
         image_url: imageUrl,
         pdfFile,
+        release_date: releaseDate || null,
       });
       setName('');
       setTitle('');
       setBody('');
+      setReleaseDate('');
       setImageUrl(null);
       setPdfFile(null);
     }
   };
+
+  const openEditDialog = (edition: Edition) => {
+    setEditingEdition(edition);
+    setEditName(edition.name);
+    setEditTitle(edition.title || '');
+    setEditBody(edition.body || '');
+    setEditReleaseDate(edition.release_date || '');
+    setEditImageUrl(edition.image_url);
+    setEditPdfFile(null);
+    setKeepExistingPdf(!!edition.pdf_url);
+  };
+
 
   const openEditDialog = (edition: Edition) => {
     setEditingEdition(edition);
