@@ -272,6 +272,9 @@ export type Database = {
           id: string
           image_url: string | null
           name: string
+          notification_body: string | null
+          notification_sent_at: string | null
+          notification_title: string | null
           pdf_url: string | null
           published_at: string | null
           title: string | null
@@ -282,6 +285,9 @@ export type Database = {
           id?: string
           image_url?: string | null
           name: string
+          notification_body?: string | null
+          notification_sent_at?: string | null
+          notification_title?: string | null
           pdf_url?: string | null
           published_at?: string | null
           title?: string | null
@@ -292,6 +298,9 @@ export type Database = {
           id?: string
           image_url?: string | null
           name?: string
+          notification_body?: string | null
+          notification_sent_at?: string | null
+          notification_title?: string | null
           pdf_url?: string | null
           published_at?: string | null
           title?: string | null
