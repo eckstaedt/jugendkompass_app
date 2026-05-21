@@ -25,7 +25,7 @@ const FIELD_MAP: Record<string, { table: string; fields: string[] }> = {
   message: { table: "messages",         fields: ["title", "message"] },
   poll:    { table: "polls",            fields: ["question"] },
   video:   { table: "videos",           fields: ["title", "description"] },
-  edition: { table: "editions",         fields: ["title", "body"] },
+  edition: { table: "editions",         fields: ["title", "body", "notification_title", "notification_body"] },
 };
 
 const LANG_NAMES: Record<string, string> = {
