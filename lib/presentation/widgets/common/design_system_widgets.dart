@@ -244,9 +244,12 @@ class BadgeWidget extends StatelessWidget {
     final brightness = Theme.of(context).brightness;
     final isDark = brightness == Brightness.dark;
 
-    // Better contrast in dark mode: use brighter red text on dark background
+    // Dark mode: use white text on solid red background for maximum contrast
+    // Light mode: use dark red text on light red background
+    final badgeBgColor = backgroundColor ??
+        (isDark ? DesignTokens.primaryRed : DesignTokens.getRedBackground(brightness));
     final badgeTextColor = textColor ??
-        (isDark ? const Color(0xFFFF6B6B) : DesignTokens.primaryRed);
+        (isDark ? Colors.white : DesignTokens.primaryRed);
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -254,7 +257,7 @@ class BadgeWidget extends StatelessWidget {
         vertical: 4,
       ),
       decoration: BoxDecoration(
-        color: backgroundColor ?? DesignTokens.getRedBackground(brightness),
+        color: badgeBgColor,
         borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
       ),
       child: Row(
