@@ -4,6 +4,8 @@ import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
+import 'package:jugendkompass_app/core/services/verse_share_service.dart';
+import 'package:jugendkompass_app/presentation/widgets/verse/verse_share_card.dart';
 
 class VerseCard extends StatefulWidget {
   final VerseModel verse;
@@ -22,6 +24,16 @@ class _VerseCardState extends State<VerseCard>
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
+
+  final GlobalKey _shareCardKey = GlobalKey();
+  bool _isSharing = false;
+
+  Future<void> _shareVerse() async {
+    if (_isSharing) return;
+    setState(() => _isSharing = true);
+    await VerseShareService.shareVerseImage(boundaryKey: _shareCardKey);
+    if (mounted) setState(() => _isSharing = false);
+  }
 
   @override
   void initState() {
@@ -65,7 +77,18 @@ class _VerseCardState extends State<VerseCard>
 
     // The verse is already localized from the RPC function get_verse_of_day_localized
     // in verse_repository.dart, so we just display it directly without additional translation
-    return GestureDetector(
+    return Stack(
+      children: [
+        // Off-screen share card – rendered but invisible, used for image capture.
+        Offstage(
+          child: RepaintBoundary(
+            key: _shareCardKey,
+            child: VerseShareCard(verse: verse),
+          ),
+        ),
+
+        // Visible interactive card.
+        GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
@@ -89,8 +112,14 @@ class _VerseCardState extends State<VerseCard>
               ),
               const Spacer(),
               IconButton(
-                onPressed: null,
-                icon: const Icon(Icons.share_outlined),
+                onPressed: _isSharing ? null : _shareVerse,
+                icon: _isSharing
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.share_outlined),
                 iconSize: 20,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -123,6 +152,8 @@ class _VerseCardState extends State<VerseCard>
           ),
         ),
       ),
-    );
+        ), // GestureDetector
+      ],
+    ); // Stack
   }
 }
