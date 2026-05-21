@@ -161,6 +161,18 @@ const AusgabenPage = () => {
                   )}
                 </div>
               </div>
+              <div className="rounded-lg border border-dashed p-3 grid gap-3">
+                <p className="text-sm font-medium">Push-Benachrichtigung (optional)</p>
+                <p className="text-xs text-muted-foreground">Wird automatisch zum Release-Zeitpunkt an alle App-Nutzer gesendet und übersetzt.</p>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Push-Titel</label>
+                  <Input placeholder="z.B. Neue Ausgabe ist da!" value={notifTitle} onChange={(e) => setNotifTitle(e.target.value)} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Push-Text</label>
+                  <Textarea placeholder="Kurzer Text für die Benachrichtigung..." value={notifBody} onChange={(e) => setNotifBody(e.target.value)} rows={2} />
+                </div>
+              </div>
               <Button type="submit" disabled={isCreating}>{isCreating ? 'Wird erstellt...' : 'Erstellen'}</Button>
             </form>
           </CardContent>
@@ -199,6 +211,11 @@ const AusgabenPage = () => {
                       <a href={edition.pdf_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2">
                         <FileText className="h-3 w-3" />PDF anzeigen<ExternalLink className="h-3 w-3" />
                       </a>
+                    )}
+                    {edition.notification_sent_at && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Push gesendet: {new Date(edition.notification_sent_at).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })}
+                      </p>
                     )}
 
                     <div className="mt-2">
