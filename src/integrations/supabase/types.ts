@@ -413,23 +413,23 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
-          option_id: string | null
-          poll_id: string | null
-          user_id: string | null
+          option_id: string
+          poll_id: string
+          user_id: string
         }
         Insert: {
           created_at?: string | null
           id?: string
-          option_id?: string | null
-          poll_id?: string | null
-          user_id?: string | null
+          option_id: string
+          poll_id: string
+          user_id: string
         }
         Update: {
           created_at?: string | null
           id?: string
-          option_id?: string | null
-          poll_id?: string | null
-          user_id?: string | null
+          option_id?: string
+          poll_id?: string
+          user_id?: string
         }
         Relationships: [
           {
