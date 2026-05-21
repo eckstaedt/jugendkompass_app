@@ -596,6 +596,36 @@ export type Database = {
         }
         Relationships: []
       }
+      test_push_devices: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          fcm_token: string
+          id: string
+          label: string
+          language: string
+          platform: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          fcm_token: string
+          id?: string
+          label: string
+          language?: string
+          platform?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          fcm_token?: string
+          id?: string
+          label?: string
+          language?: string
+          platform?: string | null
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string
