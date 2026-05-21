@@ -129,15 +129,10 @@ const PostsPage = () => {
                         <TableCell className="font-medium">{post.title}</TableCell>
                         <TableCell>
                           {post.content_id ? (
-                            <div className="flex items-center gap-3">
-                              <Switch
-                                checked={post.content?.status === 'published'}
-                                onCheckedChange={() => handleStatusChange(post.id, post.content_id, post.content?.status)}
-                              />
-                              <Badge variant={post.content?.status === 'published' ? 'success' : 'secondary'}>
-                                {post.content?.status === 'published' ? 'Veröffentlicht' : 'Entwurf'}
-                              </Badge>
-                            </div>
+                            <Switch
+                              checked={post.content?.status === 'published'}
+                              onCheckedChange={() => handleStatusChange(post.id, post.content_id, post.content?.status)}
+                            />
                           ) : (
                             <Badge variant="warning">Kein Content</Badge>
                           )}
