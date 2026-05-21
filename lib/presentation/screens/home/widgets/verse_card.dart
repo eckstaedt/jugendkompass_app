@@ -84,8 +84,6 @@ class _VerseCardState extends State<VerseCard>
           // Header with label and favorite icon
           BadgeWidget(
                 label: context.tr('verse_of_day_badge'),
-                backgroundColor: DesignTokens.getRedBackground(theme.brightness),
-                textColor: DesignTokens.primaryRed,
               ),
           const SizedBox(height: DesignTokens.spacingMedium),
           // Verse text itself uses Merriweather (serif) per design request.

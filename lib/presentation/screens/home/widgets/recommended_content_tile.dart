@@ -232,8 +232,6 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
                                   if (isNew)
                                     BadgeWidget(
                                       label: context.tr('new_badge'),
-                                      backgroundColor: DesignTokens.primaryRed,
-                                      textColor: Colors.white,
                                     ),
                                   BadgeWidget(
                                     label: item.isVideo
@@ -241,8 +239,6 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
                                       : item.isKurznachricht
                                         ? context.tr('short_message_badge')
                                         : context.tr('article_badge'),
-                                    backgroundColor: DesignTokens.getRedBackground(Theme.of(context).brightness),
-                                    textColor: DesignTokens.primaryRed,
                                   ),
                                   if (item.hasAudio)
                                     BadgeWidget(

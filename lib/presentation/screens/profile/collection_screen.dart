@@ -216,8 +216,6 @@ class CollectionScreen extends ConsumerWidget {
                           const SizedBox(height: 8),
                           BadgeWidget(
                             label: typeLabel.toUpperCase(),
-                            backgroundColor: DesignTokens.getRedBackground(brightness),
-                            textColor: DesignTokens.primaryRed,
                           ),
                         ],
                       ),
