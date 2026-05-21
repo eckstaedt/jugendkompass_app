@@ -1,44 +1,43 @@
 
+# Polls für anonyme Nutzer (Backend-only)
 
-## Sprachumschalter im Admin-Bereich
+Die normalen Anwender stimmen über die **native Flutter-App** ab, nicht über dieses Admin-Dashboard. Daher sind in diesem Repo nur **Backend-/DB-Änderungen** nötig — keine UI-Anpassungen für anonyme User.
 
-**Ziel:** Admins können in der Sidebar die Vorschau-Sprache umschalten (DE / EN). Beim Wechsel werden Listen und Detail-Ansichten in der gewählten Sprache angezeigt — über die bereits vorhandenen `get_*_localized(lang)` RPCs.
+Identifier auf beiden Plattformen: **Supabase Anonymous Auth**. Die Flutter-App ruft `signInAnonymously()` auf und bekommt eine persistente `auth.uid()` (löst sowohl Web als auch Native sauber).
 
-### Implementierung
+## 1. Supabase Anonymous Auth aktivieren
 
-1. **Globaler Locale-Context** (`src/contexts/PreviewLocaleContext.tsx`)
-   - State `previewLang: 'de' | 'en'`, persistiert in `localStorage`
-   - Hook `usePreviewLocale()` für Lese-/Schreibzugriff
-   - Default: `'de'`
-   - Provider in `App.tsx` mounten
+Einmaliger manueller Schritt im Supabase Dashboard: Auth → Providers → **Anonymous Sign-ins** aktivieren. Link liefere ich nach Plan-Bestätigung. Die Flutter-App muss dann `signInAnonymously()` aufrufen — das ist Arbeit im Flutter-Repo, nicht hier.
 
-2. **Sprachumschalter-UI** (in `Sidebar.tsx`)
-   - Kompakter Toggle (DE/EN Pillen-Buttons) im Footer-Bereich neben Theme-Toggle
-   - Im collapsed-Modus: globe-Icon mit aktueller Sprache als Badge
-   - Beim Klick: `setPreviewLang('en'|'de')` → React-Query invalidiert betroffene Keys
+## 2. Datenbank-Migration
 
-3. **Daten-Hooks anpassen**, damit sie die gewählte Sprache nutzen:
-   - `use-posts.ts` → bei `lang === 'en'` via `supabase.rpc('get_posts_localized', { lang })`, sonst direkter Tabellen-Query (bestehendes Verhalten)
-   - `use-impulses.ts` → `get_impulses_localized`
-   - `use-daily-verses.ts` → `get_verse_of_day_localized`
-   - `use-messages.ts` → `get_messages_localized`
-   - `use-videos.ts` → `get_videos_localized`
-   - `use-polls.ts` → `get_polls_localized` + `get_poll_options_localized`
-   - `use-content-feed.ts` → `get_content_feed_localized`
-   - `useFetchPosts` (`src/hooks/posts/use-fetch-posts.ts`) → analog
-   - Jeder `useQuery`-Key bekommt `lang` als Suffix → automatisches Refetch beim Sprachwechsel
+- **Daten zurücksetzen**:
+  - Alle Zeilen aus `poll_votes` löschen.
+  - `poll_options.votes` auf 0 setzen.
+- **`poll_votes` Struktur**:
+  - Unique-Constraint `(poll_id, user_id)` → ermöglicht Upsert / "Stimme ändern".
+  - `user_id` auf `NOT NULL` setzen.
+- **RLS auf `poll_votes`** neu:
+  - SELECT: `auth.uid() = user_id` (eigene Stimme sichtbar).
+  - INSERT: `auth.uid() = user_id` — greift sowohl für eingeloggte Admins als auch für anonyme Flutter-User.
+  - UPDATE: `auth.uid() = user_id` (Stimme ändern).
+- **Vote-Counting via Trigger** auf `poll_votes` (`SECURITY DEFINER`):
+  - INSERT → +1 auf `option_id`.
+  - UPDATE → -1 auf alter, +1 auf neuer `option_id`.
+  - DELETE → -1 (für Konsistenz, auch wenn aktuell kein DELETE-Pfad).
+- RPC `increment_poll_votes` wird obsolet (kann bleiben, nicht mehr verwendet).
 
-4. **Visueller Hinweis**
-   - Wenn `previewLang === 'en'`: dezenter Banner-Badge oben in `DashboardLayout` ("Vorschau: Englisch") → klar erkennbar, dass man Übersetzungen sieht
-   - Edit-Dialoge bleiben **immer DE** (bearbeitet wird der Quelltext) → Hinweistext im Dialog, wenn EN-Vorschau aktiv ist
+## 3. Admin-Dashboard (dieses Repo)
 
-### Bewusst NICHT geändert
+- Keine UI-Änderung nötig.
+- **Auth-Flow nicht anfassen**: `AuthContext` bleibt unverändert, da Admins sich weiterhin nur per Email/Passwort einloggen.
+- `useVote`-Hook in `use-polls.ts` ist hier ungenutzt für anonyme Flows — kann optional auf `upsert` umgestellt werden, ist aber kein Muss (Flutter-App implementiert das eigenständig).
 
-- **Admin-UI-Sprache** (Buttons, Labels, Menüs) bleibt deutsch — entspricht der gespeicherten Memory-Regel.
-- **Edit-Forms** schreiben weiterhin in die Quelltabellen (DE). Nur die Vorschau in Listen/Tabellen/Detail-Ansichten wechselt.
-- Bulk-Imports, Create-Dialoge, Stats-Seiten bleiben unverändert (nur DE-Eingabe sinnvoll).
+## 4. Memory-Update
 
-### Aufwand-Indikator
+Nach Build-Modus speichere ich in der Project Memory, dass es eine separate **native Flutter-App** für Endnutzer gibt, damit künftige Änderungen das berücksichtigen.
 
-~10 Dateien geändert, 1 neue Datei (Context). Reine Frontend-Arbeit, keine DB-Migration nötig.
+## Manueller Schritt für dich
 
+1. Anonymous Sign-ins im Supabase Dashboard aktivieren.
+2. In der Flutter-App `supabase.auth.signInAnonymously()` beim Start aufrufen.
