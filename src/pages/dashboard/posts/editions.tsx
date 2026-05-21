@@ -39,7 +39,7 @@ const AusgabenPage = () => {
   const [editName, setEditName] = useState('');
   const [editTitle, setEditTitle] = useState('');
   const [editBody, setEditBody] = useState('');
-  const [editReleaseDate, setEditReleaseDate] = useState('');
+  const [editPublishedAt, setEditPublishedAt] = useState('');
   const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
   const [editPdfFile, setEditPdfFile] = useState<File | null>(null);
   const [keepExistingPdf, setKeepExistingPdf] = useState(true);
@@ -59,12 +59,12 @@ const AusgabenPage = () => {
         body: body.trim() || undefined,
         image_url: imageUrl,
         pdfFile,
-        release_date: releaseDate || null,
+        published_at: publishedAt ? new Date(publishedAt).toISOString() : null,
       });
       setName('');
       setTitle('');
       setBody('');
-      setReleaseDate('');
+      setPublishedAt('');
       setImageUrl(null);
       setPdfFile(null);
     }
@@ -75,7 +75,7 @@ const AusgabenPage = () => {
     setEditName(edition.name);
     setEditTitle(edition.title || '');
     setEditBody(edition.body || '');
-    setEditReleaseDate(edition.release_date || '');
+    setEditPublishedAt(edition.published_at ? toLocalInputValue(edition.published_at) : '');
     setEditImageUrl(edition.image_url);
     setEditPdfFile(null);
     setKeepExistingPdf(!!edition.pdf_url);
@@ -92,7 +92,7 @@ const AusgabenPage = () => {
         image_url: editImageUrl,
         pdfFile: editPdfFile,
         keepExistingPdf,
-        release_date: editReleaseDate || null,
+        published_at: editPublishedAt ? new Date(editPublishedAt).toISOString() : null,
       }, {
         onSuccess: () => setEditingEdition(null),
       });
@@ -119,8 +119,8 @@ const AusgabenPage = () => {
                 <Input placeholder="Titel der Ausgabe" value={title} onChange={(e) => setTitle(e.target.value)} />
               </div>
               <div>
-                <label className="block font-medium mb-1">Release-Datum</label>
-                <Input type="date" value={releaseDate} onChange={(e) => setReleaseDate(e.target.value)} />
+                <label className="block font-medium mb-1">Release-Datum & Uhrzeit</label>
+                <Input type="datetime-local" value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)} />
               </div>
               <div>
                 <label className="block font-medium mb-1">Beschreibung</label>
@@ -171,9 +171,9 @@ const AusgabenPage = () => {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold">{edition.name}</p>
                     {edition.title && <p className="text-sm text-muted-foreground">{edition.title}</p>}
-                    {edition.release_date && (
+                    {edition.published_at && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Release: {new Date(edition.release_date).toLocaleDateString('de-DE')}
+                        Release: {new Date(edition.published_at).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })}
                       </p>
                     )}
                     {edition.body && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{edition.body}</p>}
@@ -217,8 +217,8 @@ const AusgabenPage = () => {
               <Input value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
             </div>
             <div>
-              <label className="block font-medium mb-1">Release-Datum</label>
-              <Input type="date" value={editReleaseDate} onChange={(e) => setEditReleaseDate(e.target.value)} />
+              <label className="block font-medium mb-1">Release-Datum & Uhrzeit</label>
+              <Input type="datetime-local" value={editPublishedAt} onChange={(e) => setEditPublishedAt(e.target.value)} />
             </div>
             <div>
               <label className="block font-medium mb-1">Beschreibung</label>
