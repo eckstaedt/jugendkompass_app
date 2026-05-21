@@ -486,6 +486,24 @@ export type Database = {
           },
         ]
       }
+      post_view_counts: {
+        Row: {
+          content_id: string
+          last_updated_at: string
+          view_count: number
+        }
+        Insert: {
+          content_id: string
+          last_updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          content_id?: string
+          last_updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       posts: {
         Row: {
           audio_id: string | null
