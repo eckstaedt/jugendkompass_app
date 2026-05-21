@@ -39,6 +39,7 @@ const StatsPage = React.lazy(() => import('./pages/dashboard/polls/stats'));
 const VideosPage = React.lazy(() => import('./pages/dashboard/videos'));
 const NewVideoPage = React.lazy(() => import('./pages/dashboard/videos/new'));
 const ReportsPage = React.lazy(() => import('./pages/dashboard/reports'));
+const TestPushPage = React.lazy(() => import('./pages/dashboard/test-push'));
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,7 @@ const App = () => (
               
               <Route path="/dashboard/messages" element={<MessagesPage />} />
               <Route path="/dashboard/reports" element={<ReportsPage />} />
+              <Route path="/dashboard/test-push" element={<TestPushPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
