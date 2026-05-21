@@ -242,6 +242,12 @@ class BadgeWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final brightness = Theme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
+
+    // Better contrast in dark mode: use brighter red text on dark background
+    final badgeTextColor = textColor ??
+        (isDark ? const Color(0xFFFF6B6B) : DesignTokens.primaryRed);
+
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: 8,
@@ -258,14 +264,14 @@ class BadgeWidget extends StatelessWidget {
             Icon(
               icon,
               size: 12,
-              color: textColor ?? DesignTokens.primaryRed,
+              color: badgeTextColor,
             ),
             const SizedBox(width: 4),
           ],
           Text(
             label,
             style: TextStyle(
-              color: textColor ?? DesignTokens.primaryRed,
+              color: badgeTextColor,
               fontWeight: FontWeight.w600,
               fontSize: 11,
               letterSpacing: 0.5,
