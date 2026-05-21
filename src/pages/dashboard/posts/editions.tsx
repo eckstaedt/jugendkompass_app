@@ -38,6 +38,8 @@ const AusgabenPage = () => {
   const [publishedAt, setPublishedAt] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [notifTitle, setNotifTitle] = useState('');
+  const [notifBody, setNotifBody] = useState('');
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
 
@@ -48,13 +50,15 @@ const AusgabenPage = () => {
   const [editPublishedAt, setEditPublishedAt] = useState('');
   const [editImageUrl, setEditImageUrl] = useState<string | null>(null);
   const [editPdfFile, setEditPdfFile] = useState<File | null>(null);
+  const [editNotifTitle, setEditNotifTitle] = useState('');
+  const [editNotifBody, setEditNotifBody] = useState('');
   const [keepExistingPdf, setKeepExistingPdf] = useState(true);
   const editPdfInputRef = useRef<HTMLInputElement>(null);
 
 
   const { editions, createEdition, isCreating, updateEdition, isUpdating } = useEditions();
   const { data: translationsByContent } = useTranslationsForContents(editions.map((e) => e.content_id));
-  const EXPECTED_FIELDS = ['title', 'body'];
+  const EXPECTED_FIELDS = ['title', 'body', 'notification_title', 'notification_body'];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +70,8 @@ const AusgabenPage = () => {
         image_url: imageUrl,
         pdfFile,
         published_at: publishedAt ? new Date(publishedAt).toISOString() : null,
+        notification_title: notifTitle.trim() || null,
+        notification_body: notifBody.trim() || null,
       });
       setName('');
       setTitle('');
@@ -73,6 +79,8 @@ const AusgabenPage = () => {
       setPublishedAt('');
       setImageUrl(null);
       setPdfFile(null);
+      setNotifTitle('');
+      setNotifBody('');
     }
   };
 
@@ -85,6 +93,8 @@ const AusgabenPage = () => {
     setEditImageUrl(edition.image_url);
     setEditPdfFile(null);
     setKeepExistingPdf(!!edition.pdf_url);
+    setEditNotifTitle(edition.notification_title || '');
+    setEditNotifBody(edition.notification_body || '');
   };
 
   const handleUpdate = (e: React.FormEvent) => {
@@ -99,6 +109,8 @@ const AusgabenPage = () => {
         pdfFile: editPdfFile,
         keepExistingPdf,
         published_at: editPublishedAt ? new Date(editPublishedAt).toISOString() : null,
+        notification_title: editNotifTitle.trim() || null,
+        notification_body: editNotifBody.trim() || null,
       }, {
         onSuccess: () => setEditingEdition(null),
       });
