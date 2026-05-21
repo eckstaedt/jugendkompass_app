@@ -12,6 +12,9 @@ export type Edition = {
   image_url: string | null;
   pdf_url: string | null;
   content_id: string | null;
+  notification_title: string | null;
+  notification_body: string | null;
+  notification_sent_at: string | null;
 };
 
 export type CreateEditionParams = {
@@ -21,6 +24,8 @@ export type CreateEditionParams = {
   image_url?: string | null;
   pdfFile?: File | null;
   published_at?: string | null;
+  notification_title?: string | null;
+  notification_body?: string | null;
 };
 
 export type UpdateEditionParams = {
@@ -32,6 +37,8 @@ export type UpdateEditionParams = {
   pdfFile?: File | null;
   keepExistingPdf?: boolean;
   published_at?: string | null;
+  notification_title?: string | null;
+  notification_body?: string | null;
 };
 
 export function useEditions() {
@@ -76,6 +83,8 @@ export function useEditions() {
           image_url: params.image_url || null,
           pdf_url,
           published_at: params.published_at || null,
+          notification_title: params.notification_title || null,
+          notification_body: params.notification_body || null,
         }]);
       
       if (error) throw error;
@@ -105,6 +114,8 @@ export function useEditions() {
         body: params.body || null,
         image_url: params.image_url || null,
         published_at: params.published_at || null,
+        notification_title: params.notification_title || null,
+        notification_body: params.notification_body || null,
       };
 
       if (pdf_url !== undefined) {

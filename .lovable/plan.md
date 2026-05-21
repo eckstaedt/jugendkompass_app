@@ -1,43 +1,62 @@
+## Ziel
 
-# Polls für anonyme Nutzer (Backend-only)
+Wenn `editions.published_at` erreicht ist, soll genau eine Push-Benachrichtigung pro Ausgabe versendet werden — mit beim Anlegen definiertem Titel/Inhalt, automatisch in alle App-Sprachen übersetzt.
 
-Die normalen Anwender stimmen über die **native Flutter-App** ab, nicht über dieses Admin-Dashboard. Daher sind in diesem Repo nur **Backend-/DB-Änderungen** nötig — keine UI-Anpassungen für anonyme User.
+## Datenbank (Migration)
 
-Identifier auf beiden Plattformen: **Supabase Anonymous Auth**. Die Flutter-App ruft `signInAnonymously()` auf und bekommt eine persistente `auth.uid()` (löst sowohl Web als auch Native sauber).
+Spalten zur Tabelle `editions` hinzufügen:
+- `notification_title text` — Push-Titel (deutsch)
+- `notification_body text` — Push-Text (deutsch)
+- `notification_sent_at timestamptz` — Zeitpunkt des Versands (NULL = noch nicht gesendet); verhindert Doppelversand
 
-## 1. Supabase Anonymous Auth aktivieren
+Cron-Job (über `pg_cron` + `pg_net`, alle 1 Minute) ruft eine neue Edge Function `dispatch-edition-pushes` auf.
 
-Einmaliger manueller Schritt im Supabase Dashboard: Auth → Providers → **Anonymous Sign-ins** aktivieren. Link liefere ich nach Plan-Bestätigung. Die Flutter-App muss dann `signInAnonymously()` aufrufen — das ist Arbeit im Flutter-Repo, nicht hier.
+## Übersetzungen
 
-## 2. Datenbank-Migration
+Wiederverwendung der bestehenden `content_translations`-Tabelle und `translate-content`-Edge-Function. Map für `edition` wird erweitert:
+- Neben `title`/`body` werden `notification_title` und `notification_body` als zusätzliche Felder übersetzt.
+- Trigger `notify_translate_content` läuft beim Anlegen/Update ohnehin schon → die Push-Texte sind in EN/ES/RU/PL verfügbar, sobald die Ausgabe veröffentlicht ist.
 
-- **Daten zurücksetzen**:
-  - Alle Zeilen aus `poll_votes` löschen.
-  - `poll_options.votes` auf 0 setzen.
-- **`poll_votes` Struktur**:
-  - Unique-Constraint `(poll_id, user_id)` → ermöglicht Upsert / "Stimme ändern".
-  - `user_id` auf `NOT NULL` setzen.
-- **RLS auf `poll_votes`** neu:
-  - SELECT: `auth.uid() = user_id` (eigene Stimme sichtbar).
-  - INSERT: `auth.uid() = user_id` — greift sowohl für eingeloggte Admins als auch für anonyme Flutter-User.
-  - UPDATE: `auth.uid() = user_id` (Stimme ändern).
-- **Vote-Counting via Trigger** auf `poll_votes` (`SECURITY DEFINER`):
-  - INSERT → +1 auf `option_id`.
-  - UPDATE → -1 auf alter, +1 auf neuer `option_id`.
-  - DELETE → -1 (für Konsistenz, auch wenn aktuell kein DELETE-Pfad).
-- RPC `increment_poll_votes` wird obsolet (kann bleiben, nicht mehr verwendet).
+## Edge Functions
 
-## 3. Admin-Dashboard (dieses Repo)
+**Neu: `dispatch-edition-pushes`** (vom Cron-Job angestoßen)
+- Sucht: `editions` mit `published_at <= now()` AND `notification_sent_at IS NULL` AND `notification_title IS NOT NULL`.
+- Für jede Ausgabe: setzt zuerst `notification_sent_at = now()` (vor dem Senden, damit Cron-Retries nicht doppelt senden), dann Versand pro Device-Token in dessen Sprache mit Übersetzung aus `content_translations` (Fallback: Originaltext).
+- Toggle: `content_notifications`.
 
-- Keine UI-Änderung nötig.
-- **Auth-Flow nicht anfassen**: `AuthContext` bleibt unverändert, da Admins sich weiterhin nur per Email/Passwort einloggen.
-- `useVote`-Hook in `use-polls.ts` ist hier ungenutzt für anonyme Flows — kann optional auf `upsert` umgestellt werden, ist aber kein Muss (Flutter-App implementiert das eigenständig).
+**Bestehend: `send-push-notification`** bleibt unverändert für die anderen Tabellen. Edition-Push läuft nicht mehr beim INSERT-Trigger, sondern über den Cron-Dispatcher (sonst würde beim Anlegen — vor dem Release-Datum — sofort gesendet).
 
-## 4. Memory-Update
+## Frontend (`/dashboard/posts/ausgaben`)
 
-Nach Build-Modus speichere ich in der Project Memory, dass es eine separate **native Flutter-App** für Endnutzer gibt, damit künftige Änderungen das berücksichtigen.
+Im Formular „Neue Ausgabe" und im Edit-Dialog zwei neue Eingabefelder:
+- „Push-Titel" (Input)
+- „Push-Text" (Textarea)
 
-## Manueller Schritt für dich
+Optional anzeigen: Status „Push gesendet am …" wenn `notification_sent_at` gesetzt ist.
 
-1. Anonymous Sign-ins im Supabase Dashboard aktivieren.
-2. In der Flutter-App `supabase.auth.signInAnonymously()` beim Start aufrufen.
+Hook `use-editions.ts` um `notification_title` / `notification_body` erweitern (Create + Update).
+
+## Ablauf-Diagramm
+
+```text
+Admin legt Ausgabe an
+  └─ editions row (published_at in Zukunft, notification_title/body gesetzt)
+       └─ translate-content (Trigger) übersetzt title/body/notif_title/notif_body
+                                                                     │
+Cron (jede Minute)                                                   │
+  └─ dispatch-edition-pushes ──── findet Ausgabe mit                ▼
+                                  published_at <= now()
+                                  AND notification_sent_at IS NULL
+       ├─ setzt notification_sent_at = now()
+       └─ für jeden Device-Token: FCM in passender Sprache
+```
+
+## Manuell vom Nutzer einzurichten
+
+Nach Approval wird über die DB-Insert-Tools (nicht Migration) der Cron-Job mit deinem Service-Role-Key registriert — das passiert automatisch in der Implementierungsphase.
+
+## Hinweise
+
+- Ich lasse `release_date` weg (gibt es nicht mehr) und nutze nur `published_at`.
+- Wenn `notification_title` leer ist → keine Push (Ausgabe wird trotzdem regulär veröffentlicht).
+- Cron-Granularität: 1 Minute (Standard-`pg_cron`-Minimum).
