@@ -81,10 +81,23 @@ class _VerseCardState extends State<VerseCard>
             child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with label and favorite icon
-          BadgeWidget(
+          // Header with label and share icon
+          Row(
+            children: [
+              BadgeWidget(
                 label: context.tr('verse_of_day_badge'),
               ),
+              const Spacer(),
+              IconButton(
+                onPressed: null,
+                icon: const Icon(Icons.share_outlined),
+                iconSize: 20,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                tooltip: 'Teilen',
+              ),
+            ],
+          ),
           const SizedBox(height: DesignTokens.spacingMedium),
           // Verse text itself uses Merriweather (serif) per design request.
           Text(

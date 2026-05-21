@@ -225,29 +225,38 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
                                 overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 4,
-                                children: [
-                                  if (isNew)
-                                    BadgeWidget(
-                                      label: context.tr('new_badge'),
-                                    ),
-                                  BadgeWidget(
-                                    label: item.isVideo
-                                      ? context.tr('video_badge')
-                                      : item.isKurznachricht
-                                        ? context.tr('short_message_badge')
-                                        : context.tr('article_badge'),
-                                  ),
-                                  if (item.hasAudio)
-                                    BadgeWidget(
-                                      label: context.tr('audio_badge'),
-                                      backgroundColor: DesignTokens.successGreen.withOpacity(0.12),
-                                      textColor: DesignTokens.successGreen,
-                                      icon: Icons.headphones,
-                                    ),
-                                ],
+                              Builder(
+                                builder: (context) {
+                                  final isDark = Theme.of(context).brightness == Brightness.dark;
+                                  return Wrap(
+                                    spacing: 8,
+                                    runSpacing: 4,
+                                    children: [
+                                      if (isNew)
+                                        BadgeWidget(
+                                          label: context.tr('new_badge'),
+                                          backgroundColor: isDark ? DesignTokens.primaryRed : null,
+                                          textColor: isDark ? Colors.white : null,
+                                        ),
+                                      BadgeWidget(
+                                        label: item.isVideo
+                                          ? context.tr('video_badge')
+                                          : item.isKurznachricht
+                                            ? context.tr('short_message_badge')
+                                            : context.tr('article_badge'),
+                                        backgroundColor: isDark ? DesignTokens.primaryRed : null,
+                                        textColor: isDark ? Colors.white : null,
+                                      ),
+                                      if (item.hasAudio)
+                                        BadgeWidget(
+                                          label: context.tr('audio_badge'),
+                                          backgroundColor: DesignTokens.successGreen.withOpacity(0.12),
+                                          textColor: DesignTokens.successGreen,
+                                          icon: Icons.headphones,
+                                        ),
+                                    ],
+                                  );
+                                },
                               ),
                             ],
                           ),

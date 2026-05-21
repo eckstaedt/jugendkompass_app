@@ -487,51 +487,50 @@ class _PodcastScreenState extends ConsumerState<PodcastScreen> {
                               (audio.post!.categoryName != null
                                   ? [audio.post!.categoryName!]
                                   : []))
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: DesignTokens.primaryRed.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(
-                                    DesignTokens.radiusBadges),
-                              ),
-                              child: Text(
-                                tag,
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: DesignTokens.primaryRed,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
+                            Builder(
+                              builder: (context) {
+                                final isDark = Theme.of(context).brightness == Brightness.dark;
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? DesignTokens.primaryRed
+                                        : DesignTokens.primaryRed.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(
+                                        DesignTokens.radiusBadges),
+                                  ),
+                                  child: Text(
+                                    tag,
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      color: isDark ? Colors.white : DesignTokens.primaryRed,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
-                          // View count tag
+                          // View count (plain, no badge)
                           Consumer(
                             builder: (context, ref, _) {
                               final viewCountAsync = ref.watch(postViewCountProvider(audio.id));
                               return viewCountAsync.whenOrNull(
                                 data: (count) => count == 0
                                     ? const SizedBox.shrink()
-                                    : Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: theme.colorScheme.secondaryContainer,
-                                          borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(Icons.visibility_outlined, size: 10, color: theme.colorScheme.onSecondaryContainer),
-                                            const SizedBox(width: 3),
-                                            Text(
-                                              _formatViewCount(count),
-                                              style: theme.textTheme.labelSmall?.copyWith(
-                                                color: theme.colorScheme.onSecondaryContainer,
-                                                fontWeight: FontWeight.bold,
-                                                letterSpacing: 0.5,
-                                              ),
+                                    : Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.visibility_outlined, size: 10, color: theme.colorScheme.onSurfaceVariant),
+                                          const SizedBox(width: 3),
+                                          Text(
+                                            _formatViewCount(count),
+                                            style: theme.textTheme.labelSmall?.copyWith(
+                                              color: theme.colorScheme.onSurfaceVariant,
+                                              fontWeight: FontWeight.normal,
                                             ),
-                                          ],
-                                        ),
+                                          ),
+                                        ],
                                       ),
                               ) ?? const SizedBox.shrink();
                             },
