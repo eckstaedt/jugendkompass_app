@@ -290,6 +290,24 @@ const AusgabenPage = () => {
                 )}
               </div>
             </div>
+            <div className="rounded-lg border border-dashed p-3 grid gap-3">
+              <p className="text-sm font-medium">Push-Benachrichtigung (optional)</p>
+              {editingEdition?.notification_sent_at ? (
+                <p className="text-xs text-muted-foreground">
+                  Bereits gesendet am {new Date(editingEdition.notification_sent_at).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })}.
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Wird automatisch zum Release-Zeitpunkt gesendet und übersetzt.</p>
+              )}
+              <div>
+                <label className="block text-sm font-medium mb-1">Push-Titel</label>
+                <Input value={editNotifTitle} onChange={(e) => setEditNotifTitle(e.target.value)} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Push-Text</label>
+                <Textarea value={editNotifBody} onChange={(e) => setEditNotifBody(e.target.value)} rows={2} />
+              </div>
+            </div>
             <div className="flex gap-2 justify-end">
               <Button type="button" variant="outline" onClick={() => setEditingEdition(null)}>Abbrechen</Button>
               <Button type="submit" disabled={isUpdating}>{isUpdating ? 'Wird gespeichert...' : 'Speichern'}</Button>
