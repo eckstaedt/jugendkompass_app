@@ -28,7 +28,7 @@ const NewPollPage = () => {
     }
   });
   
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, move } = useFieldArray({
     control,
     name: "options"
   });
