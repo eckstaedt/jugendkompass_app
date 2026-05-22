@@ -82,7 +82,7 @@ class VerseShareCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'jugendkompass.de',
+            'jugendkompass-app.vercel.app',
             style: GoogleFonts.poppins(
               fontSize: 9,
               color: Colors.black38,
