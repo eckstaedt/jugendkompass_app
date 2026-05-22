@@ -77,7 +77,7 @@ export const useDailyVerses = () => {
   const queryClient = useQueryClient();
   
   const createVerse = useMutation({
-    mutationFn: async ({ verse, reference, date, userId }: { verse: string; reference: string; date: string; userId: string }) => {
+    mutationFn: async ({ verse, reference, date, image_url, userId }: { verse: string; reference: string; date: string; image_url?: string | null; userId: string }) => {
       const { data: contentData, error: contentError } = await supabase
         .from('content')
         .insert({ content_type: 'daily_verse', status: 'published' })
@@ -88,7 +88,7 @@ export const useDailyVerses = () => {
 
       const { data: result, error } = await supabase
         .from('verse_of_the_day')
-        .insert({ verse, reference, date, content_id: contentData.id })
+        .insert({ verse, reference, date, image_url: image_url || null, content_id: contentData.id })
         .select('*')
         .single();
 
@@ -113,49 +113,15 @@ export const useDailyVerses = () => {
   });
 
   const updateVerse = useMutation({
-    mutationFn: async ({ id, content_id, verse, reference, date }: { id: string; content_id: string; verse: string; reference: string; date: string }) => {
+    mutationFn: async ({ id, content_id, verse, reference, date, image_url }: { id: string; content_id: string; verse: string; reference: string; date: string; image_url?: string | null }) => {
       const { data, error } = await supabase
         .from('verse_of_the_day')
-        .update({ verse, reference, date })
+        .update({ verse, reference, date, image_url: image_url || null })
         .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['dailyVerses'] });
-    }
-  });
-
-  const bulkCreateVerses = useMutation({
-    mutationFn: async ({ verses, userId }: { verses: { verse: string; reference: string; date: string }[]; userId: string }) => {
-      // Create content entries for each verse
-      const contentInserts = verses.map(() => ({ content_type: 'daily_verse', status: 'published' }));
-      const { data: contentData, error: contentError } = await supabase
-        .from('content')
-        .insert(contentInserts)
-        .select('id');
-
-      if (contentError) throw contentError;
-      if (!contentData || contentData.length !== verses.length) throw new Error('Content creation mismatch');
-
-      const verseInserts = verses.map((v, i) => ({
-        verse: v.verse,
-        reference: v.reference,
-        date: v.date,
-        content_id: contentData[i].id,
-      }));
-
-      const { data, error } = await supabase
-        .from('verse_of_the_day')
-        .insert(verseInserts)
-        .select('*');
-
-      if (error) throw error;
-
-      await logActivity(userId, 'daily_verse', 'create', null as any, `${verses.length} Verse per Bulk-Import erstellt`);
       return data;
     },
     onSuccess: () => {
@@ -172,6 +138,6 @@ export const useDailyVerses = () => {
     isFetchingNextPage,
     createVerse,
     updateVerse,
-    bulkCreateVerses
   };
 };
+
