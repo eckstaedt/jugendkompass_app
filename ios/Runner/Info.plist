@@ -28,8 +28,12 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Die App benötigt gegebenenfalls Mikrofonzugriff für bestimmte Medienfunktionen.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Die App benötigt Zugriff auf deine Fotos, damit du Bilder auswählen und in der App verwenden kannst.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Die App benötigt Zugriff auf die Kamera, damit du Fotos aufnehmen und in der App verwenden kannst.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Die App möchte Bilder in deiner Fotogalerie speichern.</string>
+	<string>Die App benötigt Zugriff auf deine Fotomediathek, um Bilder zu speichern.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
