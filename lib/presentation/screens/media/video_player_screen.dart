@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
 import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
@@ -31,13 +32,15 @@ class VideoPlayerScreen extends ConsumerStatefulWidget {
 }
 
 class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
-  late VideoPlayerController _videoPlayerController;
+  VideoPlayerController? _videoPlayerController;
   ChewieController? _chewieController;
   YoutubePlayerController? _youtubeController;
   bool _isInitialized = false;
   String? _error;
   bool _isYouTube = false;
   String? _youtubeVideoId;
+  int _retryCount = 0;
+  static const int _maxRetries = 2;
 
   @override
   void initState() {
@@ -94,18 +97,25 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     return match?.group(1);
   }
 
-  /// Parse platform-specific video errors and provide user-friendly messages
-  String _handleVideoError(String rawError) {
-    final lowerError = rawError.toLowerCase();
-
-    // Codec errors - enhanced detection for MediaCodec issues
-    if (lowerError.contains('mediacodec') ||
+  /// Check if error is a codec/decoder error that might benefit from retry
+  bool _isCodecError(String error) {
+    final lowerError = error.toLowerCase();
+    return lowerError.contains('mediacodec') ||
         lowerError.contains('codec') ||
         lowerError.contains('decoder') ||
         lowerError.contains('no_exceeds_capabilities') ||
         lowerError.contains('exceeds capabilities') ||
         lowerError.contains('decoderinitialization') ||
-        lowerError.contains('failed to allocate buffers')) {
+        lowerError.contains('failed to allocate buffers') ||
+        lowerError.contains('videorenderer');
+  }
+
+  /// Parse platform-specific video errors and provide user-friendly messages
+  String _handleVideoError(String rawError) {
+    final lowerError = rawError.toLowerCase();
+
+    // Codec errors - enhanced detection for MediaCodec issues
+    if (_isCodecError(rawError)) {
       return AppTranslations.t('video_codec_error');
     }
 
@@ -127,41 +137,51 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     return '${AppTranslations.t('error_loading_video')}: ${rawError.split('\n').first}';
   }
 
-  Future<void> _initializePlayer() async {
+  /// Dispose current video player resources to free up decoder
+  Future<void> _disposeVideoPlayer() async {
+    _chewieController?.dispose();
+    _chewieController = null;
+    await _videoPlayerController?.dispose();
+    _videoPlayerController = null;
+  }
+
+  Future<void> _initializePlayer({bool isRetry = false}) async {
     try {
-      debugPrint('[VideoPlayer] Initializing: ${widget.videoUrl}');
+      // Dispose any existing player first to free up decoder resources
+      await _disposeVideoPlayer();
+
+      // On retry, add a delay to allow system to release decoder resources
+      if (isRetry) {
+        debugPrint('[VideoPlayer] Retry attempt $_retryCount - waiting for decoder resources...');
+        await Future.delayed(Duration(milliseconds: 500 * _retryCount));
+      }
+
+      debugPrint('[VideoPlayer] Initializing: ${widget.videoUrl} (attempt ${_retryCount + 1})');
 
       _videoPlayerController = VideoPlayerController.networkUrl(
         Uri.parse(widget.videoUrl),
+        videoPlayerOptions: VideoPlayerOptions(
+          mixWithOthers: false,
+          allowBackgroundPlayback: false,
+        ),
       );
 
-      await _videoPlayerController.initialize();
+      await _videoPlayerController!.initialize();
 
       debugPrint('[VideoPlayer] Initialized successfully. '
-          'Codec: ${_videoPlayerController.value.isInitialized ? "supported" : "unknown"}, '
-          'Aspect ratio: ${_videoPlayerController.value.aspectRatio}');
+          'Codec: ${_videoPlayerController!.value.isInitialized ? "supported" : "unknown"}, '
+          'Aspect ratio: ${_videoPlayerController!.value.aspectRatio}');
 
       if (!mounted) return;
 
       // Listen for codec/playback errors after initialization
-      _videoPlayerController.addListener(() {
-        if (_videoPlayerController.value.hasError) {
-          final error = _videoPlayerController.value.errorDescription ?? 'Unknown error';
-          debugPrint('[VideoPlayer] Runtime error: $error');
-
-          if (mounted) {
-            setState(() {
-              _error = _handleVideoError(error);
-            });
-          }
-        }
-      });
+      _videoPlayerController!.addListener(_onVideoPlayerError);
 
       _chewieController = ChewieController(
-        videoPlayerController: _videoPlayerController,
+        videoPlayerController: _videoPlayerController!,
         autoPlay: true,
         looping: false,
-        aspectRatio: _videoPlayerController.value.aspectRatio,
+        aspectRatio: _videoPlayerController!.value.aspectRatio,
         allowFullScreen: true,
         allowMuting: true,
         showControls: true,
@@ -198,10 +218,20 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       if (mounted) {
         setState(() {
           _isInitialized = true;
+          _error = null;
         });
       }
     } catch (e) {
-      debugPrint('[VideoPlayer] Initialization error: $e');
+      debugPrint('[VideoPlayer] Initialization error (attempt ${_retryCount + 1}): $e');
+
+      // Auto-retry for codec errors
+      if (_isCodecError(e.toString()) && _retryCount < _maxRetries) {
+        _retryCount++;
+        debugPrint('[VideoPlayer] Codec error detected, retrying (${_retryCount}/$_maxRetries)...');
+        await _initializePlayer(isRetry: true);
+        return;
+      }
+
       if (mounted) {
         setState(() {
           _error = _handleVideoError(e.toString());
@@ -210,12 +240,63 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     }
   }
 
+  void _onVideoPlayerError() {
+    if (_videoPlayerController?.value.hasError ?? false) {
+      final error = _videoPlayerController!.value.errorDescription ?? 'Unknown error';
+      debugPrint('[VideoPlayer] Runtime error: $error');
+
+      // Try to recover from codec errors during playback
+      if (_isCodecError(error) && _retryCount < _maxRetries && mounted) {
+        _retryCount++;
+        debugPrint('[VideoPlayer] Runtime codec error, attempting recovery (${_retryCount}/$_maxRetries)...');
+        setState(() {
+          _isInitialized = false;
+        });
+        _initializePlayer(isRetry: true);
+        return;
+      }
+
+      if (mounted) {
+        setState(() {
+          _error = _handleVideoError(error);
+        });
+      }
+    }
+  }
+
+  /// Open video in external browser/player app
+  Future<void> _openInExternalPlayer() async {
+    final uri = Uri.parse(widget.videoUrl);
+    try {
+      // Try to launch in external application (video player)
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      if (!launched && mounted) {
+        // Fallback to browser if external app launch fails
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalNonBrowserApplication,
+        );
+      }
+    } catch (e) {
+      debugPrint('[VideoPlayer] Failed to open external player: $e');
+      // Last resort: try any available method
+      if (mounted) {
+        await launchUrl(uri);
+      }
+    }
+  }
+
   @override
   void dispose() {
     // Restore system UI
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    _videoPlayerController.dispose();
+    // Remove listener before disposing
+    _videoPlayerController?.removeListener(_onVideoPlayerError);
     _chewieController?.dispose();
+    _videoPlayerController?.dispose();
     _youtubeController?.dispose();
     super.dispose();
   }
@@ -352,16 +433,29 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                         ),
                       ),
                     const SizedBox(height: 24),
+                    // Retry button
                     FilledButton.icon(
                       onPressed: () {
                         setState(() {
                           _error = null;
                           _isInitialized = false;
+                          _retryCount = 0; // Reset retry count for manual retry
                         });
                         _checkVideoType();
                       },
                       icon: const Icon(Icons.refresh),
                       label: Text(AppTranslations.t('try_again')),
+                    ),
+                    const SizedBox(height: 12),
+                    // Open in external player button
+                    OutlinedButton.icon(
+                      onPressed: _openInExternalPlayer,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white70,
+                        side: const BorderSide(color: Colors.white38),
+                      ),
+                      icon: const Icon(Icons.open_in_new, size: 20),
+                      label: Text(AppTranslations.t('open_external_player')),
                     ),
                   ],
                 ),
