@@ -14,13 +14,21 @@ class DesignTokens {
   static const Color textSecondary = Color(0xFF6F7479);
   static const Color iconGrey = Color(0xFF9AA0A6);
 
+  // Badge colors
+  static const Color pollBadgeColor = Color(0xFF7C3AED); // Purple for polls
+  static const Color successColor = Color(0xFF10B981); // Green for success states
+
   // ⸻ FARBPALETTE - DARK MODE
   static const Color darkAppBackground = Color(0xFF0A0A0A);
   static const Color darkCardBackground = Color(0xFF1A1A1A);
   static const Color darkTextPrimary = Color(0xFFFFFFFF);
   static const Color darkTextSecondary = Color(0xFFA0A0A0);
   static const Color darkIconGrey = Color(0xFF707070);
-  
+
+  // Dark mode badge colors
+  static const Color darkPollBadgeColor = Color(0xFF9F7AEA); // Lighter purple for dark mode
+  static const Color darkSuccessColor = Color(0xFF34D399); // Lighter green for dark mode
+
   // Dark mode red background (more visible for dark theme)
   static const Color darkRedBackground = Color(0xFF4A1818);
 
@@ -139,6 +147,14 @@ class DesignTokens {
 
   static Color getRedBackground(Brightness brightness) {
     return brightness == Brightness.dark ? darkRedBackground : redBackground;
+  }
+
+  static Color getPollBadgeColor(Brightness brightness) {
+    return brightness == Brightness.dark ? darkPollBadgeColor : pollBadgeColor;
+  }
+
+  static Color getSuccessColor(Brightness brightness) {
+    return brightness == Brightness.dark ? darkSuccessColor : successColor;
   }
 
   static Color getGlassBackground(Brightness brightness, [double opacity = 0.18]) {

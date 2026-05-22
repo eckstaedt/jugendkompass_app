@@ -42,6 +42,20 @@ Future<void> main() async {
   // Initialize Supabase
   await SupabaseService.initialize();
 
+  // Sign in anonymously if not already signed in (required for poll voting)
+  try {
+    final supabase = SupabaseService.instance.client;
+    if (supabase.auth.currentUser == null) {
+      await supabase.auth.signInAnonymously();
+      debugPrint('[Auth] Signed in anonymously');
+    } else {
+      debugPrint('[Auth] User already signed in: ${supabase.auth.currentUser?.id}');
+    }
+  } catch (e) {
+    debugPrint('[Auth] Anonymous sign-in failed: $e');
+    // Non-blocking - app continues without auth (polls will be view-only)
+  }
+
   // Initialize Firebase (not configured for web yet)
   if (!kIsWeb) {
     await Firebase.initializeApp(

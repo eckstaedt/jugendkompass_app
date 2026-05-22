@@ -7,6 +7,7 @@ enum ReadContentType {
   audio,
   impulse,
   message,
+  poll,
 }
 
 /// Represents a content item that has been read or played

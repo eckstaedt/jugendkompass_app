@@ -1,15 +1,18 @@
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/data/models/post_model.dart';
 import 'package:jugendkompass_app/data/models/video_model.dart';
 import 'package:jugendkompass_app/data/models/message_model.dart';
+import 'package:jugendkompass_app/data/models/poll_model.dart';
 import 'package:jugendkompass_app/domain/providers/post_provider.dart';
 import 'package:jugendkompass_app/domain/providers/video_provider.dart';
 import 'package:jugendkompass_app/domain/providers/message_provider.dart';
+import 'package:jugendkompass_app/domain/providers/poll_provider.dart';
 
-// Model for recommended content items (Posts = Artikel with/without Audio, Videos, Messages = Kurznachrichten)
+// Model for recommended content items (Posts = Artikel with/without Audio, Videos, Messages = Kurznachrichten, Polls)
 class RecommendedItem {
-  final dynamic data; // PostModel, VideoModel, or MessageModel
-  final String contentType; // 'post', 'video', or 'message'
+  final dynamic data; // PostModel, VideoModel, MessageModel, or PollModel
+  final String contentType; // 'post', 'video', 'message', or 'poll'
 
   RecommendedItem({
     required this.data,
@@ -37,12 +40,22 @@ class RecommendedItem {
     );
   }
 
+  factory RecommendedItem.fromPoll(PollModel poll) {
+    return RecommendedItem(
+      data: poll,
+      contentType: 'poll',
+    );
+  }
+
   String get id {
     if (contentType == 'video') {
       return (data as VideoModel).id;
     }
     if (contentType == 'message') {
       return (data as MessageModel).id;
+    }
+    if (contentType == 'poll') {
+      return (data as PollModel).id;
     }
     return (data as PostModel).id;
   }
@@ -55,6 +68,9 @@ class RecommendedItem {
       // Use title if available, otherwise stripped plain text
       return (data as MessageModel).displayTitle;
     }
+    if (contentType == 'poll') {
+      return (data as PollModel).question;
+    }
     return (data as PostModel).title;
   }
 
@@ -64,6 +80,9 @@ class RecommendedItem {
     }
     if (contentType == 'message') {
       return (data as MessageModel).imageUrl;
+    }
+    if (contentType == 'poll') {
+      return null; // Polls don't have images
     }
     return (data as PostModel).imageUrl;
   }
@@ -84,6 +103,7 @@ class RecommendedItem {
   PostModel? get post => contentType == 'post' ? data as PostModel : null;
   VideoModel? get video => contentType == 'video' ? data as VideoModel : null;
   MessageModel? get message => contentType == 'message' ? data as MessageModel : null;
+  PollModel? get poll => contentType == 'poll' ? data as PollModel : null;
 
   /// Get the URL for videos (used for read history tracking)
   String? get videoUrl => contentType == 'video' ? (data as VideoModel).url : null;
@@ -92,6 +112,7 @@ class RecommendedItem {
   bool get isVideo => contentType == 'video';
   bool get isArticle => contentType == 'post' && !hasAudio;
   bool get isMessage => contentType == 'message';
+  bool get isPoll => contentType == 'poll';
   
   /// Whether this is a Kurznachricht (either a message or a post with news category)
   bool get isKurznachricht {
@@ -109,6 +130,9 @@ class RecommendedItem {
     }
     if (contentType == 'message') {
       return (data as MessageModel).createdAt;
+    }
+    if (contentType == 'poll') {
+      return (data as PollModel).createdAt;
     }
     return (data as PostModel).createdAt;
   }
@@ -138,30 +162,40 @@ final recommendedContentProvider = FutureProvider<List<RecommendedItem>>((ref) a
   }
 });
 
-/// Paginated content provider - fetches all content (posts, videos, messages) sorted by date
+/// Paginated content provider - fetches all content (posts, videos, messages, polls) sorted by date
 /// Returns batches of items. Parameter is the page number (0-indexed).
 final paginatedContentProvider = FutureProvider.family<List<RecommendedItem>, int>((ref, page) async {
   try {
     final postRepository = ref.watch(postRepositoryProvider);
     final videoRepository = ref.watch(videoRepositoryProvider);
     final messageRepository = ref.watch(messageRepositoryProvider);
-    
+    final pollRepository = ref.watch(pollRepositoryProvider);
+
     final batchSize = 50;
     final posts = await postRepository.getPostList(limit: batchSize, offset: page * batchSize);
     final videos = await videoRepository.getVideoList(limit: batchSize, offset: page * batchSize);
     final messages = await messageRepository.getMessageList(limit: batchSize, offset: page * batchSize);
 
+    // Fetch polls with error handling (don't break entire feed if polls fail)
+    List<dynamic> polls = [];
+    try {
+      polls = await pollRepository.getPollList(limit: batchSize, offset: page * batchSize, activeOnly: true);
+    } catch (e) {
+      // Log error but continue with other content
+      debugPrint('Error fetching polls: $e');
+    }
+
     // Convert to RecommendedItems and deduplicate within the batch
     final seen = <String>{};
     final allItems = <RecommendedItem>[];
-    
+
     for (final post in posts) {
       final key = 'post_${post.id}';
       if (seen.add(key)) {
         allItems.add(RecommendedItem.fromPost(post));
       }
     }
-    
+
     for (final video in videos) {
       final key = 'video_${video.id}';
       if (seen.add(key)) {
@@ -173,6 +207,13 @@ final paginatedContentProvider = FutureProvider.family<List<RecommendedItem>, in
       final key = 'message_${message.id}';
       if (seen.add(key)) {
         allItems.add(RecommendedItem.fromMessage(message));
+      }
+    }
+
+    for (final poll in polls) {
+      final key = 'poll_${poll.id}';
+      if (seen.add(key)) {
+        allItems.add(RecommendedItem.fromPoll(poll));
       }
     }
 

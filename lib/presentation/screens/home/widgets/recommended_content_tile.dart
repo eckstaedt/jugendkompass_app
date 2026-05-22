@@ -13,6 +13,7 @@ import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.da
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
+import 'package:jugendkompass_app/presentation/screens/home/widgets/poll_content_tile.dart';
 
 class RecommendedContentTile extends ConsumerStatefulWidget {
   final RecommendedItem item;
@@ -111,8 +112,14 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final item = widget.item;
+
+    // If this is a poll, render PollContentTile instead
+    if (item.isPoll && item.poll != null) {
+      return PollContentTile(poll: item.poll!);
+    }
+
+    final theme = Theme.of(context);
 
     // Translate item title to the selected app language
     final titleAsync = ref.watch(translateTextProvider(item.title));
