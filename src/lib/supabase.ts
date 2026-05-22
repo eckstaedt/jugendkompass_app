@@ -75,9 +75,10 @@ export type Video = {
 export type DailyVerse = {
   id: string;
   content_id: string;
-  verse: string;        // Changed from verse_text to match actual DB field
-  reference: string;    // Changed from verse_reference to match actual DB field
+  verse: string;
+  reference: string;
   date: string;
+  image_url?: string | null;
   created_at?: string;
   content?: {
     content_type: string;
