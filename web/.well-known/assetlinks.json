@@ -1,0 +1,11 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "io.stephanus.jugendkompass",
+    "sha256_cert_fingerprints": [
+      "4C:35:E5:46:97:9D:6F:9C:99:29:9B:86:B8:43:1A:99:CE:42:B6:B6:DC:A8:50:C7:7E:D6:62:B9:47:3D:0B:82",
+      "BE:BC:8D:8B:8D:F3:92:10:63:00:5A:A9:08:17:7D:FD:BD:44:E5:91:CA:56:7C:BE:46:78:92:A5:D7:EF:60:D1"
+    ]
+  }
+}]

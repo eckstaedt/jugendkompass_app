@@ -55,8 +55,12 @@ class AudioService {
   // Listen for playlist completion
   void _setupPlayerStateListener() {
     _playerStateSubscription = _player.playerStateStream.listen((state) {
+      // Only call onPlaybackComplete when truly at the end of the queue
       if (state.processingState == ProcessingState.completed) {
-        onPlaybackComplete?.call();
+        // Check if we're at the last track in the queue
+        if (_currentIndex >= _queue.length - 1) {
+          onPlaybackComplete?.call();
+        }
       }
     });
   }

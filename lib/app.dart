@@ -1,7 +1,10 @@
 import 'dart:ui';
+import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:app_links/app_links.dart';
 import 'package:jugendkompass_app/core/config/app_theme.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
@@ -18,6 +21,7 @@ import 'package:jugendkompass_app/presentation/screens/podcast/widgets/mini_play
 import 'package:jugendkompass_app/core/services/fcm_service.dart'
     if (dart.library.html) 'package:jugendkompass_app/stubs/fcm_service_stub.dart';
 import 'package:jugendkompass_app/core/services/deep_link_service.dart';
+import 'package:jugendkompass_app/core/services/url_parser_service.dart';
 
 class App extends ConsumerStatefulWidget {
   const App({super.key});
@@ -31,12 +35,72 @@ class _AppState extends ConsumerState<App> {
   final _navigatorKey = GlobalKey<NavigatorState>();
   Map<String, dynamic>? _pendingNotificationData;
   bool _isAppReady = false;
+  AppLinks? _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
 
   @override
   void initState() {
     super.initState();
     // Set up notification tap handler for deep linking
     FCMService().onNotificationTap = _handleNotificationTap;
+
+    // Initialize deep link listening ONLY on mobile (not web)
+    if (!kIsWeb) {
+      _initDeepLinks();
+    }
+  }
+
+  /// Initialize deep link listening for jugendkompass.com URLs (mobile only)
+  Future<void> _initDeepLinks() async {
+    _appLinks = AppLinks();
+
+    // Handle link that launched the app (cold start)
+    try {
+      final initialLink = await _appLinks!.getInitialLink();
+      if (initialLink != null) {
+        debugPrint('[App] Initial deep link: $initialLink');
+        _handleDeepLink(initialLink);
+      }
+    } catch (e) {
+      debugPrint('[App] Error getting initial link: $e');
+    }
+
+    // Handle links while app is running (warm start / already open)
+    _linkSubscription = _appLinks!.uriLinkStream.listen(
+      (uri) {
+        debugPrint('[App] Deep link received: $uri');
+        _handleDeepLink(uri);
+      },
+      onError: (err) {
+        debugPrint('[App] Deep link error: $err');
+      },
+    );
+  }
+
+  /// Handle incoming deep link URL
+  Future<void> _handleDeepLink(Uri uri) async {
+    // Parse URL into content data
+    final data = UrlParserService.instance.parseUrl(uri.toString());
+
+    if (data == null) {
+      debugPrint('[App] Failed to parse deep link: $uri');
+      return;
+    }
+
+    // Use existing navigation flow (same as FCM notifications)
+    if (!_isAppReady) {
+      debugPrint('[App] App not ready, storing pending deep link');
+      _pendingNotificationData = data;
+      return;
+    }
+
+    await _navigateToContent(data);
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
   }
 
   /// Handle notification tap and navigate to appropriate content.

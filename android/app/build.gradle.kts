@@ -69,22 +69,4 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
-
-    // Force compatible versions of Glance and Remote Creation to avoid AGP 9.1.0 requirement
-    constraints {
-        implementation("androidx.glance:glance-appwidget") {
-            version {
-                strictly("[1.0.0, 1.3.0-alpha01)")
-                prefer("1.2.0")
-            }
-            because("home_widget 0.9.x pulls in 1.3.0-alpha01 which requires AGP 9.1.0")
-        }
-        implementation("androidx.compose.remote:remote-creation-android") {
-            version {
-                strictly("[1.0.0-alpha01, 1.0.0-alpha11)")
-                prefer("1.0.0-alpha10")
-            }
-            because("newer versions require AGP 9.1.0")
-        }
-    }
 }

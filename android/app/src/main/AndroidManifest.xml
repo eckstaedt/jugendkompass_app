@@ -11,7 +11,7 @@
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
 
     <application
-        android:label="jugendkompass_app"
+        android:label="Jugendkompass"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -34,6 +34,18 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+
+            <!-- Deep link intent filter for jugendkompass.com -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!-- Main domain -->
+                <data android:scheme="https" android:host="jugendkompass.com" />
+                <!-- Optional: www subdomain -->
+                <data android:scheme="https" android:host="www.jugendkompass.com" />
             </intent-filter>
         </activity>
         <!-- just_audio_background: background audio service for lock screen controls -->

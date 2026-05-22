@@ -1,0 +1,19 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "MXM3YWAKPL.io.stephanus.jugendkompass",
+        "paths": [
+          "/post/*",
+          "/video/*",
+          "/verse/*",
+          "/message/*",
+          "/impulse/*",
+          "/poll/*",
+          "/content/*"
+        ]
+      }
+    ]
+  }
+}
