@@ -4,6 +4,7 @@ class VerseModel {
   final String reference;
   final DateTime date;
   final String? contentId;
+  final String? imageUrl;
 
   VerseModel({
     required this.id,
@@ -11,6 +12,7 @@ class VerseModel {
     required this.reference,
     required this.date,
     this.contentId,
+    this.imageUrl,
   });
 
   factory VerseModel.fromJson(Map<String, dynamic> json) {
@@ -22,6 +24,7 @@ class VerseModel {
           ? DateTime.parse(json['date'] as String)
           : DateTime.now(),
       contentId: json['content_id']?.toString(),
+      imageUrl: json['image_url'] as String?,
     );
   }
 
@@ -32,6 +35,7 @@ class VerseModel {
       'reference': reference,
       'date': date.toIso8601String(),
       'content_id': contentId,
+      'image_url': imageUrl,
     };
   }
 
@@ -41,6 +45,7 @@ class VerseModel {
     String? reference,
     DateTime? date,
     String? contentId,
+    String? imageUrl,
   }) {
     return VerseModel(
       id: id ?? this.id,
@@ -48,6 +53,7 @@ class VerseModel {
       reference: reference ?? this.reference,
       date: date ?? this.date,
       contentId: contentId ?? this.contentId,
+      imageUrl: imageUrl ?? this.imageUrl,
     );
   }
 }
