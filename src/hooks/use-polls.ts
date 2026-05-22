@@ -258,35 +258,23 @@ export const useVote = () => {
   return useMutation({
     mutationFn: async ({ pollId, optionId }: { pollId: string; optionId: string }) => {
       const userId = (await supabase.auth.getUser()).data.user?.id;
-      
-      // Check if user has already voted
-      const { data: existingVote, error: checkError } = await supabase
-        .from('poll_votes')
-        .select()
-        .eq('poll_id', pollId)
-        .eq('user_id', userId);
-      
-      if (checkError) throw checkError;
-      
-      if (existingVote && existingVote.length > 0) {
-        throw new Error('User has already voted on this poll');
-      }
-      
-      // Record the vote
+      if (!userId) throw new Error('Not authenticated');
+
+      // Insert vote — DB unique constraint (poll_id, user_id) prevents re-voting.
+      // poll_options.votes is kept in sync by the sync_poll_option_votes trigger,
+      // so we must NOT increment manually here (would double-count).
       const { error: voteError } = await supabase
         .from('poll_votes')
         .insert([{ poll_id: pollId, option_id: optionId, user_id: userId }]);
-      
-      if (voteError) throw voteError;
-      
-      // Increment vote count
-      const { error: incrementError } = await supabase.rpc(
-        'increment_poll_votes', 
-        { option_id: optionId }
-      );
-      
-      if (incrementError) throw incrementError;
-      
+
+      if (voteError) {
+        // 23505 = unique_violation → user has already voted
+        if ((voteError as any).code === '23505') {
+          throw new Error('User has already voted on this poll');
+        }
+        throw voteError;
+      }
+
       return true;
     },
     onSuccess: (_, variables) => {
