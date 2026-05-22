@@ -56,7 +56,9 @@ export const usePolls = (showAll = false) => {
         let polls = (localizedPolls ?? []).map((p: any) => ({
           ...p,
           content: contentMap[p.content_id],
-          options: (localizedOptions ?? []).filter((o: any) => o.poll_id === p.id),
+          options: (localizedOptions ?? [])
+            .filter((o: any) => o.poll_id === p.id)
+            .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
         }));
         if (!showAll) polls = polls.filter((p: any) => p.is_active);
         polls.sort((a: any, b: any) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
@@ -83,6 +85,13 @@ export const usePolls = (showAll = false) => {
 
       const { data: polls, error } = await query;
       if (error) throw error;
+
+      // Sort poll options by sort_order after fetching
+      (polls as any[]).forEach((poll) => {
+        if (poll.options) {
+          poll.options.sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+        }
+      });
       
       return polls as Poll[];
     },
