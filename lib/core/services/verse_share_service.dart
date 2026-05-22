@@ -1,46 +1,28 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:jugendkompass_app/presentation/widgets/verse/verse_share_card.dart';
 import 'package:jugendkompass_app/data/models/verse_model.dart';
+import 'package:jugendkompass_app/presentation/widgets/verse/verse_share_card.dart';
 
-/// Service to render a [VerseShareCard] to an image and open the native
-/// OS share sheet.  Not supported on web.
+/// Renders a [VerseShareCard] entirely off-screen (no widget tree insertion)
+/// and shares the resulting PNG via the native OS share sheet.
 class VerseShareService {
   VerseShareService._();
 
-  /// Renders [verse] as a PNG and opens the native share sheet.
-  /// On web this is a no-op (file sharing not supported by browsers).
-  static Future<void> shareVerse({
-    required VerseModel verse,
-    required BuildContext context,
-    String subject = 'Vers des Tages',
-  }) async {
-    if (kIsWeb) {
-      // Web cannot share binary files via share_plus – show a snackbar.
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Teilen ist nur in der App (iOS/Android) verfügbar.'),
-          ),
-        );
-      }
-      return;
-    }
+  static final ScreenshotController _controller = ScreenshotController();
 
+  static Future<void> shareVerse(VerseModel verse) async {
     try {
-      final controller = ScreenshotController();
-
-      // Capture the share card widget completely off-screen.
-      final Uint8List pngBytes = await controller.captureFromLongWidget(
+      // captureFromWidget renders the widget without adding it to the tree,
+      // so there are no layout constraints / overflow issues on any platform.
+      final Uint8List pngBytes = await _controller.captureFromWidget(
         VerseShareCard(verse: verse),
         pixelRatio: 3.0,
-        context: context,
+        targetSize: const Size(360, 560),
       );
 
       final Directory tempDir = await getTemporaryDirectory();
@@ -49,7 +31,7 @@ class VerseShareService {
 
       await Share.shareXFiles(
         [XFile(file.path, mimeType: 'image/png')],
-        subject: subject,
+        subject: 'Vers des Tages',
       );
     } catch (e) {
       debugPrint('[VerseShareService] Fehler beim Teilen: $e');

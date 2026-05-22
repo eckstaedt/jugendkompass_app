@@ -26,10 +26,10 @@ class _VerseCardState extends State<VerseCard>
 
   bool _isSharing = false;
 
-  Future<void> _shareVerse(BuildContext context) async {
+  Future<void> _shareVerse() async {
     if (_isSharing) return;
     setState(() => _isSharing = true);
-    await VerseShareService.shareVerse(verse: widget.verse, context: context);
+    await VerseShareService.shareVerse(widget.verse);
     if (mounted) setState(() => _isSharing = false);
   }
 
@@ -99,7 +99,7 @@ class _VerseCardState extends State<VerseCard>
               ),
               const Spacer(),
               IconButton(
-                onPressed: _isSharing ? null : () => _shareVerse(context),
+                onPressed: _isSharing ? null : _shareVerse,
                 icon: _isSharing
                     ? const SizedBox(
                         width: 16,
