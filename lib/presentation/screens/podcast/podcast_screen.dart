@@ -20,30 +20,17 @@ import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/animated_equalizer.dart';
 
-class PodcastScreen extends ConsumerStatefulWidget {
+class PodcastScreen extends ConsumerWidget {
   const PodcastScreen({super.key});
 
   @override
-  ConsumerState<PodcastScreen> createState() => _PodcastScreenState();
-}
-
-class _PodcastScreenState extends ConsumerState<PodcastScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(languageProvider);
     final translate = ref.watch(stringTranslatorProvider);
     final audioListAsync = ref.watch(audioListProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
     final selectedCategory = ref.watch(selectedPodcastCategoryProvider);
+    final searchQuery = ref.watch(podcastSearchQueryProvider);
     final theme = Theme.of(context);
     final brightness = theme.brightness;
     final textSecondary = DesignTokens.getTextSecondary(brightness);
@@ -93,11 +80,12 @@ class _PodcastScreenState extends ConsumerState<PodcastScreen> {
               }
 
               // Apply search filter
-              if (_searchQuery.isNotEmpty) {
+              if (searchQuery.isNotEmpty) {
+                final lowerQuery = searchQuery.toLowerCase();
                 filteredList = filteredList.where((audio) {
                   final title = (audio.title ?? audio.post?.title ?? '').toLowerCase();
                   final description = (audio.description ?? '').toLowerCase();
-                  return title.contains(_searchQuery) || description.contains(_searchQuery);
+                  return title.contains(lowerQuery) || description.contains(lowerQuery);
                 }).toList();
               }
 
@@ -137,11 +125,8 @@ class _PodcastScreenState extends ConsumerState<PodcastScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
                         withShadow: false,
                         child: TextField(
-                          controller: _searchController,
                           onChanged: (value) {
-                            setState(() {
-                              _searchQuery = value.toLowerCase();
-                            });
+                            ref.read(podcastSearchQueryProvider.notifier).state = value;
                           },
                           decoration: InputDecoration(
                             hintText: translate('Podcasts suchen...'),
@@ -153,14 +138,11 @@ class _PodcastScreenState extends ConsumerState<PodcastScreen> {
                               Icons.search,
                               color: textSecondary,
                             ),
-                            suffixIcon: _searchController.text.isNotEmpty
+                            suffixIcon: searchQuery.isNotEmpty
                                 ? IconButton(
                                     icon: Icon(Icons.clear, color: textSecondary),
                                     onPressed: () {
-                                      _searchController.clear();
-                                      setState(() {
-                                        _searchQuery = '';
-                                      });
+                                      ref.read(podcastSearchQueryProvider.notifier).state = '';
                                     },
                                   )
                                 : null,
@@ -311,7 +293,7 @@ class _PodcastScreenState extends ConsumerState<PodcastScreen> {
                       child: EmptyState(
                         icon: Icons.podcasts_outlined,
                         title: translate('Keine Podcasts gefunden'),
-                        message: _searchQuery.isNotEmpty
+                        message: searchQuery.isNotEmpty
                             ? translate('Versuche eine andere Suche')
                             : translate('Keine Podcasts in dieser Kategorie'),
                       ),
@@ -322,15 +304,9 @@ class _PodcastScreenState extends ConsumerState<PodcastScreen> {
                     SliverList(
                       delegate: SliverChildBuilderDelegate((context, index) {
                         final audio = filteredList[index];
-                        final currentAudio = ref.watch(currentAudioProvider);
-                        final isActuallyPlaying = ref.watch(isPlayingProvider);
-                        final isCurrentAndPlaying = currentAudio?.id == audio.id && isActuallyPlaying;
-
-                        return _buildEpisodeListItem(
-                          context,
-                          ref,
-                          audio,
-                          isCurrentAndPlaying,
+                        return _PodcastListItem(
+                          key: ValueKey(audio.id),
+                          audio: audio,
                         );
                       }, childCount: filteredList.length),
                     ),
@@ -362,31 +338,32 @@ class _PodcastScreenState extends ConsumerState<PodcastScreen> {
       ),
     );
   }
+}
 
-  String _formatViewCount(int count) {
-    if (count >= 1000000) return '${(count / 1000000).toStringAsFixed(1)}M';
-    if (count >= 1000) return '${(count / 1000).toStringAsFixed(1)}k';
-    return '$count';
-  }
+/// Extracted podcast list item to prevent unnecessary rebuilds
+class _PodcastListItem extends ConsumerWidget {
+  final AudioModel audio;
 
-  Widget _buildEpisodeListItem(
-    BuildContext context,
-    WidgetRef ref,
-    AudioModel audio,
-    bool isPlaying,
-  ) {
+  const _PodcastListItem({
+    super.key,
+    required this.audio,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Only watch providers needed for THIS item
+    final currentAudio = ref.watch(currentAudioProvider);
+    final isActuallyPlaying = ref.watch(isPlayingProvider);
+    final isCurrentAndPlaying = currentAudio?.id == audio.id && isActuallyPlaying;
+    final isListened = ref.watch(isContentReadProvider((id: audio.id, type: ReadContentType.audio)));
     final theme = Theme.of(context);
 
-    // Check if audio has been listened to
-    final isListened = ref.watch(isContentReadProvider((id: audio.id, type: ReadContentType.audio)));
-
     return Opacity(
-      opacity: isListened && !isPlaying ? 0.6 : 1.0,
+      opacity: isListened && !isCurrentAndPlaying ? 0.6 : 1.0,
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          // Tapping anywhere on the tile plays the audio instantly
           onTap: () => _playAudio(context, ref, audio),
           child: Padding(
             padding: const EdgeInsets.all(12),
@@ -394,34 +371,34 @@ class _PodcastScreenState extends ConsumerState<PodcastScreen> {
               children: [
                 // Thumbnail
                 ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: SizedBox(
-                      width: 60,
-                      height: 60,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          if (audio.imageUrl != null)
-                            CachedNetworkImage(
-                              imageUrl: audio.imageUrl!,
+                  borderRadius: BorderRadius.circular(8),
+                  child: SizedBox(
+                    width: 60,
+                    height: 60,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        if (audio.imageUrl != null)
+                          CachedNetworkImage(
+                            imageUrl: audio.imageUrl!,
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
                               width: 60,
                               height: 60,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Container(
-                                width: 60,
-                                height: 60,
-                                color: theme.colorScheme.surfaceContainerHighest,
-                                child: const Center(
-                                  child: CircularProgressIndicator(strokeWidth: 2),
-                                ),
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              child: const Center(
+                                child: CircularProgressIndicator(strokeWidth: 2),
                               ),
-                              errorWidget: (context, url, error) => Container(
-                                width: 60,
-                                height: 60,
-                                color: theme.colorScheme.surfaceContainerHighest,
-                                child: const Icon(Icons.podcasts),
-                              ),
-                            )
+                            ),
+                            errorWidget: (context, url, error) => Container(
+                              width: 60,
+                              height: 60,
+                              color: theme.colorScheme.surfaceContainerHighest,
+                              child: const Icon(Icons.podcasts),
+                            ),
+                          )
                         else
                           Container(
                             width: 60,
@@ -430,7 +407,7 @@ class _PodcastScreenState extends ConsumerState<PodcastScreen> {
                             child: const Icon(Icons.podcasts),
                           ),
                         // Play overlay
-                        if (!isPlaying)
+                        if (!isCurrentAndPlaying)
                           Container(
                             width: 60,
                             height: 60,
@@ -444,14 +421,14 @@ class _PodcastScreenState extends ConsumerState<PodcastScreen> {
                             ),
                           ),
                         // Equaliser when playing
-                        if (isPlaying)
+                        if (isCurrentAndPlaying)
                           Container(
                             width: 60,
                             height: 60,
                             decoration: BoxDecoration(
                               color: Colors.black.withOpacity(0.45),
                             ),
-                            child: Center(
+                            child: const Center(
                               child: AnimatedEqualizer(
                                 color: DesignTokens.primaryRed,
                                 size: 28,
@@ -462,117 +439,136 @@ class _PodcastScreenState extends ConsumerState<PodcastScreen> {
                       ],
                     ),
                   ),
-              ),
-              const SizedBox(width: 12),
-              // Title + meta
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      audio.title ?? audio.post?.title ?? 'Unbekannter Titel',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: isPlaying ? FontWeight.bold : FontWeight.normal,
+                ),
+                const SizedBox(width: 12),
+                // Title + meta
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        audio.title ?? audio.post?.title ?? 'Unbekannter Titel',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: isCurrentAndPlaying ? FontWeight.bold : FontWeight.normal,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    if (audio.post != null)
-                      Wrap(
-                        spacing: 4,
-                        runSpacing: 2,
-                        children: [
-                          for (var tag in audio.post!.categoryNames ??
-                              (audio.post!.categoryName != null
-                                  ? [audio.post!.categoryName!]
-                                  : []))
-                            Builder(
-                              builder: (context) {
-                                final isDark = Theme.of(context).brightness == Brightness.dark;
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: isDark
-                                        ? DesignTokens.primaryRed
-                                        : DesignTokens.primaryRed.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(
-                                        DesignTokens.radiusBadges),
-                                  ),
-                                  child: Text(
-                                    tag,
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      color: isDark ? Colors.white : DesignTokens.primaryRed,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.5,
+                      const SizedBox(height: 4),
+                      if (audio.post != null)
+                        Wrap(
+                          spacing: 4,
+                          runSpacing: 2,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            for (var tag in audio.post!.categoryNames ??
+                                (audio.post!.categoryName != null
+                                    ? [audio.post!.categoryName!]
+                                    : []))
+                              Builder(
+                                builder: (context) {
+                                  final isDark = Theme.of(context).brightness == Brightness.dark;
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: isDark
+                                          ? DesignTokens.primaryRed
+                                          : DesignTokens.primaryRed.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(
+                                          DesignTokens.radiusBadges),
                                     ),
-                                  ),
-                                );
+                                    child: Text(
+                                      tag,
+                                      style: theme.textTheme.labelSmall?.copyWith(
+                                        color: isDark ? Colors.white : DesignTokens.primaryRed,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            // View count
+                            Consumer(
+                              builder: (context, ref, _) {
+                                final viewCountAsync = ref.watch(postViewCountProvider(audio.id));
+                                return viewCountAsync.whenOrNull(
+                                  data: (count) => count == 0
+                                      ? const SizedBox.shrink()
+                                      : Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          crossAxisAlignment: CrossAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.visibility_outlined, size: 10, color: theme.colorScheme.onSurfaceVariant),
+                                            const SizedBox(width: 3),
+                                            Text(
+                                              _formatViewCount(count),
+                                              style: theme.textTheme.labelSmall?.copyWith(
+                                                color: theme.colorScheme.onSurfaceVariant,
+                                                fontWeight: FontWeight.normal,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                ) ?? const SizedBox.shrink();
                               },
                             ),
-                          // View count (plain, no badge)
-                          Consumer(
-                            builder: (context, ref, _) {
-                              final viewCountAsync = ref.watch(postViewCountProvider(audio.id));
-                              return viewCountAsync.whenOrNull(
-                                data: (count) => count == 0
-                                    ? const SizedBox.shrink()
-                                    : Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(Icons.visibility_outlined, size: 10, color: theme.colorScheme.onSurfaceVariant),
-                                          const SizedBox(width: 3),
-                                          Text(
-                                            _formatViewCount(count),
-                                            style: theme.textTheme.labelSmall?.copyWith(
-                                              color: theme.colorScheme.onSurfaceVariant,
-                                              fontWeight: FontWeight.normal,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                              ) ?? const SizedBox.shrink();
-                            },
-                          ),
-                        ],
-                      ),
-                    if (audio.durationSeconds != null) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        _formatDuration(audio.durationSeconds!),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                          ],
                         ),
-                      ),
+                      if (audio.durationSeconds != null) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          _formatDuration(audio.durationSeconds!),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              // Add to queue button
-              IconButton(
-                icon: const Icon(Icons.playlist_add),
-                onPressed: () => _addToQueue(context, ref, audio),
-                tooltip: 'Zur Warteschlange hinzufügen',
-              ),
-            ],
+                // Add to queue button
+                IconButton(
+                  icon: const Icon(Icons.playlist_add),
+                  onPressed: () => _addToQueue(context, ref, audio),
+                  tooltip: 'Zur Warteschlange hinzufügen',
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    ),
     );
+  }
+
+  String _formatViewCount(int count) {
+    if (count >= 1000000) return '${(count / 1000000).toStringAsFixed(1)}M';
+    if (count >= 1000) return '${(count / 1000).toStringAsFixed(1)}k';
+    return '$count';
+  }
+
+  String _formatDuration(int seconds) {
+    final duration = Duration(seconds: seconds);
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    final secs = duration.inSeconds.remainder(60);
+
+    if (hours > 0) {
+      return '${hours}h ${minutes}m';
+    } else {
+      return '${minutes}m ${secs}s';
+    }
   }
 
   Future<void> _playAudio(BuildContext context, WidgetRef ref, AudioModel audio) async {
     final audioService = ref.read(audioServiceProvider);
 
-    // Update providers immediately so the mini player bar appears instantly
     ref.read(audioQueueProvider.notifier).state = [audio];
     ref.read(currentQueueIndexProvider.notifier).state = 0;
     ref.read(currentAudioProvider.notifier).state = audio;
     currentAudioNotifier.value = audio;
 
-    // Mark audio as listened
     ref.read(readHistoryProvider.notifier).markAsRead(
       audio.id,
       ReadContentType.audio,
@@ -580,7 +576,6 @@ class _PodcastScreenState extends ConsumerState<PodcastScreen> {
       imageUrl: audio.imageUrl,
     );
 
-    // Start playback (setQueue calls playAudio internally)
     await audioService.setQueue([audio], startIndex: 0);
   }
 
@@ -596,18 +591,5 @@ class _PodcastScreenState extends ConsumerState<PodcastScreen> {
       '${audio.title ?? audio.post?.title ?? "Audio"} ${translate('zur Warteschlange hinzugefügt')}',
       duration: const Duration(seconds: 2),
     );
-  }
-
-  String _formatDuration(int seconds) {
-    final duration = Duration(seconds: seconds);
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60);
-    final secs = duration.inSeconds.remainder(60);
-
-    if (hours > 0) {
-      return '${hours}h ${minutes}m';
-    } else {
-      return '${minutes}m ${secs}s';
-    }
   }
 }

@@ -4,6 +4,9 @@ import 'audio_player_provider.dart';
 /// Provider for selected podcast category filter
 final selectedPodcastCategoryProvider = StateProvider<String?>((ref) => null);
 
+/// Provider for podcast search query
+final podcastSearchQueryProvider = StateProvider<String>((ref) => '');
+
 /// Provider for filtered audio list based on selected category
 final filteredPodcastListProvider = Provider((ref) {
   final audioListAsync = ref.watch(audioListProvider);

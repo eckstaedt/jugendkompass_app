@@ -1,6 +1,7 @@
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 
 class AudioService {
@@ -42,11 +43,13 @@ class AudioService {
   bool get hasNext => _currentIndex < _queue.length - 1;
   bool get hasPrevious => _currentIndex > 0;
 
-  // Listen for track changes triggered by lock screen skip buttons
+  // Listen for track changes triggered by lock screen skip buttons or auto-advance
   void _setupCurrentIndexListener() {
     _currentIndexSubscription = _player.currentIndexStream.listen((index) {
+      debugPrint('[AudioService] Current index changed: $index (previous: $_currentIndex, queue length: ${_queue.length})');
       if (index != null && index != _currentIndex && index < _queue.length) {
         _currentIndex = index;
+        debugPrint('[AudioService] Track changed to index $_currentIndex: ${currentAudio?.title}');
         onTrackChanged?.call(_currentIndex, currentAudio);
       }
     });
@@ -55,10 +58,17 @@ class AudioService {
   // Listen for playlist completion
   void _setupPlayerStateListener() {
     _playerStateSubscription = _player.playerStateStream.listen((state) {
+      debugPrint('[AudioService] Player state changed: ${state.processingState}, current index: $_currentIndex, queue length: ${_queue.length}');
+
       // Only call onPlaybackComplete when truly at the end of the queue
       if (state.processingState == ProcessingState.completed) {
-        // Check if we're at the last track in the queue
-        if (_currentIndex >= _queue.length - 1) {
+        // For ConcatenatingAudioSource, check the player's current index
+        final playerIndex = _player.currentIndex;
+        debugPrint('[AudioService] Playback completed. Player index: $playerIndex, Queue index: $_currentIndex, Queue length: ${_queue.length}');
+
+        // If we're at the last track (or player index indicates end)
+        if (playerIndex == null || playerIndex >= _queue.length - 1 || _currentIndex >= _queue.length - 1) {
+          debugPrint('[AudioService] Reached end of queue, calling onPlaybackComplete');
           onPlaybackComplete?.call();
         }
       }
@@ -101,14 +111,10 @@ class AudioService {
     _queue = List.from(audios);
     _currentIndex = startIndex;
 
-    if (audios.length == 1) {
-      // Single item — use simple source
-      await playAudio(audios[0].audioUrl, audio: audios[0]);
-      return;
-    }
+    debugPrint('[AudioService] Setting queue: ${audios.length} items, starting at index $startIndex');
 
-    // Multiple items — ConcatenatingAudioSource gives the OS the full playlist,
-    // so the lock screen skip buttons work without any extra wiring.
+    // Always use ConcatenatingAudioSource for queue functionality
+    // This enables auto-advance to next track and lock screen controls
     final sources = audios.map((a) {
       return AudioSource.uri(Uri.parse(a.audioUrl), tag: _mediaItem(a));
     }).toList();
@@ -118,18 +124,24 @@ class AudioService {
     try {
       await _player.setAudioSource(_playlist!, initialIndex: startIndex);
       await _player.play();
+      debugPrint('[AudioService] Queue loaded and playing');
     } catch (e) {
+      debugPrint('[AudioService] Error loading queue: $e');
       throw Exception('Fehler beim Laden der Wiedergabeliste: $e');
     }
   }
 
   /// Add an audio to the end of the current playlist.
   Future<void> addToQueue(AudioModel audio) async {
+    debugPrint('[AudioService] Adding to queue: ${audio.title}, current queue size: ${_queue.length}');
     _queue.add(audio);
     if (_playlist != null) {
       await _playlist!.add(
         AudioSource.uri(Uri.parse(audio.audioUrl), tag: _mediaItem(audio)),
       );
+      debugPrint('[AudioService] Added to playlist, new queue size: ${_queue.length}');
+    } else {
+      debugPrint('[AudioService] WARNING: No playlist active, audio added to queue but not to player');
     }
   }
 

@@ -98,10 +98,14 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
   String _handleVideoError(String rawError) {
     final lowerError = rawError.toLowerCase();
 
-    // Codec errors
+    // Codec errors - enhanced detection for MediaCodec issues
     if (lowerError.contains('mediacodec') ||
         lowerError.contains('codec') ||
-        lowerError.contains('decoder')) {
+        lowerError.contains('decoder') ||
+        lowerError.contains('no_exceeds_capabilities') ||
+        lowerError.contains('exceeds capabilities') ||
+        lowerError.contains('decoderinitialization') ||
+        lowerError.contains('failed to allocate buffers')) {
       return AppTranslations.t('video_codec_error');
     }
 
@@ -114,7 +118,8 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
 
     // Format not supported
     if (lowerError.contains('format') ||
-        lowerError.contains('not supported')) {
+        lowerError.contains('not supported') ||
+        lowerError.contains('nosupport')) {
       return AppTranslations.t('video_format_error');
     }
 
