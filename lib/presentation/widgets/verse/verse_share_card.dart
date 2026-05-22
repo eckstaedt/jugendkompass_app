@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:jugendkompass_app/data/models/verse_model.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -13,6 +14,10 @@ class VerseShareCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Format current date in German style (e.g., "22. Mai 2026")
+    final dateFormatter = DateFormat('d. MMMM yyyy', 'de_DE');
+    final formattedDate = dateFormatter.format(DateTime.now());
+
     return Container(
       width: 1080 / 3, // 360 logical pixels → 1080 px @ pixelRatio 3×
       padding: const EdgeInsets.all(32),
@@ -34,14 +39,35 @@ class VerseShareCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            'VERS DES TAGES',
-            style: GoogleFonts.poppins(
-              fontSize: 9,
-              fontWeight: FontWeight.w500,
-              color: Colors.black54,
-              letterSpacing: 1.5,
-            ),
+          Row(
+            children: [
+              Text(
+                'VERS DES TAGES',
+                style: GoogleFonts.poppins(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black54,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '•',
+                style: GoogleFonts.poppins(
+                  fontSize: 9,
+                  color: Colors.black38,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                formattedDate,
+                style: GoogleFonts.poppins(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black54,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 24),
 

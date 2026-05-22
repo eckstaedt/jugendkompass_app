@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:jugendkompass_app/data/models/verse_model.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
@@ -5,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/services/verse_share_service.dart';
+import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 
 class VerseCard extends StatefulWidget {
   final VerseModel verse;
@@ -25,12 +27,111 @@ class _VerseCardState extends State<VerseCard>
   late Animation<double> _opacityAnimation;
 
   bool _isSharing = false;
+  bool _isSaving = false;
 
   Future<void> _shareVerse() async {
     if (_isSharing) return;
     setState(() => _isSharing = true);
-    await VerseShareService.shareVerse(widget.verse);
+    try {
+      await VerseShareService.shareVerse(widget.verse);
+    } catch (e) {
+      if (mounted) {
+        SnackBarUtils.showError(context, context.tr('share_error'));
+      }
+    }
     if (mounted) setState(() => _isSharing = false);
+  }
+
+  Future<void> _saveToGallery() async {
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
+
+    // Check/request permission
+    bool hasAccess = await VerseShareService.hasGalleryAccess();
+    if (!hasAccess) {
+      hasAccess = await VerseShareService.requestGalleryAccess();
+    }
+
+    if (!hasAccess) {
+      if (mounted) {
+        SnackBarUtils.showError(context, context.tr('gallery_permission_denied'));
+      }
+      setState(() => _isSaving = false);
+      return;
+    }
+
+    final success = await VerseShareService.saveToGallery(widget.verse);
+
+    if (mounted) {
+      if (success) {
+        SnackBarUtils.showSuccess(context, context.tr('image_saved_to_gallery'));
+      } else {
+        SnackBarUtils.showError(context, context.tr('save_error'));
+      }
+      setState(() => _isSaving = false);
+    }
+  }
+
+  void _showShareOptions() {
+    // On web, just share directly (no gallery save option)
+    if (kIsWeb) {
+      _shareVerse();
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: DesignTokens.getCardBackground(Theme.of(context).brightness),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          top: 16,
+          bottom: DesignTokens.overlayPaddingBase + MediaQuery.of(context).padding.bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade400,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.share_outlined),
+              title: Text(context.tr('share')),
+              subtitle: Text(context.tr('share_via_apps')),
+              onTap: () {
+                Navigator.pop(context);
+                _shareVerse();
+              },
+            ),
+            ListTile(
+              leading: _isSaving
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save_alt_outlined),
+              title: Text(context.tr('save_to_gallery')),
+              subtitle: Text(context.tr('save_image_to_photos')),
+              onTap: _isSaving
+                  ? null
+                  : () {
+                      Navigator.pop(context);
+                      _saveToGallery();
+                    },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -99,8 +200,8 @@ class _VerseCardState extends State<VerseCard>
               ),
               const Spacer(),
               IconButton(
-                onPressed: _isSharing ? null : _shareVerse,
-                icon: _isSharing
+                onPressed: (_isSharing || _isSaving) ? null : _showShareOptions,
+                icon: (_isSharing || _isSaving)
                     ? const SizedBox(
                         width: 16,
                         height: 16,
