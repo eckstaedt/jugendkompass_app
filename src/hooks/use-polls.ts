@@ -120,7 +120,8 @@ export const usePoll = (id: string) => {
       const { data: options, error: optionsError } = await supabase
         .from('poll_options')
         .select('*')
-        .eq('poll_id', id);
+        .eq('poll_id', id)
+        .order('sort_order', { ascending: true });
 
       if (optionsError) throw optionsError;
 
@@ -161,9 +162,10 @@ export const useCreatePoll = () => {
 
       if (pollError) throw pollError;
 
-      const optionsToInsert = options.map(option_text => ({
+      const optionsToInsert = options.map((option_text, index) => ({
         poll_id: poll.id,
         option_text,
+        sort_order: index,
       }));
 
       const { error: optionsError } = await supabase
