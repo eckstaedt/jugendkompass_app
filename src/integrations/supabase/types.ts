@@ -389,6 +389,7 @@ export type Database = {
           id: string
           option_text: string
           poll_id: string | null
+          sort_order: number
           votes: number | null
         }
         Insert: {
@@ -396,6 +397,7 @@ export type Database = {
           id?: string
           option_text: string
           poll_id?: string | null
+          sort_order?: number
           votes?: number | null
         }
         Update: {
@@ -403,6 +405,7 @@ export type Database = {
           id?: string
           option_text?: string
           poll_id?: string | null
+          sort_order?: number
           votes?: number | null
         }
         Relationships: [

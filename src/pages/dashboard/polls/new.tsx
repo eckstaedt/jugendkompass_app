@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCreatePoll } from '@/hooks/use-polls';
-import { PlusIcon, TrashIcon } from 'lucide-react';
+import { ChevronDownIcon, ChevronUpIcon, PlusIcon, TrashIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 type FormValues = {
@@ -28,7 +28,7 @@ const NewPollPage = () => {
     }
   });
   
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, remove, move } = useFieldArray({
     control,
     name: "options"
   });
@@ -92,11 +92,36 @@ const NewPollPage = () => {
             <div className="space-y-4">
               <Label>Antwortmöglichkeiten</Label>
               {fields.map((field, index) => (
-                <div key={field.id} className="flex gap-2">
+                <div key={field.id} className="flex items-center gap-2">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
+                    {index + 1}
+                  </span>
                   <Input
                     {...register(`options.${index}.text`, { required: true })}
                     placeholder={`Option ${index + 1}`}
                   />
+                  <div className="flex flex-col gap-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-6 w-6"
+                      disabled={index === 0}
+                      onClick={() => move(index, index - 1)}
+                    >
+                      <ChevronUpIcon className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-6 w-6"
+                      disabled={index === fields.length - 1}
+                      onClick={() => move(index, index + 1)}
+                    >
+                      <ChevronDownIcon className="h-3 w-3" />
+                    </Button>
+                  </div>
                   {index > 1 && (
                     <Button
                       type="button"

@@ -19,6 +19,7 @@ export type PollOption = {
   poll_id: string;
   option_text: string;
   votes: number;
+  sort_order: number;
 };
 
 export type CreatePollInput = {
@@ -55,7 +56,9 @@ export const usePolls = (showAll = false) => {
         let polls = (localizedPolls ?? []).map((p: any) => ({
           ...p,
           content: contentMap[p.content_id],
-          options: (localizedOptions ?? []).filter((o: any) => o.poll_id === p.id),
+          options: (localizedOptions ?? [])
+            .filter((o: any) => o.poll_id === p.id)
+            .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0)),
         }));
         if (!showAll) polls = polls.filter((p: any) => p.is_active);
         polls.sort((a: any, b: any) => (b.created_at ?? '').localeCompare(a.created_at ?? ''));
@@ -82,6 +85,13 @@ export const usePolls = (showAll = false) => {
 
       const { data: polls, error } = await query;
       if (error) throw error;
+
+      // Sort poll options by sort_order after fetching
+      (polls as any[]).forEach((poll) => {
+        if (poll.options) {
+          poll.options.sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+        }
+      });
       
       return polls as Poll[];
     },
@@ -103,7 +113,9 @@ export const usePoll = (id: string) => {
         const { data: optionsLocalized, error: optsError } = await supabase
           .rpc('get_poll_options_localized', { lang: previewLang });
         if (optsError) throw optsError;
-        const options = (optionsLocalized ?? []).filter((o: any) => o.poll_id === id);
+        const options = (optionsLocalized ?? [])
+          .filter((o: any) => o.poll_id === id)
+          .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
         return { poll, options };
       }
@@ -119,7 +131,8 @@ export const usePoll = (id: string) => {
       const { data: options, error: optionsError } = await supabase
         .from('poll_options')
         .select('*')
-        .eq('poll_id', id);
+        .eq('poll_id', id)
+        .order('sort_order', { ascending: true });
 
       if (optionsError) throw optionsError;
 
@@ -160,9 +173,10 @@ export const useCreatePoll = () => {
 
       if (pollError) throw pollError;
 
-      const optionsToInsert = options.map(option_text => ({
+      const optionsToInsert = options.map((option_text, index) => ({
         poll_id: poll.id,
         option_text,
+        sort_order: index,
       }));
 
       const { error: optionsError } = await supabase
