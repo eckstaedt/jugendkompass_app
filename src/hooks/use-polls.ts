@@ -113,7 +113,9 @@ export const usePoll = (id: string) => {
         const { data: optionsLocalized, error: optsError } = await supabase
           .rpc('get_poll_options_localized', { lang: previewLang });
         if (optsError) throw optsError;
-        const options = (optionsLocalized ?? []).filter((o: any) => o.poll_id === id);
+        const options = (optionsLocalized ?? [])
+          .filter((o: any) => o.poll_id === id)
+          .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
         return { poll, options };
       }
