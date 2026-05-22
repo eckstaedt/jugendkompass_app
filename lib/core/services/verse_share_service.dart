@@ -1,42 +1,50 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:jugendkompass_app/presentation/widgets/verse/verse_share_card.dart';
+import 'package:jugendkompass_app/data/models/verse_model.dart';
 
-/// Service to render a verse widget to an image and share it via the
-/// native OS share sheet.
+/// Service to render a [VerseShareCard] to an image and open the native
+/// OS share sheet.  Not supported on web.
 class VerseShareService {
   VerseShareService._();
 
-  /// Captures the widget attached to [boundaryKey] as a PNG, saves it to a
-  /// temporary file and opens the native share sheet.
-  ///
-  /// [subject] is used as the email subject / message preview where supported.
-  static Future<void> shareVerseImage({
-    required GlobalKey boundaryKey,
+  /// Renders [verse] as a PNG and opens the native share sheet.
+  /// On web this is a no-op (file sharing not supported by browsers).
+  static Future<void> shareVerse({
+    required VerseModel verse,
+    required BuildContext context,
     String subject = 'Vers des Tages',
   }) async {
+    if (kIsWeb) {
+      // Web cannot share binary files via share_plus – show a snackbar.
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Teilen ist nur in der App (iOS/Android) verfügbar.'),
+          ),
+        );
+      }
+      return;
+    }
+
     try {
-      final boundary = boundaryKey.currentContext?.findRenderObject()
-          as RenderRepaintBoundary?;
-      if (boundary == null) return;
+      final controller = ScreenshotController();
 
-      // Render at 3× device pixel ratio for crisp output on high-DPI screens.
-      final ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      final ByteData? byteData =
-          await image.toByteData(format: ui.ImageByteFormat.png);
-      if (byteData == null) return;
+      // Capture the share card widget completely off-screen.
+      final Uint8List pngBytes = await controller.captureFromLongWidget(
+        VerseShareCard(verse: verse),
+        pixelRatio: 3.0,
+        context: context,
+      );
 
-      final Uint8List pngBytes = byteData.buffer.asUint8List();
-
-      // Write to a temporary file.
       final Directory tempDir = await getTemporaryDirectory();
-      final File file =
-          File('${tempDir.path}/vers_des_tages.png');
+      final File file = File('${tempDir.path}/vers_des_tages.png');
       await file.writeAsBytes(pngBytes);
 
       await Share.shareXFiles(

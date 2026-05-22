@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/services/verse_share_service.dart';
-import 'package:jugendkompass_app/presentation/widgets/verse/verse_share_card.dart';
 
 class VerseCard extends StatefulWidget {
   final VerseModel verse;
@@ -25,13 +24,12 @@ class _VerseCardState extends State<VerseCard>
   late Animation<double> _scaleAnimation;
   late Animation<double> _opacityAnimation;
 
-  final GlobalKey _shareCardKey = GlobalKey();
   bool _isSharing = false;
 
-  Future<void> _shareVerse() async {
+  Future<void> _shareVerse(BuildContext context) async {
     if (_isSharing) return;
     setState(() => _isSharing = true);
-    await VerseShareService.shareVerseImage(boundaryKey: _shareCardKey);
+    await VerseShareService.shareVerse(verse: widget.verse, context: context);
     if (mounted) setState(() => _isSharing = false);
   }
 
@@ -77,18 +75,7 @@ class _VerseCardState extends State<VerseCard>
 
     // The verse is already localized from the RPC function get_verse_of_day_localized
     // in verse_repository.dart, so we just display it directly without additional translation
-    return Stack(
-      children: [
-        // Off-screen share card – rendered but invisible, used for image capture.
-        Offstage(
-          child: RepaintBoundary(
-            key: _shareCardKey,
-            child: VerseShareCard(verse: verse),
-          ),
-        ),
-
-        // Visible interactive card.
-        GestureDetector(
+    return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
@@ -112,7 +99,7 @@ class _VerseCardState extends State<VerseCard>
               ),
               const Spacer(),
               IconButton(
-                onPressed: _isSharing ? null : _shareVerse,
+                onPressed: _isSharing ? null : () => _shareVerse(context),
                 icon: _isSharing
                     ? const SizedBox(
                         width: 16,
@@ -152,8 +139,6 @@ class _VerseCardState extends State<VerseCard>
           ),
         ),
       ),
-        ), // GestureDetector
-      ],
-    ); // Stack
+    );
   }
 }
