@@ -8,14 +8,11 @@ flutter_launcher_icons:
     theme_color: "#E53935"
   image_path: "assets/images/logo.png"
 
-  # Android specific
+  # Android adaptive icon
   adaptive_icon_background: "#ffffff"
-  adaptive_icon_foreground: "assets/images/logo.png"
-  # Increase inset to prevent cropping (safe zone is typically 66dp, so 80 gives more padding)
-  adaptive_icon_foreground_inset: 80
+  adaptive_icon_foreground: "assets/images/logo_foreground.png"
 
   # iOS specific
-  # Add padding for iOS to prevent cropping on rounded corners
   ios_content_padding: 0.20
 
   # Windows specific
