@@ -80,7 +80,19 @@ class VerseRepository {
 
       // RPC returns a list, get the first (today's) verse
       final verseData = response is List ? response.first : response;
-      final verse = VerseModel.fromJson(verseData);
+      var verse = VerseModel.fromJson(verseData);
+
+      // RPC may not return image_url – fetch it directly from the table.
+      if (verse.imageUrl == null) {
+        final row = await _supabase
+            .from(SupabaseConstants.verseOfTheDayTable)
+            .select('image_url')
+            .eq('id', verse.id)
+            .maybeSingle();
+        if (row != null && row['image_url'] != null) {
+          verse = verse.copyWith(imageUrl: row['image_url'] as String);
+        }
+      }
 
       return verse;
     } catch (e) {
