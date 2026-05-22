@@ -94,15 +94,63 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     return match?.group(1);
   }
 
+  /// Parse platform-specific video errors and provide user-friendly messages
+  String _handleVideoError(String rawError) {
+    final lowerError = rawError.toLowerCase();
+
+    // Codec errors
+    if (lowerError.contains('mediacodec') ||
+        lowerError.contains('codec') ||
+        lowerError.contains('decoder')) {
+      return AppTranslations.t('video_codec_error');
+    }
+
+    // Network/loading errors
+    if (lowerError.contains('source error') ||
+        lowerError.contains('cannot connect') ||
+        lowerError.contains('network')) {
+      return AppTranslations.t('video_network_error');
+    }
+
+    // Format not supported
+    if (lowerError.contains('format') ||
+        lowerError.contains('not supported')) {
+      return AppTranslations.t('video_format_error');
+    }
+
+    // Generic fallback
+    return '${AppTranslations.t('error_loading_video')}: ${rawError.split('\n').first}';
+  }
+
   Future<void> _initializePlayer() async {
     try {
+      debugPrint('[VideoPlayer] Initializing: ${widget.videoUrl}');
+
       _videoPlayerController = VideoPlayerController.networkUrl(
         Uri.parse(widget.videoUrl),
       );
 
       await _videoPlayerController.initialize();
 
+      debugPrint('[VideoPlayer] Initialized successfully. '
+          'Codec: ${_videoPlayerController.value.isInitialized ? "supported" : "unknown"}, '
+          'Aspect ratio: ${_videoPlayerController.value.aspectRatio}');
+
       if (!mounted) return;
+
+      // Listen for codec/playback errors after initialization
+      _videoPlayerController.addListener(() {
+        if (_videoPlayerController.value.hasError) {
+          final error = _videoPlayerController.value.errorDescription ?? 'Unknown error';
+          debugPrint('[VideoPlayer] Runtime error: $error');
+
+          if (mounted) {
+            setState(() {
+              _error = _handleVideoError(error);
+            });
+          }
+        }
+      });
 
       _chewieController = ChewieController(
         videoPlayerController: _videoPlayerController,
@@ -112,6 +160,23 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
         allowFullScreen: true,
         allowMuting: true,
         showControls: true,
+        errorBuilder: (context, errorMessage) {
+          // Custom error UI for playback errors
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.white70),
+                const SizedBox(height: 16),
+                Text(
+                  _handleVideoError(errorMessage),
+                  style: const TextStyle(color: Colors.white70),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        },
         materialProgressColors: ChewieProgressColors(
           playedColor: Theme.of(context).colorScheme.primary,
           handleColor: Theme.of(context).colorScheme.primary,
@@ -131,9 +196,10 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
         });
       }
     } catch (e) {
+      debugPrint('[VideoPlayer] Initialization error: $e');
       if (mounted) {
         setState(() {
-          _error = '${AppTranslations.t('error_loading_video')}: $e';
+          _error = _handleVideoError(e.toString());
         });
       }
     }
@@ -259,8 +325,27 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                     Text(
                       _error!,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white70, fontSize: 16),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
+                    const SizedBox(height: 8),
+                    // Add troubleshooting tip for codec errors
+                    if (_error!.contains('codec') || _error!.contains('Codec') ||
+                        _error!.contains('Gerät') || _error!.contains('device'))
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Text(
+                          AppTranslations.t('video_codec_help'),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 24),
                     FilledButton.icon(
                       onPressed: () {
