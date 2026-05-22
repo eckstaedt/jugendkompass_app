@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,22 +8,20 @@ import { useDailyVerses } from '@/hooks/use-daily-verses';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, isToday, isFuture } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { CalendarPlus, LayoutList, ViewIcon, Upload, Loader2 } from 'lucide-react';
+import { CalendarPlus, LayoutList, ViewIcon, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DailyVerse } from '@/lib/supabase';
-import { BulkVerseDialog } from '@/components/verses/BulkVerseDialog';
 import { useTranslationsForContents, summarizeLang, SUPPORTED_LANGS } from '@/hooks/use-translations';
 import { TranslationStatusList } from '@/components/translations/TranslationStatusBadge';
 
 const DailyVersesPage = () => {
-  const { verses, isLoading, createVerse, updateVerse, bulkCreateVerses, fetchNextPage, hasNextPage, isFetchingNextPage } = useDailyVerses();
+  const { verses, isLoading, createVerse, updateVerse, fetchNextPage, hasNextPage, isFetchingNextPage } = useDailyVerses();
   const { data: translationsMap } = useTranslationsForContents((verses ?? []).map((v: any) => v.content_id));
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [selectedVerse, setSelectedVerse] = useState<DailyVerse | undefined>();
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const { isAdmin, user } = useAuth();
-  
+
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadMoreRef = useCallback((node: HTMLDivElement | null) => {
     if (isFetchingNextPage) return;
@@ -35,36 +33,31 @@ const DailyVersesPage = () => {
     });
     if (node) observerRef.current.observe(node);
   }, [isFetchingNextPage, hasNextPage, fetchNextPage]);
-  
+
   const handleEdit = (verse: DailyVerse) => {
     setSelectedVerse(verse);
     setDialogOpen(true);
   };
-  
+
   const handleCreate = () => {
     setSelectedVerse(undefined);
     setDialogOpen(true);
   };
-  
+
   const handleDialogSubmit = async (data: Omit<DailyVerse, 'id' | 'content_id' | 'created_at' | 'content'>) => {
     if (selectedVerse) {
-      await updateVerse.mutateAsync({ 
-        ...data, 
-        id: selectedVerse.id, 
-        content_id: selectedVerse.content_id 
+      await updateVerse.mutateAsync({
+        ...data,
+        id: selectedVerse.id,
+        content_id: selectedVerse.content_id,
       });
     } else if (user?.id) {
       await createVerse.mutateAsync({
         ...data,
-        userId: user.id
+        userId: user.id,
       });
     }
     setDialogOpen(false);
-  };
-
-  const handleBulkSubmit = async (versesData: { verse: string; reference: string; date: string }[]) => {
-    if (!user?.id) return;
-    await bulkCreateVerses.mutateAsync({ verses: versesData, userId: user.id });
   };
 
   return (
@@ -92,16 +85,10 @@ const DailyVersesPage = () => {
             </span>
           </Button>
           {isAdmin && (
-            <>
-              <Button variant="outline" onClick={() => setBulkDialogOpen(true)}>
-                <Upload className="mr-2 h-4 w-4" />
-                JSON Import
-              </Button>
-              <Button onClick={handleCreate}>
-                <CalendarPlus className="mr-2 h-4 w-4" />
-                Neuer Tagesvers
-              </Button>
-            </>
+            <Button onClick={handleCreate}>
+              <CalendarPlus className="mr-2 h-4 w-4" />
+              Neuer Vers des Tages
+            </Button>
           )}
         </div>
       </div>
@@ -121,9 +108,9 @@ const DailyVersesPage = () => {
             {verses.map((verse) => {
               const verseDate = new Date(verse.date);
               const isCurrentOrFuture = isToday(verseDate) || isFuture(verseDate);
-              
+
               return (
-                <Card 
+                <Card
                   key={verse.id}
                   className={cn(
                     "relative overflow-hidden transition-colors",
@@ -131,6 +118,13 @@ const DailyVersesPage = () => {
                     isToday(verseDate) && "bg-primary/5"
                   )}
                 >
+                  {verse.image_url && (
+                    <img
+                      src={verse.image_url}
+                      alt=""
+                      className="w-full h-32 object-cover"
+                    />
+                  )}
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
                       <span>{format(verseDate, "EEEE, dd. MMMM yyyy", { locale: de })}</span>
@@ -160,7 +154,7 @@ const DailyVersesPage = () => {
                     )}
                   </CardContent>
                 </Card>
-              )
+              );
             })}
           </div>
           <div ref={loadMoreRef} className="flex justify-center py-6">
@@ -179,11 +173,6 @@ const DailyVersesPage = () => {
         onSubmit={handleDialogSubmit}
         initialData={selectedVerse}
         mode={selectedVerse ? 'edit' : 'create'}
-      />
-      <BulkVerseDialog
-        open={bulkDialogOpen}
-        onOpenChange={setBulkDialogOpen}
-        onSubmit={handleBulkSubmit}
       />
     </DashboardLayout>
   );

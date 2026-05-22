@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { useEffect } from "react";
@@ -29,6 +28,8 @@ import { de } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { DailyVerse } from "@/lib/supabase";
 import { RetranslateButton } from '@/components/translations/RetranslateButton';
+import { VerseImageUploader } from "./VerseImageUploader";
+import { toast } from "sonner";
 
 type FormData = Omit<DailyVerse, 'id' | 'content_id' | 'created_at' | 'content'>;
 
@@ -41,10 +42,11 @@ interface VerseDialogProps {
 }
 
 export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }: VerseDialogProps) {
-  const defaultValues = {
+  const defaultValues: FormData = {
     verse: '',
     reference: '',
     date: format(new Date(), 'yyyy-MM-dd'),
+    image_url: '',
   };
 
   const form = useForm<FormData>({
@@ -52,10 +54,10 @@ export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }:
       verse: initialData?.verse || '',
       reference: initialData?.reference || '',
       date: initialData?.date ? format(new Date(initialData.date), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+      image_url: initialData?.image_url || '',
     },
   });
 
-  // Reset form when dialog opens/closes or mode changes
   useEffect(() => {
     if (open) {
       if (mode === 'create') {
@@ -65,22 +67,31 @@ export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }:
           verse: initialData.verse,
           reference: initialData.reference,
           date: format(new Date(initialData.date), 'yyyy-MM-dd'),
+          image_url: initialData.image_url || '',
         });
       }
     }
   }, [open, mode, initialData, form]);
 
+  const handleSubmit = (data: FormData) => {
+    if (!data.image_url) {
+      toast.error("Bitte ein Bild hochladen.");
+      return;
+    }
+    onSubmit(data);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{mode === 'create' ? 'Neuer Tagesvers' : 'Tagesvers bearbeiten'}</DialogTitle>
+          <DialogTitle>{mode === 'create' ? 'Neuer Vers des Tages' : 'Vers des Tages bearbeiten'}</DialogTitle>
           <DialogDescription>
-            {mode === 'create' ? 'Füge einen neuen Tagesvers hinzu.' : 'Bearbeite den ausgewählten Tagesvers.'}
+            {mode === 'create' ? 'Füge einen neuen Vers des Tages hinzu.' : 'Bearbeite den ausgewählten Vers.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="date"
@@ -96,7 +107,7 @@ export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }:
                             "w-full pl-3 text-left font-normal",
                             !field.value && "text-muted-foreground"
                           )}
-                          disabled={mode === 'edit'} // Disable date button when editing
+                          disabled={mode === 'edit'}
                         >
                           {field.value ? (
                             format(new Date(field.value), "PPP", { locale: de })
@@ -112,11 +123,9 @@ export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }:
                         mode="single"
                         selected={field.value ? new Date(field.value) : undefined}
                         onSelect={(date) => field.onChange(date ? format(date, 'yyyy-MM-dd') : '')}
-                        disabled={(date) =>
-                          date < new Date('1900-01-01')
-                        }
+                        disabled={(date) => date < new Date('1900-01-01')}
                         locale={de}
-                        className="pointer-events-auto" // Added to make calendar interactive
+                        className="pointer-events-auto"
                       />
                     </PopoverContent>
                   </Popover>
@@ -131,10 +140,7 @@ export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }:
                 <FormItem>
                   <FormLabel>Vers</FormLabel>
                   <FormControl>
-                    <Textarea
-                      placeholder="Gib den Vers ein"
-                      {...field}
-                    />
+                    <Textarea placeholder="Gib den Vers ein" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -148,6 +154,22 @@ export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }:
                   <FormLabel>Referenz</FormLabel>
                   <FormControl>
                     <Input placeholder="z.B. Johannes 3,16" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="image_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <VerseImageUploader
+                      value={field.value || ''}
+                      onChange={(url) => field.onChange(url)}
+                      required
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

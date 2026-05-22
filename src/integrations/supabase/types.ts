@@ -659,6 +659,7 @@ export type Database = {
           created_at: string
           date: string
           id: string
+          image_url: string | null
           reference: string
           verse: string
         }
@@ -667,6 +668,7 @@ export type Database = {
           created_at?: string
           date?: string
           id?: string
+          image_url?: string | null
           reference: string
           verse: string
         }
@@ -675,6 +677,7 @@ export type Database = {
           created_at?: string
           date?: string
           id?: string
+          image_url?: string | null
           reference?: string
           verse?: string
         }
