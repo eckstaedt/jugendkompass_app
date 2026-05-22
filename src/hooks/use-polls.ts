@@ -19,6 +19,7 @@ export type PollOption = {
   poll_id: string;
   option_text: string;
   votes: number;
+  sort_order: number;
 };
 
 export type CreatePollInput = {
