@@ -171,11 +171,6 @@ class _PollContentTileState extends ConsumerState<PollContentTile> {
                         ),
                       ),
                     const SizedBox(width: 8),
-                    Icon(
-                      _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                      color: DesignTokens.getTextSecondary(brightness),
-                      size: 24,
-                    ),
                   ],
                 ),
               ),
@@ -250,7 +245,7 @@ class _PollContentTileState extends ConsumerState<PollContentTile> {
                               child: Container(
                                 decoration: BoxDecoration(
                                   color: isUserVote
-                                      ? DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.2)
+                                      ? DesignTokens.getSuccessColor(brightness)
                                       : DesignTokens.getTextSecondary(brightness).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
