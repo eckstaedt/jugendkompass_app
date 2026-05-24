@@ -1,0 +1,3 @@
+CREATE POLICY "Admins can upload pdfs" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'pdfs' AND public.is_admin(auth.uid()));
+CREATE POLICY "Admins can update pdfs" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'pdfs' AND public.is_admin(auth.uid()));
+CREATE POLICY "Admins can delete pdfs" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'pdfs' AND public.is_admin(auth.uid()));
