@@ -60,7 +60,44 @@ const AusgabenPage = () => {
 
   const { editions, createEdition, isCreating, updateEdition, isUpdating } = useEditions();
   const { data: translationsByContent } = useTranslationsForContents(editions.map((e) => e.content_id));
+  const { data: testDevices = [] } = useTestPushDevices();
+  const { mutate: sendTestPush, isPending: isSendingTestPush } = useSendTestPush();
+  const [pushingEditionId, setPushingEditionId] = useState<string | null>(null);
+  const { toast } = useToast();
   const EXPECTED_FIELDS = ['title', 'body', 'notification_title', 'notification_body'];
+
+  const handleSendTestPush = (edition: Edition) => {
+    if (testDevices.length === 0) {
+      toast({ title: 'Keine Test-Geräte', description: 'Bitte zuerst Test-Push-Geräte anlegen.', variant: 'destructive' });
+      return;
+    }
+    const title = edition.notification_title?.trim() || edition.title?.trim() || edition.name;
+    const body = edition.notification_body?.trim() || edition.body?.trim() || 'Neue Ausgabe verfügbar';
+    setPushingEditionId(edition.id);
+    sendTestPush(
+      {
+        device_ids: testDevices.map((d) => d.id),
+        title,
+        body,
+        data: { type: 'edition', edition_id: edition.id, content_id: edition.content_id ?? '' },
+      },
+      {
+        onSuccess: (res) => {
+          const ok = res.results.filter((r) => r.ok).length;
+          const fail = res.results.length - ok;
+          toast({
+            title: 'Test-Push gesendet',
+            description: `${ok} erfolgreich, ${fail} fehlgeschlagen`,
+            variant: fail === 0 ? 'success' : 'destructive',
+          });
+        },
+        onError: (e) => {
+          toast({ title: 'Fehler', description: (e as Error).message, variant: 'destructive' });
+        },
+        onSettled: () => setPushingEditionId(null),
+      },
+    );
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
