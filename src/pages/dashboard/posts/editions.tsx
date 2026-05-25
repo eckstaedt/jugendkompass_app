@@ -314,7 +314,19 @@ const AusgabenPage = () => {
                     >
                       <Send className="h-4 w-4" />
                     </Button>
+                    {!edition.notification_sent_at && edition.notification_title && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        title="Push jetzt an ALLE App-Nutzer senden"
+                        disabled={dispatchingEditionId === edition.id}
+                        onClick={() => handleDispatchPush(edition)}
+                      >
+                        <Megaphone className="h-4 w-4" />
+                      </Button>
+                    )}
                     <RetranslateButton contentId={edition.content_id} size="icon" />
+
                   </div>
                 </div>
                 );
