@@ -19,7 +19,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Upload, FileText, ExternalLink, Pencil, Send } from 'lucide-react';
+import { Upload, FileText, ExternalLink, Pencil, Send, Megaphone } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { BackfillButton } from '@/components/translations/BackfillButton';
 import { RetranslateButton } from '@/components/translations/RetranslateButton';
 import { TranslationStatusList } from '@/components/translations/TranslationStatusBadge';
