@@ -20,7 +20,7 @@ const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 // Welche Felder pro content_type übersetzt werden
 const FIELD_MAP: Record<string, { table: string; fields: string[] }> = {
   post:    { table: "posts",            fields: ["title", "body"] },
-  impulse: { table: "impulses",         fields: ["title", "impulse_text"] },
+  impulse: { table: "impulses",         fields: ["title", "impulse_text", "notification_title", "notification_body"] },
   verse:   { table: "verse_of_the_day", fields: ["verse", "reference"] },
   message: { table: "messages",         fields: ["title", "message"] },
   poll:    { table: "polls",            fields: ["question"] },
