@@ -120,13 +120,30 @@ Deno.serve(async (req) => {
   try {
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 
-    // Reife Ausgaben finden
-    const { data: editions, error: edErr } = await supabase
+    // Optional: manueller Trigger für eine bestimmte Ausgabe
+    let manualEditionId: string | null = null;
+    if (req.method === "POST") {
+      try {
+        const body = await req.json();
+        if (body && typeof body.edition_id === "string") manualEditionId = body.edition_id;
+      } catch {
+        // kein Body — Cron-Modus
+      }
+    }
+
+    let query = supabase
       .from("editions")
       .select("id, content_id, notification_title, notification_body, image_url, published_at, notification_sent_at")
-      .lte("published_at", new Date().toISOString())
       .is("notification_sent_at", null)
       .not("notification_title", "is", null);
+
+    if (manualEditionId) {
+      query = query.eq("id", manualEditionId);
+    } else {
+      query = query.lte("published_at", new Date().toISOString());
+    }
+
+    const { data: editions, error: edErr } = await query;
 
     if (edErr) throw edErr;
     if (!editions || editions.length === 0) {

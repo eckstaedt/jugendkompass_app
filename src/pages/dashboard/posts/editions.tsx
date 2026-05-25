@@ -19,7 +19,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Upload, FileText, ExternalLink, Pencil, Send } from 'lucide-react';
+import { Upload, FileText, ExternalLink, Pencil, Send, Megaphone } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import { BackfillButton } from '@/components/translations/BackfillButton';
 import { RetranslateButton } from '@/components/translations/RetranslateButton';
 import { TranslationStatusList } from '@/components/translations/TranslationStatusBadge';
@@ -63,8 +65,45 @@ const AusgabenPage = () => {
   const { data: testDevices = [] } = useTestPushDevices();
   const { mutate: sendTestPush, isPending: isSendingTestPush } = useSendTestPush();
   const [pushingEditionId, setPushingEditionId] = useState<string | null>(null);
+  const [dispatchingEditionId, setDispatchingEditionId] = useState<string | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const EXPECTED_FIELDS = ['title', 'body', 'notification_title', 'notification_body'];
+
+  const handleDispatchPush = async (edition: Edition) => {
+    if (!edition.notification_title?.trim()) {
+      toast({ title: 'Kein Push-Titel', description: 'Bitte zuerst einen Push-Titel hinterlegen.', variant: 'destructive' });
+      return;
+    }
+    if (edition.notification_sent_at) {
+      toast({ title: 'Bereits gesendet', description: 'Diese Push wurde bereits versendet.', variant: 'destructive' });
+      return;
+    }
+    const ok = window.confirm(`Push für "${edition.name}" jetzt an ALLE App-Nutzer senden? Dies kann nicht rückgängig gemacht werden.`);
+    if (!ok) return;
+    setDispatchingEditionId(edition.id);
+    try {
+      const { data, error } = await supabase.functions.invoke('dispatch-edition-pushes', {
+        body: { edition_id: edition.id },
+      });
+      if (error) throw error;
+      const result = (data?.results ?? [])[0];
+      if (result) {
+        toast({
+          title: 'Push gesendet',
+          description: `${result.sent} von ${result.total} Geräten erreicht`,
+          variant: 'success',
+        });
+      } else {
+        toast({ title: 'Nichts zu senden', description: 'Eventuell bereits versendet.', variant: 'destructive' });
+      }
+      queryClient.invalidateQueries({ queryKey: ['editions'] });
+    } catch (e) {
+      toast({ title: 'Fehler', description: (e as Error).message, variant: 'destructive' });
+    } finally {
+      setDispatchingEditionId(null);
+    }
+  };
 
   const handleSendTestPush = (edition: Edition) => {
     if (testDevices.length === 0) {
@@ -275,7 +314,19 @@ const AusgabenPage = () => {
                     >
                       <Send className="h-4 w-4" />
                     </Button>
+                    {!edition.notification_sent_at && edition.notification_title && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        title="Push jetzt an ALLE App-Nutzer senden"
+                        disabled={dispatchingEditionId === edition.id}
+                        onClick={() => handleDispatchPush(edition)}
+                      >
+                        <Megaphone className="h-4 w-4" />
+                      </Button>
+                    )}
                     <RetranslateButton contentId={edition.content_id} size="icon" />
+
                   </div>
                 </div>
                 );
