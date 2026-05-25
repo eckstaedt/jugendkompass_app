@@ -196,7 +196,7 @@ Deno.serve(async (req) => {
             content_id: ed.content_id ?? "",
             entity_id: ed.id,
             language: lang,
-          });
+          }, (ed as any).image_url ?? undefined);
           if (r.ok) sent++;
           else console.warn("FCM fail", lang, r.status, r.body);
         } catch (e) {
