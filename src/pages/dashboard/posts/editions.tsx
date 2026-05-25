@@ -79,7 +79,7 @@ const AusgabenPage = () => {
         device_ids: testDevices.map((d) => d.id),
         title,
         body,
-        data: { type: 'edition', edition_id: edition.id, content_id: edition.content_id ?? '' },
+        data: { type: 'edition', content_id: edition.content_id ?? '', entity_id: edition.id },
       },
       {
         onSuccess: (res) => {
