@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
     // Reife Ausgaben finden
     const { data: editions, error: edErr } = await supabase
       .from("editions")
-      .select("id, content_id, notification_title, notification_body, published_at, notification_sent_at")
+      .select("id, content_id, notification_title, notification_body, image_url, published_at, notification_sent_at")
       .lte("published_at", new Date().toISOString())
       .is("notification_sent_at", null)
       .not("notification_title", "is", null);
