@@ -80,6 +80,7 @@ const AusgabenPage = () => {
         title,
         body,
         data: { type: 'edition', content_id: edition.content_id ?? '', entity_id: edition.id },
+        image_url: edition.image_url ?? undefined,
       },
       {
         onSuccess: (res) => {
