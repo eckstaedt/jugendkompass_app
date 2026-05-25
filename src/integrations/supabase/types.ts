@@ -315,6 +315,9 @@ export type Database = {
           id: string
           image_url: string | null
           impulse_text: string
+          notification_body: string | null
+          notification_sent_at: string | null
+          notification_title: string | null
           title: string
         }
         Insert: {
@@ -324,6 +327,9 @@ export type Database = {
           id?: string
           image_url?: string | null
           impulse_text: string
+          notification_body?: string | null
+          notification_sent_at?: string | null
+          notification_title?: string | null
           title: string
         }
         Update: {
@@ -333,6 +339,9 @@ export type Database = {
           id?: string
           image_url?: string | null
           impulse_text?: string
+          notification_body?: string | null
+          notification_sent_at?: string | null
+          notification_title?: string | null
           title?: string
         }
         Relationships: [
