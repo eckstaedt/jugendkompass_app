@@ -159,6 +159,8 @@ Deno.serve(async (req) => {
     const title: string = String(body.title ?? "").trim();
     const text: string = String(body.body ?? "").trim();
     const extraData: Record<string, string> = body.data ?? {};
+    const imageUrl: string | undefined =
+      typeof body.image_url === "string" && body.image_url.trim() ? body.image_url.trim() : undefined;
 
     if (deviceIds.length === 0 || !title || !text) {
       return new Response(
