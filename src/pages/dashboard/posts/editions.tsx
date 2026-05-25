@@ -265,6 +265,15 @@ const AusgabenPage = () => {
                     <Button variant="outline" size="icon" onClick={() => openEditDialog(edition)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      title="Test-Push an alle Test-Geräte senden"
+                      disabled={isSendingTestPush && pushingEditionId === edition.id}
+                      onClick={() => handleSendTestPush(edition)}
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
                     <RetranslateButton contentId={edition.content_id} size="icon" />
                   </div>
                 </div>
