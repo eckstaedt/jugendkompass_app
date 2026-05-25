@@ -75,6 +75,8 @@ export default function ImpulsesPage() {
           title: data.title,
           impulse_text: data.impulse_text,
           image_url,
+          notification_title: data.notification_title ?? null,
+          notification_body: data.notification_body ?? null,
           user_id: user.id,
         });
       } else {
