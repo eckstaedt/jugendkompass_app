@@ -71,10 +71,30 @@ async function getFcmAccessToken(): Promise<string | null> {
   return cachedAccessToken.token;
 }
 
-async function sendFcm(token: string, title: string, body: string, data: Record<string, string>) {
+async function sendFcm(
+  token: string,
+  title: string,
+  body: string,
+  data: Record<string, string>,
+  imageUrl?: string,
+) {
   const accessToken = await getFcmAccessToken();
   if (!accessToken || !FCM_PROJECT_ID) {
     return { ok: false, status: 0, error: "FCM nicht konfiguriert" };
+  }
+  const notification: Record<string, string> = { title, body };
+  if (imageUrl) notification.image = imageUrl;
+  const message: Record<string, unknown> = {
+    token,
+    notification,
+    data,
+  };
+  if (imageUrl) {
+    message.android = { notification: { image: imageUrl } };
+    message.apns = {
+      payload: { aps: { "mutable-content": 1 } },
+      fcm_options: { image: imageUrl },
+    };
   }
   const res = await fetch(
     `https://fcm.googleapis.com/v1/projects/${FCM_PROJECT_ID}/messages:send`,
@@ -84,7 +104,7 @@ async function sendFcm(token: string, title: string, body: string, data: Record<
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ message: { token, notification: { title, body }, data } }),
+      body: JSON.stringify({ message }),
     },
   );
   if (res.ok) return { ok: true, status: res.status };
