@@ -21,6 +21,9 @@ verify_jwt = false
 [functions.dispatch-edition-pushes]
 verify_jwt = false
 
+[functions.dispatch-impulse-pushes]
+verify_jwt = false
+
 [functions.send-test-push]
 verify_jwt = true
 

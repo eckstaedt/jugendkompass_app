@@ -18,36 +18,57 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Impulse } from '@/hooks/use-impulses';
 import RichTextEditor from '@/components/editor/RichTextEditor';
-import { LoaderCircle, Upload } from 'lucide-react';
+import { LoaderCircle, Upload, Send, Megaphone } from 'lucide-react';
 import { RetranslateButton } from '@/components/translations/RetranslateButton';
+import { useTestPushDevices, useSendTestPush } from '@/hooks/use-test-push-devices';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 
 type ImpulseFormData = {
   date: string;
   title: string;
   impulse_text: string;
+  notification_title: string;
+  notification_body: string;
   image: FileList;
 };
 
 type ImpulseDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: { date: string; title: string; impulse_text: string; image?: File; image_url?: string }) => Promise<void>;
+  onSubmit: (data: {
+    date: string;
+    title: string;
+    impulse_text: string;
+    notification_title?: string | null;
+    notification_body?: string | null;
+    image?: File;
+    image_url?: string;
+  }) => Promise<void>;
   defaultValues?: Partial<Impulse>;
   title: string;
 };
 
 export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, title }: ImpulseDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isDispatching, setIsDispatching] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const isEdit = Boolean(defaultValues?.id);
+  const { data: testDevices = [] } = useTestPushDevices();
+  const { mutate: sendTestPush, isPending: isSendingTestPush } = useSendTestPush();
+
   const form = useForm<ImpulseFormData>({
     defaultValues: {
       date: defaultValues?.date || new Date().toISOString().split('T')[0],
       title: defaultValues?.title || '',
       impulse_text: defaultValues?.impulse_text || '',
+      notification_title: defaultValues?.notification_title || '',
+      notification_body: defaultValues?.notification_body || '',
     },
   });
 
@@ -57,6 +78,8 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
         date: defaultValues?.date || new Date().toISOString().split('T')[0],
         title: defaultValues?.title || '',
         impulse_text: defaultValues?.impulse_text || '',
+        notification_title: defaultValues?.notification_title || '',
+        notification_body: defaultValues?.notification_body || '',
         image: undefined as any,
       });
     }
@@ -80,6 +103,8 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
         date: data.date,
         title: data.title,
         impulse_text: data.impulse_text,
+        notification_title: data.notification_title.trim() || null,
+        notification_body: data.notification_body.trim() || null,
         ...(file ? { image: file } : { image_url: defaultValues?.image_url }),
       });
       onOpenChange(false);
@@ -96,6 +121,76 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleTestPush = () => {
+    if (testDevices.length === 0) {
+      toast({ title: 'Keine Test-Geräte', description: 'Bitte zuerst Test-Push-Geräte anlegen.', variant: 'destructive' });
+      return;
+    }
+    const values = form.getValues();
+    const t = values.notification_title.trim() || values.title.trim() || 'Neuer Impuls';
+    const b = values.notification_body.trim() || 'Schau dir den neuen Impuls an';
+    sendTestPush(
+      {
+        device_ids: testDevices.map((d) => d.id),
+        title: t,
+        body: b,
+        data: {
+          type: 'impulse',
+          content_id: defaultValues?.content_id ?? '',
+          entity_id: defaultValues?.id ?? '',
+        },
+        image_url: defaultValues?.image_url ?? undefined,
+      },
+      {
+        onSuccess: (res) => {
+          const ok = res.results.filter((r) => r.ok).length;
+          const fail = res.results.length - ok;
+          toast({
+            title: 'Test-Push gesendet',
+            description: `${ok} erfolgreich, ${fail} fehlgeschlagen`,
+            variant: fail === 0 ? 'success' : 'destructive',
+          });
+        },
+        onError: (e) => {
+          toast({ title: 'Fehler', description: (e as Error).message, variant: 'destructive' });
+        },
+      },
+    );
+  };
+
+  const handleDispatchPush = async () => {
+    if (!defaultValues?.id) return;
+    const values = form.getValues();
+    if (!values.notification_title.trim()) {
+      toast({ title: 'Kein Push-Titel', description: 'Bitte zuerst Push-Titel hinterlegen und speichern.', variant: 'destructive' });
+      return;
+    }
+    if (defaultValues.notification_sent_at) {
+      toast({ title: 'Bereits gesendet', description: 'Diese Push wurde bereits versendet.', variant: 'destructive' });
+      return;
+    }
+    const ok = window.confirm(`Push für diesen Impuls jetzt an ALLE App-Nutzer senden? Dies kann nicht rückgängig gemacht werden.`);
+    if (!ok) return;
+    setIsDispatching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('dispatch-impulse-pushes', {
+        body: { impulse_id: defaultValues.id },
+      });
+      if (error) throw error;
+      toast({
+        title: 'Push gesendet',
+        description: `${data?.sent ?? 0} von ${data?.total ?? 0} Geräten erreicht`,
+        variant: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: ['impulses'] });
+      onOpenChange(false);
+    } catch (e) {
+      toast({ title: 'Fehler', description: (e as Error).message, variant: 'destructive' });
+    } finally {
+      setIsDispatching(false);
     }
   };
 
@@ -167,6 +262,71 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
                 </FormItem>
               )}
             />
+
+            <div className="rounded-lg border border-dashed p-3 grid gap-3">
+              <p className="text-sm font-medium">Push-Benachrichtigung (optional)</p>
+              <p className="text-xs text-muted-foreground">
+                Wird in alle Sprachen übersetzt. Manueller Versand über den Megafon-Button.
+              </p>
+              <FormField
+                control={form.control}
+                name="notification_title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Push-Titel</FormLabel>
+                    <FormControl>
+                      <Input placeholder="z.B. Neuer Impuls verfügbar" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="notification_body"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Push-Text</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Kurzer Text für die Benachrichtigung..." rows={2} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {isEdit && defaultValues?.notification_sent_at && (
+                <p className="text-xs text-muted-foreground">
+                  Push gesendet: {new Date(defaultValues.notification_sent_at).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' })}
+                </p>
+              )}
+              {isEdit && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleTestPush}
+                    disabled={isSendingTestPush}
+                  >
+                    <Send className="mr-2 h-4 w-4" />
+                    {isSendingTestPush ? 'Sende...' : 'Test-Push'}
+                  </Button>
+                  {!defaultValues?.notification_sent_at && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDispatchPush}
+                      disabled={isDispatching}
+                    >
+                      <Megaphone className="mr-2 h-4 w-4" />
+                      {isDispatching ? 'Sende...' : 'An alle senden'}
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+
             <DialogFooter className="gap-2 sm:justify-between">
               {defaultValues?.content_id && (
                 <RetranslateButton contentId={defaultValues.content_id} />

@@ -11,6 +11,9 @@ export type Impulse = {
   title: string;
   impulse_text: string;
   image_url: string;
+  notification_title?: string | null;
+  notification_body?: string | null;
+  notification_sent_at?: string | null;
   content?: {
     status: string;
     created_at: string;
@@ -31,6 +34,8 @@ type UpdateImpulseArgs = {
   title: string;
   impulse_text: string;
   image_url?: string;
+  notification_title?: string | null;
+  notification_body?: string | null;
   user_id: string;
 };
 
