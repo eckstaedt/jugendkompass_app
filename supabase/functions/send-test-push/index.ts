@@ -185,11 +185,17 @@ Deno.serve(async (req) => {
 
     for (const d of devices ?? []) {
       try {
-        const r = await sendFcm(d.fcm_token, title, text, {
-          type: "test",
-          language: d.language ?? "de",
-          ...extraData,
-        });
+        const r = await sendFcm(
+          d.fcm_token,
+          title,
+          text,
+          {
+            type: "test",
+            language: d.language ?? "de",
+            ...extraData,
+          },
+          imageUrl,
+        );
         results.push({ id: d.id, label: d.label, ok: r.ok, status: r.status, error: r.error });
       } catch (e) {
         results.push({
