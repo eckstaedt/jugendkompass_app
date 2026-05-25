@@ -33,7 +33,7 @@ class PostRepository {
       }
 
       query = query
-          .order('id', ascending: false)
+          .order('created_at', ascending: false)
           .range(offset, offset + limit - 1);
 
       final response = await query;
