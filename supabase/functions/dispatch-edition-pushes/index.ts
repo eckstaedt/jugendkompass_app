@@ -90,15 +90,25 @@ async function getFcmAccessToken(): Promise<string | null> {
   return cachedAccessToken.token;
 }
 
-async function sendFcm(token: string, title: string, body: string, data: Record<string, string>) {
+async function sendFcm(token: string, title: string, body: string, data: Record<string, string>, imageUrl?: string) {
   const accessToken = await getFcmAccessToken();
   if (!accessToken || !FCM_PROJECT_ID) return { ok: false, status: 0, body: "FCM not configured" };
+  const notification: Record<string, string> = { title, body };
+  if (imageUrl) notification.image = imageUrl;
+  const message: Record<string, unknown> = { token, notification, data };
+  if (imageUrl) {
+    message.android = { notification: { image: imageUrl } };
+    message.apns = {
+      payload: { aps: { "mutable-content": 1 } },
+      fcm_options: { image: imageUrl },
+    };
+  }
   const res = await fetch(
     `https://fcm.googleapis.com/v1/projects/${FCM_PROJECT_ID}/messages:send`,
     {
       method: "POST",
       headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ message: { token, notification: { title, body }, data } }),
+      body: JSON.stringify({ message }),
     },
   );
   return { ok: res.ok, status: res.status, body: res.ok ? undefined : await res.text() };
@@ -113,7 +123,7 @@ Deno.serve(async (req) => {
     // Reife Ausgaben finden
     const { data: editions, error: edErr } = await supabase
       .from("editions")
-      .select("id, content_id, notification_title, notification_body, published_at, notification_sent_at")
+      .select("id, content_id, notification_title, notification_body, image_url, published_at, notification_sent_at")
       .lte("published_at", new Date().toISOString())
       .is("notification_sent_at", null)
       .not("notification_title", "is", null);
@@ -186,7 +196,7 @@ Deno.serve(async (req) => {
             content_id: ed.content_id ?? "",
             entity_id: ed.id,
             language: lang,
-          });
+          }, (ed as any).image_url ?? undefined);
           if (r.ok) sent++;
           else console.warn("FCM fail", lang, r.status, r.body);
         } catch (e) {

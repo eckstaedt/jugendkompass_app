@@ -101,6 +101,7 @@ export const useSendTestPush = () =>
       title: string;
       body: string;
       data?: Record<string, string>;
+      image_url?: string | null;
     }) => {
       const { data, error } = await supabase.functions.invoke('send-test-push', {
         body: payload,
