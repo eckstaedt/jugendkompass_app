@@ -204,8 +204,8 @@ Deno.serve(async (req) => {
       );
       try {
         const r = await sendFcm((t as any).fcm_token, title || "Jugendkompass", text, {
-          type: "impulse",
-          content_id: impulse.content_id ?? "",
+          contentType: "impulse",
+          contentId: impulse.content_id ?? "",
           entity_id: impulse.id,
           language: lang,
         }, (impulse as any).image_url ?? undefined);
