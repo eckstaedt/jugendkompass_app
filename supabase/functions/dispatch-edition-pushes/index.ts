@@ -14,7 +14,10 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const FCM_PROJECT_ID = Deno.env.get("FCM_PROJECT_ID") ?? "";
-const FCM_SERVICE_ACCOUNT_JSON = Deno.env.get("FCM_SERVICE_ACCOUNT_JSON") ?? "";
+const FCM_SERVICE_ACCOUNT_JSON =
+  Deno.env.get("FCM_SERVICE_ACCOUNT_JSON") ??
+  Deno.env.get("FCM_SERVICE_ACCOUNT_KEY") ??
+  "";
 
 function stripHtml(input: string | null | undefined): string {
   if (!input) return "";
