@@ -167,13 +167,18 @@ class FCMService {
   /// Handle notification tap from background or terminated state.
   void _handleBackgroundNotificationTap(RemoteMessage message) {
     debugPrint('[FCM] Notification tapped: ${message.messageId}');
-    debugPrint('[FCM] Notification data: ${message.data}');
+    debugPrint('[FCM] Message data keys: ${message.data.keys.toList()}');
+    debugPrint('[FCM] Full notification data: ${message.data}');
+
     final data = message.data;
     if (data.isNotEmpty && _onNotificationTap != null) {
-      debugPrint('[FCM] Calling onNotificationTap callback');
+      debugPrint('[FCM] Calling onNotificationTap callback with data: $data');
       _onNotificationTap!(data);
     } else {
       debugPrint('[FCM] Cannot process tap: data.isEmpty=${data.isEmpty}, callback=${_onNotificationTap != null}');
+      if (data.isEmpty) {
+        debugPrint('[FCM] WARNING: Notification data is empty! Check FCM payload.');
+      }
     }
   }
 
@@ -216,6 +221,21 @@ class FCMService {
       initSettings,
       onDidReceiveNotificationResponse: _handleNotificationTap,
     );
+
+    // Create Android notification channel with image support
+    const androidChannel = AndroidNotificationChannel(
+      'push_notifications',
+      'Push-Benachrichtigungen',
+      description: 'Benachrichtigungen für neue Beiträge',
+      importance: Importance.high,
+      enableLights: true,
+      enableVibration: true,
+      playSound: true,
+    );
+
+    await _localNotifications
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(androidChannel);
   }
 
   /// Request notification permission on Android 13+ (API 33+).
@@ -316,22 +336,44 @@ class FCMService {
         ? '${data['contentType']}|${data['contentId']}'
         : null;
 
+    // Get image URL from notification (supports both platforms)
+    String? imageUrl;
+    if (notification.android?.imageUrl != null) {
+      imageUrl = notification.android!.imageUrl;
+    } else if (notification.apple?.imageUrl != null) {
+      imageUrl = notification.apple!.imageUrl;
+    }
+
+    debugPrint('[FCM] Image URL: $imageUrl');
+
+    // Show notification with image if available
     _localNotifications.show(
       notification.hashCode,
       notification.title,
       notification.body,
       NotificationDetails(
-        iOS: const DarwinNotificationDetails(
+        iOS: DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
+          attachments: imageUrl != null
+              ? [DarwinNotificationAttachment(imageUrl)]
+              : null,
         ),
-        android: const AndroidNotificationDetails(
+        android: AndroidNotificationDetails(
           'push_notifications',
           'Push-Benachrichtigungen',
           channelDescription: 'Benachrichtigungen für neue Beiträge',
           importance: Importance.high,
           priority: Priority.high,
+          styleInformation: imageUrl != null
+              ? BigPictureStyleInformation(
+                  DrawableResourceAndroidBitmap('@mipmap/ic_launcher'), // placeholder while loading
+                  largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+                  contentTitle: notification.title,
+                  summaryText: notification.body,
+                )
+              : null,
         ),
       ),
       payload: payload,

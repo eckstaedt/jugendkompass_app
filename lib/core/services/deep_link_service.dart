@@ -23,11 +23,20 @@ class DeepLinkService {
 
   /// Navigate to content based on notification data payload.
   ///
-  /// Expected data structure:
+  /// Expected data structure (format 1):
   /// ```
   /// {
   ///   "contentType": "post" | "video" | "verse" | "impulse" | "message",
   ///   "contentId": "uuid-string"
+  /// }
+  /// ```
+  ///
+  /// Alternative format (format 2):
+  /// ```
+  /// {
+  ///   "type": "post" | "video" | "verse" | "impulse" | "message",
+  ///   "content_id": "uuid-string",
+  ///   "entity_id": "uuid-string"  // optional
   /// }
   /// ```
   Future<void> handleNotificationTap({
@@ -35,14 +44,16 @@ class DeepLinkService {
     required WidgetRef ref,
     required Map<String, dynamic> data,
   }) async {
-    final contentType = data['contentType'] as String?;
-    final contentId = data['contentId'] as String?;
-
     debugPrint('[DeepLink] handleNotificationTap called with data: $data');
+
+    // Support both formats
+    String? contentType = data['contentType'] as String? ?? data['type'] as String?;
+    String? contentId = data['contentId'] as String? ?? data['content_id'] as String? ?? data['entity_id'] as String?;
+
     debugPrint('[DeepLink] contentType: $contentType, contentId: $contentId');
 
     if (contentType == null || contentId == null) {
-      debugPrint('[DeepLink] Missing contentType or contentId: $data');
+      debugPrint('[DeepLink] Missing contentType or contentId in data: $data');
       return;
     }
 

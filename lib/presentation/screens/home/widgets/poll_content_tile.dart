@@ -21,14 +21,40 @@ class PollContentTile extends ConsumerStatefulWidget {
   ConsumerState<PollContentTile> createState() => _PollContentTileState();
 }
 
-class _PollContentTileState extends ConsumerState<PollContentTile> {
+class _PollContentTileState extends ConsumerState<PollContentTile> with SingleTickerProviderStateMixin {
   bool _isExpanded = false;
   String? _selectedOptionId;
   bool _isSubmitting = false;
+  late AnimationController _animationController;
+  late Animation<double> _expandAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _expandAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   void _toggleExpanded() {
     setState(() {
       _isExpanded = !_isExpanded;
+      if (_isExpanded) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
     });
 
     // Mark poll as read when first expanded
@@ -116,275 +142,451 @@ class _PollContentTileState extends ConsumerState<PollContentTile> {
     final userVotedOptionId = userVoteAsync.value?.optionId;
 
     // Determine which options to show
-    final displayOptions = _isExpanded ? currentPoll.options : currentPoll.options.take(2).toList();
+    final displayOptions = _isExpanded ? currentPoll.options : currentPoll.options.take(5).toList();
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(
-          sigmaX: DesignTokens.glassBlurSigma,
-          sigmaY: DesignTokens.glassBlurSigma,
-        ),
-        child: Container(
-          width: double.infinity,
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: DesignTokens.getGlassBackground(brightness, 0.26),
-            borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
-            border: DesignTokens.cardBorder(brightness),
-            boxShadow: [DesignTokens.shadowGlass],
+    return GestureDetector(
+      onTap: _toggleExpanded,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(
+            sigmaX: DesignTokens.glassBlurSigma,
+            sigmaY: DesignTokens.glassBlurSigma,
           ),
-          padding: const EdgeInsets.all(DesignTokens.spacingSmall),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with badge and voted status
-              GestureDetector(
-                onTap: _toggleExpanded,
-                behavior: HitTestBehavior.opaque,
-                child: Row(
+          child: Container(
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: brightness == Brightness.dark
+                    ? [
+                        DesignTokens.getGlassBackground(brightness, 0.3),
+                        DesignTokens.getGlassBackground(brightness, 0.22),
+                      ]
+                    : [
+                        Colors.white.withValues(alpha: 0.95),
+                        Colors.white.withValues(alpha: 0.85),
+                      ],
+              ),
+              borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+              border: Border.all(
+                color: brightness == Brightness.dark
+                    ? Colors.white.withValues(alpha: 0.18)
+                    : DesignTokens.primaryRed.withValues(alpha: 0.15),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: DesignTokens.primaryRed.withValues(alpha: 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+                DesignTokens.shadowGlass,
+              ],
+            ),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header with badge and voted status
+                Row(
                   children: [
-                    BadgeWidget(
-                      label: context.tr('poll_badge'),
-                      backgroundColor: brightness == Brightness.dark ? DesignTokens.primaryRed : null,
-                      textColor: brightness == Brightness.dark ? Colors.white : null,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            DesignTokens.primaryRed,
+                            DesignTokens.primaryRed.withValues(alpha: 0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: DesignTokens.primaryRed.withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.poll_rounded,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            context.tr('poll_badge'),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const Spacer(),
                     if (hasVoted)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(8),
+                          color: DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.4),
-                            width: 1,
+                            color: DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.5),
+                            width: 1.5,
                           ),
                         ),
-                        child: Text(
-                          context.tr('voted'),
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: DesignTokens.getSuccessColor(brightness),
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.check_circle,
+                              size: 14,
+                              color: DesignTokens.getSuccessColor(brightness),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              context.tr('voted'),
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: DesignTokens.getSuccessColor(brightness),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    const SizedBox(width: 8),
-                    if (_isExpanded)
-                      Icon(
-                        Icons.keyboard_arrow_up,
-                        color: DesignTokens.getTextSecondary(brightness),
-                        size: 24,
+                    if (_isExpanded && !hasVoted)
+                      RotationTransition(
+                        turns: Tween(begin: 0.0, end: 0.5).animate(_expandAnimation),
+                        child: Icon(
+                          Icons.keyboard_arrow_down,
+                          color: DesignTokens.getTextSecondary(brightness),
+                          size: 24,
+                        ),
                       ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
-              // Poll question
-              GestureDetector(
-                onTap: _toggleExpanded,
-                behavior: HitTestBehavior.opaque,
-                child: Text(
+                // Poll question
+                Text(
                   widget.poll.question,
                   style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
                     color: DesignTokens.getTextPrimary(brightness),
-                    height: 1.3,
+                    height: 1.4,
+                    letterSpacing: -0.3,
                   ),
                   maxLines: _isExpanded ? null : 3,
                   overflow: _isExpanded ? null : TextOverflow.ellipsis,
                 ),
-              ),
-              const SizedBox(height: 12),
+                const SizedBox(height: 16),
 
-              // Poll options
-              ...displayOptions.map((option) {
-                final percentage = hasVoted ? option.getPercentage(currentPoll.totalVotes) : 0.0;
-                final isUserVote = userVotedOptionId == option.id;
-                final isSelected = _selectedOptionId == option.id;
+                // Poll options
+                ...displayOptions.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final option = entry.value;
+                  final percentage = hasVoted ? option.getPercentage(currentPoll.totalVotes) : 0.0;
+                  final isUserVote = userVotedOptionId == option.id;
+                  final isSelected = _selectedOptionId == option.id;
 
-                return GestureDetector(
-                  // Only allow selection if user hasn't voted yet
-                  onTap: hasVoted ? null : () {
-                    setState(() {
-                      _selectedOptionId = option.id;
-                    });
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: hasVoted
-                          ? (isUserVote
-                              ? DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.15)
-                              : DesignTokens.getCardBackground(brightness).withValues(alpha: 0.5))
-                          : (isSelected
-                              ? DesignTokens.primaryRed.withValues(alpha: 0.15)
-                              : DesignTokens.getCardBackground(brightness).withValues(alpha: 0.5)),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: hasVoted
-                            ? (isUserVote
-                                ? DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.4)
-                                : brightness == Brightness.dark
-                                    ? Colors.white.withValues(alpha: 0.1)
-                                    : Colors.black.withValues(alpha: 0.08))
-                            : (isSelected
-                                ? DesignTokens.primaryRed.withValues(alpha: 0.6)
-                                : brightness == Brightness.dark
-                                    ? Colors.white.withValues(alpha: 0.1)
-                                    : Colors.black.withValues(alpha: 0.08)),
-                        width: isSelected || isUserVote ? 2 : 1,
-                      ),
-                    ),
-                    child: Stack(
-                      children: [
-                        // Animated progress bar background for voted polls
-                        if (hasVoted)
-                          Positioned.fill(
-                            child: FractionallySizedBox(
-                              alignment: Alignment.centerLeft,
-                              widthFactor: isUserVote ? 1.0 : percentage / 100,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: isUserVote
-                                      ? DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.2)
-                                      : DesignTokens.getTextSecondary(brightness).withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            ),
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: index < displayOptions.length - 1 ? 10 : 0),
+                    child: GestureDetector(
+                      // Only allow selection if user hasn't voted yet
+                      onTap: hasVoted ? null : () {
+                        setState(() {
+                          _selectedOptionId = option.id;
+                        });
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          gradient: hasVoted
+                              ? (isUserVote
+                                  ? LinearGradient(
+                                      colors: [
+                                        DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.2),
+                                        DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.15),
+                                      ],
+                                    )
+                                  : null)
+                              : (isSelected
+                                  ? LinearGradient(
+                                      colors: [
+                                        DesignTokens.primaryRed.withValues(alpha: 0.15),
+                                        DesignTokens.primaryRed.withValues(alpha: 0.1),
+                                      ],
+                                    )
+                                  : null),
+                          color: hasVoted
+                              ? (isUserVote ? null : DesignTokens.getCardBackground(brightness).withValues(alpha: 0.4))
+                              : (isSelected ? null : DesignTokens.getCardBackground(brightness).withValues(alpha: 0.5)),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: hasVoted
+                                ? (isUserVote
+                                    ? DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.6)
+                                    : brightness == Brightness.dark
+                                        ? Colors.white.withValues(alpha: 0.1)
+                                        : Colors.black.withValues(alpha: 0.08))
+                                : (isSelected
+                                    ? DesignTokens.primaryRed.withValues(alpha: 0.7)
+                                    : brightness == Brightness.dark
+                                        ? Colors.white.withValues(alpha: 0.1)
+                                        : Colors.black.withValues(alpha: 0.08)),
+                            width: isSelected || isUserVote ? 2 : 1,
                           ),
-                        // Content row
-                        Row(
+                          boxShadow: isSelected || isUserVote
+                              ? [
+                                  BoxShadow(
+                                    color: (isUserVote
+                                            ? DesignTokens.getSuccessColor(brightness)
+                                            : DesignTokens.primaryRed)
+                                        .withValues(alpha: 0.2),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Stack(
                           children: [
-                            // Show radio button only if user hasn't voted yet
-                            if (!hasVoted)
-                              Container(
-                                width: 20,
-                                height: 20,
-                                margin: const EdgeInsets.only(right: 12),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: isSelected
-                                        ? DesignTokens.primaryRed
-                                        : DesignTokens.getTextSecondary(brightness),
-                                    width: 2,
+                            // Animated progress bar background for voted polls
+                            if (hasVoted)
+                              Positioned.fill(
+                                child: AnimatedFractionallySizedBox(
+                                  duration: const Duration(milliseconds: 600),
+                                  curve: Curves.easeOut,
+                                  alignment: Alignment.centerLeft,
+                                  widthFactor: percentage / 100,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: isUserVote
+                                            ? [
+                                                DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.3),
+                                                DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.15),
+                                              ]
+                                            : [
+                                                DesignTokens.getTextSecondary(brightness).withValues(alpha: 0.15),
+                                                DesignTokens.getTextSecondary(brightness).withValues(alpha: 0.08),
+                                              ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
                                   ),
                                 ),
-                                child: isSelected
-                                    ? Center(
-                                        child: Container(
-                                          width: 10,
-                                          height: 10,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: DesignTokens.primaryRed,
-                                          ),
-                                        ),
-                                      )
-                                    : null,
                               ),
-                            Expanded(
-                              child: Text(
-                                option.optionText,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: isUserVote ? FontWeight.w700 : FontWeight.w500,
-                                  color: DesignTokens.getTextPrimary(brightness),
+                            // Content row
+                            Row(
+                              children: [
+                                // Show radio button only if user hasn't voted yet
+                                if (!hasVoted)
+                                  Container(
+                                    width: 22,
+                                    height: 22,
+                                    margin: const EdgeInsets.only(right: 12),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? DesignTokens.primaryRed
+                                            : DesignTokens.getTextSecondary(brightness),
+                                        width: 2,
+                                      ),
+                                      color: isSelected
+                                          ? DesignTokens.primaryRed.withValues(alpha: 0.1)
+                                          : Colors.transparent,
+                                    ),
+                                    child: isSelected
+                                        ? Center(
+                                            child: Container(
+                                              width: 10,
+                                              height: 10,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: DesignTokens.primaryRed,
+                                              ),
+                                            ),
+                                          )
+                                        : null,
+                                  ),
+                                Expanded(
+                                  child: Text(
+                                    option.optionText,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: isUserVote ? FontWeight.w700 : FontWeight.w600,
+                                      color: DesignTokens.getTextPrimary(brightness),
+                                      height: 1.3,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                                if (hasVoted) ...[
+                                  const SizedBox(width: 12),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: isUserVote
+                                          ? DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.2)
+                                          : DesignTokens.getTextSecondary(brightness).withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      '${percentage.toStringAsFixed(0)}%',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w800,
+                                        color: isUserVote
+                                            ? DesignTokens.getSuccessColor(brightness)
+                                            : DesignTokens.getTextSecondary(brightness),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
-                            if (hasVoted) ...[
-                              const SizedBox(width: 12),
-                              Text(
-                                '${percentage.toStringAsFixed(0)}%',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: isUserVote
-                                      ? DesignTokens.getSuccessColor(brightness)
-                                      : DesignTokens.getTextSecondary(brightness),
-                                ),
-                              ),
-                            ],
                           ],
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+
+                // Show "more options" if collapsed and there are more than 5
+                if (!_isExpanded && currentPoll.options.length > 5) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: DesignTokens.primaryRed.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: DesignTokens.primaryRed.withValues(alpha: 0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.unfold_more,
+                          size: 16,
+                          color: DesignTokens.primaryRed,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '+${currentPoll.options.length - 5} ${context.tr('more_options')}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: DesignTokens.primaryRed,
+                          ),
                         ),
                       ],
                     ),
                   ),
-                );
-              }),
+                ],
 
-              // Show "more options" if collapsed and there are more than 2
-              if (!_isExpanded && currentPoll.options.length > 2) ...[
-                const SizedBox(height: 4),
-                GestureDetector(
-                  onTap: _toggleExpanded,
-                  child: Text(
-                    '+${currentPoll.options.length - 2} ${context.tr('more_options')}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: DesignTokens.primaryRed,
-                    ),
-                  ),
-                ),
-              ],
-
-              // Vote button - only show when user hasn't voted and has selected an option
-              if (!hasVoted && _selectedOptionId != null) ...[
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : _submitVote,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: DesignTokens.primaryRed,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                // Vote button - only show when user hasn't voted and has selected an option
+                if (!hasVoted && _selectedOptionId != null) ...[
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            DesignTokens.primaryRed,
+                            Color(0xFFD32F2F),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: DesignTokens.primaryRed.withValues(alpha: 0.4),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton(
+                        onPressed: _isSubmitting ? null : _submitVote,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: Colors.white,
+                          shadowColor: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.how_to_vote_rounded, size: 18),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    context.tr('vote'),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
                       ),
                     ),
-                    child: _isSubmitting
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : Text(
-                            context.tr('vote'),
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
                   ),
+                ],
+
+                const SizedBox(height: 12),
+
+                // Total votes with icon
+                Row(
+                  children: [
+                    Icon(
+                      Icons.people_outline,
+                      size: 16,
+                      color: DesignTokens.getTextSecondary(brightness),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${currentPoll.totalVotes} ${context.tr('votes')}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: DesignTokens.getTextSecondary(brightness),
+                      ),
+                    ),
+                  ],
                 ),
               ],
-
-              const SizedBox(height: 8),
-
-              // Total votes
-              Text(
-                '${currentPoll.totalVotes} ${context.tr('votes')}',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: DesignTokens.getTextSecondary(brightness),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
