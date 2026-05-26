@@ -44,26 +44,12 @@ class PollRepository {
           .inFilter('poll_id', pollIds)
           .order('created_at', ascending: true);
 
-      // Fetch all vote counts for these polls
-      final allVotes = await _supabase
-          .from(SupabaseConstants.pollVotesTable)
-          .select('poll_id, option_id')
-          .inFilter('poll_id', pollIds);
-
-      // Count votes per option
-      final Map<String, int> voteCountMap = {};
-      for (final vote in allVotes as List) {
-        final optionId = vote['option_id'].toString();
-        voteCountMap[optionId] = (voteCountMap[optionId] ?? 0) + 1;
-      }
-
-      // Group options by poll_id
+      // Group options by poll_id (use votes field from poll_options directly)
       final Map<String, List<Map<String, dynamic>>> optionsByPoll = {};
       for (final option in allOptions as List) {
         final pollId = option['poll_id'].toString();
         final opt = Map<String, dynamic>.from(option);
-        final optionId = opt['id'].toString();
-        opt['votes'] = voteCountMap[optionId] ?? 0;
+        // Use the votes field from poll_options table (updated by database trigger)
 
         if (!optionsByPoll.containsKey(pollId)) {
           optionsByPoll[pollId] = [];
@@ -115,25 +101,9 @@ class PollRepository {
           .eq('poll_id', id)
           .order('created_at', ascending: true);
 
-      // Fetch actual vote counts from poll_votes table
-      final voteCounts = await _supabase
-          .from(SupabaseConstants.pollVotesTable)
-          .select('option_id')
-          .eq('poll_id', id);
-
-      // Count votes per option
-      final Map<String, int> voteCountMap = {};
-      for (final vote in voteCounts as List) {
-        final optionId = vote['option_id'].toString();
-        voteCountMap[optionId] = (voteCountMap[optionId] ?? 0) + 1;
-      }
-
-      // Update vote counts in options data
+      // Use votes field from poll_options directly (updated by database trigger)
       final options = (optionsResponse as List).map((opt) {
-        final option = Map<String, dynamic>.from(opt);
-        final optionId = option['id'].toString();
-        option['votes'] = voteCountMap[optionId] ?? 0;
-        return option;
+        return Map<String, dynamic>.from(opt);
       }).toList();
 
       // Combine poll data with options
