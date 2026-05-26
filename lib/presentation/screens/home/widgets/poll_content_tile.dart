@@ -439,7 +439,7 @@ class _PollContentTileState extends ConsumerState<PollContentTile> with SingleTi
                                 if (hasVoted) ...[
                                   const SizedBox(width: 12),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
                                     decoration: BoxDecoration(
                                       color: isUserVote
                                           ? DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.2)
