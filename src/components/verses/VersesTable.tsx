@@ -54,6 +54,9 @@ export const VersesTable = ({ verses, onEdit }: VersesTableProps) => {
                   )}
                 />
               </TableCell>
+              <TableCell className="text-right font-mono text-muted-foreground">
+                {verse.usage_count ?? 0}
+              </TableCell>
               {isAdmin && (
                 <TableCell>
                   <Button
