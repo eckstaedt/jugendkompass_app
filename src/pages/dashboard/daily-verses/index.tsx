@@ -8,7 +8,7 @@ import { useDailyVerses } from '@/hooks/use-daily-verses';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, isToday, isFuture } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { CalendarPlus, LayoutList, ViewIcon, Loader2 } from 'lucide-react';
+import { CalendarPlus, LayoutList, ViewIcon, Loader2, Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DailyVerse } from '@/lib/supabase';
 import { useTranslationsForContents, summarizeLang, SUPPORTED_LANGS } from '@/hooks/use-translations';
@@ -143,6 +143,12 @@ const DailyVersesPage = () => {
                         )}
                       />
                     </div>
+                    {(verse.usage_count ?? 0) > 0 && (
+                      <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                        <Download className="h-3 w-3" />
+                        <span>{verse.usage_count} Teilen/Downloads</span>
+                      </div>
+                    )}
                     {isAdmin && (
                       <Button
                         variant="outline"

@@ -34,6 +34,7 @@ export const VersesTable = ({ verses, onEdit }: VersesTableProps) => {
             <TableHead>Bibelvers</TableHead>
             <TableHead>Referenz</TableHead>
             <TableHead>Übersetzungen</TableHead>
+            <TableHead className="text-right">Teilen/Downloads</TableHead>
             {isAdmin && <TableHead className="w-[100px]">Aktionen</TableHead>}
           </TableRow>
         </TableHeader>
@@ -52,6 +53,9 @@ export const VersesTable = ({ verses, onEdit }: VersesTableProps) => {
                     ])
                   )}
                 />
+              </TableCell>
+              <TableCell className="text-right font-mono text-muted-foreground">
+                {verse.usage_count ?? 0}
               </TableCell>
               {isAdmin && (
                 <TableCell>

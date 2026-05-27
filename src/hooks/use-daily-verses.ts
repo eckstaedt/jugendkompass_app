@@ -49,6 +49,7 @@ export const useDailyVerses = () => {
           reference, 
           date, 
           content_id,
+          usage_count,
           content!verse_of_the_day_content_id_fkey (
             id,
             content_type,

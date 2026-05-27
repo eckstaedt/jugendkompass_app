@@ -79,6 +79,7 @@ export type DailyVerse = {
   reference: string;
   date: string;
   image_url?: string | null;
+  usage_count?: number;
   created_at?: string;
   content?: {
     content_type: string;
