@@ -143,6 +143,12 @@ const DailyVersesPage = () => {
                         )}
                       />
                     </div>
+                    {(verse.usage_count ?? 0) > 0 && (
+                      <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                        <Download className="h-3 w-3" />
+                        <span>{verse.usage_count} Teilen/Downloads</span>
+                      </div>
+                    )}
                     {isAdmin && (
                       <Button
                         variant="outline"
