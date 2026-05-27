@@ -175,6 +175,12 @@ export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }:
                 </FormItem>
               )}
             />
+            {mode === 'edit' && initialData?.usage_count !== undefined && (
+              <div className="flex items-center justify-between rounded-md border p-3 text-sm">
+                <span className="text-muted-foreground">Teilen/Downloads</span>
+                <span className="font-mono font-medium">{initialData.usage_count}</span>
+              </div>
+            )}
             <DialogFooter className="gap-2 sm:justify-between">
               {mode === 'edit' && initialData?.content_id && (
                 <RetranslateButton contentId={initialData.content_id} />
