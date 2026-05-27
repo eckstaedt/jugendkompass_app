@@ -673,6 +673,7 @@ export type Database = {
           id: string
           image_url: string | null
           reference: string
+          usage_count: number
           verse: string
         }
         Insert: {
@@ -682,6 +683,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           reference: string
+          usage_count?: number
           verse: string
         }
         Update: {
@@ -691,6 +693,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           reference?: string
+          usage_count?: number
           verse?: string
         }
         Relationships: [
@@ -884,6 +887,7 @@ export type Database = {
         }[]
       }
       increment_poll_votes: { Args: { option_id: string }; Returns: undefined }
+      increment_verse_usage: { Args: { verse_id: string }; Returns: undefined }
       is_admin:
         | { Args: never; Returns: boolean }
         | { Args: { user_id: string }; Returns: boolean }
