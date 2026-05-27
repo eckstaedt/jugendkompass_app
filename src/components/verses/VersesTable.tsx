@@ -34,6 +34,7 @@ export const VersesTable = ({ verses, onEdit }: VersesTableProps) => {
             <TableHead>Bibelvers</TableHead>
             <TableHead>Referenz</TableHead>
             <TableHead>Übersetzungen</TableHead>
+            <TableHead className="text-right">Teilen/Downloads</TableHead>
             {isAdmin && <TableHead className="w-[100px]">Aktionen</TableHead>}
           </TableRow>
         </TableHeader>
