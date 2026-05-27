@@ -186,6 +186,19 @@ class VerseRepository {
     }
   }
 
+  /// Increment the usage counter for a verse (share or save-to-gallery).
+  /// Fire-and-forget: errors are swallowed so UI flow is never blocked.
+  Future<void> incrementUsage(String verseId) async {
+    try {
+      await _supabase.rpc(
+        'increment_verse_usage',
+        params: {'verse_id': verseId},
+      );
+    } catch (_) {
+      // Counter is best-effort; ignore failures.
+    }
+  }
+
   /// Get a specific verse by ID.
   Future<VerseModel?> getVerseById(String verseId) async {
     try {

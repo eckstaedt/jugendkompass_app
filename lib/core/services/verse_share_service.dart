@@ -8,6 +8,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:jugendkompass_app/data/models/verse_model.dart';
+import 'package:jugendkompass_app/data/repositories/verse_repository.dart';
+import 'package:jugendkompass_app/data/services/supabase_service.dart';
 import 'package:jugendkompass_app/presentation/widgets/verse/verse_share_card.dart';
 
 /// Shares the verse image – uses the admin-uploaded image if available,
@@ -16,6 +18,10 @@ class VerseShareService {
   VerseShareService._();
 
   static final ScreenshotController _controller = ScreenshotController();
+
+  static void _trackUsage(VerseModel verse) {
+    VerseRepository(SupabaseService.instance.client).incrementUsage(verse.id);
+  }
 
   /// Downloads the image from [url] and returns its bytes.
   static Future<Uint8List> _downloadImage(String url) async {
@@ -57,6 +63,7 @@ class VerseShareService {
         [XFile(file.path, mimeType: 'image/png')],
         subject: 'Vers des Tages',
       );
+      _trackUsage(verse);
     } catch (e) {
       debugPrint('[VerseShareService] Fehler beim Teilen: $e');
       rethrow;
@@ -73,6 +80,7 @@ class VerseShareService {
 
       await Gal.putImage(file.path, album: 'Jugendkompass');
       await file.delete();
+      _trackUsage(verse);
       return true;
     } catch (e) {
       debugPrint('[VerseShareService] Fehler beim Speichern: $e');

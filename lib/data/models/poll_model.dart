@@ -3,6 +3,7 @@ class PollOptionModel {
   final String pollId;
   final String optionText;
   final int votes;
+  final int sortOrder;
   final DateTime createdAt;
 
   PollOptionModel({
@@ -10,6 +11,7 @@ class PollOptionModel {
     required this.pollId,
     required this.optionText,
     required this.votes,
+    required this.sortOrder,
     required this.createdAt,
   });
 
@@ -19,6 +21,7 @@ class PollOptionModel {
       pollId: json['poll_id'].toString(),
       optionText: json['option_text'] as String? ?? '',
       votes: json['votes'] as int? ?? 0,
+      sortOrder: json['sort_order'] as int? ?? 0,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : DateTime.now(),
@@ -31,6 +34,7 @@ class PollOptionModel {
       'poll_id': pollId,
       'option_text': optionText,
       'votes': votes,
+      'sort_order': sortOrder,
       'created_at': createdAt.toIso8601String(),
     };
   }
@@ -40,6 +44,7 @@ class PollOptionModel {
     String? pollId,
     String? optionText,
     int? votes,
+    int? sortOrder,
     DateTime? createdAt,
   }) {
     return PollOptionModel(
@@ -47,6 +52,7 @@ class PollOptionModel {
       pollId: pollId ?? this.pollId,
       optionText: optionText ?? this.optionText,
       votes: votes ?? this.votes,
+      sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
     );
   }

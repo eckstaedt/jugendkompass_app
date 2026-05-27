@@ -204,6 +204,7 @@ Analytics tracking für App-Installationen und App-Öffnungen.
 | reference | text | Nein | – |
 | date | date | Nein | `CURRENT_DATE` |
 | created_at | timestamptz | Nein | `now()` |
+| usage_count | integer | Nein | `0` |
 
 **FK:** `content_id` → `content.id`
 
@@ -341,6 +342,7 @@ Analytics tracking für App-Installationen und App-Öffnungen.
 | `is_admin()` / `is_admin(user_id)` | boolean | Prüft Admin-Status |
 | `get_current_user_role()` | text | Rolle des aktuellen Users |
 | `increment_poll_votes(option_id)` | void | Erhöht Stimmenanzahl einer Poll-Option |
+| `increment_verse_usage(verse_id)` | void | Erhöht `usage_count` (Teilen/Speichern) für einen Vers |
 | `get_vers_des_tages_today_json()` | jsonb | Heutiger Vers als JSON |
 
 ### Content-Trigger (BEFORE INSERT, erstellen Content-Eintrag)
