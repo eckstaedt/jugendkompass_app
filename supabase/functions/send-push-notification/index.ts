@@ -40,7 +40,7 @@ const TABLE_MAP: Record<
 > = {
   posts: { titleField: "title", bodyField: "body", toggle: "content_notifications" },
   impulses: { titleField: "title", bodyField: "impulse_text", toggle: "content_notifications" },
-  messages: { titleField: "title", bodyField: "message", toggle: "content_notifications", fallbackTitle: "Neue Nachricht" },
+  messages: { titleField: "title", bodyField: "message", toggle: "content_notifications", fallbackTitle: "Neue Kurznachricht" },
   videos: { titleField: "title", bodyField: "description", toggle: "content_notifications" },
   polls: { titleField: "question", bodyField: "question", toggle: "content_notifications", fallbackTitle: "Neue Umfrage" },
   verse_of_the_day: { titleField: "reference", bodyField: "verse", toggle: "verse_notifications", fallbackTitle: "Vers des Tages" },
