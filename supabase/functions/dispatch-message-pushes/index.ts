@@ -202,7 +202,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const origTitle = msg.title ?? "Neue Nachricht";
+    const origTitle = msg.title ?? "Neue Kurznachricht";
     const origBody = msg.message ?? "";
 
     const { data: tokens, error: tokErr } = await supabase
