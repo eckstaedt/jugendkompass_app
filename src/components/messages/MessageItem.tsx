@@ -37,7 +37,46 @@ const MessageItem = ({ message, onUpdate, onDelete }: MessageItemProps) => {
   const { user } = useAuth();
   const { data: translationsMap } = useTranslationsForContents([message.content_id]);
   const sendPush = useSendMessagePush();
+  const { data: testDevices = [] } = useTestPushDevices();
+  const { mutate: sendTestPush, isPending: isSendingTestPush } = useSendTestPush();
   const { toast } = useToast();
+
+  const stripHtml = (html: string) => html.replace(/<[^>]*>/g, '').trim();
+
+  const handleTestPush = () => {
+    if (testDevices.length === 0) {
+      toast({ title: 'Keine Test-Geräte', description: 'Bitte zuerst Test-Push-Geräte anlegen.', variant: 'destructive' });
+      return;
+    }
+    const cleanTitle = stripHtml(message.title || message.message || '');
+    sendTestPush(
+      {
+        device_ids: testDevices.map((d) => d.id),
+        title: 'Neue Kurznachricht',
+        body: `Die neue Kurznachricht "${cleanTitle}" ist jetzt verfügbar!`,
+        data: {
+          type: 'message',
+          content_id: message.content_id ?? '',
+          entity_id: String(message.id),
+        },
+        image_url: message.image_url ?? undefined,
+      },
+      {
+        onSuccess: (res) => {
+          const ok = res.results.filter((r) => r.ok).length;
+          const fail = res.results.length - ok;
+          toast({
+            title: 'Test-Push gesendet',
+            description: `${ok} erfolgreich, ${fail} fehlgeschlagen`,
+            variant: fail === 0 ? 'success' : 'destructive',
+          });
+        },
+        onError: (e) => {
+          toast({ title: 'Fehler', description: (e as Error).message, variant: 'destructive' });
+        },
+      },
+    );
+  };
 
   const handleSend = async (force: boolean) => {
     try {
