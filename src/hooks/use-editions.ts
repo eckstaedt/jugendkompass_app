@@ -108,7 +108,16 @@ export function useEditions() {
         pdf_url = null;
       }
 
-      const updateData: Record<string, unknown> = {
+      const updateData: {
+        name: string;
+        title: string | null;
+        body: string | null;
+        image_url: string | null;
+        published_at: string | null;
+        notification_title: string | null;
+        notification_body: string | null;
+        pdf_url?: string | null;
+      } = {
         name: params.name,
         title: params.title || null,
         body: params.body || null,
