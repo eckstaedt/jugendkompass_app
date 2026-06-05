@@ -15,13 +15,15 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { Message } from '@/hooks/use-messages';
-import { formatDistanceToNow } from 'date-fns';
+import { Message, useSendMessagePush } from '@/hooks/use-messages';
+import { formatDistanceToNow, format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import MessageForm from './MessageForm';
 import { useTranslationsForContents, summarizeLang, SUPPORTED_LANGS } from '@/hooks/use-translations';
 import { TranslationStatusList } from '@/components/translations/TranslationStatusBadge';
 import { RetranslateButton } from '@/components/translations/RetranslateButton';
+import { useToast } from '@/hooks/use-toast';
+import { Send } from 'lucide-react';
 
 interface MessageItemProps {
   message: Message;
@@ -33,6 +35,29 @@ const MessageItem = ({ message, onUpdate, onDelete }: MessageItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const { user } = useAuth();
   const { data: translationsMap } = useTranslationsForContents([message.content_id]);
+  const sendPush = useSendMessagePush();
+  const { toast } = useToast();
+
+  const handleSend = async (force: boolean) => {
+    try {
+      const res = await sendPush.mutateAsync({ id: message.id, force });
+      toast({
+        title: 'Push gesendet',
+        description: `${res.sent} von ${res.total} Geräten erreicht.`,
+      });
+    } catch (e: any) {
+      toast({
+        title: 'Fehler beim Senden',
+        description: e?.message ?? 'Unbekannter Fehler',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const sentAt = message.notification_sent_at
+    ? format(new Date(message.notification_sent_at), "dd.MM.yyyy HH:mm", { locale: de })
+    : null;
+
 
   return (
     <Card>
