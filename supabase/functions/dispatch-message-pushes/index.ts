@@ -202,8 +202,22 @@ Deno.serve(async (req) => {
       }
     }
 
-    const origTitle = msg.title ?? "Neue Kurznachricht";
-    const origBody = msg.message ?? "";
+    const origTitle = msg.title ?? "";
+
+    const PUSH_TITLES: Record<string, string> = {
+      de: "Neue Kurznachricht",
+      en: "New short message",
+      es: "Nuevo mensaje breve",
+      ru: "Новое короткое сообщение",
+      pl: "Nowa krótka wiadomość",
+    };
+    const BODY_TEMPLATES: Record<string, (t: string) => string> = {
+      de: (t) => `Die neue Kurznachricht "${t}" ist jetzt verfügbar!`,
+      en: (t) => `The new short message "${t}" is now available!`,
+      es: (t) => `¡El nuevo mensaje breve "${t}" ya está disponible!`,
+      ru: (t) => `Новое короткое сообщение «${t}» теперь доступно!`,
+      pl: (t) => `Nowa krótka wiadomość „${t}" jest już dostępna!`,
+    };
 
     const { data: tokens, error: tokErr } = await supabase
       .from("device_tokens")
@@ -215,10 +229,12 @@ Deno.serve(async (req) => {
     let sent = 0;
     for (const t of tokens ?? []) {
       const lang = (t as any).language || "de";
-      const title = truncate(stripHtml(translations[lang]?.title ?? origTitle), 80);
-      const text = truncate(stripHtml(translations[lang]?.message ?? origBody), 240);
+      const localizedTitle = stripHtml(translations[lang]?.title ?? origTitle);
+      const title = PUSH_TITLES[lang] ?? PUSH_TITLES.de;
+      const bodyFn = BODY_TEMPLATES[lang] ?? BODY_TEMPLATES.de;
+      const text = truncate(bodyFn(localizedTitle), 240);
       try {
-        const r = await sendFcm((t as any).fcm_token, title || "Jugendkompass", text, {
+        const r = await sendFcm((t as any).fcm_token, title, text, {
           contentType: "message",
           contentId: msg.content_id ?? "",
           entity_id: String(msg.id),
