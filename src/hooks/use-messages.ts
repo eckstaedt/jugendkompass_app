@@ -12,6 +12,7 @@ export type Message = {
   title: string;
   message: string;
   image_url: string | null;
+  notification_sent_at: string | null;
 };
 
 import { usePreviewLocale } from '@/contexts/PreviewLocaleContext';
@@ -161,6 +162,23 @@ export const useDeleteMessage = () => {
           'Nachricht gelöscht'
         );
       }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+    },
+  });
+};
+
+export const useSendMessagePush = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, force }: { id: number; force?: boolean }) => {
+      const { data, error } = await supabase.functions.invoke('dispatch-message-pushes', {
+        body: { message_id: id, force: !!force },
+      });
+      if (error) throw error;
+      return data as { message_id: number; sent: number; total: number };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['messages'] });
