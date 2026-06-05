@@ -142,6 +142,15 @@ const MessageItem = ({ message, onUpdate, onDelete }: MessageItemProps) => {
             Bearbeiten
           </Button>
           {message.content_id && <RetranslateButton contentId={message.content_id} />}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleTestPush}
+            disabled={isSendingTestPush}
+          >
+            <FlaskConical className="h-4 w-4 mr-1" />
+            {isSendingTestPush ? 'Sende…' : 'Test-Push'}
+          </Button>
           {sentAt ? (
             <AlertDialog>
               <AlertDialogTrigger asChild>
