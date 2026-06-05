@@ -102,6 +102,41 @@ const MessageItem = ({ message, onUpdate, onDelete }: MessageItemProps) => {
             Bearbeiten
           </Button>
           {message.content_id && <RetranslateButton contentId={message.content_id} />}
+          {sentAt ? (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" disabled={sendPush.isPending}>
+                  <Send className="h-4 w-4 mr-1" />
+                  Erneut senden
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Push erneut senden?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Diese Nachricht wurde bereits am {sentAt} gesendet. Soll die Push-Benachrichtigung erneut an alle Geräte gesendet werden?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => handleSend(true)}>Erneut senden</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          ) : (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => handleSend(false)}
+              disabled={sendPush.isPending}
+            >
+              <Send className="h-4 w-4 mr-1" />
+              {sendPush.isPending ? 'Sende…' : 'Push senden'}
+            </Button>
+          )}
+          <span className="text-xs text-muted-foreground">
+            {sentAt ? `Gesendet: ${sentAt}` : 'Noch nicht gesendet'}
+          </span>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" size="sm">
