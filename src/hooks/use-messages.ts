@@ -168,3 +168,20 @@ export const useDeleteMessage = () => {
     },
   });
 };
+
+export const useSendMessagePush = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, force }: { id: number; force?: boolean }) => {
+      const { data, error } = await supabase.functions.invoke('dispatch-message-pushes', {
+        body: { message_id: id, force: !!force },
+      });
+      if (error) throw error;
+      return data as { message_id: number; sent: number; total: number };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+    },
+  });
+};
