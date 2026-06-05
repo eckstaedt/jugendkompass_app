@@ -23,7 +23,8 @@ import { useTranslationsForContents, summarizeLang, SUPPORTED_LANGS } from '@/ho
 import { TranslationStatusList } from '@/components/translations/TranslationStatusBadge';
 import { RetranslateButton } from '@/components/translations/RetranslateButton';
 import { useToast } from '@/hooks/use-toast';
-import { Send } from 'lucide-react';
+import { Send, FlaskConical } from 'lucide-react';
+import { useTestPushDevices, useSendTestPush } from '@/hooks/use-test-push-devices';
 
 interface MessageItemProps {
   message: Message;
