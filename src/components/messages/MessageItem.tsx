@@ -162,7 +162,7 @@ const MessageItem = ({ message, onUpdate, onDelete }: MessageItemProps) => {
       )}
 
       <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Nachricht bearbeiten</DialogTitle>
           </DialogHeader>
