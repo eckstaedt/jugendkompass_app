@@ -12,6 +12,7 @@ export type Message = {
   title: string;
   message: string;
   image_url: string | null;
+  notification_sent_at: string | null;
 };
 
 import { usePreviewLocale } from '@/contexts/PreviewLocaleContext';
