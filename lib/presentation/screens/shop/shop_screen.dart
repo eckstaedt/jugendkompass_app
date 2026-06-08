@@ -31,19 +31,11 @@ class ShopScreen extends ConsumerWidget {
             children: [
               const Spacer(),
 
-              // Placeholder icon (replace with image later)
-              Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  color: DesignTokens.primaryRed.withValues(alpha: 0.08),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.menu_book_rounded,
-                  size: 72,
-                  color: DesignTokens.primaryRed,
-                ),
+              // Magazine image
+              Image.asset(
+                'assets/images/shop_magazines.png',
+                width: 260,
+                fit: BoxFit.contain,
               ),
 
               const SizedBox(height: 32),
