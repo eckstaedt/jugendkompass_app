@@ -166,12 +166,15 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen>
                       ),
                     ),
                     const SizedBox(height: 10),
-                    Text(
-                      'Unterstütze uns mit einer freiwilligen Spende via PayPal',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: DesignTokens.getTextSecondary(brightness),
+                    SizedBox(
+                      width: double.infinity,
+                      child: Text(
+                        'Unterstütze uns mit einer freiwilligen Spende via PayPal',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: DesignTokens.getTextSecondary(brightness),
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),

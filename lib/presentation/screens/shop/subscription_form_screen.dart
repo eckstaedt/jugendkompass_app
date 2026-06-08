@@ -176,7 +176,8 @@ class _SubscriptionFormScreenState
             Center(
               child: Image.asset(
                 'assets/images/shop_magazines.png',
-                width: 260,
+                width: double.infinity,
+                height: 220,
                 fit: BoxFit.contain,
               ),
             ),
