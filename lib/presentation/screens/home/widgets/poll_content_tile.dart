@@ -7,7 +7,6 @@ import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
 import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 
 class PollContentTile extends ConsumerStatefulWidget {
   final PollModel poll;

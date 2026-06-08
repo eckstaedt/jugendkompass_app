@@ -171,7 +171,27 @@ class _SubscriptionFormScreenState
             bottom: DesignTokens.overlayPaddingBase + 24,
           ),
           children: [
-            // ── Persönliche Daten ────────────────────────────────────
+            // ── Bild & Intro ─────────────────────────────────────────
+            const SizedBox(height: 8),
+            Center(
+              child: Image.asset(
+                'assets/images/shop_magazines.png',
+                width: 260,
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              translate('Das Heft bequem zu dir nach Hause bestellen – kostenlos & frei Haus'),
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                height: 1.4,
+              ),
+              textAlign: TextAlign.center,
+            ),
+
+            // ── Persönliche Daten ───────────────────────────────────────
             sectionTitle('PERSÖNLICHE DATEN'),
 
             Row(

@@ -22,7 +22,7 @@ import 'package:jugendkompass_app/data/services/collection_service.dart';
 import '../onboarding/onboarding_screen.dart';
 import 'collection_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/search/search_screen.dart';
-import 'package:jugendkompass_app/presentation/screens/shop/shop_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/shop/subscription_form_screen.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -372,7 +372,7 @@ class ProfileScreen extends ConsumerWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const ShopScreen(),
+                  builder: (_) => const SubscriptionFormScreen(),
                 ),
               );
             },

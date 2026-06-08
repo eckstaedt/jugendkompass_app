@@ -274,7 +274,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                                 ],
                               ),
                               loading: () => const SizedBox.shrink(),
-                              error: (_, __) => const SizedBox.shrink(),
+                              error: (_, _) => const SizedBox.shrink(),
                             );
                           },
                         ),

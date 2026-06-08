@@ -354,7 +354,7 @@ class _VideoCardState extends ConsumerState<VideoCard> {
                   style: textStyle,
                 ),
                 loading: () => Text(dateStr, style: textStyle),
-                error: (_, __) => Text(dateStr, style: textStyle),
+                error: (_, _) => Text(dateStr, style: textStyle),
               );
             },
           ),
