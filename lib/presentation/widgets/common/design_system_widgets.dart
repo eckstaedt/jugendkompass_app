@@ -411,3 +411,110 @@ class SectionContainer extends StatelessWidget {
     );
   }
 }
+
+/// A focus-aware search bar that animates a red border on the outer
+/// glass container when focused — instead of showing a broken inner outline.
+class AppSearchBar extends StatefulWidget {
+  final String hint;
+  final TextEditingController? controller;
+  final ValueChanged<String>? onChanged;
+  final VoidCallback? onClear;
+  final bool showClear;
+
+  const AppSearchBar({
+    super.key,
+    required this.hint,
+    this.controller,
+    this.onChanged,
+    this.onClear,
+    this.showClear = false,
+  });
+
+  @override
+  State<AppSearchBar> createState() => _AppSearchBarState();
+}
+
+class _AppSearchBarState extends State<AppSearchBar> {
+  late final FocusNode _focusNode;
+  bool _isFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _focusNode.addListener(_onFocusChange);
+  }
+
+  void _onFocusChange() {
+    if (mounted) setState(() => _isFocused = _focusNode.hasFocus);
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_onFocusChange);
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final textSecondary = DesignTokens.getTextSecondary(brightness);
+
+    final borderColor = _isFocused
+        ? DesignTokens.primaryRed
+        : (brightness == Brightness.dark
+            ? Colors.white.withValues(alpha: 0.12)
+            : Colors.black.withValues(alpha: 0.08));
+    final borderWidth = _isFocused ? 2.0 : 1.0;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
+        border: Border.all(color: borderColor, width: borderWidth),
+        boxShadow: [DesignTokens.shadowGlass],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(
+            sigmaX: DesignTokens.glassBlurSigma,
+            sigmaY: DesignTokens.glassBlurSigma,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: brightness == Brightness.dark
+                  ? DesignTokens.glassDarkBackground(0.16)
+                  : DesignTokens.glassBackground(0.22),
+            ),
+            child: TextField(
+              focusNode: _focusNode,
+              controller: widget.controller,
+              onChanged: widget.onChanged,
+              decoration: InputDecoration(
+                hintText: widget.hint,
+                hintStyle: TextStyle(color: textSecondary, fontSize: 16),
+                prefixIcon: Icon(Icons.search, color: textSecondary),
+                suffixIcon: widget.showClear
+                    ? IconButton(
+                        icon: Icon(Icons.clear, color: textSecondary),
+                        onPressed: widget.onClear,
+                      )
+                    : null,
+                filled: false,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

@@ -33,7 +33,6 @@ class PodcastScreen extends ConsumerWidget {
     final searchQuery = ref.watch(podcastSearchQueryProvider);
     final theme = Theme.of(context);
     final brightness = theme.brightness;
-    final textSecondary = DesignTokens.getTextSecondary(brightness);
 
     return Scaffold(
       body: SafeArea(
@@ -119,37 +118,15 @@ class PodcastScreen extends ConsumerWidget {
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
-                      child: RoundedCard(
-                        glass: true,
-                        backgroundColor: DesignTokens.glassBackgroundDeep(0.20),
-                        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-                        withShadow: false,
-                        child: TextField(
-                          onChanged: (value) {
-                            ref.read(podcastSearchQueryProvider.notifier).state = value;
-                          },
-                          decoration: InputDecoration(
-                            hintText: translate('Podcasts suchen...'),
-                            hintStyle: TextStyle(
-                              color: textSecondary,
-                              fontSize: 16,
-                            ),
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color: textSecondary,
-                            ),
-                            suffixIcon: searchQuery.isNotEmpty
-                                ? IconButton(
-                                    icon: Icon(Icons.clear, color: textSecondary),
-                                    onPressed: () {
-                                      ref.read(podcastSearchQueryProvider.notifier).state = '';
-                                    },
-                                  )
-                                : null,
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          ),
-                        ),
+                      child: AppSearchBar(
+                        hint: translate('Podcasts suchen...'),
+                        showClear: searchQuery.isNotEmpty,
+                        onChanged: (value) {
+                          ref.read(podcastSearchQueryProvider.notifier).state = value;
+                        },
+                        onClear: () {
+                          ref.read(podcastSearchQueryProvider.notifier).state = '';
+                        },
                       ),
                     ),
                   ),

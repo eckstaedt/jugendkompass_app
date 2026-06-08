@@ -40,7 +40,6 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
     final theme = Theme.of(context);
     final brightness = theme.brightness;
     final textPrimary = DesignTokens.getTextPrimary(brightness);
-    final textSecondary = DesignTokens.getTextSecondary(brightness);
     final translate = ref.watch(stringTranslatorProvider);
 
     return Scaffold(
@@ -66,43 +65,21 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
             // Search Bar at Top
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-              child: RoundedCard(
-                glass: true,
-                backgroundColor: DesignTokens.glassBackgroundDeep(0.20),
-                padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-                withShadow: false,
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value.toLowerCase();
-                    });
-                  },
-                  decoration: InputDecoration(
-                    hintText: translate('Videos suchen...'),
-                    hintStyle: TextStyle(
-                      color: textSecondary,
-                      fontSize: 16,
-                    ),
-                    prefixIcon: Icon(
-                      Icons.search,
-                      color: textSecondary,
-                    ),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: Icon(Icons.clear, color: textSecondary),
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() {
-                                _searchQuery = '';
-                              });
-                            },
-                          )
-                        : null,
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  ),
-                ),
+              child: AppSearchBar(
+                hint: translate('Videos suchen...'),
+                controller: _searchController,
+                showClear: _searchQuery.isNotEmpty,
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value.toLowerCase();
+                  });
+                },
+                onClear: () {
+                  _searchController.clear();
+                  setState(() {
+                    _searchQuery = '';
+                  });
+                },
               ),
             ),
 

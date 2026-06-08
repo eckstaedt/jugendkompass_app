@@ -72,7 +72,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final theme = Theme.of(context);
     final brightness = theme.brightness;
     final textPrimary = DesignTokens.getTextPrimary(brightness);
-    final textSecondary = DesignTokens.getTextSecondary(brightness);
     final selectedFilter = ref.watch(_selectedDiscoverFilterProvider);
     final sortDescending = ref.watch(_sortDescendingProvider);
     final translate = ref.watch(stringTranslatorProvider);
@@ -109,80 +108,22 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   const SizedBox(height: 16),
 
                   // Search Field
-                  // search box sits inside a glass card to match app style
-                  RoundedCard(
-                    glass: true,
-                    backgroundColor: DesignTokens.glassBackgroundDeep(0.20),
-                    padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-                    withShadow: false,
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                      hintText: translate('Wonach suchst du?'),
-                      hintStyle: TextStyle(
-                        color: textSecondary,
-                        fontSize: 16,
-                      ),
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: textSecondary,
-                      ),
-                        suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                            icon: Icon(Icons.clear,
-                              color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withOpacity(0.6)),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() {
-                                  _searchQuery = '';
-                                });
-                              },
-                            )
-                          : null,
-                      filled: true,
-                      fillColor: Theme.of(context).colorScheme.surface,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusInputFields),
-                        borderSide: BorderSide(
-                            color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.12),
-                          width: 1,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withOpacity(0.12),
-                          width: 1,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(DesignTokens.radiusInputFields),
-                        borderSide: const BorderSide(
-                          color: DesignTokens.primaryRed,
-                          width: 2,
-                        ),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                    ),
+                  AppSearchBar(
+                    hint: translate('Wonach suchst du?'),
+                    controller: _searchController,
+                    showClear: _searchQuery.isNotEmpty,
                     onChanged: (value) {
                       setState(() {
                         _searchQuery = value.trim();
                       });
                     },
+                    onClear: () {
+                      _searchController.clear();
+                      setState(() {
+                        _searchQuery = '';
+                      });
+                    },
                   ),
-                  ), // close RoundedCard
                 ],
               ),
             ),
