@@ -19,10 +19,10 @@ import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/services/local_verse_notification_service.dart';
 
 import 'package:jugendkompass_app/data/services/collection_service.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../onboarding/onboarding_screen.dart';
 import 'collection_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/search/search_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/shop/shop_screen.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -357,7 +357,7 @@ class ProfileScreen extends ConsumerWidget {
           ),
 
           const SizedBox(height: DesignTokens.spacingSmall),
-          // Shop – opens external website
+          // Shop – opens in-app
           ListTile(
             tileColor: DesignTokens.getGlassBackground(theme.brightness, 0.22),
             shape: RoundedRectangleBorder(
@@ -366,13 +366,15 @@ class ProfileScreen extends ConsumerWidget {
             ),
             leading: const Icon(Icons.storefront_outlined),
             title: Text(translate('Shop')),
-            subtitle: const Text('stephanus-verlag.de'),
-            trailing: const Icon(Icons.open_in_new, size: 18),
-            onTap: () async {
-              final uri = Uri.parse('https://stephanus-verlag.de/');
-              if (await canLaunchUrl(uri)) {
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
-              }
+            subtitle: Text(translate('Heft kostenlos bestellen')),
+            trailing: const Icon(Icons.chevron_right, size: 20),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ShopScreen(),
+                ),
+              );
             },
           ),
 

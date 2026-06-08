@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
+import 'package:jugendkompass_app/presentation/screens/shop/subscription_form_screen.dart';
 
 class ShopScreen extends ConsumerWidget {
   const ShopScreen({super.key});
@@ -9,6 +11,7 @@ class ShopScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final brightness = theme.brightness;
     final translate = ref.watch(stringTranslatorProvider);
 
     return Scaffold(
@@ -17,36 +20,151 @@ class ShopScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: Center(
+      body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: DesignTokens.paddingHorizontal),
+          padding: const EdgeInsets.symmetric(
+            horizontal: DesignTokens.paddingHorizontal,
+            vertical: 24,
+          ),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(
-                Icons.storefront_outlined,
-                size: 80,
-                color: theme.colorScheme.onSurface.withOpacity(0.4),
+              const Spacer(),
+
+              // Placeholder icon (replace with image later)
+              Container(
+                width: 140,
+                height: 140,
+                decoration: BoxDecoration(
+                  color: DesignTokens.primaryRed.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.menu_book_rounded,
+                  size: 72,
+                  color: DesignTokens.primaryRed,
+                ),
               ),
-              const SizedBox(height: DesignTokens.spacingLarge),
+
+              const SizedBox(height: 32),
+
+              // Headline
               Text(
-                translate('Der Shop wird bald verfügbar sein!'),
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
+                translate('Das Heft bequem zu dir nach Hause bestellen'),
+                style: GoogleFonts.poppins(
+                  textStyle: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
+                  ),
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: DesignTokens.spacingMedium),
+
+              const SizedBox(height: 12),
+
+              // Subline
               Text(
-                translate('Bis dahin kannst du dich zurücklehnen und dich auf neue Angebote freuen.'),
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                translate('Rund um die Uhr – kostenlos & frei Haus'),
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: DesignTokens.getTextSecondary(brightness),
                 ),
                 textAlign: TextAlign.center,
               ),
+
+              const SizedBox(height: 16),
+
+              // Highlight chips
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                children: [
+                  _InfoChip(icon: Icons.local_shipping_outlined, label: translate('Kostenloser Versand')),
+                  _InfoChip(icon: Icons.euro_outlined, label: translate('Kostenlos')),
+                  _InfoChip(icon: Icons.schedule_outlined, label: translate('Rund um die Uhr')),
+                ],
+              ),
+
+              const Spacer(),
+
+              // CTA Button
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: FilledButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const SubscriptionFormScreen(),
+                      ),
+                    );
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: DesignTokens.primaryRed,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
+                    ),
+                  ),
+                  icon: const Icon(Icons.shopping_bag_outlined),
+                  label: Text(
+                    translate('Jetzt bestellen'),
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              Text(
+                translate('Keine Zahlung erforderlich'),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: DesignTokens.getTextSecondary(brightness),
+                ),
+              ),
+
+              const SizedBox(height: 8),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _InfoChip({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final brightness = theme.brightness;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: DesignTokens.getGlassBackground(brightness, 0.18),
+        borderRadius: BorderRadius.circular(20),
+        border: DesignTokens.cardBorder(brightness),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: DesignTokens.primaryRed),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: theme.textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
