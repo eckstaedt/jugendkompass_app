@@ -79,6 +79,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen>
         ],
       ),
       body: SafeArea(
+        bottom: false,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Column(
