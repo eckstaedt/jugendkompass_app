@@ -375,12 +375,12 @@ class _PollContentTileState extends ConsumerState<PollContentTile> with SingleTi
                                       gradient: LinearGradient(
                                         colors: isUserVote
                                             ? [
-                                                DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.25),
-                                                DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.12),
+                                                DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.55),
+                                                DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.18),
                                               ]
                                             : [
-                                                DesignTokens.getTextSecondary(brightness).withValues(alpha: 0.15),
-                                                DesignTokens.getTextSecondary(brightness).withValues(alpha: 0.08),
+                                                DesignTokens.getTextSecondary(brightness).withValues(alpha: 0.18),
+                                                DesignTokens.getTextSecondary(brightness).withValues(alpha: 0.06),
                                               ],
                                       ),
                                     ),
