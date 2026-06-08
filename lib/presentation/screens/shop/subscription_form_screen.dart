@@ -5,6 +5,7 @@ import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/domain/providers/supabase_provider.dart';
+import 'package:jugendkompass_app/presentation/screens/shop/order_success_screen.dart';
 
 class SubscriptionFormScreen extends ConsumerStatefulWidget {
   const SubscriptionFormScreen({super.key});
@@ -83,11 +84,10 @@ class _SubscriptionFormScreenState
       });
 
       if (mounted) {
-        // Pop form and show success on ShopScreen
-        Navigator.pop(context);
-        SnackBarUtils.showSuccess(
+        // Navigate to success screen, replacing the form in the stack
+        Navigator.pushReplacement(
           context,
-          'Bestellung erfolgreich! Du erhältst das Heft bald. 🎉',
+          MaterialPageRoute(builder: (_) => const OrderSuccessScreen()),
         );
       }
     } catch (e) {
