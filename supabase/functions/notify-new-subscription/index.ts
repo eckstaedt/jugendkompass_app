@@ -178,6 +178,12 @@ Deno.serve(async (req) => {
       }
     }
 
+    try {
+      await sendConfirmationEmail(sub as any);
+    } catch (e) {
+      console.error("Bestätigungsmail Fehler", e);
+    }
+
     return new Response(JSON.stringify({ results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
