@@ -611,6 +611,54 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          address_extra: string | null
+          city: string
+          country: string
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+          phone: string | null
+          postal_code: string
+          shipping_method: Database["public"]["Enums"]["shipping_method"]
+          street: string
+          updated_at: string
+        }
+        Insert: {
+          address_extra?: string | null
+          city: string
+          country: string
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+          phone?: string | null
+          postal_code: string
+          shipping_method?: Database["public"]["Enums"]["shipping_method"]
+          street: string
+          updated_at?: string
+        }
+        Update: {
+          address_extra?: string | null
+          city?: string
+          country?: string
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string | null
+          postal_code?: string
+          shipping_method?: Database["public"]["Enums"]["shipping_method"]
+          street?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       test_push_devices: {
         Row: {
           created_at: string
@@ -906,6 +954,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      shipping_method: "standard" | "pickup"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1034,6 +1083,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      shipping_method: ["standard", "pickup"],
     },
   },
 } as const

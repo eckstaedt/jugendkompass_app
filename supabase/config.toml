@@ -1,3 +1,6 @@
 project_id = "vdcdibvclaulqxfjyzpq"
 [functions.dispatch-message-pushes]
 verify_jwt = true
+
+[functions.notify-new-subscription]
+verify_jwt = false

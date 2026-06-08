@@ -15,7 +15,8 @@ import {
   Moon,
   Sun,
   Globe,
-  BellIcon
+  BellIcon,
+  MailIcon
 } from 'lucide-react';
 import { useTheme } from '@/hooks/use-theme';
 import { useEffect } from 'react';
@@ -102,6 +103,11 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
       label: 'Berichte',
       path: '/dashboard/reports',
       icon: LineChartIcon,
+    },
+    {
+      label: 'Abonnements',
+      path: '/dashboard/subscriptions',
+      icon: MailIcon,
     },
     {
       label: 'Test Pushes',
