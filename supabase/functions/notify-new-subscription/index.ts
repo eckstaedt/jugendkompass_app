@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
 
     const { data: sub, error: subErr } = await admin
       .from("subscriptions")
-      .select("first_name, last_name, city, shipping_method")
+      .select("first_name, last_name, email, street, postal_code, city, country, address_extra, shipping_method")
       .eq("id", subscription_id)
       .maybeSingle();
     if (subErr) throw subErr;
