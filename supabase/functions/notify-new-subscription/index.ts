@@ -17,6 +17,56 @@ const FCM_SERVICE_ACCOUNT_JSON =
   Deno.env.get("FCM_SERVICE_ACCOUNT_JSON") ??
   Deno.env.get("FCM_SERVICE_ACCOUNT_KEY") ??
   "";
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
+const RESEND_FROM = Deno.env.get("RESEND_FROM") ?? "Jugendkompass <onboarding@resend.dev>";
+
+async function sendConfirmationEmail(sub: {
+  email: string;
+  first_name: string;
+  last_name: string;
+  street: string;
+  postal_code: string;
+  city: string;
+  country: string;
+  address_extra: string | null;
+  shipping_method: string;
+}) {
+  if (!RESEND_API_KEY) {
+    console.warn("RESEND_API_KEY nicht gesetzt – überspringe Bestätigungsmail");
+    return;
+  }
+  const method = sub.shipping_method === "pickup" ? "Abholung" : "Standardversand";
+  const addressLine = `${sub.street}${sub.address_extra ? ", " + sub.address_extra : ""}`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; color: #1a1a1a;">
+      <h2 style="color:#1a1a1a;">Vielen Dank für dein Print-Abo, ${sub.first_name}!</h2>
+      <p>Wir haben dein Abonnement der Zeitschrift <strong>Jugendkompass</strong> erfolgreich empfangen.</p>
+      <h3 style="margin-top:24px;">Deine Daten</h3>
+      <p style="margin:4px 0;"><strong>Name:</strong> ${sub.first_name} ${sub.last_name}</p>
+      <p style="margin:4px 0;"><strong>Adresse:</strong><br/>${addressLine}<br/>${sub.postal_code} ${sub.city}<br/>${sub.country}</p>
+      <p style="margin:4px 0;"><strong>Versandart:</strong> ${method}</p>
+      <p style="margin-top:24px;">Du erhältst die nächste Ausgabe automatisch per Post${sub.shipping_method === "pickup" ? " bzw. kannst sie abholen" : ""}.</p>
+      <p>Bei Fragen antworte einfach auf diese E-Mail.</p>
+      <p style="margin-top:32px;">Herzliche Grüße,<br/>Dein Jugendkompass-Team</p>
+    </div>
+  `;
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from: RESEND_FROM,
+      to: [sub.email],
+      subject: "Bestätigung deines Print-Abos – Jugendkompass",
+      html,
+    }),
+  });
+  if (!res.ok) {
+    console.error("Resend Fehler", res.status, await res.text());
+  }
+}
 
 let cachedAccessToken: { token: string; exp: number } | null = null;
 
