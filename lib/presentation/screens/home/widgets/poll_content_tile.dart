@@ -310,7 +310,6 @@ class _PollContentTileState extends ConsumerState<PollContentTile> with SingleTi
                       },
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         decoration: BoxDecoration(
                           gradient: hasVoted
                               ? (isUserVote
@@ -360,36 +359,38 @@ class _PollContentTileState extends ConsumerState<PollContentTile> with SingleTi
                                 ]
                               : null,
                         ),
+                        clipBehavior: Clip.antiAlias,
                         child: Stack(
                           children: [
-                            // Animated progress bar background for voted polls
+                            // Animated progress bar – positioned behind content, fills from left edge
                             if (hasVoted)
                               Positioned.fill(
                                 child: AnimatedFractionallySizedBox(
                                   duration: const Duration(milliseconds: 600),
                                   curve: Curves.easeOut,
                                   alignment: Alignment.centerLeft,
-                                  widthFactor: percentage / 100,
+                                  widthFactor: isUserVote ? 1.0 : percentage / 100,
                                   child: Container(
                                     decoration: BoxDecoration(
                                       gradient: LinearGradient(
                                         colors: isUserVote
                                             ? [
-                                                DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.3),
-                                                DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.15),
+                                                DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.25),
+                                                DesignTokens.getSuccessColor(brightness).withValues(alpha: 0.12),
                                               ]
                                             : [
                                                 DesignTokens.getTextSecondary(brightness).withValues(alpha: 0.15),
                                                 DesignTokens.getTextSecondary(brightness).withValues(alpha: 0.08),
                                               ],
                                       ),
-                                      borderRadius: BorderRadius.circular(14),
                                     ),
                                   ),
                                 ),
                               ),
-                            // Content row
-                            Row(
+                            // Content with padding on top of the bar
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              child: Row(
                               children: [
                                 // Show radio button only if user hasn't voted yet
                                 if (!hasVoted)
@@ -458,6 +459,7 @@ class _PollContentTileState extends ConsumerState<PollContentTile> with SingleTi
                                   ),
                                 ],
                               ],
+                              ),
                             ),
                           ],
                         ),
