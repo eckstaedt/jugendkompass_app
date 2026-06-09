@@ -37,6 +37,10 @@ class KioskScreen extends ConsumerWidget {
                 );
               }
 
+              // Sort newest first
+              final sorted = [...editions]
+                ..sort((a, b) => b.publishedDate.compareTo(a.publishedDate));
+
               return CustomScrollView(
                 slivers: [
                   // Header
@@ -76,9 +80,9 @@ class KioskScreen extends ConsumerWidget {
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
-                          return EditionCard(edition: editions[index]);
+                          return EditionCard(edition: sorted[index]);
                         },
-                        childCount: editions.length,
+                        childCount: sorted.length,
                       ),
                     ),
                   ),
