@@ -49,7 +49,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen>
 
   Future<void> _openDonation() async {
     // Placeholder – replace with real donation link later
-    final uri = Uri.parse('https://www.paypal.com');
+    final uri = Uri.parse('https://paypal.me/jugendkompass');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }

@@ -366,7 +366,7 @@ class ProfileScreen extends ConsumerWidget {
             ),
             leading: const Icon(Icons.storefront_outlined),
             title: Text(translate('Shop')),
-            subtitle: Text(translate('Heft kostenlos bestellen')),
+            subtitle: Text(translate('Erstes Heft kostenlos')),
             trailing: const Icon(Icons.chevron_right, size: 20),
             onTap: () {
               Navigator.push(

@@ -183,7 +183,7 @@ class _SubscriptionFormScreenState
             ),
             const SizedBox(height: 16),
             Text(
-              translate('Das Heft bequem zu dir nach Hause bestellen – kostenlos & frei Haus'),
+              translate('Das Heft bequem zu dir nach Hause bestellen'),
               style: GoogleFonts.poppins(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
