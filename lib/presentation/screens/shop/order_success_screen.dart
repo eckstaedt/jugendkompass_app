@@ -140,47 +140,32 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen>
               // Donation button
               FadeTransition(
                 opacity: _fadeAnim,
-                child: Column(
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: FilledButton.icon(
-                        onPressed: _openDonation,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF003087), // PayPal Blue
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                                DesignTokens.radiusButtons),
-                          ),
-                        ),
-                        icon: const Icon(Icons.favorite_outline),
-                        label: const Text(
-                          'Für diese Ausgabe spenden',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: FilledButton.icon(
+                    onPressed: _openDonation,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF003087), // PayPal Blue
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                            DesignTokens.radiusButtons),
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: Text(
-                        'Unterstütze uns mit einer freiwilligen Spende via PayPal',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: DesignTokens.getTextSecondary(brightness),
-                        ),
-                        textAlign: TextAlign.center,
+                    icon: const Icon(Icons.favorite_outline),
+                    label: const Text(
+                      'Für diese Ausgabe spenden',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ),
 
-              SizedBox(height: MediaQuery.of(context).padding.bottom + 56),
+              SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
             ],
           ),
         ),
