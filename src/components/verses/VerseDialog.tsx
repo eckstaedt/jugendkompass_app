@@ -26,12 +26,27 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
-import { DailyVerse } from "@/lib/supabase";
+import { DailyVerse, supabase } from "@/lib/supabase";
 import { RetranslateButton } from '@/components/translations/RetranslateButton';
 import { VerseImageUploader } from "./VerseImageUploader";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
 
 type FormData = Omit<DailyVerse, 'id' | 'content_id' | 'created_at' | 'content'>;
+
+function normalizeVerse(s: string) {
+  return (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
 
 interface VerseDialogProps {
   open: boolean;
