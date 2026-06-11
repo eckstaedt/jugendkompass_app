@@ -88,12 +88,48 @@ export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }:
     }
   }, [open, mode, initialData, form]);
 
-  const handleSubmit = (data: FormData) => {
+  const [duplicates, setDuplicates] = useState<Array<{ id: string; date: string; reference: string }>>([]);
+  const [pendingData, setPendingData] = useState<FormData | null>(null);
+  const [checking, setChecking] = useState(false);
+
+  const proceedSubmit = (data: FormData) => {
+    onSubmit(data);
+    setPendingData(null);
+    setDuplicates([]);
+  };
+
+  const handleSubmit = async (data: FormData) => {
     if (!data.image_url) {
       toast.error("Bitte ein Bild hochladen.");
       return;
     }
-    onSubmit(data);
+
+    setChecking(true);
+    try {
+      const { data: rows, error } = await supabase
+        .from('verse_of_the_day')
+        .select('id, verse, reference, date')
+        .eq('reference', data.reference)
+        .order('date', { ascending: false })
+        .limit(50);
+
+      if (!error && rows) {
+        const target = normalizeVerse(data.verse);
+        const matches = rows.filter((r: any) =>
+          r.id !== initialData?.id && normalizeVerse(r.verse) === target
+        );
+        if (matches.length > 0) {
+          setDuplicates(matches as any);
+          setPendingData(data);
+          setChecking(false);
+          return;
+        }
+      }
+    } catch (e) {
+      console.error('Duplicate check failed', e);
+    }
+    setChecking(false);
+    proceedSubmit(data);
   };
 
   return (
