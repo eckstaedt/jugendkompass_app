@@ -26,12 +26,27 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
-import { DailyVerse } from "@/lib/supabase";
+import { DailyVerse, supabase } from "@/lib/supabase";
 import { RetranslateButton } from '@/components/translations/RetranslateButton';
 import { VerseImageUploader } from "./VerseImageUploader";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
 
 type FormData = Omit<DailyVerse, 'id' | 'content_id' | 'created_at' | 'content'>;
+
+function normalizeVerse(s: string) {
+  return (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
 
 interface VerseDialogProps {
   open: boolean;
@@ -73,12 +88,48 @@ export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }:
     }
   }, [open, mode, initialData, form]);
 
-  const handleSubmit = (data: FormData) => {
+  const [duplicates, setDuplicates] = useState<Array<{ id: string; date: string; reference: string }>>([]);
+  const [pendingData, setPendingData] = useState<FormData | null>(null);
+  const [checking, setChecking] = useState(false);
+
+  const proceedSubmit = (data: FormData) => {
+    onSubmit(data);
+    setPendingData(null);
+    setDuplicates([]);
+  };
+
+  const handleSubmit = async (data: FormData) => {
     if (!data.image_url) {
       toast.error("Bitte ein Bild hochladen.");
       return;
     }
-    onSubmit(data);
+
+    setChecking(true);
+    try {
+      const { data: rows, error } = await supabase
+        .from('verse_of_the_day')
+        .select('id, verse, reference, date')
+        .eq('reference', data.reference)
+        .order('date', { ascending: false })
+        .limit(50);
+
+      if (!error && rows) {
+        const target = normalizeVerse(data.verse);
+        const matches = rows.filter((r: any) =>
+          r.id !== initialData?.id && normalizeVerse(r.verse) === target
+        );
+        if (matches.length > 0) {
+          setDuplicates(matches as any);
+          setPendingData(data);
+          setChecking(false);
+          return;
+        }
+      }
+    } catch (e) {
+      console.error('Duplicate check failed', e);
+    }
+    setChecking(false);
+    proceedSubmit(data);
   };
 
   return (
@@ -185,11 +236,43 @@ export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }:
               {mode === 'edit' && initialData?.content_id && (
                 <RetranslateButton contentId={initialData.content_id} />
               )}
-              <Button type="submit">{mode === 'create' ? 'Erstellen' : 'Speichern'}</Button>
+              <Button type="submit" disabled={checking}>
+                {checking ? 'Prüfe…' : mode === 'create' ? 'Erstellen' : 'Speichern'}
+              </Button>
             </DialogFooter>
           </form>
         </Form>
       </DialogContent>
+
+      <AlertDialog
+        open={duplicates.length > 0}
+        onOpenChange={(o) => { if (!o) { setDuplicates([]); setPendingData(null); } }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Vers wurde bereits verwendet</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>Dieser Vers war bereits an folgenden Tagen Vers des Tages:</p>
+                <ul className="list-disc pl-5">
+                  {duplicates.map((d) => (
+                    <li key={d.id}>
+                      {format(new Date(d.date), 'dd. MMMM yyyy', { locale: de })} – {d.reference}
+                    </li>
+                  ))}
+                </ul>
+                <p>Trotzdem speichern?</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={() => pendingData && proceedSubmit(pendingData)}>
+              Trotzdem speichern
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
