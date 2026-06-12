@@ -31,17 +31,14 @@
             android:letterSpacing="0.12" />
     </LinearLayout>
 
-    <!-- Top spacer (larger – pushes verse toward centre) -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="2" />
-
-    <!-- Verse text -->
+    <!-- Verse text – fills remaining space, vertically centred -->
     <TextView
         android:id="@+id/widget_verse"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical"
         android:text="Laden..."
         android:textSize="13sp"
         android:textColor="#1A1A1A"
@@ -50,17 +47,12 @@
         android:ellipsize="end"
         android:maxLines="5" />
 
-    <!-- Bottom spacer (smaller) -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-
     <!-- Reference aligned end, italic, secondary colour -->
     <TextView
         android:id="@+id/widget_reference"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
         android:text=""
         android:textSize="10sp"
         android:textColor="#888888"
