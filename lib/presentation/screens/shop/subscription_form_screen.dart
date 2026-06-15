@@ -171,17 +171,8 @@ class _SubscriptionFormScreenState
             bottom: DesignTokens.overlayPaddingBase + 24,
           ),
           children: [
-            // ── Bild & Intro ─────────────────────────────────────────
+            // ── Intro ────────────────────────────────────────────────
             const SizedBox(height: 8),
-            Center(
-              child: Image.asset(
-                'assets/images/shop_magazines.png',
-                width: double.infinity,
-                height: 220,
-                fit: BoxFit.contain,
-              ),
-            ),
-            const SizedBox(height: 16),
             Text(
               translate('Das Heft bequem zu dir nach Hause bestellen'),
               style: GoogleFonts.poppins(
