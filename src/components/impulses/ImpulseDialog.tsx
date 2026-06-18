@@ -28,6 +28,19 @@ import { useTestPushDevices, useSendTestPush } from '@/hooks/use-test-push-devic
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 
+const getEdgeFunctionErrorMessage = async (error: unknown) => {
+  const context = (error as { context?: Response })?.context;
+  if (context) {
+    try {
+      const payload = await context.clone().json();
+      if (typeof payload?.error === 'string') return payload.error;
+    } catch {
+      // Fall back to the default error message below.
+    }
+  }
+  return (error as Error).message;
+};
+
 type ImpulseFormData = {
   date: string;
   title: string;
@@ -80,7 +93,7 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
         impulse_text: defaultValues?.impulse_text || '',
         notification_title: defaultValues?.notification_title || '',
         notification_body: defaultValues?.notification_body || '',
-        image: undefined as any,
+        image: undefined as unknown as FileList,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -164,8 +177,16 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
   const handleDispatchPush = async () => {
     if (!defaultValues?.id) return;
     const values = form.getValues();
-    if (!values.notification_title.trim()) {
-      toast({ title: 'Kein Push-Titel', description: 'Bitte zuerst Push-Titel hinterlegen und speichern.', variant: 'destructive' });
+    const savedTitle = defaultValues.notification_title?.trim() ?? '';
+    const savedBody = defaultValues.notification_body?.trim() ?? '';
+    const formTitle = values.notification_title.trim();
+    const formBody = values.notification_body.trim();
+    if (!savedTitle) {
+      toast({ title: 'Kein Push-Titel gespeichert', description: 'Bitte zuerst Push-Titel hinterlegen und speichern.', variant: 'destructive' });
+      return;
+    }
+    if (formTitle !== savedTitle || formBody !== savedBody) {
+      toast({ title: 'Änderungen nicht gespeichert', description: 'Bitte Push-Titel und Push-Text vor dem Senden speichern.', variant: 'destructive' });
       return;
     }
     if (defaultValues.notification_sent_at) {
@@ -188,7 +209,7 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
       queryClient.invalidateQueries({ queryKey: ['impulses'] });
       onOpenChange(false);
     } catch (e) {
-      toast({ title: 'Fehler', description: (e as Error).message, variant: 'destructive' });
+      toast({ title: 'Fehler', description: await getEdgeFunctionErrorMessage(e), variant: 'destructive' });
     } finally {
       setIsDispatching(false);
     }
