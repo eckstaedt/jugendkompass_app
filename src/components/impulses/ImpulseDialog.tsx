@@ -93,7 +93,7 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
         impulse_text: defaultValues?.impulse_text || '',
         notification_title: defaultValues?.notification_title || '',
         notification_body: defaultValues?.notification_body || '',
-        image: undefined as any,
+        image: undefined as unknown as FileList,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
