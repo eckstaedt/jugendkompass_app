@@ -44,9 +44,6 @@ import { useState } from "react";
 
 type FormData = Omit<DailyVerse, 'id' | 'content_id' | 'created_at' | 'content'>;
 
-function normalizeVerse(s: string) {
-  return (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
-}
 
 interface VerseDialogProps {
   open: boolean;
@@ -108,15 +105,14 @@ export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }:
     try {
       const { data: rows, error } = await supabase
         .from('verse_of_the_day')
-        .select('id, verse, reference, date')
+        .select('id, reference, date')
         .eq('reference', data.reference)
         .order('date', { ascending: false })
         .limit(50);
 
       if (!error && rows) {
-        const target = normalizeVerse(data.verse);
         const matches = rows.filter((r: any) =>
-          r.id !== initialData?.id && normalizeVerse(r.verse) === target
+          r.id !== initialData?.id
         );
         if (matches.length > 0) {
           setDuplicates(matches as any);
