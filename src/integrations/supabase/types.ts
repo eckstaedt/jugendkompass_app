@@ -621,6 +621,7 @@ export type Database = {
           first_name: string
           id: string
           last_name: string
+          paid: boolean
           phone: string | null
           postal_code: string
           shipping_method: Database["public"]["Enums"]["shipping_method"]
@@ -636,6 +637,7 @@ export type Database = {
           first_name: string
           id?: string
           last_name: string
+          paid?: boolean
           phone?: string | null
           postal_code: string
           shipping_method?: Database["public"]["Enums"]["shipping_method"]
@@ -651,6 +653,7 @@ export type Database = {
           first_name?: string
           id?: string
           last_name?: string
+          paid?: boolean
           phone?: string | null
           postal_code?: string
           shipping_method?: Database["public"]["Enums"]["shipping_method"]

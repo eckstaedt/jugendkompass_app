@@ -4,16 +4,19 @@ import {
   useSubscriptions,
   useCreateSubscription,
   useDeleteSubscription,
+  useUpdateSubscriptionPaid,
 } from '@/hooks/use-subscriptions';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const SubscriptionsPage = () => {
   const { data: subs, isLoading } = useSubscriptions();
   const create = useCreateSubscription();
   const del = useDeleteSubscription();
+  const updatePaid = useUpdateSubscriptionPaid();
   const { toast } = useToast();
 
   return (
@@ -64,25 +67,45 @@ const SubscriptionsPage = () => {
                       {format(new Date(s.created_at), 'dd.MM.yyyy HH:mm')}
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={async () => {
-                      if (!confirm('Abonnement wirklich löschen?')) return;
-                      try {
-                        await del.mutateAsync(s.id);
-                        toast({ title: 'Gelöscht', description: 'Abo wurde gelöscht.' });
-                      } catch (e) {
-                        toast({
-                          title: 'Fehler',
-                          description: (e as Error).message,
-                          variant: 'destructive',
-                        });
-                      }
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={Boolean(s.paid)}
+                        onCheckedChange={async (checked) => {
+                          try {
+                            await updatePaid.mutateAsync({ id: s.id, paid: checked === true });
+                            toast({ title: 'Gespeichert', description: 'Bezahlt-Status wurde aktualisiert.' });
+                          } catch (e) {
+                            toast({
+                              title: 'Fehler',
+                              description: (e as Error).message,
+                              variant: 'destructive',
+                            });
+                          }
+                        }}
+                      />
+                      <span>Bezahlt</span>
+                    </label>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={async () => {
+                        if (!confirm('Abonnement wirklich löschen?')) return;
+                        try {
+                          await del.mutateAsync(s.id);
+                          toast({ title: 'Gelöscht', description: 'Abo wurde gelöscht.' });
+                        } catch (e) {
+                          toast({
+                            title: 'Fehler',
+                            description: (e as Error).message,
+                            variant: 'destructive',
+                          });
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

@@ -15,6 +15,7 @@ export type Subscription = {
   country: string;
   address_extra: string | null;
   shipping_method: ShippingMethod;
+  paid: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -59,6 +60,23 @@ export const useDeleteSubscription = () => {
         .delete()
         .eq('id', id);
       if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['subscriptions'] }),
+  });
+};
+
+export const useUpdateSubscriptionPaid = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, paid }: { id: string; paid: boolean }) => {
+      const { data, error } = await supabase
+        .from('subscriptions' as any)
+        .update({ paid, updated_at: new Date().toISOString() } as any)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as unknown as Subscription;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['subscriptions'] }),
   });
