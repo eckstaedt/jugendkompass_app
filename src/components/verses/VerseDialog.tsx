@@ -89,6 +89,9 @@ export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }:
   const [pendingData, setPendingData] = useState<FormData | null>(null);
   const [checking, setChecking] = useState(false);
 
+  const normalizeReference = (value: string) =>
+    value.trim().replace(/[,:]/g, ':').toLowerCase();
+
   const proceedSubmit = (data: FormData) => {
     onSubmit(data);
     setPendingData(null);
@@ -103,17 +106,18 @@ export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }:
 
     setChecking(true);
     try {
+      const normalizedReference = normalizeReference(data.reference);
       const { data: rows, error } = await supabase
         .from('verse_of_the_day')
         .select('id, reference, date')
-        .eq('reference', data.reference)
         .order('date', { ascending: false })
         .limit(50);
 
       if (!error && rows) {
-        const matches = rows.filter((r: any) =>
-          r.id !== initialData?.id
-        );
+        const matches = rows.filter((r: any) => {
+          if (r.id === initialData?.id) return false;
+          return normalizeReference(r.reference) === normalizedReference;
+        });
         if (matches.length > 0) {
           setDuplicates(matches as any);
           setPendingData(data);
