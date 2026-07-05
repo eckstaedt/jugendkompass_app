@@ -17,6 +17,7 @@ import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 import 'package:jugendkompass_app/domain/providers/post_view_count_provider.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/like_button.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 
@@ -281,6 +282,8 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                       ],
                     ],
                   ),
+                  const SizedBox(height: 8),
+                  LikeButton(contentId: post.id, contentType: 'post'),
 
                   // Audio play / pause button
                   if (hasAudio) ...[

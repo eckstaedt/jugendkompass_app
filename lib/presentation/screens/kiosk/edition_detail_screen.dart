@@ -20,6 +20,7 @@ import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/post_view_count_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/like_button.dart';
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 
 import 'package:google_fonts/google_fonts.dart';
@@ -147,7 +148,9 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
         Text(edition.name.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(fontSize: 12, letterSpacing: 1.5, color: DesignTokens.primaryRed, fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
         Text(edition.displayTitle, style: theme.textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold, color: textPrimary)),
-        const SizedBox(height: 20),
+        const SizedBox(height: 8),
+        LikeButton(contentId: edition.id, contentType: 'edition'),
+        const SizedBox(height: 12),
         // Audio controls: play full edition
         if (audios.isNotEmpty) ...[
           FilledButton.icon(

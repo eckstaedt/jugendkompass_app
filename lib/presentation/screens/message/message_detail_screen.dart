@@ -11,6 +11,7 @@ import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/domain/providers/post_view_count_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/like_button.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
@@ -151,6 +152,8 @@ class _MessageDetailScreenState extends ConsumerState<MessageDetailScreen> {
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            LikeButton(contentId: message.id, contentType: 'message'),
             const SizedBox(height: 16),
             // Message body rendered as HTML
             Html(

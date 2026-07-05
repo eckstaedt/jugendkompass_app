@@ -13,6 +13,7 @@ import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/domain/providers/post_view_count_provider.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/like_button.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 
@@ -227,6 +228,8 @@ class _ImpulseDetailScreenState extends ConsumerState<ImpulseDetailScreen> {
                           ) ?? const SizedBox.shrink();
                         },
                       ),
+                      // Like button
+                      LikeButton(contentId: impulse.id, contentType: 'impulse'),
                     ],
                   ),
 

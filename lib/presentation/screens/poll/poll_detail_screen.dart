@@ -8,7 +8,6 @@ import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 import 'package:jugendkompass_app/domain/providers/supabase_provider.dart';
 
 class PollDetailScreen extends ConsumerStatefulWidget {
@@ -325,7 +324,7 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen> {
                       ),
                     ),
                   );
-                }).toList(),
+                }),
 
                 // Vote button (only show if not voted yet)
                 if (!hasVoted && userId != null) ...[

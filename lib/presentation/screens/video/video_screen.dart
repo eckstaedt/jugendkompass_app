@@ -16,6 +16,7 @@ import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/like_button.dart';
 
 class VideoScreen extends ConsumerStatefulWidget {
   const VideoScreen({super.key});
@@ -335,6 +336,8 @@ class _VideoCardState extends ConsumerState<VideoCard> {
               );
             },
           ),
+          const SizedBox(height: 2),
+          LikeButton(contentId: widget.video.url, contentType: 'video'),
         ],
       ),
     ),

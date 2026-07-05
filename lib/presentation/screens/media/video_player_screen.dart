@@ -227,7 +227,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       // Auto-retry for codec errors
       if (_isCodecError(e.toString()) && _retryCount < _maxRetries) {
         _retryCount++;
-        debugPrint('[VideoPlayer] Codec error detected, retrying (${_retryCount}/$_maxRetries)...');
+        debugPrint('[VideoPlayer] Codec error detected, retrying ($_retryCount/$_maxRetries)...');
         await _initializePlayer(isRetry: true);
         return;
       }
@@ -248,7 +248,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       // Try to recover from codec errors during playback
       if (_isCodecError(error) && _retryCount < _maxRetries && mounted) {
         _retryCount++;
-        debugPrint('[VideoPlayer] Runtime codec error, attempting recovery (${_retryCount}/$_maxRetries)...');
+        debugPrint('[VideoPlayer] Runtime codec error, attempting recovery ($_retryCount/$_maxRetries)...');
         setState(() {
           _isInitialized = false;
         });

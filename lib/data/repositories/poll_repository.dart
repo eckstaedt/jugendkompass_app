@@ -31,18 +31,18 @@ class PollRepository {
           .range(offset, offset + limit - 1);
 
       // Handle empty response
-      if (pollsResponse == null || (pollsResponse is List && pollsResponse.isEmpty)) {
+      if ((pollsResponse.isEmpty)) {
         return [];
       }
 
       final pollIds = (pollsResponse as List).map((p) => p['id'].toString()).toList();
 
-      // Fetch all options for these polls, ordered by sort_order
+      // Fetch all options for these polls, ordered by created_at
       final allOptions = await _supabase
           .from(SupabaseConstants.pollOptionsTable)
           .select('*')
           .inFilter('poll_id', pollIds)
-          .order('sort_order', ascending: true);
+          .order('created_at', ascending: true);
 
       // Group options by poll_id (use votes field from poll_options directly)
       final Map<String, List<Map<String, dynamic>>> optionsByPoll = {};
@@ -94,12 +94,12 @@ class PollRepository {
 
       if (pollResponse == null) return null;
 
-      // Fetch poll options separately, ordered by sort_order
+      // Fetch poll options separately, ordered by created_at
       final optionsResponse = await _supabase
           .from(SupabaseConstants.pollOptionsTable)
           .select('*')
           .eq('poll_id', id)
-          .order('sort_order', ascending: true);
+          .order('created_at', ascending: true);
 
       // Use votes field from poll_options directly (updated by database trigger)
       final options = (optionsResponse as List).map((opt) {

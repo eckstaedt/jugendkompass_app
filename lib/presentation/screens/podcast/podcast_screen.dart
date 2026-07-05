@@ -19,6 +19,7 @@ import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/error_view.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/animated_equalizer.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/like_button.dart';
 
 class PodcastScreen extends ConsumerWidget {
   const PodcastScreen({super.key});
@@ -432,6 +433,8 @@ class _PodcastListItem extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
+                      LikeButton(contentId: audio.id, contentType: 'audio'),
+                      const SizedBox(height: 2),
                       if (audio.post != null)
                         Wrap(
                           spacing: 4,
