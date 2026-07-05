@@ -10,6 +10,7 @@ import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/like_button.dart';
 
 class FullPlayerScreen extends ConsumerStatefulWidget {
   const FullPlayerScreen({super.key});
@@ -364,7 +365,15 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                           ),
                         ],
 
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 12),
+                        Center(
+                          child: LikeButton(
+                            contentId: currentAudio.id,
+                            contentType: 'audio',
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
 
                         // Progress bar
                         _GlassCard(

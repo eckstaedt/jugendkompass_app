@@ -12,6 +12,7 @@ import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/like_button.dart';
 
 class VideoPlayerScreen extends ConsumerStatefulWidget {
   final String videoUrl;
@@ -371,6 +372,12 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                 );
               },
             ),
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: Center(
+              child: LikeButton(contentId: widget.videoUrl, contentType: 'video'),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Center(
