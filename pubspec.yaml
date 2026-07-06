@@ -80,9 +80,30 @@ dev_dependencies:
   # App Icon Generator
   flutter_launcher_icons: ^0.13.1
 
+  # Native Splash Screen Generator
+  flutter_native_splash: ^2.4.7
+
 flutter:
   uses-material-design: true
 
   assets:
     - dotenv
     - assets/images/
+
+# Native splash screen configuration.
+# After changing this, regenerate with: dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/images/logo.png
+  color_dark: "#ffffff"
+  image_dark: assets/images/logo.png
+
+  android_12:
+    image: assets/images/logo_foreground.png
+    icon_background_color: "#ffffff"
+    image_dark: assets/images/logo_foreground.png
+    icon_background_color_dark: "#ffffff"
+
+  android: true
+  ios: true
+  web: false
