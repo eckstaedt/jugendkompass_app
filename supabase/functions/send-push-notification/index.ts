@@ -196,6 +196,15 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
+    // Auth: nur der DB-Trigger (Service-Role) darf diesen Endpunkt aufrufen
+    const bearer = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
+    if (!bearer || bearer !== SERVICE_ROLE) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const payload = (await req.json()) as TriggerPayload;
     const tableCfg = TABLE_MAP[payload.table];
     if (!tableCfg || !payload.record) {
