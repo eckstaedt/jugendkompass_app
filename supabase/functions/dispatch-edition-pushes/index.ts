@@ -227,8 +227,16 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      // Doppelte fcm_token entfernen (ein Gerät kann mehrfach registriert sein)
+      const seenTokens = new Set<string>();
+      const uniqueTokens = (tokens ?? []).filter((t: any) => {
+        if (!t.fcm_token || seenTokens.has(t.fcm_token)) return false;
+        seenTokens.add(t.fcm_token);
+        return true;
+      });
+
       let sent = 0;
-      for (const t of tokens ?? []) {
+      for (const t of uniqueTokens) {
         const lang = (t as any).language || "de";
         const title = truncate(
           stripHtml(translations[lang]?.notification_title ?? origTitle),
@@ -252,7 +260,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      summary.push({ edition_id: ed.id, sent, total: tokens?.length ?? 0 });
+      summary.push({ edition_id: ed.id, sent, total: uniqueTokens.length });
     }
 
     return new Response(
