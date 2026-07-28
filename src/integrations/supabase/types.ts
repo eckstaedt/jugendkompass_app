@@ -354,6 +354,30 @@ export type Database = {
           },
         ]
       }
+      likes: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string
+          device_id: string
+          id: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string
+          device_id: string
+          id?: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          device_id?: string
+          id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content_id: string | null
@@ -621,7 +645,6 @@ export type Database = {
           first_name: string
           id: string
           last_name: string
-          paid: boolean
           phone: string | null
           postal_code: string
           shipping_method: Database["public"]["Enums"]["shipping_method"]
@@ -637,7 +660,6 @@ export type Database = {
           first_name: string
           id?: string
           last_name: string
-          paid?: boolean
           phone?: string | null
           postal_code: string
           shipping_method?: Database["public"]["Enums"]["shipping_method"]
@@ -653,7 +675,6 @@ export type Database = {
           first_name?: string
           id?: string
           last_name?: string
-          paid?: boolean
           phone?: string | null
           postal_code?: string
           shipping_method?: Database["public"]["Enums"]["shipping_method"]
@@ -774,6 +795,7 @@ export type Database = {
           description: string | null
           id: number
           image_url: string | null
+          notification_sent_at: string | null
           title: string
           url: string
           user_id: string | null
@@ -784,6 +806,7 @@ export type Database = {
           description?: string | null
           id?: number
           image_url?: string | null
+          notification_sent_at?: string | null
           title: string
           url: string
           user_id?: string | null
@@ -794,6 +817,7 @@ export type Database = {
           description?: string | null
           id?: number
           image_url?: string | null
+          notification_sent_at?: string | null
           title?: string
           url?: string
           user_id?: string | null
@@ -846,6 +870,13 @@ export type Database = {
           image_url: string
           impulse_text: string
           title: string
+        }[]
+      }
+      get_like_counts: {
+        Args: { p_content_ids: string[]; p_content_type: string }
+        Returns: {
+          content_id: string
+          like_count: number
         }[]
       }
       get_messages_localized: {
@@ -907,6 +938,17 @@ export type Database = {
         }[]
       }
       get_vers_des_tages_today_json: { Args: never; Returns: Json }
+      get_verse_archive_localized: {
+        Args: { lang: string; page_limit?: number; page_offset?: number }
+        Returns: {
+          content_id: string
+          date: string
+          id: string
+          image_url: string
+          reference: string
+          verse: string
+        }[]
+      }
       get_verse_by_id_localized: {
         Args: { lang: string; verse_id: string }
         Returns: {
@@ -945,6 +987,17 @@ export type Database = {
       is_admin:
         | { Args: never; Returns: boolean }
         | { Args: { user_id: string }; Returns: boolean }
+      toggle_like: {
+        Args: {
+          p_content_id: string
+          p_content_type: string
+          p_device_id: string
+        }
+        Returns: {
+          like_count: number
+          liked: boolean
+        }[]
+      }
       tr: {
         Args: {
           p_content_id: string
