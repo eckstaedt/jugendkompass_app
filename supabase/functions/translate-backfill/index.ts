@@ -43,6 +43,9 @@ const PAGE_SIZE = 1000;
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  const denied = await requireAdminOrServiceRole(req, corsHeaders);
+  if (denied) return denied;
+
   try {
     const body = await req.json().catch(() => ({}));
     const target_languages: string[] = body.target_languages ?? ["en", "es", "ru", "pl"];
