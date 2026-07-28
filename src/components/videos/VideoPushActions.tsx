@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { BellIcon, SendIcon, LoaderCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -15,6 +16,7 @@ interface Props {
 
 export default function VideoPushActions({ video, onSent }: Props) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { data: devices } = useTestPushDevices();
   const sendTestPush = useSendTestPush();
   const [isTesting, setIsTesting] = useState(false);
@@ -74,6 +76,7 @@ export default function VideoPushActions({ video, onSent }: Props) {
         title: 'Push gesendet',
         description: `${data?.sent ?? 0} von ${data?.total ?? 0} Geräten erreicht`,
       });
+      queryClient.invalidateQueries({ queryKey: ['videos'] });
       onSent?.();
     } catch (e: any) {
       toast({ title: 'Fehler', description: e?.message ?? 'Push fehlgeschlagen', variant: 'destructive' });
