@@ -4,6 +4,7 @@
 // HTML-Tags werden bewahrt (Prompt + leichte Validierung).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { requireAdminOrServiceRole } from "../_shared/auth-guard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -137,6 +138,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
+
+  const denied = await requireAdminOrServiceRole(req, corsHeaders);
+  if (denied) return denied;
 
   try {
     const { content_id, target_languages, force } = await req.json();

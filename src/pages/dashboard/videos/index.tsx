@@ -15,6 +15,7 @@ import RichTextEditor from '@/components/editor/RichTextEditor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Video } from '@/lib/supabase';
 import EditVideoDialog from '@/components/videos/EditVideoDialog';
+import VideoPushActions from '@/components/videos/VideoPushActions';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -282,6 +283,7 @@ const VideosPage = () => {
                           dangerouslySetInnerHTML={{ __html: video.description }}
                         />
                       )}
+                      <VideoPushActions video={video} />
                       <TranslationStatusList
                         statuses={Object.fromEntries(
                           SUPPORTED_LANGS.map((l) => [

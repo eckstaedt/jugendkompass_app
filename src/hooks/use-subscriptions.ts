@@ -20,7 +20,9 @@ export type Subscription = {
   updated_at: string;
 };
 
-export type SubscriptionInput = Omit<Subscription, 'id' | 'created_at' | 'updated_at'>;
+export type SubscriptionInput = Omit<Subscription, 'id' | 'created_at' | 'updated_at' | 'paid'> & {
+  paid?: boolean;
+};
 
 export const useSubscriptions = () =>
   useQuery({
