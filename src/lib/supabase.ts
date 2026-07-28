@@ -63,6 +63,7 @@ export type Video = {
   image_url: string | null;
   user_id: string | null;
   created_at: string | null;
+  notification_sent_at?: string | null;
   content: {
     content_type: string;
     created_at: string;
