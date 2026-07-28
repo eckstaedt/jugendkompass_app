@@ -258,7 +258,15 @@ Deno.serve(async (req) => {
 
     const results: Array<{ token: string; lang: string; ok: boolean; status: number }> = [];
 
-    for (const t of tokens ?? []) {
+    // Doppelte fcm_token entfernen (ein Gerät kann mehrfach registriert sein)
+    const seenTokens = new Set<string>();
+    const uniqueTokens = (tokens ?? []).filter((t: any) => {
+      if (!t.fcm_token || seenTokens.has(t.fcm_token)) return false;
+      seenTokens.add(t.fcm_token);
+      return true;
+    });
+
+    for (const t of uniqueTokens) {
       const token = (t as any).fcm_token as string;
       const lang = ((t as any).language as string) || "de";
       const title = truncate(
