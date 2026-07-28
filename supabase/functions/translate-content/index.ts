@@ -138,6 +138,9 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const denied = await requireAdminOrServiceRole(req, corsHeaders);
+  if (denied) return denied;
+
   try {
     const { content_id, target_languages, force } = await req.json();
 
