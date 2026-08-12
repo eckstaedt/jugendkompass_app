@@ -269,8 +269,12 @@ Deno.serve(async (req) => {
     for (const t of uniqueTokens) {
       const token = (t as any).fcm_token as string;
       const lang = ((t as any).language as string) || "de";
+      const isVideo = payload.table === "videos";
+      const rawTitle = stripHtml(resolveText(lang, tableCfg.titleField, originalTitle));
       const title = truncate(
-        stripHtml(resolveText(lang, tableCfg.titleField, originalTitle)),
+        isVideo
+          ? (rawTitle ? `Neues Video: ${rawTitle}` : "Neues Video")
+          : (rawTitle || tableCfg.fallbackTitle || "Jugendkompass"),
         80,
       );
       const body = truncate(
