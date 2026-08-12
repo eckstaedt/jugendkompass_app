@@ -216,10 +216,11 @@ Deno.serve(async (req) => {
     let sent = 0;
     for (const t of uniqueTokens) {
       const lang = (t as any).language || "de";
-      const title = truncate(stripHtml(translations[lang]?.title ?? origTitle), 80);
+      const rawTitle = stripHtml(translations[lang]?.title ?? origTitle);
+      const title = truncate(rawTitle ? `Neues Video: ${rawTitle}` : "Neues Video", 80);
       const text = truncate(stripHtml(translations[lang]?.description ?? origBody), 240);
       try {
-        const r = await sendFcm((t as any).fcm_token, title || "Neues Video", text || title, {
+        const r = await sendFcm((t as any).fcm_token, title, text || title, {
           contentType: "video",
           contentId: video.content_id ?? "",
           entity_id: String(video.id),
