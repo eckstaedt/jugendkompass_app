@@ -37,7 +37,7 @@ export default function VideoPushActions({ video, onSent }: Props) {
     try {
       const res = await sendTestPush.mutateAsync({
         device_ids: ids,
-        title: video.title || 'Neues Video',
+        title: `Neues Video: ${video.title || ''}`.trim().slice(0, 80),
         body: stripHtml(video.description) || video.title,
         image_url: video.image_url ?? null,
         data: {
