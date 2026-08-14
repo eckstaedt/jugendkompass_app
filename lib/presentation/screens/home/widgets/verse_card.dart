@@ -7,6 +7,8 @@ import 'package:jugendkompass_app/presentation/widgets/common/design_system_widg
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/services/verse_share_service.dart';
 import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
+import 'package:jugendkompass_app/presentation/navigation/fade_page_route.dart';
+import 'package:jugendkompass_app/presentation/screens/verse/verse_archive_screen.dart';
 
 class VerseCard extends StatefulWidget {
   final VerseModel verse;
@@ -169,6 +171,13 @@ class _VerseCardState extends State<VerseCard>
     _animationController.reverse();
   }
 
+  void _openArchive(BuildContext context) {
+    Navigator.push(
+      context,
+      FadePageRoute(builder: (_) => const VerseArchiveScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -189,6 +198,7 @@ class _VerseCardState extends State<VerseCard>
             glass: true,
             backgroundColor: DesignTokens.glassBackgroundDeep(0.30),
             withShadow: true,
+            onTap: () => _openArchive(context),
             child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -234,6 +244,24 @@ class _VerseCardState extends State<VerseCard>
               color: DesignTokens.getTextSecondary(theme.brightness),
               fontStyle: FontStyle.italic,
             ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text(
+                context.tr('view_archive'),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: DesignTokens.getTextSecondary(theme.brightness),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                size: 16,
+                color: DesignTokens.getTextSecondary(theme.brightness),
+              ),
+            ],
           ),
         ],
             ),

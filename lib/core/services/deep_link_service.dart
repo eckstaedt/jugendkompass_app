@@ -5,11 +5,15 @@ import 'package:jugendkompass_app/domain/providers/post_provider.dart';
 import 'package:jugendkompass_app/domain/providers/verse_provider.dart';
 import 'package:jugendkompass_app/domain/providers/video_provider.dart';
 import 'package:jugendkompass_app/domain/providers/message_provider.dart';
+import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
+import 'package:jugendkompass_app/domain/providers/impulse_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/content/content_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/message/message_detail_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/kiosk/edition_detail_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/impulse/impulse_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
     show kVideoPlayerRouteName;
 import 'package:google_fonts/google_fonts.dart';
@@ -73,9 +77,14 @@ class DeepLinkService {
         case 'message':
           await _navigateToMessage(context, ref, contentId);
           break;
+        case 'edition':
+          await _navigateToEdition(context, ref, contentId);
+          break;
         case 'impulse':
+          await _navigateToImpulse(context, ref, contentId);
+          break;
         case 'poll':
-          // Generic content screen handles these types
+          // Generic content screen handles this type
           _navigateToContent(context, contentId);
           break;
         default:
@@ -190,6 +199,52 @@ class DeepLinkService {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => MessageDetailScreen(message: message),
+      ),
+    );
+  }
+
+  /// Navigate to an edition (Ausgabe) detail screen.
+  Future<void> _navigateToEdition(
+    BuildContext context,
+    WidgetRef ref,
+    String editionId,
+  ) async {
+    final editionAsync = ref.read(editionDetailProvider(editionId).future);
+    final edition = await editionAsync;
+
+    if (edition == null) {
+      debugPrint('[DeepLink] Edition not found: $editionId');
+      return;
+    }
+
+    if (!context.mounted) return;
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => EditionDetailScreen(edition: edition),
+      ),
+    );
+  }
+
+  /// Navigate to an impulse detail screen.
+  Future<void> _navigateToImpulse(
+    BuildContext context,
+    WidgetRef ref,
+    String impulseId,
+  ) async {
+    final impulseAsync = ref.read(impulseDetailProvider(impulseId).future);
+    final impulse = await impulseAsync;
+
+    if (impulse == null) {
+      debugPrint('[DeepLink] Impulse not found: $impulseId');
+      return;
+    }
+
+    if (!context.mounted) return;
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ImpulseDetailScreen(impulse: impulse),
       ),
     );
   }

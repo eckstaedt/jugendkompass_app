@@ -199,6 +199,61 @@ class VerseRepository {
     }
   }
 
+  /// Get a paginated archive of ALL verse-of-the-day entries (newest first),
+  /// localized for the given language. Includes `image_url` so the UI can
+  /// determine whether a verse is shareable as an image.
+  ///
+  /// Only verses up to and including today are returned - future-dated
+  /// (pre-scheduled) verses are excluded so the archive never spoils
+  /// upcoming daily verses.
+  ///
+  /// Used by the "Vers des Tages Archiv" screen for infinite scroll.
+  Future<List<VerseModel>> getVerseArchive(
+    String language, {
+    int limit = 20,
+    int offset = 0,
+  }) async {
+    try {
+      final today = DateTime.now();
+      final todayStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+      // For German, query the table directly (already fully RLS-readable).
+      if (language == 'de') {
+        final response = await _supabase
+            .from(SupabaseConstants.verseOfTheDayTable)
+            .select()
+            .lte('date', todayStr)
+            .order('date', ascending: false)
+            .order('created_at', ascending: false)
+            .range(offset, offset + limit - 1);
+
+        return (response as List)
+            .map((json) => VerseModel.fromJson(json as Map<String, dynamic>))
+            .toList();
+      }
+
+      // For other languages, use the localized + paginated RPC.
+      final response = await _supabase.rpc(
+        'get_verse_archive_localized',
+        params: {
+          'lang': language,
+          'page_limit': limit,
+          'page_offset': offset,
+        },
+      );
+
+      if (response == null || (response is List && response.isEmpty)) {
+        return [];
+      }
+
+      return (response as List)
+          .map((json) => VerseModel.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      throw Exception('Fehler beim Laden des Vers-Archivs: $e');
+    }
+  }
+
   /// Get a specific verse by ID.
   Future<VerseModel?> getVerseById(String verseId) async {
     try {

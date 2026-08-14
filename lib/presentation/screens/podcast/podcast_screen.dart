@@ -567,6 +567,8 @@ class _PodcastListItem extends ConsumerWidget {
       context,
       '${audio.title ?? audio.post?.title ?? "Audio"} ${translate('zur Warteschlange hinzugefügt')}',
       duration: const Duration(seconds: 2),
+      backgroundColor: Colors.green,
+      topPosition: false,
     );
   }
 }

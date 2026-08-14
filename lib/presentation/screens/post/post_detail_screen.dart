@@ -547,6 +547,8 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
           context,
           '${HtmlUtils.stripHtml(widget.post.title)} zur Warteschlange hinzugefügt',
           duration: const Duration(seconds: 2),
+          backgroundColor: Colors.green,
+          topPosition: false,
         );
       }
     } catch (e) {

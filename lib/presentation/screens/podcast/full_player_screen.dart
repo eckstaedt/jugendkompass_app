@@ -725,6 +725,8 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                               context,
                                               '${audio.title ?? "Audio"} ${translate('zur Warteschlange hinzugefügt')}',
                                               duration: const Duration(seconds: 2),
+                                              backgroundColor: Colors.green,
+                                              topPosition: false,
                                             );
                                           },
                                           child: ClipRRect(
