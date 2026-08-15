@@ -40,6 +40,15 @@ final verseByIdProvider = FutureProvider.family<VerseModel?, String>(
   },
 );
 
+/// Single verse provider by content_id (FK to the polymorphic `content`
+/// table). Used for deep linking from push notifications.
+final verseByContentIdProvider = FutureProvider.family<VerseModel?, String>(
+  (ref, contentId) async {
+    final repository = ref.watch(verseRepositoryProvider);
+    return await repository.getVerseByContentId(contentId);
+  },
+);
+
 /// State for the "Vers des Tages Archiv" screen: a paginated, newest-first
 /// list of every verse that has ever been the verse of the day.
 class VerseArchiveState {

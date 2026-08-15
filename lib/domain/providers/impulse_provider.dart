@@ -25,3 +25,12 @@ final impulseDetailProvider = FutureProvider.family<ImpulseModel?, String>((
 
   return await repository.getImpulseByIdLocalized(impulseId, language);
 });
+
+/// Single impulse provider by content_id (FK to the polymorphic `content`
+/// table). Used for deep linking from push notifications.
+final impulseByContentIdProvider = FutureProvider.family<ImpulseModel?, String>(
+  (ref, contentId) async {
+    final repository = ref.watch(impulseRepositoryProvider);
+    return await repository.getImpulseByContentId(contentId);
+  },
+);

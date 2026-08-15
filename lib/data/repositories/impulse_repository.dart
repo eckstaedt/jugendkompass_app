@@ -118,6 +118,47 @@ class ImpulseRepository {
       }
       return null;
     } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Get a single impulse by its content_id (FK to the polymorphic `content`
+  /// table). Used for deep linking from push notifications.
+  Future<ImpulseModel?> getImpulseByContentId(String contentId) async {
+    try {
+      final response = await _supabase
+          .from(SupabaseConstants.impulsesTable)
+          .select('''
+            id,
+            content_id,
+            title,
+            date,
+            impulse_text,
+            image_url,
+            created_at,
+            content!content_id(
+              status
+            )
+          ''')
+          .eq('content_id', contentId)
+          .maybeSingle();
+
+      if (response != null) {
+        final contentData = response['content'];
+
+        return ImpulseModel.fromJson({
+          'id': response['id'],
+          'content_id': response['content_id'],
+          'title': response['title'],
+          'date': response['date'],
+          'impulse_text': response['impulse_text'],
+          'image_url': response['image_url'],
+          'created_at': response['created_at'],
+          'status': contentData?['status'],
+        });
+      }
+      return null;
+    } catch (e) {
       throw Exception('Fehler beim Laden des Impulses: $e');
     }
   }

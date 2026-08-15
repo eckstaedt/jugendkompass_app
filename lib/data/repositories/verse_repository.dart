@@ -272,4 +272,24 @@ class VerseRepository {
       throw Exception('Fehler beim Laden des Verses: $e');
     }
   }
+
+  /// Get a specific verse by its content_id (FK to the polymorphic `content`
+  /// table). Used for deep linking from push notifications.
+  Future<VerseModel?> getVerseByContentId(String contentId) async {
+    try {
+      final response = await _supabase
+          .from(SupabaseConstants.verseOfTheDayTable)
+          .select()
+          .eq('content_id', contentId)
+          .maybeSingle();
+
+      if (response != null) {
+        return VerseModel.fromJson(response);
+      }
+
+      return null;
+    } catch (e) {
+      throw Exception('Fehler beim Laden des Verses: $e');
+    }
+  }
 }

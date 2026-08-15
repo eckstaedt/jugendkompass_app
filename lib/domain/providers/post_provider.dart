@@ -38,6 +38,15 @@ final postByIdProvider = FutureProvider.family<PostModel?, String>(
 /// Single post provider by ID (localized) - alias for consistency
 final postDetailProvider = postByIdProvider;
 
+/// Single post provider by content_id (FK to the polymorphic `content` table).
+/// Used for deep linking from push notifications that reference content_id.
+final postByContentIdProvider = FutureProvider.family<PostModel?, String>(
+  (ref, contentId) async {
+    final repository = ref.watch(postRepositoryProvider);
+    return await repository.getPostByContentId(contentId);
+  },
+);
+
 /// Posts by edition provider
 final postsByEditionProvider = FutureProvider.family<List<PostModel>, String>(
   (ref, editionId) async {

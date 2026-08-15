@@ -64,6 +64,26 @@ class PostRepository {
     }
   }
 
+  /// Get a single post by its content_id (FK to the polymorphic `content` table).
+  /// Used for deep linking from push notifications, which sometimes reference
+  /// the content_id rather than the post's own id.
+  Future<PostModel?> getPostByContentId(String contentId) async {
+    try {
+      final response = await _supabase
+          .from(SupabaseConstants.postsTable)
+          .select()
+          .eq('content_id', contentId)
+          .maybeSingle();
+
+      if (response != null) {
+        return PostModel.fromJson(response);
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Fehler beim Laden des Posts: $e');
+    }
+  }
+
   /// Get posts by edition ID
   Future<List<PostModel>> getPostsByEdition(String editionId) async {
     try {

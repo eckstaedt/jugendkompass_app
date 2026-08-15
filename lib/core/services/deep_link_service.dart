@@ -103,9 +103,11 @@ class DeepLinkService {
     WidgetRef ref,
     String postId,
   ) async {
-    // Fetch post data first
-    final postAsync = ref.read(postByIdProvider(postId).future);
-    final post = await postAsync;
+    // Notifications may reference either the post's own id or its content_id
+    // (FK to the polymorphic `content` table), depending on the trigger
+    // source. Try both to be safe.
+    var post = await ref.read(postByIdProvider(postId).future);
+    post ??= await ref.read(postByContentIdProvider(postId).future);
 
     if (post == null) {
       debugPrint('[DeepLink] Post not found: $postId');
@@ -116,7 +118,7 @@ class DeepLinkService {
 
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => PostDetailScreen(post: post),
+        builder: (context) => PostDetailScreen(post: post!),
       ),
     );
   }
@@ -127,9 +129,10 @@ class DeepLinkService {
     WidgetRef ref,
     String videoId,
   ) async {
-    // Fetch video data first
-    final videoAsync = ref.read(videoByIdProvider(videoId).future);
-    final video = await videoAsync;
+    // Notifications may reference either the video's own id or its
+    // content_id, depending on the trigger source. Try both to be safe.
+    var video = await ref.read(videoByIdProvider(videoId).future);
+    video ??= await ref.read(videoByContentIdProvider(videoId).future);
 
     if (video == null) {
       debugPrint('[DeepLink] Video not found: $videoId');
@@ -142,7 +145,7 @@ class DeepLinkService {
       MaterialPageRoute(
         settings: const RouteSettings(name: kVideoPlayerRouteName),
         builder: (context) => VideoPlayerScreen(
-          videoUrl: video.videoUrl,
+          videoUrl: video!.videoUrl,
           title: video.displayTitle,
           description: video.description,
           imageUrl: video.imageUrl,
@@ -158,9 +161,10 @@ class DeepLinkService {
     WidgetRef ref,
     String verseId,
   ) async {
-    // Fetch verse data
-    final verseAsync = ref.read(verseByIdProvider(verseId).future);
-    final verse = await verseAsync;
+    // Notifications may reference either the verse's own id or its
+    // content_id, depending on the trigger source. Try both to be safe.
+    var verse = await ref.read(verseByIdProvider(verseId).future);
+    verse ??= await ref.read(verseByContentIdProvider(verseId).future);
 
     if (verse == null) {
       debugPrint('[DeepLink] Verse not found: $verseId');
@@ -172,7 +176,7 @@ class DeepLinkService {
     // Show verse in a dialog since there's no dedicated verse detail screen
     showDialog(
       context: context,
-      builder: (context) => _VerseDialog(verse: verse),
+      builder: (context) => _VerseDialog(verse: verse!),
     );
   }
 
@@ -232,8 +236,10 @@ class DeepLinkService {
     WidgetRef ref,
     String impulseId,
   ) async {
-    final impulseAsync = ref.read(impulseDetailProvider(impulseId).future);
-    final impulse = await impulseAsync;
+    // Notifications may reference either the impulse's own id or its
+    // content_id, depending on the trigger source. Try both to be safe.
+    var impulse = await ref.read(impulseDetailProvider(impulseId).future);
+    impulse ??= await ref.read(impulseByContentIdProvider(impulseId).future);
 
     if (impulse == null) {
       debugPrint('[DeepLink] Impulse not found: $impulseId');
@@ -244,7 +250,7 @@ class DeepLinkService {
 
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => ImpulseDetailScreen(impulse: impulse),
+        builder: (context) => ImpulseDetailScreen(impulse: impulse!),
       ),
     );
   }
