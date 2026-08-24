@@ -14,6 +14,7 @@ import 'package:jugendkompass_app/presentation/screens/content/content_detail_sc
 import 'package:jugendkompass_app/presentation/screens/message/message_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/kiosk/edition_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/impulse/impulse_detail_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/reading_plan/bible_reading_plan_screen.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
     show kVideoPlayerRouteName;
 import 'package:google_fonts/google_fonts.dart';
@@ -56,8 +57,20 @@ class DeepLinkService {
 
     debugPrint('[DeepLink] contentType: $contentType, contentId: $contentId');
 
-    if (contentType == null || contentId == null) {
-      debugPrint('[DeepLink] Missing contentType or contentId in data: $data');
+    if (contentType == null) {
+      debugPrint('[DeepLink] Missing contentType in data: $data');
+      return;
+    }
+
+    // The Bible reading plan reminder has no associated content_id — it
+    // simply opens the plan screen at the current day.
+    if (contentType.toLowerCase() == 'bible_plan') {
+      _navigateToBibleReadingPlan(context);
+      return;
+    }
+
+    if (contentId == null) {
+      debugPrint('[DeepLink] Missing contentId in data: $data');
       return;
     }
 
@@ -95,6 +108,17 @@ class DeepLinkService {
     } catch (e) {
       debugPrint('[DeepLink] Error navigating to content: $e');
     }
+  }
+
+  /// Navigate straight to the Bible reading plan screen (used by the daily
+  /// 06:30 reminder push notification). The screen itself shows the current
+  /// day by default.
+  void _navigateToBibleReadingPlan(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const BibleReadingPlanScreen(),
+      ),
+    );
   }
 
   /// Navigate to a post detail screen.

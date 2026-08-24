@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -56,6 +58,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     // Save name to local storage
     await UserPreferencesService.instance.setUserName(name);
     await UserPreferencesService.instance.setOnboardingComplete();
+    unawaited(DeviceRegistrationService.instance.updateUserName(name));
 
     if (!mounted) return;
 

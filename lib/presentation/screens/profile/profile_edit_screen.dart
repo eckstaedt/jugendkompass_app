@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:jugendkompass_app/core/services/device_registration_service.dart';
 import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
@@ -124,6 +126,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
       // Update provider
       ref.read(userNameProvider.notifier).state = name;
+      unawaited(DeviceRegistrationService.instance.updateUserName(name));
 
       // Save to Supabase if authenticated
       final user = ref.read(supabaseProvider).auth.currentUser;

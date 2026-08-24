@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jugendkompass_app/core/services/device_registration_service.dart';
 import 'package:jugendkompass_app/data/models/bible_reading_plan_model.dart';
 import 'package:jugendkompass_app/data/services/bible_reading_plan_generator.dart';
 import 'package:jugendkompass_app/data/services/bible_reading_plan_service.dart';
@@ -22,6 +25,8 @@ class BibleReadingHasStartedNotifier extends StateNotifier<bool> {
   Future<void> start() async {
     await BibleReadingPlanService.instance.startPlan();
     state = true;
+    // Enable the daily 06:30 reminder push for this device.
+    unawaited(DeviceRegistrationService.instance.updateBiblePlanStarted(true));
   }
 }
 

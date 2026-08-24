@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -427,7 +429,7 @@ class ProfileScreen extends ConsumerWidget {
           // App Version (optional)
           Center(
             child: Text(
-              'Version 2.2.0',
+              'Version 2.3.0',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -579,6 +581,7 @@ class ProfileScreen extends ConsumerWidget {
     if (newName != null && newName.isNotEmpty && context.mounted) {
       await UserPreferencesService.instance.setUserName(newName);
       ref.read(userNameProvider.notifier).state = newName;
+      unawaited(DeviceRegistrationService.instance.updateUserName(newName));
       if (context.mounted) {
         SnackBarUtils.showSuccess(context, translate('Name gespeichert'));
       }

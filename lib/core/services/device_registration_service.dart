@@ -140,6 +140,37 @@ class DeviceRegistrationService {
     }
   }
 
+  /// Update the display name for this device (used to personalize push
+  /// notifications, e.g. the Bible reading plan reminders).
+  Future<void> updateUserName(String userName) async {
+    try {
+      final supabase = Supabase.instance.client;
+      await supabase
+          .from(_table)
+          .update({'user_name': userName})
+          .eq('device_id', deviceId);
+      debugPrint('[DeviceRegistration] updated user_name: $userName');
+    } catch (e) {
+      debugPrint('[DeviceRegistration] updateUserName error: $e');
+    }
+  }
+
+  /// Marks whether the user has started the "Bibel in 365 Tagen" reading
+  /// plan. Only devices with `bible_plan_started = true` receive the daily
+  /// 06:30 reminder push notification.
+  Future<void> updateBiblePlanStarted(bool started) async {
+    try {
+      final supabase = Supabase.instance.client;
+      await supabase
+          .from(_table)
+          .update({'bible_plan_started': started})
+          .eq('device_id', deviceId);
+      debugPrint('[DeviceRegistration] updated bible_plan_started: $started');
+    } catch (e) {
+      debugPrint('[DeviceRegistration] updateBiblePlanStarted error: $e');
+    }
+  }
+
   /// Unregister this device (when user disables ALL push notifications).
   Future<void> unregister() async {
     try {
