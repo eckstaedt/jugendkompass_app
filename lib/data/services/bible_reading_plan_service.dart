@@ -17,9 +17,26 @@ class BibleReadingPlanService {
 
   static const String _keyStartDate = 'bible_plan_start_date';
   static const String _keyCheckedReadings = 'bible_plan_checked_readings';
+  static const String _keyHasStarted = 'bible_plan_has_started';
+
+  /// Whether the user has already tapped "Bibelleseplan starten" once.
+  /// Until then, the intro screen ("Die ganze Bibel in einem Jahr") is shown
+  /// instead of the chapter overview.
+  bool hasStartedPlan() {
+    return UserPreferencesService.instance.getBool(_keyHasStarted) ?? false;
+  }
+
+  /// Marks the plan as started (today becomes day 1) and persists it.
+  Future<void> startPlan() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    await UserPreferencesService.instance.setString(_keyStartDate, today.toIso8601String());
+    await UserPreferencesService.instance.setBool(_keyHasStarted, true);
+  }
 
   /// Returns the date the plan was started, creating (and persisting) it as
-  /// "today" the first time this is called.
+  /// "today" if it doesn't exist yet (defensive fallback — normally set via
+  /// [startPlan]).
   DateTime getOrCreateStartDate() {
     final stored = UserPreferencesService.instance.getString(_keyStartDate);
     if (stored != null) {
@@ -44,6 +61,13 @@ class BibleReadingPlanService {
     if (dayNumber < 1) return 1;
     if (dayNumber > 365) return 365;
     return dayNumber;
+  }
+
+  /// Returns the calendar date for a given plan day number, based on the
+  /// plan's start date.
+  DateTime getDateForDay(int dayNumber) {
+    final start = getOrCreateStartDate();
+    return start.add(Duration(days: dayNumber - 1));
   }
 
   /// Returns which reading-item indices are checked off for each day,

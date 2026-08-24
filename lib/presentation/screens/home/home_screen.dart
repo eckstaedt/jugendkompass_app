@@ -416,12 +416,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   /// Offset from the bottom of the screen so the button sits just above the
   /// floating navbar (and higher still when the mini player is visible).
+  ///
+  /// [miniPlayerBottomOffsetProvider] already tracks the exact distance from
+  /// the screen bottom to the top edge of the floating navbar (see
+  /// `bottom_nav_screen.dart`), so we reuse it and just add a gap – plus the
+  /// mini player's own height when audio is playing.
   double _fabBottomOffset() {
     final hasAudio = ref.watch(currentAudioProvider) != null;
-    return (hasAudio
-            ? DesignTokens.overlayPaddingWithMiniPlayer
-            : DesignTokens.overlayPaddingBase) -
-        44;
+    final navBarTopOffset = ref.watch(miniPlayerBottomOffsetProvider);
+    const gap = 16.0;
+    const miniPlayerHeight = 80.0;
+    return navBarTopOffset + gap + (hasAudio ? miniPlayerHeight : 0);
   }
 
   void _navigateToContent(BuildContext context, RecommendedItem item) {

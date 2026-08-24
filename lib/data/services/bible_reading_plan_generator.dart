@@ -113,41 +113,15 @@ class BibleReadingPlanGenerator {
       final slice = flat.sublist(previousBoundary, boundary);
       previousBoundary = boundary;
 
-      days.add(BibleReadingDay(dayNumber: day, readings: _groupIntoRanges(slice)));
+      days.add(BibleReadingDay(
+        dayNumber: day,
+        chapters: slice
+            .map((entry) => BibleReadingChapter(book: entry.key, chapter: entry.value))
+            .toList(),
+      ));
     }
 
     _cached = days;
     return days;
-  }
-
-  /// Groups a flat list of (book, chapterNumber) pairs into contiguous
-  /// [BibleReadingRange]s, splitting whenever the book changes or the
-  /// chapter sequence is not consecutive.
-  static List<BibleReadingRange> _groupIntoRanges(List<MapEntry<String, int>> entries) {
-    final ranges = <BibleReadingRange>[];
-    String? currentBook;
-    int rangeStart = 0;
-    int rangeEnd = 0;
-
-    for (final entry in entries) {
-      if (currentBook == null) {
-        currentBook = entry.key;
-        rangeStart = entry.value;
-        rangeEnd = entry.value;
-      } else if (entry.key == currentBook && entry.value == rangeEnd + 1) {
-        rangeEnd = entry.value;
-      } else {
-        ranges.add(BibleReadingRange(book: currentBook, startChapter: rangeStart, endChapter: rangeEnd));
-        currentBook = entry.key;
-        rangeStart = entry.value;
-        rangeEnd = entry.value;
-      }
-    }
-
-    if (currentBook != null) {
-      ranges.add(BibleReadingRange(book: currentBook, startChapter: rangeStart, endChapter: rangeEnd));
-    }
-
-    return ranges;
   }
 }

@@ -1,30 +1,25 @@
-/// A single continuous chapter range within one Bible book,
-/// e.g. "1. Mose 1-3" or "Psalm 23".
-class BibleReadingRange {
+/// A single Bible chapter to read, e.g. "1. Mose" chapter 1.
+class BibleReadingChapter {
   final String book;
-  final int startChapter;
-  final int endChapter;
+  final int chapter;
 
-  const BibleReadingRange({
+  const BibleReadingChapter({
     required this.book,
-    required this.startChapter,
-    required this.endChapter,
+    required this.chapter,
   });
 
-  /// Human readable label, e.g. "1. Mose 1–3" or "Psalm 23".
-  String get label => endChapter > startChapter
-      ? '$book $startChapter–$endChapter'
-      : '$book $startChapter';
+  /// Human readable label, e.g. "1. Mose 1".
+  String get label => '$book $chapter';
 }
 
 /// One day of the "Bibel in 365 Tagen" reading plan: a day number (1-365)
-/// and the list of chapter ranges to read that day.
+/// and the individual chapters to read that day.
 class BibleReadingDay {
   final int dayNumber;
-  final List<BibleReadingRange> readings;
+  final List<BibleReadingChapter> chapters;
 
   const BibleReadingDay({
     required this.dayNumber,
-    required this.readings,
+    required this.chapters,
   });
 }

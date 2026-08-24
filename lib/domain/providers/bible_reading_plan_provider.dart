@@ -13,6 +13,24 @@ final bibleReadingTodayDayNumberProvider = Provider<int>((ref) {
   return BibleReadingPlanService.instance.getCurrentDayNumber();
 });
 
+/// Whether the user has already started the plan (tapped "Bibelleseplan
+/// starten"). While false, the intro screen is shown instead of the
+/// chapter overview.
+class BibleReadingHasStartedNotifier extends StateNotifier<bool> {
+  BibleReadingHasStartedNotifier() : super(BibleReadingPlanService.instance.hasStartedPlan());
+
+  Future<void> start() async {
+    await BibleReadingPlanService.instance.startPlan();
+    state = true;
+  }
+}
+
+final bibleReadingHasStartedProvider =
+    StateNotifierProvider<BibleReadingHasStartedNotifier, bool>(
+  (ref) => BibleReadingHasStartedNotifier(),
+);
+
+
 /// Manages which reading items are checked off, per day.
 ///
 /// State: a map from day number to the set of checked reading indices.
@@ -39,7 +57,7 @@ class BibleReadingCheckedNotifier extends StateNotifier<Map<int, Set<int>>> {
 
   /// Total number of fully-completed days across the whole plan.
   int completedDaysCount(List<BibleReadingDay> plan) {
-    return plan.where((day) => isDayCompleted(day.dayNumber, day.readings.length)).length;
+    return plan.where((day) => isDayCompleted(day.dayNumber, day.chapters.length)).length;
   }
 }
 
