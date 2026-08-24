@@ -14,6 +14,7 @@ import 'package:jugendkompass_app/presentation/screens/impulse/impulse_detail_sc
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/message/message_detail_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/reading_plan/bible_reading_plan_screen.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
     show kVideoPlayerRouteName;
 import 'package:jugendkompass_app/presentation/navigation/fade_page_route.dart';
@@ -391,10 +392,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
           ),
+
+          // Floating button: navigate to the "Bibel in 365 Tagen" reading plan.
+          Positioned(
+            right: DesignTokens.paddingHorizontal,
+            bottom: _fabBottomOffset(),
+            child: _BibleReadingPlanButton(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  FadePageRoute(
+                    builder: (context) => const BibleReadingPlanScreen(),
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
       ),
     );
+  }
+
+  /// Offset from the bottom of the screen so the button sits just above the
+  /// floating navbar (and higher still when the mini player is visible).
+  double _fabBottomOffset() {
+    final hasAudio = ref.watch(currentAudioProvider) != null;
+    return (hasAudio
+            ? DesignTokens.overlayPaddingWithMiniPlayer
+            : DesignTokens.overlayPaddingBase) -
+        44;
   }
 
   void _navigateToContent(BuildContext context, RecommendedItem item) {
@@ -426,5 +453,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       );
     }
+  }
+}
+
+/// Round red floating button (bottom-right, above the navbar) that opens the
+/// "Bibel in 365 Tagen" reading plan screen.
+class _BibleReadingPlanButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _BibleReadingPlanButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: DesignTokens.primaryRed,
+      shape: const CircleBorder(),
+      elevation: 4,
+      shadowColor: Colors.black.withValues(alpha: 0.3),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: const SizedBox(
+          width: 56,
+          height: 56,
+          child: Icon(
+            Icons.menu_book_rounded,
+            color: Colors.white,
+            size: 26,
+          ),
+        ),
+      ),
+    );
   }
 }
