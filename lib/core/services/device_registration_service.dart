@@ -156,8 +156,8 @@ class DeviceRegistrationService {
   }
 
   /// Marks whether the user has started the "Bibel in 365 Tagen" reading
-  /// plan. Only devices with `bible_plan_started = true` receive the daily
-  /// 06:30 reminder push notification.
+  /// plan. Only devices with `bible_plan_started = true` are eligible for
+  /// the daily reminder push (also gated by `bible_plan_notifications_enabled`).
   Future<void> updateBiblePlanStarted(bool started) async {
     try {
       final supabase = Supabase.instance.client;
@@ -168,6 +168,33 @@ class DeviceRegistrationService {
       debugPrint('[DeviceRegistration] updated bible_plan_started: $started');
     } catch (e) {
       debugPrint('[DeviceRegistration] updateBiblePlanStarted error: $e');
+    }
+  }
+
+  /// Update the "Bibelleseplan" push notification preference (on/off and/or
+  /// preferred reminder hour), mirroring the Vers des Tages settings pattern.
+  Future<void> updateBiblePlanNotifications({
+    bool? enabled,
+    int? hour,
+  }) async {
+    try {
+      final supabase = Supabase.instance.client;
+      final updates = <String, dynamic>{};
+      if (enabled != null) {
+        updates['bible_plan_notifications_enabled'] = enabled;
+      }
+      if (hour != null) {
+        updates['bible_plan_notification_hour'] = hour;
+      }
+      if (updates.isEmpty) return;
+
+      await supabase
+          .from(_table)
+          .update(updates)
+          .eq('device_id', deviceId);
+      debugPrint('[DeviceRegistration] updated bible plan notifications: $updates');
+    } catch (e) {
+      debugPrint('[DeviceRegistration] updateBiblePlanNotifications error: $e');
     }
   }
 

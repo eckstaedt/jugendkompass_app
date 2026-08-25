@@ -202,11 +202,12 @@ serve(async (_req) => {
 
     console.log(`[bible-plan] Running at UTC ${now.toISOString()}`);
 
-    // ── 1. Fetch devices that started the plan and have a push token ────────
+    // ── 1. Fetch devices that started the plan, opted in, and have a push token
     const { data: devices, error: devicesError } = await supabase
       .from("device_tokens")
-      .select("fcm_token, user_name, timezone")
+      .select("fcm_token, user_name, timezone, bible_plan_notification_hour")
       .eq("bible_plan_started", true)
+      .eq("bible_plan_notifications_enabled", true)
       .not("fcm_token", "is", null);
 
     if (devicesError) {
@@ -219,10 +220,13 @@ serve(async (_req) => {
       return new Response(JSON.stringify({ message: "No devices to notify" }), { status: 200 });
     }
 
-    // ── 2. Filter to devices whose local time is currently 06:xx ─────────────
-    const devicesToNotify = devices.filter((d) => {
-      const tz = d.timezone || "Europe/Berlin";
-      return localHourInTimezone(now, tz) === 6;
+    // ── 2. Filter to devices whose local time currently matches their
+    //      individually chosen reminder hour (default 6, editable in the app
+    //      under Einstellungen → Push-Benachrichtigungen → Bibelleseplan) ────
+    const devicesToNotify = devices.filter((d: Record<string, unknown>) => {
+      const tz = (d.timezone as string) || "Europe/Berlin";
+      const preferredHour = (d.bible_plan_notification_hour as number | null) ?? 6;
+      return localHourInTimezone(now, tz) === preferredHour;
     });
 
     if (devicesToNotify.length === 0) {
@@ -241,7 +245,7 @@ serve(async (_req) => {
     let failureCount = 0;
 
     await Promise.allSettled(
-      devicesToNotify.map(async (device) => {
+      devicesToNotify.map(async (device: Record<string, unknown>) => {
         const body = pickMessage(device.user_name as string | null);
 
         const message = {

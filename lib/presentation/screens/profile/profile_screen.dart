@@ -36,6 +36,8 @@ class ProfileScreen extends ConsumerWidget {
     final notificationTime = ref.watch(notificationTimeProvider);
     final verseEnabled = ref.watch(verseNotificationsProvider);
     final newContentEnabled = ref.watch(newContentNotificationsProvider);
+    final biblePlanEnabled = ref.watch(biblePlanNotificationsProvider);
+    final biblePlanHour = ref.watch(biblePlanNotificationHourProvider);
     final themeMode = ref.watch(themeModeProvider);
     final currentLanguage = ref.watch(languageProvider);
     final currentTimezone = ref.watch(timezoneProvider);
@@ -226,6 +228,65 @@ class ProfileScreen extends ConsumerWidget {
                       },
                       activeThumbColor: DesignTokens.primaryRed,
                       secondary: const Icon(Icons.article_outlined, size: 22),
+                    ),
+
+                    Divider(
+                      height: 1,
+                      indent: 16,
+                      endIndent: 16,
+                      color: theme.brightness == Brightness.dark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : Colors.black.withValues(alpha: 0.06),
+                    ),
+
+                    // Bibelleseplan toggle + hour picker
+                    SwitchListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                      secondary: const Icon(Icons.menu_book_outlined, size: 22),
+                      title: Text(translate('Bibelleseplan')),
+                      subtitle: biblePlanEnabled
+                          ? GestureDetector(
+                              onTap: () async {
+                                final selectedHour = await showDialog<int>(
+                                  context: context,
+                                  builder: (context) => _HourPickerDialog(
+                                    initialHour: biblePlanHour,
+                                    title: translate('Bibelleseplan — Uhrzeit wählen'),
+                                    cancelText: translate('Abbrechen'),
+                                    confirmText: translate('Speichern'),
+                                  ),
+                                );
+                                if (selectedHour != null) {
+                                  await ref
+                                      .read(biblePlanNotificationHourProvider.notifier)
+                                      .update(selectedHour);
+                                  if (context.mounted) {
+                                    SnackBarUtils.show(
+                                      context,
+                                      '${translate('Bibelleseplan')} ${translate('um')} ${selectedHour.toString().padLeft(2, '0')}:00 ${translate('Uhr')}',
+                                    );
+                                  }
+                                }
+                              },
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '${translate('Um')} ${biblePlanHour.toString().padLeft(2, '0')}:00 ${translate('Uhr')}',
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.edit_outlined, size: 14),
+                                ],
+                              ),
+                            )
+                          : null,
+                      value: biblePlanEnabled,
+                      onChanged: (value) {
+                        ref
+                            .read(biblePlanNotificationsProvider.notifier)
+                            .update(value);
+                      },
+                      activeThumbColor: DesignTokens.primaryRed,
                     ),
                   ],
                 ],
@@ -429,7 +490,7 @@ class ProfileScreen extends ConsumerWidget {
           // App Version (optional)
           Center(
             child: Text(
-              'Version 2.3.0',
+              'Version 2.3.1',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

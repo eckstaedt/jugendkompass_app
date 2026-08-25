@@ -22,6 +22,8 @@ class UserPreferencesService {
   static const String _keyLastContentCheck = 'last_content_check';
   static const String _keyVerseNotifications = 'verse_notifications_enabled';
   static const String _keyNewContentNotifications = 'new_content_notifications_enabled';
+  static const String _keyBiblePlanNotifications = 'bible_plan_notifications_enabled';
+  static const String _keyBiblePlanNotificationHour = 'bible_plan_notification_hour';
   static const String _keyDeviceId = 'device_id';
   static const String _keyHasChosenTheme = 'has_chosen_theme';
   static const String _keyTimezone = 'timezone';
@@ -171,6 +173,24 @@ class UserPreferencesService {
 
   Future<void> setNewContentNotificationsEnabled(bool enabled) async {
     await _prefs.setBool(_keyNewContentNotifications, enabled);
+  }
+
+  // Bibelleseplan Notifications (sub-toggle)
+  bool getBiblePlanNotificationsEnabled() {
+    return _prefs.getBool(_keyBiblePlanNotifications) ?? true;
+  }
+
+  Future<void> setBiblePlanNotificationsEnabled(bool enabled) async {
+    await _prefs.setBool(_keyBiblePlanNotifications, enabled);
+  }
+
+  // Bibelleseplan Notification Hour (default 06:00)
+  int getBiblePlanNotificationHour() {
+    return _prefs.getInt(_keyBiblePlanNotificationHour) ?? 6;
+  }
+
+  Future<void> setBiblePlanNotificationHour(int hour) async {
+    await _prefs.setInt(_keyBiblePlanNotificationHour, hour);
   }
 
   // Device ID (for push notification registration)

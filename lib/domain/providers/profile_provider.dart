@@ -97,6 +97,7 @@ class NotificationsNotifier extends StateNotifier<bool> {
         // Enable sub-toggles when main toggle is enabled
         await _ref.read(verseNotificationsProvider.notifier).update(true);
         await _ref.read(newContentNotificationsProvider.notifier).update(true);
+        await _ref.read(biblePlanNotificationsProvider.notifier).update(true);
       } catch (e) {
         // Permission request failed
         debugPrint('[NotificationsNotifier] Permission request failed: $e');
@@ -209,6 +210,53 @@ class NewContentNotificationsNotifier extends StateNotifier<bool> {
     // Keep server in sync for content notifications
     await DeviceRegistrationService.instance
         .updatePreferences(contentNotifications: enabled);
+  }
+}
+
+/// Bibelleseplan notifications sub-toggle (only effective when main
+/// notifications are on). Mirrors [verseNotificationsProvider].
+final biblePlanNotificationsProvider =
+    StateNotifierProvider<BiblePlanNotificationsNotifier, bool>((ref) {
+  return BiblePlanNotificationsNotifier();
+});
+
+class BiblePlanNotificationsNotifier extends StateNotifier<bool> {
+  BiblePlanNotificationsNotifier() : super(true) {
+    _load();
+  }
+
+  void _load() {
+    state = UserPreferencesService.instance.getBiblePlanNotificationsEnabled();
+  }
+
+  Future<void> update(bool enabled) async {
+    state = enabled;
+    await UserPreferencesService.instance
+        .setBiblePlanNotificationsEnabled(enabled);
+    // Sync to server
+    await DeviceRegistrationService.instance
+        .updateBiblePlanNotifications(enabled: enabled);
+  }
+}
+
+/// Preferred hour (0-23) for the daily Bibelleseplan reminder push.
+final biblePlanNotificationHourProvider =
+    StateNotifierProvider<BiblePlanNotificationHourNotifier, int>((ref) {
+  return BiblePlanNotificationHourNotifier();
+});
+
+class BiblePlanNotificationHourNotifier extends StateNotifier<int> {
+  BiblePlanNotificationHourNotifier()
+      : super(UserPreferencesService.instance.getBiblePlanNotificationHour());
+
+  Future<void> update(int hour) async {
+    state = hour;
+    await UserPreferencesService.instance.setBiblePlanNotificationHour(hour);
+    final prefs = UserPreferencesService.instance;
+    if (prefs.getBiblePlanNotificationsEnabled() && prefs.getNotificationsEnabled()) {
+      await DeviceRegistrationService.instance
+          .updateBiblePlanNotifications(hour: hour);
+    }
   }
 }
 

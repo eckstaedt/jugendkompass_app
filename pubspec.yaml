@@ -1,7 +1,7 @@
 name: jugendkompass_app
 description: "Dein täglicher Begleiter"
 publish_to: 'none'
-version: 2.3.0+60
+version: 2.3.1+61
 
 environment:
   sdk: ^3.10.8
