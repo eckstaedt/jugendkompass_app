@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/domain/providers/recommendation_provider.dart';
-import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
 import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
 import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
@@ -121,9 +120,7 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
 
     final theme = Theme.of(context);
 
-    // Translate item title to the selected app language
-    final titleAsync = ref.watch(translateTextProvider(item.title));
-    final displayTitle = HtmlUtils.stripHtml(titleAsync.whenOrNull(data: (t) => t) ?? item.title);
+    final displayTitle = HtmlUtils.stripHtml(item.title);
 
     // Determine content type for read history check
     final ReadContentType contentType;

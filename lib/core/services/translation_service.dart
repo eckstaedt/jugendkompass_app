@@ -23,9 +23,11 @@ class TranslationService {
   static const Map<AppLanguage, String> _langCodes = {
     AppLanguage.de: 'de',
     AppLanguage.en: 'en',
+    AppLanguage.es: 'es',
     AppLanguage.ru: 'ru',
     AppLanguage.pl: 'pl',
     AppLanguage.tr: 'tr',
+    AppLanguage.he: 'he',
   };
 
   /// Translate [text] from German to [targetLanguage].
@@ -59,7 +61,7 @@ class TranslationService {
 
     // 3. Network call
     try {
-      final translated = await _callMyMemory(text, targetCode);
+      final translated = await _callMyMemoryWithRetry(text, targetCode);
       if (translated.isNotEmpty) {
         _memoryCache[cacheKey] = translated;
         _persistToCache(cacheKey, translated); // fire-and-forget
@@ -94,6 +96,24 @@ class TranslationService {
   }
 
   // ───────────── Private helpers ─────────────
+
+  Future<String> _callMyMemoryWithRetry(String text, String targetCode) async {
+    const maxAttempts = 3;
+    Object? lastError;
+
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        return await _callMyMemory(text, targetCode);
+      } catch (error) {
+        lastError = error;
+        if (attempt < maxAttempts) {
+          await Future.delayed(Duration(milliseconds: 350 * attempt));
+        }
+      }
+    }
+
+    throw Exception('MyMemory retries exhausted: $lastError');
+  }
 
   Future<String> _callMyMemory(String text, String targetCode) async {
     // MyMemory accepts up to ~500 characters per request reliably.

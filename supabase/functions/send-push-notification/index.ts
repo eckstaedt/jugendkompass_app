@@ -79,51 +79,65 @@ const NOTIFICATION_TRANSLATIONS: Record<string, Record<string, { title: string; 
   post_audio: {
     de: { title: "Neuer Podcast", fallback: "Neuer Inhalt verfügbar" },
     en: { title: "New Podcast", fallback: "New content available" },
+    es: { title: "Nuevo pódcast", fallback: "Nuevo contenido disponible" },
     ru: { title: "Новый подкаст", fallback: "Доступен новый контент" },
     pl: { title: "Nowy podcast", fallback: "Dostępna nowa treść" },
     tr: { title: "Yeni Podcast", fallback: "Yeni içerik mevcut" },
+    he: { title: "פודקאסט חדש", fallback: "תוכן חדש זמין" },
   },
   post: {
     de: { title: "Neuer Artikel", fallback: "Neuer Inhalt verfügbar" },
     en: { title: "New Article", fallback: "New content available" },
+    es: { title: "Nuevo artículo", fallback: "Nuevo contenido disponible" },
     ru: { title: "Новая статья", fallback: "Доступен новый контент" },
     pl: { title: "Nowy artykuł", fallback: "Dostępna nowa treść" },
     tr: { title: "Yeni Makale", fallback: "Yeni içerik mevcut" },
+    he: { title: "מאמר חדש", fallback: "תוכן חדש זמין" },
   },
   video: {
     de: { title: "Neues Video", fallback: "Neues Video verfügbar" },
     en: { title: "New Video", fallback: "New video available" },
+    es: { title: "Nuevo video", fallback: "Nuevo video disponible" },
     ru: { title: "Новое видео", fallback: "Доступно новое видео" },
     pl: { title: "Nowe wideo", fallback: "Dostępne nowe wideo" },
     tr: { title: "Yeni Video", fallback: "Yeni video mevcut" },
+    he: { title: "סרטון חדש", fallback: "סרטון חדש זמין" },
   },
   message: {
     de: { title: "Neue Kurznachricht", fallback: "Neue Kurznachricht" },
     en: { title: "New Message", fallback: "New message" },
+    es: { title: "Nuevo mensaje", fallback: "Nuevo mensaje" },
     ru: { title: "Новое сообщение", fallback: "Новое сообщение" },
     pl: { title: "Nowa wiadomość", fallback: "Nowa wiadomość" },
     tr: { title: "Yeni Mesaj", fallback: "Yeni mesaj" },
+    he: { title: "הודעה חדשה", fallback: "הודעה חדשה" },
   },
   edition: {
     de: { title: "Neue Ausgabe", fallback: "Neue Ausgabe verfügbar" },
     en: { title: "New Edition", fallback: "New edition available" },
+    es: { title: "Nueva edición", fallback: "Nueva edición disponible" },
     ru: { title: "Новый выпуск", fallback: "Доступен новый выпуск" },
     pl: { title: "Nowe wydanie", fallback: "Dostępne nowe wydanie" },
     tr: { title: "Yeni Baskı", fallback: "Yeni baskı mevcut" },
+    he: { title: "מהדורה חדשה", fallback: "מהדורה חדשה זמינה" },
   },
   impulse: {
     de: { title: "Neuer Impuls", fallback: "Neuer Impuls verfügbar" },
     en: { title: "New Impulse", fallback: "New impulse available" },
+    es: { title: "Nuevo impulso", fallback: "Nuevo impulso disponible" },
     ru: { title: "Новый импульс", fallback: "Доступен новый импульс" },
     pl: { title: "Nowy impuls", fallback: "Dostępny nowy impuls" },
     tr: { title: "Yeni İmpuls", fallback: "Yeni impuls mevcut" },
+    he: { title: "אימפולס חדש", fallback: "אימפולס חדש זמין" },
   },
   verse: {
     de: { title: "Vers des Tages", fallback: "Neuer Bibelvers verfügbar" },
     en: { title: "Verse of the Day", fallback: "New Bible verse available" },
+    es: { title: "Versículo del día", fallback: "Nuevo versículo bíblico disponible" },
     ru: { title: "Стих дня", fallback: "Доступен новый библейский стих" },
     pl: { title: "Werset dnia", fallback: "Dostępny nowy werset biblijny" },
     tr: { title: "Günün Ayeti", fallback: "Yeni İncil ayeti mevcut" },
+    he: { title: "פסוק היום", fallback: "פסוק מקרא חדש זמין" },
   },
 };
 
@@ -134,7 +148,7 @@ function getNotificationContent(
   language: string = "de"
 ): { title: string; body: string; imageUrl: string | null; data: { contentType: string; contentId: string } } | null {
   // Validate language and default to German
-  const lang = ["de", "en", "ru", "pl", "tr"].includes(language) ? language : "de";
+  const lang = ["de", "en", "es", "ru", "pl", "tr", "he"].includes(language) ? language : "de";
 
   // Extract content ID - could be content_id or id depending on table
   const contentId = (record.content_id as string) || (record.id as string);

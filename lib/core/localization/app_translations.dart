@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jugendkompass_app/core/localization/he_translations.dart';
 
 enum AppLanguage {
   de(Locale('de'), 'Deutsch'),
@@ -6,7 +7,8 @@ enum AppLanguage {
   ru(Locale('ru'), 'Русский'),
   es(Locale('es'), 'Español'),
   pl(Locale('pl'), 'Polski'),
-  tr(Locale('tr'), 'Türkçe');
+  tr(Locale('tr'), 'Türkçe'),
+  he(Locale('he'), 'עברית');
 
   final Locale locale;
   final String displayName;
@@ -14,7 +16,7 @@ enum AppLanguage {
   const AppLanguage(this.locale, this.displayName);
 
   /// Returns only the languages that should be shown in the language selector
-  static List<AppLanguage> get availableLanguages => [de, en, ru, es, pl];
+  static List<AppLanguage> get availableLanguages => [de, en, ru, es, pl, tr, he];
 }
 
 class Translations {
@@ -1477,10 +1479,14 @@ class Translations {
       'save_content_bookmark': 'Yer işareti simgesiyle içerik kaydedin',
       'listen_edition': 'Baskıyı Dinle',
     },
+    AppLanguage.he: heTranslations,
   };
 
   String get(String key) {
-    return _translations[language]?[key] ?? key;
+    return _translations[language]?[key] ??
+        _translations[AppLanguage.en]?[key] ??
+        _translations[AppLanguage.de]?[key] ??
+        key;
   }
 
   String getWithParams(String key, Map<String, String> params) {

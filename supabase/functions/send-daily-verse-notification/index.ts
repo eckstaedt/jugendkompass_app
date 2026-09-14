@@ -48,6 +48,7 @@ function getLocalizedTitle(language: string): string {
     es: 'Versículo del Día 📖',
     pl: 'Werset Dnia 📖',
     tr: 'Günün Ayeti 📖',
+    he: 'פסוק היום 📖',
   }
   return titles[language] || titles.de
 }

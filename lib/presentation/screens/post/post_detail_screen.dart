@@ -9,7 +9,6 @@ import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.da
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
-import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
@@ -59,16 +58,8 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
           (item) => item.id == post.id && item.type == CollectionItemType.post,
         );
 
-    // Translate post content to the selected app language
-    final translationAsync = ref.watch(
-      translatePostProvider((
-        id: post.id,
-        title: post.title,
-        body: post.body,
-      )),
-    );
-    final displayTitle = translationAsync.whenOrNull(data: (d) => d.title) ?? post.title;
-    final displayBody = translationAsync.whenOrNull(data: (d) => d.body) ?? post.body;
+    final displayTitle = post.title;
+    final displayBody = post.body;
 
     return Scaffold(
       extendBody: true,

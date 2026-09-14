@@ -8,6 +8,7 @@ import 'package:jugendkompass_app/domain/providers/post_provider.dart';
 import 'package:jugendkompass_app/domain/providers/video_provider.dart';
 import 'package:jugendkompass_app/domain/providers/message_provider.dart';
 import 'package:jugendkompass_app/domain/providers/poll_provider.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 
 // Model for recommended content items (Posts = Artikel with/without Audio, Videos, Messages = Kurznachrichten, Polls)
 class RecommendedItem {
@@ -140,13 +141,15 @@ class RecommendedItem {
 
 final recommendedContentProvider = FutureProvider<List<RecommendedItem>>((ref) async {
   try {
+    final language = ref.watch(languageProvider).locale.languageCode;
+
     // Fetch posts (articles with and without audio)
     final postRepository = ref.watch(postRepositoryProvider);
-    final posts = await postRepository.getPostList(limit: 8);
+    final posts = await postRepository.getPostsLocalized(language, limit: 8);
 
     // Fetch videos
     final videoRepository = ref.watch(videoRepositoryProvider);
-    final videos = await videoRepository.getVideoList(limit: 100);
+    final videos = await videoRepository.getVideoListLocalized(language, limit: 100);
 
     // Convert to RecommendedItems
     final postItems = posts.map((post) => RecommendedItem.fromPost(post)).toList();
@@ -166,20 +169,26 @@ final recommendedContentProvider = FutureProvider<List<RecommendedItem>>((ref) a
 /// Returns batches of items. Parameter is the page number (0-indexed).
 final paginatedContentProvider = FutureProvider.family<List<RecommendedItem>, int>((ref, page) async {
   try {
+    final language = ref.watch(languageProvider).locale.languageCode;
+
     final postRepository = ref.watch(postRepositoryProvider);
     final videoRepository = ref.watch(videoRepositoryProvider);
     final messageRepository = ref.watch(messageRepositoryProvider);
     final pollRepository = ref.watch(pollRepositoryProvider);
 
     final batchSize = 50;
-    final posts = await postRepository.getPostList(limit: batchSize, offset: page * batchSize);
-    final videos = await videoRepository.getVideoList(limit: batchSize, offset: page * batchSize);
+    final posts = await postRepository.getPostsLocalized(language, limit: batchSize, offset: page * batchSize);
+    final videos = await videoRepository.getVideoListLocalized(language, limit: batchSize, offset: page * batchSize);
     final messages = await messageRepository.getMessageList(limit: batchSize, offset: page * batchSize);
 
     // Fetch polls with error handling (don't break entire feed if polls fail)
     List<dynamic> polls = [];
     try {
-      polls = await pollRepository.getPollList(limit: batchSize, offset: page * batchSize, activeOnly: true);
+      polls = await pollRepository.getPollsLocalized(
+        language,
+        limit: batchSize,
+        offset: page * batchSize,
+      );
     } catch (e) {
       // Log error but continue with other content
       debugPrint('Error fetching polls: $e');

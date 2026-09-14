@@ -157,7 +157,26 @@ class DeepLinkService {
     final video = await ref.read(videoByAnyIdProvider(videoId).future);
 
     if (video == null) {
-      debugPrint('[DeepLink] Video not found: $videoId');
+      final fallbackUrl = _extractVideoUrlFromIdentifier(videoId);
+      if (fallbackUrl == null) {
+        debugPrint('[DeepLink] Video not found: $videoId');
+        return;
+      }
+
+      if (!context.mounted) return;
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          settings: const RouteSettings(name: kVideoPlayerRouteName),
+          builder: (context) => VideoPlayerScreen(
+            videoUrl: fallbackUrl,
+            title: 'Video',
+            description: null,
+            imageUrl: null,
+            shareContentId: null,
+          ),
+        ),
+      );
       return;
     }
 
@@ -175,6 +194,26 @@ class DeepLinkService {
         ),
       ),
     );
+  }
+
+  String? _extractVideoUrlFromIdentifier(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return null;
+
+    String decoded = trimmed;
+    try {
+      decoded = Uri.decodeComponent(trimmed);
+    } catch (_) {}
+
+    final uri = Uri.tryParse(decoded);
+    if (uri == null || !uri.hasScheme) return null;
+
+    final scheme = uri.scheme.toLowerCase();
+    if (scheme == 'http' || scheme == 'https') {
+      return decoded;
+    }
+
+    return null;
   }
 
   /// Navigate to a poll detail screen.

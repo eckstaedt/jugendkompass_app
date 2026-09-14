@@ -60,6 +60,17 @@ class UrlParserService {
     return _typeAliasMap[type] ?? type;
   }
 
+  String _normalizeContentId(String rawId) {
+    var id = rawId.trim();
+    try {
+      id = Uri.decodeComponent(id);
+    } catch (_) {}
+
+    id = id.replaceAll(RegExp(r'^/+|/+$'), '');
+    id = id.replaceAll(RegExp(r'[)\]>,.!?;:]+$'), '');
+    return id;
+  }
+
   /// Parse a jugendkompass.com URL into deep link data.
   ///
   /// Returns null if URL is not recognized or invalid.
@@ -93,9 +104,11 @@ class UrlParserService {
             return {'contentType': 'bible_plan'};
           }
           if (queryId != null && queryId.isNotEmpty) {
+            final normalizedId = _normalizeContentId(queryId);
+            if (normalizedId.isEmpty) return null;
             return {
               'contentType': normalized,
-              'contentId': queryId,
+              'contentId': normalizedId,
             };
           }
         }
@@ -120,9 +133,11 @@ class UrlParserService {
           return {'contentType': 'bible_plan'};
         }
         if (queryId != null && queryId.isNotEmpty) {
+          final normalizedId = _normalizeContentId(queryId);
+          if (normalizedId.isEmpty) return null;
           return {
             'contentType': normalized,
-            'contentId': queryId,
+            'contentId': normalizedId,
           };
         }
       }
@@ -154,7 +169,8 @@ class UrlParserService {
       // - /share/post/{id}
       final isSharePrefix = segments.first.toLowerCase() == 'share';
       final typeSegment = isSharePrefix ? segments[1].toLowerCase() : segments[0].toLowerCase();
-      final idSegment = isSharePrefix ? (segments.length >= 3 ? segments[2] : '') : segments[1];
+      final rawIdSegment = isSharePrefix ? (segments.length >= 3 ? segments[2] : '') : segments[1];
+      final idSegment = _normalizeContentId(rawIdSegment);
 
       final normalizedType = _pathTypeMap[typeSegment] ?? _normalizeType(typeSegment);
       if (normalizedType != 'bible_plan' && idSegment.isEmpty) {

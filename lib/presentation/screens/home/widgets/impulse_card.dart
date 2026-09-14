@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/data/models/impulse_model.dart';
 import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
-import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
 import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
@@ -68,10 +67,7 @@ class _ImpulseCardState extends ConsumerState<ImpulseCard>
     final theme = Theme.of(context);
     final impulse = widget.impulse;
 
-    // Translate title to the selected app language
-    final titleAsync = ref.watch(translateTextProvider(impulse.displayTitle));
-    final displayTitle =
-        titleAsync.whenOrNull(data: (t) => t) ?? impulse.displayTitle;
+    final displayTitle = impulse.displayTitle;
 
     // Check if impulse is read
     final isRead = ref.watch(isContentReadProvider((id: impulse.id, type: ReadContentType.impulse)));

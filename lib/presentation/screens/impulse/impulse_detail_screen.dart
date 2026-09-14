@@ -8,7 +8,6 @@ import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
-import 'package:jugendkompass_app/domain/providers/translation_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/services/content_share_service.dart';
@@ -60,16 +59,8 @@ class _ImpulseDetailScreenState extends ConsumerState<ImpulseDetailScreen> {
           (item) => item.id == impulse.id && item.type == CollectionItemType.impulse,
         );
 
-    // Translate impulse content to the selected app language
-    final translationAsync = ref.watch(
-      translateImpulseProvider((
-        id: impulse.id,
-        title: impulse.title,
-        impulseText: impulse.impulseText,
-      )),
-    );
-    final displayTitle = translationAsync.whenOrNull(data: (d) => d.title) ?? impulse.displayTitle;
-    final displayBody = translationAsync.whenOrNull(data: (d) => d.impulseText) ?? impulse.impulseText;
+    final displayTitle = impulse.displayTitle;
+    final displayBody = impulse.impulseText;
 
     return Scaffold(
       extendBody: true,
