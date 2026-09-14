@@ -15,7 +15,7 @@ select cron.schedule(
       'apikey', '__ANON_KEY__',
       'Authorization', 'Bearer __ANON_KEY__'
     ),
-    body := '{"batchSize":1}'::jsonb
+    body := '{"batchSize":1,"geminiApiKey":"__GEMINI_API_KEY__"}'::jsonb
   );
   $$
 );

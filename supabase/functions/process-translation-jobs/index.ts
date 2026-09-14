@@ -22,15 +22,29 @@ interface PostRecord {
   body: string;
 }
 
+interface WorkerPayload extends Record<string, unknown> {
+  enqueueBackfill?: boolean;
+  backfillMaxRows?: number;
+  batchSize?: number;
+  dryRun?: boolean;
+  languages?: string[];
+  geminiApiKey?: string;
+}
+
 const MAX_ATTEMPTS = Number(Deno.env.get("TRANSLATION_MAX_ATTEMPTS") ?? "8");
 const DEFAULT_BATCH_SIZE = Number(Deno.env.get("TRANSLATION_BATCH_SIZE") ?? "15");
 const DEFAULT_TARGET_LANGUAGES = ["en", "ru", "pl", "es", "tr", "he"];
-const OPENAI_MODEL = Deno.env.get("OPENAI_TRANSLATION_MODEL") ?? "gpt-4o-mini";
+const GEMINI_MODELS = (Deno.env.get("GEMINI_TRANSLATION_MODELS") ?? "gemini-3.6-flash,gemini-2.5-flash,gemini-3.5-flash-lite")
+  .split(",")
+  .map((model) => model.trim())
+  .filter((model) => model.length > 0);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+let runtimeGeminiApiKey: string | null = null;
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -48,6 +62,14 @@ serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, serviceRole);
 
     const payload = await readPayload(req);
+    runtimeGeminiApiKey =
+      (typeof payload.geminiApiKey === "string" && payload.geminiApiKey.trim().length > 0)
+        ? payload.geminiApiKey.trim()
+        : Deno.env.get("GEMINI_API_KEY");
+
+    if (!runtimeGeminiApiKey) {
+      throw new Error("Missing Gemini API key. Provide `geminiApiKey` in payload or set `GEMINI_API_KEY` secret.");
+    }
 
     if (payload.enqueueBackfill === true) {
       const maxRows = Number(payload.backfillMaxRows ?? 8000);
@@ -65,7 +87,7 @@ serve(async (req: Request) => {
 
     const batchSize = Number(payload.batchSize ?? DEFAULT_BATCH_SIZE);
     const dryRun = payload.dryRun === true;
-    const languages = await loadActiveLanguages(supabase);
+    const languages = resolveRequestedLanguages(payload, await loadActiveLanguages(supabase));
 
     const jobs = await loadPendingJobs(supabase, batchSize);
     if (jobs.length === 0) {
@@ -128,15 +150,31 @@ serve(async (req: Request) => {
   }
 });
 
-async function readPayload(req: Request): Promise<Record<string, unknown>> {
+async function readPayload(req: Request): Promise<WorkerPayload> {
   if (req.method !== "POST") return {};
   try {
     const body = await req.json();
-    if (body && typeof body === "object") return body as Record<string, unknown>;
+    if (body && typeof body === "object") return body as WorkerPayload;
     return {};
   } catch (_) {
     return {};
   }
+}
+
+function resolveRequestedLanguages(payload: Record<string, unknown>, activeLanguages: string[]): string[] {
+  const requested = payload.languages;
+  if (!Array.isArray(requested) || requested.length === 0) {
+    return activeLanguages;
+  }
+
+  const normalized = requested
+    .map((item) => String(item ?? "").trim().toLowerCase())
+    .filter((item) => item.length > 0 && item !== "de");
+
+  const unique = Array.from(new Set(normalized));
+  if (unique.length === 0) return activeLanguages;
+
+  return unique;
 }
 
 async function loadActiveLanguages(supabase: ReturnType<typeof createClient>): Promise<string[]> {
@@ -381,195 +419,99 @@ async function translateGermanText(text: string, targetLanguage: string): Promis
   if (!cleaned) return cleaned;
   if (targetLanguage === "de") return cleaned;
 
-  const openAiApiKey = Deno.env.get("OPENAI_API_KEY");
-  if (openAiApiKey) {
+  return await translateWithGeminiRetry(cleaned, targetLanguage);
+}
+
+async function translateWithGeminiRetry(text: string, targetLanguage: string): Promise<string> {
+  const chunks = splitText(text, 2500);
+  const translatedChunks: string[] = [];
+
+  for (const chunk of chunks) {
+    translatedChunks.push(await translateChunkWithGeminiRetry(chunk, targetLanguage));
+  }
+
+  return translatedChunks.join("\n\n");
+}
+
+async function translateChunkWithGeminiRetry(text: string, targetLanguage: string): Promise<string> {
+  const attempts = 3;
+  let lastError: unknown;
+
+  for (let i = 1; i <= attempts; i++) {
     try {
-      return await translateWithOpenAi(cleaned, targetLanguage, openAiApiKey);
+      return await translateChunkWithGemini(text, targetLanguage);
     } catch (error) {
-      console.warn("[translation-jobs] OpenAI translation failed, fallback to MyMemory:", stringifyError(error));
+      lastError = error;
+      if (i < attempts) {
+        await delay(500 * i);
+      }
     }
   }
 
-  try {
-    return await translateWithMyMemoryRetry(cleaned, targetLanguage);
-  } catch (error) {
-    console.warn("[translation-jobs] MyMemory failed, fallback to Google endpoint:", stringifyError(error));
-    return await translateWithGoogleGtxRetry(cleaned, targetLanguage);
-  }
+  throw new Error(`Gemini retries exhausted: ${stringifyError(lastError)}`);
 }
 
-async function translateWithOpenAi(
-  text: string,
-  targetLanguage: string,
-  apiKey: string,
-): Promise<string> {
+async function translateChunkWithGemini(text: string, targetLanguage: string): Promise<string> {
+  const apiKey = runtimeGeminiApiKey;
+  if (!apiKey) {
+    throw new Error("Missing Gemini API key at runtime");
+  }
+
   const prompt = [
-    "Translate the provided German text to the target language.",
-    "Return only the translated text.",
-    "Preserve line breaks, punctuation, links, and HTML tags.",
+    "Translate the following German text into the target language.",
+    "Return only translated text.",
+    "Preserve punctuation, markdown, html tags, links, and line breaks.",
+    "Do not add explanations.",
     `Target language code: ${targetLanguage}`,
     "Text:",
     text,
   ].join("\n");
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: OPENAI_MODEL,
-      temperature: 0.1,
-      messages: [
-        {
-          role: "system",
-          content: "You are a precise production translation engine.",
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-    }),
-  });
+  const models = GEMINI_MODELS.length > 0 ? GEMINI_MODELS : ["gemini-3.6-flash"];
+  let lastError: string | null = null;
 
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`OpenAI HTTP ${response.status}: ${body}`);
-  }
+  for (const model of models) {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          generationConfig: {
+            temperature: 0.1,
+            topP: 0.8,
+            maxOutputTokens: 8192,
+          },
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: prompt }],
+            },
+          ],
+        }),
+      },
+    );
 
-  const json = await response.json();
-  const content = json?.choices?.[0]?.message?.content;
-  if (typeof content !== "string" || !content.trim()) {
-    throw new Error("OpenAI returned empty translation content.");
-  }
-
-  return content.trim();
-}
-
-async function translateWithMyMemoryRetry(text: string, targetLanguage: string): Promise<string> {
-  const chunks = splitText(text, 500);
-  const translatedChunks: string[] = [];
-
-  for (const chunk of chunks) {
-    translatedChunks.push(await translateChunkWithMyMemoryRetry(chunk, targetLanguage));
-  }
-
-  return translatedChunks.join("\n\n");
-}
-
-async function translateChunkWithMyMemoryRetry(text: string, targetLanguage: string): Promise<string> {
-  const attempts = 3;
-  let lastError: unknown;
-
-  for (let i = 1; i <= attempts; i++) {
-    try {
-      return await translateChunkWithMyMemory(text, targetLanguage);
-    } catch (error) {
-      lastError = error;
-      if (i < attempts) {
-        await delay(350 * i);
-      }
+    if (!response.ok) {
+      const body = await response.text();
+      lastError = `Model ${model} HTTP ${response.status}: ${body}`;
+      continue;
     }
-  }
 
-  throw new Error(`MyMemory retries exhausted: ${stringifyError(lastError)}`);
-}
+    const json = await response.json();
+    const translatedText = json?.candidates?.[0]?.content?.parts
+      ?.map((part: { text?: string }) => part?.text ?? "")
+      .join("")
+      .trim();
 
-async function translateChunkWithMyMemory(text: string, targetLanguage: string): Promise<string> {
-  const url = new URL("https://api.mymemory.translated.net/get");
-  url.searchParams.set("q", text);
-  url.searchParams.set("langpair", `de|${targetLanguage}`);
-
-  const response = await fetch(url.toString(), {
-    method: "GET",
-    headers: { "Accept": "application/json" },
-  });
-
-  if (!response.ok) {
-    throw new Error(`MyMemory HTTP ${response.status}`);
-  }
-
-  const json = await response.json();
-  const translatedText = json?.responseData?.translatedText;
-
-  if (typeof translatedText !== "string" || !translatedText.trim()) {
-    throw new Error("MyMemory returned empty translation.");
-  }
-
-  if (
-    translatedText.startsWith("PLEASE ") ||
-    translatedText.includes("MYMEMORY WARNING")
-  ) {
-    throw new Error(`MyMemory quota/problem response: ${translatedText}`);
-  }
-
-  return translatedText;
-}
-
-async function translateWithGoogleGtxRetry(text: string, targetLanguage: string): Promise<string> {
-  const chunks = splitText(text, 1400);
-  const translatedChunks: string[] = [];
-
-  for (const chunk of chunks) {
-    translatedChunks.push(await translateChunkWithGoogleGtxRetry(chunk, targetLanguage));
-  }
-
-  return translatedChunks.join("\n\n");
-}
-
-async function translateChunkWithGoogleGtxRetry(text: string, targetLanguage: string): Promise<string> {
-  const attempts = 3;
-  let lastError: unknown;
-
-  for (let i = 1; i <= attempts; i++) {
-    try {
-      return await translateChunkWithGoogleGtx(text, targetLanguage);
-    } catch (error) {
-      lastError = error;
-      if (i < attempts) {
-        await delay(300 * i);
-      }
+    if (typeof translatedText === "string" && translatedText.trim()) {
+      return translatedText;
     }
+
+    lastError = `Model ${model} returned empty translation`;
   }
 
-  throw new Error(`Google fallback retries exhausted: ${stringifyError(lastError)}`);
-}
-
-async function translateChunkWithGoogleGtx(text: string, targetLanguage: string): Promise<string> {
-  const url = new URL("https://translate.googleapis.com/translate_a/single");
-  url.searchParams.set("client", "gtx");
-  url.searchParams.set("sl", "de");
-  url.searchParams.set("tl", targetLanguage);
-  url.searchParams.set("dt", "t");
-  url.searchParams.set("q", text);
-
-  const response = await fetch(url.toString(), {
-    method: "GET",
-    headers: { "Accept": "application/json" },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Google fallback HTTP ${response.status}`);
-  }
-
-  const json = await response.json();
-  if (!Array.isArray(json) || !Array.isArray(json[0])) {
-    throw new Error("Google fallback invalid response shape");
-  }
-
-  const segments = json[0] as Array<Array<unknown>>;
-  const translated = segments
-    .map((segment) => (Array.isArray(segment) ? segment[0] : ""))
-    .filter((part) => typeof part === "string")
-    .join("");
-
-  if (!translated.trim()) {
-    throw new Error("Google fallback returned empty translation");
-  }
-
-  return translated;
+  throw new Error(lastError ?? "All Gemini models failed");
 }
 
 function splitText(text: string, maxLength: number): string[] {
