@@ -8,6 +8,7 @@ import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/core/services/content_share_service.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/domain/providers/post_view_count_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
@@ -67,6 +68,18 @@ class _MessageDetailScreenState extends ConsumerState<MessageDetailScreen> {
         elevation: 0,
         backgroundColor: Colors.transparent,
         actions: [
+          IconButton(
+            tooltip: 'Teilen',
+            icon: const Icon(Icons.share_outlined),
+            onPressed: () {
+              ContentShareService.shareContent(
+                contentType: 'message',
+                contentId: message.contentId ?? message.id,
+                title: HtmlUtils.stripHtml(message.displayTitle),
+                intro: 'Schau dir diese Kurznachricht im Jugendkompass an',
+              );
+            },
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Center(

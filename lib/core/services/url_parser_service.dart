@@ -14,6 +14,52 @@ class UrlParserService {
   static final UrlParserService instance = UrlParserService._internal();
   UrlParserService._internal();
 
+  static const String _httpsHost = 'jugendkompass.com';
+  static const String _httpsWwwHost = 'www.jugendkompass.com';
+
+  static const Map<String, String> _pathTypeMap = {
+    'post': 'post',
+    'artikel': 'post',
+    'audio': 'post',
+    'video': 'video',
+    'impulse': 'impulse',
+    'impuls': 'impulse',
+    'message': 'message',
+    'kurznachricht': 'message',
+    'edition': 'edition',
+    'ausgabe': 'edition',
+    'poll': 'poll',
+    'umfrage': 'poll',
+    'verse': 'verse',
+    'content': 'content',
+    'bibelplan': 'bible_plan',
+    'bible-plan': 'bible_plan',
+    'reading-plan': 'bible_plan',
+  };
+
+  static const Map<String, String> _typeAliasMap = {
+    'post_audio': 'post',
+    'article': 'post',
+    'articles': 'post',
+    'videos': 'video',
+    'messages': 'message',
+    'impuls': 'impulse',
+    'impulse': 'impulse',
+    'editions': 'edition',
+    'ausgabe': 'edition',
+    'polls': 'poll',
+    'umfrage': 'poll',
+    'vers': 'verse',
+    'verse_of_the_day': 'verse',
+    'bibelplan': 'bible_plan',
+    'reading_plan': 'bible_plan',
+  };
+
+  String _normalizeType(String rawType) {
+    final type = rawType.trim().toLowerCase();
+    return _typeAliasMap[type] ?? type;
+  }
+
   /// Parse a jugendkompass.com URL into deep link data.
   ///
   /// Returns null if URL is not recognized or invalid.
@@ -22,41 +68,126 @@ class UrlParserService {
     try {
       final uri = Uri.parse(urlString);
 
-      // Only handle jugendkompass.com URLs
-      if (uri.host != 'jugendkompass.com' && uri.host != 'www.jugendkompass.com') {
+      // Support custom scheme fallback: jugendkompass://post/{id}
+      if (uri.scheme == 'jugendkompass') {
+        final hostType = uri.host.trim().toLowerCase();
+        final normalizedFromHost = _pathTypeMap[hostType];
+
+        if (normalizedFromHost == 'bible_plan') {
+          return {'contentType': 'bible_plan'};
+        }
+
+        final idFromPath = uri.pathSegments.isNotEmpty ? uri.pathSegments.first : null;
+        if (normalizedFromHost != null && idFromPath != null && idFromPath.isNotEmpty) {
+          return {
+            'contentType': normalizedFromHost,
+            'contentId': idFromPath,
+          };
+        }
+
+        final queryType = uri.queryParameters['type'] ?? uri.queryParameters['contentType'];
+        final queryId = uri.queryParameters['id'] ?? uri.queryParameters['contentId'];
+        if (queryType != null && queryType.isNotEmpty) {
+          final normalized = _normalizeType(queryType);
+          if (normalized == 'bible_plan') {
+            return {'contentType': 'bible_plan'};
+          }
+          if (queryId != null && queryId.isNotEmpty) {
+            return {
+              'contentType': normalized,
+              'contentId': queryId,
+            };
+          }
+        }
+
+        debugPrint('[UrlParser] Invalid jugendkompass:// URL: $uri');
+        return null;
+      }
+
+      // Only handle jugendkompass.com URLs for HTTPS links
+      if (uri.host != _httpsHost && uri.host != _httpsWwwHost) {
         debugPrint('[UrlParser] Not a jugendkompass.com URL: ${uri.host}');
         return null;
       }
 
+      // Optional query-style links:
+      // https://jugendkompass.com/open?type=post&id=uuid
+      final queryType = uri.queryParameters['type'] ?? uri.queryParameters['contentType'];
+      final queryId = uri.queryParameters['id'] ?? uri.queryParameters['contentId'];
+      if (queryType != null && queryType.isNotEmpty) {
+        final normalized = _normalizeType(queryType);
+        if (normalized == 'bible_plan') {
+          return {'contentType': 'bible_plan'};
+        }
+        if (queryId != null && queryId.isNotEmpty) {
+          return {
+            'contentType': normalized,
+            'contentId': queryId,
+          };
+        }
+      }
+
       // Extract path segments
-      final segments = uri.pathSegments;
-      if (segments.isEmpty || segments.length > 2) {
+      final segments = uri.pathSegments.where((s) => s.trim().isNotEmpty).toList();
+      if (segments.isEmpty || segments.length > 3) {
         debugPrint('[UrlParser] Invalid path structure: ${uri.path}');
         return null;
       }
 
       // Handle root path or single segment differently
       if (segments.length == 1) {
-        // Could be a tab navigation like /videos, /podcasts, etc.
-        // Return null to let browser/web handle it
-        debugPrint('[UrlParser] Single segment path (tab navigation): ${uri.path}');
+        final onlySegment = segments.first.toLowerCase();
+        final maybeType = _pathTypeMap[onlySegment];
+
+        // Allow direct plan links without ID
+        if (maybeType == 'bible_plan') {
+          return {'contentType': 'bible_plan'};
+        }
+
+        // Could be tab navigation like /videos, /podcasts etc.
+        debugPrint('[UrlParser] Single segment path (non-content route): ${uri.path}');
         return null;
       }
 
-      final contentType = segments[0]; // 'post', 'video', etc.
-      final contentId = segments[1];   // UUID
+      // Supported path forms:
+      // - /post/{id}
+      // - /share/post/{id}
+      final isSharePrefix = segments.first.toLowerCase() == 'share';
+      final typeSegment = isSharePrefix ? segments[1].toLowerCase() : segments[0].toLowerCase();
+      final idSegment = isSharePrefix ? (segments.length >= 3 ? segments[2] : '') : segments[1];
 
-      // Validate content type
-      const validTypes = ['post', 'video', 'verse', 'message', 'impulse', 'poll', 'content'];
-      if (!validTypes.contains(contentType)) {
-        debugPrint('[UrlParser] Unknown content type: $contentType');
+      final normalizedType = _pathTypeMap[typeSegment] ?? _normalizeType(typeSegment);
+      if (normalizedType != 'bible_plan' && idSegment.isEmpty) {
+        debugPrint('[UrlParser] Missing content id for type: $normalizedType');
         return null;
       }
 
-      debugPrint('[UrlParser] Parsed URL: type=$contentType, id=$contentId');
+      const validTypes = {
+        'post',
+        'video',
+        'verse',
+        'message',
+        'impulse',
+        'poll',
+        'content',
+        'edition',
+        'bible_plan',
+      };
+
+      if (!validTypes.contains(normalizedType)) {
+        debugPrint('[UrlParser] Unknown content type: $normalizedType');
+        return null;
+      }
+
+      if (normalizedType == 'bible_plan') {
+        debugPrint('[UrlParser] Parsed URL: type=bible_plan');
+        return {'contentType': 'bible_plan'};
+      }
+
+      debugPrint('[UrlParser] Parsed URL: type=$normalizedType, id=$idSegment');
       return {
-        'contentType': contentType,
-        'contentId': contentId,
+        'contentType': normalizedType,
+        'contentId': idSegment,
       };
     } catch (e) {
       debugPrint('[UrlParser] Error parsing URL: $e');

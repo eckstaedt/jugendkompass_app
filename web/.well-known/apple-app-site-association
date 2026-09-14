@@ -6,12 +6,25 @@
         "appID": "MXM3YWAKPL.io.stephanus.jugendkompass",
         "paths": [
           "/post/*",
+          "/artikel/*",
+          "/audio/*",
           "/video/*",
           "/verse/*",
+          "/vers/*",
           "/message/*",
+          "/kurznachricht/*",
           "/impulse/*",
+          "/impuls/*",
+          "/edition/*",
+          "/ausgabe/*",
           "/poll/*",
-          "/content/*"
+          "/umfrage/*",
+          "/content/*",
+          "/open",
+          "/share/*/*",
+          "/bibelplan",
+          "/bible-plan",
+          "/reading-plan"
         ]
       }
     ]

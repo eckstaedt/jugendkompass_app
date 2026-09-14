@@ -7,6 +7,7 @@ import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
 import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/core/services/content_share_service.dart';
 import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 import 'package:jugendkompass_app/domain/providers/supabase_provider.dart';
 
@@ -88,6 +89,20 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen> {
         title: Text(context.tr('poll_badge')),
         backgroundColor: DesignTokens.getCardBackground(brightness),
         elevation: 0,
+        actions: [
+          IconButton(
+            tooltip: 'Teilen',
+            icon: const Icon(Icons.share_outlined),
+            onPressed: () {
+              ContentShareService.shareContent(
+                contentType: 'poll',
+                contentId: currentPoll.contentId ?? currentPoll.id,
+                title: currentPoll.question,
+                intro: 'Mach mit bei dieser Umfrage im Jugendkompass',
+              );
+            },
+          ),
+        ],
       ),
       body: pollAsync.when(
         data: (poll) {

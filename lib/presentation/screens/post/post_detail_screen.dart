@@ -14,6 +14,7 @@ import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
+import 'package:jugendkompass_app/core/services/content_share_service.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 import 'package:jugendkompass_app/domain/providers/post_view_count_provider.dart';
@@ -79,6 +80,18 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
         elevation: 0,
         backgroundColor: Colors.transparent,
         actions: [
+          IconButton(
+            tooltip: 'Teilen',
+            icon: const Icon(Icons.share_outlined),
+            onPressed: () {
+              ContentShareService.shareContent(
+                contentType: 'post',
+                contentId: post.contentId ?? post.id,
+                title: HtmlUtils.stripHtml(displayTitle),
+                intro: 'Schau dir diesen Artikel im Jugendkompass an',
+              );
+            },
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Center(

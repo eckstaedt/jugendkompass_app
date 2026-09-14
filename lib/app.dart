@@ -44,9 +44,17 @@ class _AppState extends ConsumerState<App> {
     // Set up notification tap handler for deep linking
     FCMService().onNotificationTap = _handleNotificationTap;
 
-    // Initialize deep link listening ONLY on mobile (not web)
+    // Initialize deep link listening on mobile and process initial deep link
+    // on web for browser fallback links.
     if (!kIsWeb) {
       _initDeepLinks();
+    } else {
+      final initialWebUri = Uri.base;
+      final hasDeepLinkLikePath =
+          initialWebUri.pathSegments.isNotEmpty && initialWebUri.path != '/';
+      if (initialWebUri.hasQuery || hasDeepLinkLikePath) {
+        _handleDeepLink(initialWebUri);
+      }
     }
   }
 

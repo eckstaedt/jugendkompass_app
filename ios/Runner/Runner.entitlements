@@ -8,5 +8,10 @@
 	<array>
 		<string>group.io.stephanus.jugendkompass</string>
 	</array>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:jugendkompass.com</string>
+		<string>applinks:www.jugendkompass.com</string>
+	</array>
 </dict>
 </plist>

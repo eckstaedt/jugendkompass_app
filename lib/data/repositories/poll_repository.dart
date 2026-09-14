@@ -117,6 +117,38 @@ class PollRepository {
     }
   }
 
+  /// Get a single poll by content_id with options.
+  Future<PollModel?> getPollByContentId(String contentId) async {
+    try {
+      final pollResponse = await _supabase
+          .from(SupabaseConstants.pollsTable)
+          .select('*')
+          .eq('content_id', contentId)
+          .maybeSingle();
+
+      if (pollResponse == null) return null;
+
+      final pollId = pollResponse['id'].toString();
+      final optionsResponse = await _supabase
+          .from(SupabaseConstants.pollOptionsTable)
+          .select('*')
+          .eq('poll_id', pollId)
+          .order('created_at', ascending: true);
+
+      final options = (optionsResponse as List)
+          .map((opt) => Map<String, dynamic>.from(opt))
+          .toList();
+
+      final pollData = Map<String, dynamic>.from(pollResponse);
+      pollData['poll_options'] = options;
+
+      return PollModel.fromJson(pollData);
+    } catch (e) {
+      debugPrint('Error loading poll by content_id: $e');
+      return null;
+    }
+  }
+
   /// Get user's vote for a specific poll
   Future<PollVoteModel?> getUserVote(String pollId, String userId) async {
     try {

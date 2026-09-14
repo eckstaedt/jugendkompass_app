@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
+import 'package:jugendkompass_app/core/services/content_share_service.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier;
@@ -78,6 +79,18 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
         elevation: 0,
         backgroundColor: Colors.transparent,
         actions: [
+          IconButton(
+            tooltip: 'Teilen',
+            icon: const Icon(Icons.share_outlined),
+            onPressed: () {
+              ContentShareService.shareContent(
+                contentType: 'edition',
+                contentId: edition.id,
+                title: HtmlUtils.stripHtml(edition.displayTitle),
+                intro: 'Schau dir diese Ausgabe im Jugendkompass an',
+              );
+            },
+          ),
           if (edition.pdfUrl != null)
             IconButton(
               icon: const Icon(Icons.picture_as_pdf),
@@ -266,7 +279,7 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
                         Container(
                           width: 60,
                           height: 60,
-                          decoration: BoxDecoration(color: Colors.black.withOpacity(0.35)),
+                          decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.35)),
                           child: const Icon(Icons.play_arrow, color: Colors.white, size: 30),
                         ),
                     ],

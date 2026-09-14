@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jugendkompass öffnen</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      background: #fafafa;
+      color: #111;
+      padding: 24px;
+      text-align: center;
+    }
+    .card {
+      max-width: 520px;
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.06);
+    }
+    h1 { margin: 0 0 8px; font-size: 22px; }
+    p { margin: 8px 0 0; color: #444; line-height: 1.5; }
+    a {
+      display: inline-block;
+      margin-top: 16px;
+      color: #fff;
+      background: #c62828;
+      text-decoration: none;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Jugendkompass wird geöffnet …</h1>
+    <p id="status">Wenn die App installiert ist, wird sie jetzt geöffnet. Sonst leiten wir dich zum Inhalt im Browser weiter.</p>
+    <a id="manualLink" href="#">Inhalt im Browser öffnen</a>
+  </div>
+
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const rawType = (params.get('type') || '').trim().toLowerCase();
+      const rawId = (params.get('id') || '').trim();
+
+      const typeAlias = {
+        article: 'post',
+        articles: 'post',
+        artikel: 'post',
+        post_audio: 'post',
+        videos: 'video',
+        impuls: 'impulse',
+        kurznachricht: 'message',
+        ausgabe: 'edition',
+        umfrage: 'poll',
+      };
+
+      const type = typeAlias[rawType] || rawType;
+      const hasData = type.length > 0 && rawId.length > 0;
+      const fallbackUrl = hasData
+        ? `${window.location.origin}/${encodeURIComponent(type)}/${encodeURIComponent(rawId)}`
+        : `${window.location.origin}/`;
+
+      const manualLink = document.getElementById('manualLink');
+      const status = document.getElementById('status');
+      manualLink.href = fallbackUrl;
+
+      if (!hasData) {
+        status.textContent = 'Link ist unvollständig. Du kannst über den Button zur Startseite gehen.';
+        manualLink.textContent = 'Zur Startseite';
+        return;
+      }
+
+      const appUrl = `jugendkompass://open?type=${encodeURIComponent(type)}&id=${encodeURIComponent(rawId)}`;
+      const start = Date.now();
+      const fallbackDelayMs = 1400;
+
+      setTimeout(function () {
+        if (Date.now() - start < 2500) {
+          window.location.replace(fallbackUrl);
+        }
+      }, fallbackDelayMs);
+
+      window.location.href = appUrl;
+    })();
+  </script>
+</body>
+</html>

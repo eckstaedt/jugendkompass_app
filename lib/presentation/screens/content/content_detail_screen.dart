@@ -60,6 +60,8 @@ class ContentDetailScreen extends ConsumerWidget {
                         title: video.displayTitle,
                         description: video.description,
                         imageUrl: video.imageUrl,
+                        shareContentId:
+                            video.contentId.isNotEmpty ? video.contentId : video.id,
                       ),
                     ),
                   );

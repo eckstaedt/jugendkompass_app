@@ -22,6 +22,13 @@ final pollByIdProvider = FutureProvider.family<PollModel?, String>((ref, id) asy
   return repository.getPollById(id);
 });
 
+/// Provider for fetching a single poll by content_id
+final pollByContentIdProvider =
+    FutureProvider.family<PollModel?, String>((ref, contentId) async {
+  final repository = ref.watch(pollRepositoryProvider);
+  return repository.getPollByContentId(contentId);
+});
+
 /// Provider for checking user's vote on a specific poll
 final userVoteProvider = FutureProvider.family<PollVoteModel?, String>((ref, pollId) async {
   final repository = ref.watch(pollRepositoryProvider);

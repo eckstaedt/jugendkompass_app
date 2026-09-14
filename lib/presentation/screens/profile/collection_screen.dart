@@ -257,6 +257,7 @@ class CollectionScreen extends ConsumerWidget {
               title: HtmlUtils.stripHtml(item.title),
               imageUrl: item.imageUrl,
               description: item.description != null ? HtmlUtils.stripHtml(item.description!) : null,
+              shareContentId: item.rawData?['content_id'] as String?,
             ),
           ),
         );

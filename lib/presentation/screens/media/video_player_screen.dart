@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:jugendkompass_app/data/models/collection_item_model.dart';
 import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
+import 'package:jugendkompass_app/core/services/content_share_service.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
@@ -19,6 +20,7 @@ class VideoPlayerScreen extends ConsumerStatefulWidget {
   final String title;
   final String? imageUrl;
   final String? description;
+  final String? shareContentId;
 
   const VideoPlayerScreen({
     super.key,
@@ -26,6 +28,7 @@ class VideoPlayerScreen extends ConsumerStatefulWidget {
     required this.title,
     this.imageUrl,
     this.description,
+    this.shareContentId,
   });
 
   @override
@@ -325,6 +328,19 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
           foregroundColor: Colors.white,
           elevation: 0,
         actions: [
+          if (widget.shareContentId != null && widget.shareContentId!.isNotEmpty)
+            IconButton(
+              tooltip: 'Teilen',
+              icon: const Icon(Icons.share_outlined, size: 24),
+              onPressed: () {
+                ContentShareService.shareContent(
+                  contentType: 'video',
+                  contentId: widget.shareContentId!,
+                  title: HtmlUtils.stripHtml(widget.title),
+                  intro: 'Schau dir dieses Video im Jugendkompass an',
+                );
+              },
+            ),
           if (widget.description != null && widget.description!.trim().isNotEmpty)
             Builder(
               builder: (context) {
@@ -390,6 +406,10 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
                     imageUrl: widget.imageUrl,
                     type: CollectionItemType.video,
                     savedAt: DateTime.now(),
+                    rawData: {
+                      'video_url': widget.videoUrl,
+                      'content_id': widget.shareContentId,
+                    },
                   );
                   ref.read(collectionProvider.notifier).toggleCollection(item);
                 },

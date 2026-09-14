@@ -207,7 +207,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             : Theme.of(context)
                 .colorScheme
                 .onSurface
-                .withOpacity(0.12),
+              .withValues(alpha: 0.12),
         width: 1,
       ),
       checkmarkColor: Theme.of(context).colorScheme.onPrimary,
@@ -408,7 +408,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: _getTypeColor(item.contentType).withOpacity(0.1),
+                  color: _getTypeColor(item.contentType).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(DesignTokens.radiusInputFields),
                 ),
                 child: ClipRRect(
@@ -457,7 +457,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: _getTypeColor(item.contentType).withOpacity(0.1),
+                          color: _getTypeColor(item.contentType).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
                         ),
                         child: Text(
@@ -477,7 +477,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: DesignTokens.successGreen.withOpacity(0.1),
+                            color: DesignTokens.successGreen.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
                           ),
                           child: Row(
@@ -568,6 +568,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               title: item.data.displayTitle,
               description: item.data.description,
               imageUrl: item.data.imageUrl,
+              shareContentId: item.data.contentId.isNotEmpty
+                  ? item.data.contentId
+                  : item.data.id,
             ),
           ),
         );

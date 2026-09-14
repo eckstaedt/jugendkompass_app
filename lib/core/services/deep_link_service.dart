@@ -7,6 +7,7 @@ import 'package:jugendkompass_app/domain/providers/video_provider.dart';
 import 'package:jugendkompass_app/domain/providers/message_provider.dart';
 import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
 import 'package:jugendkompass_app/domain/providers/impulse_provider.dart';
+import 'package:jugendkompass_app/domain/providers/poll_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
@@ -14,6 +15,7 @@ import 'package:jugendkompass_app/presentation/screens/content/content_detail_sc
 import 'package:jugendkompass_app/presentation/screens/message/message_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/kiosk/edition_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/impulse/impulse_detail_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/poll/poll_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/reading_plan/bible_reading_plan_screen.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
     show kVideoPlayerRouteName;
@@ -97,8 +99,7 @@ class DeepLinkService {
           await _navigateToImpulse(context, ref, contentId);
           break;
         case 'poll':
-          // Generic content screen handles this type
-          _navigateToContent(context, contentId);
+          await _navigateToPoll(context, ref, contentId);
           break;
         default:
           debugPrint('[DeepLink] Unknown contentType: $contentType');
@@ -173,7 +174,31 @@ class DeepLinkService {
           title: video.displayTitle,
           description: video.description,
           imageUrl: video.imageUrl,
+          shareContentId: video.contentId.isNotEmpty ? video.contentId : video.id,
         ),
+      ),
+    );
+  }
+
+  /// Navigate to a poll detail screen.
+  Future<void> _navigateToPoll(
+    BuildContext context,
+    WidgetRef ref,
+    String pollIdOrContentId,
+  ) async {
+    var poll = await ref.read(pollByIdProvider(pollIdOrContentId).future);
+    poll ??= await ref.read(pollByContentIdProvider(pollIdOrContentId).future);
+
+    if (poll == null) {
+      debugPrint('[DeepLink] Poll not found: $pollIdOrContentId');
+      return;
+    }
+
+    if (!context.mounted) return;
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => PollDetailScreen(poll: poll!),
       ),
     );
   }

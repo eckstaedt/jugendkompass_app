@@ -241,6 +241,9 @@ class _VideoCardState extends ConsumerState<VideoCard> {
                 title: widget.video.title,
                 description: widget.video.description,
                 imageUrl: widget.video.imageUrl,
+                shareContentId: widget.video.contentId.isNotEmpty
+                    ? widget.video.contentId
+                    : widget.video.id,
               ),
             ),
           );
