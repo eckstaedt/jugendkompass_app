@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 // Supabase Edge Function: send-bible-plan-notification
 //
 // Sends a daily 06:30 (local device time) motivational reminder push
@@ -94,8 +96,100 @@ const MESSAGES_GENERIC: string[] = [
   "Guten Morgen! Zeit, in Dein Bibelleseplan weiterzulesen. 🌻",
 ];
 
+const LOCALIZED_TITLES: Record<string, string> = {
+  de: "Dein Bibelleseplan",
+  en: "Your Bible Reading Plan",
+  es: "Tu plan de lectura bíblica",
+  ru: "Твой план чтения Библии",
+  pl: "Twój plan czytania Biblii",
+  tr: "Kutsal Kitap okuma planın",
+  he: "תוכנית הקריאה שלך בתנ״ך",
+};
+
+const LOCALIZED_GENERIC_MESSAGES: Record<string, string[]> = {
+  en: [
+    "Good morning! Your Bible reading plan is waiting for you. 📖",
+    "Your next chapter is ready — continue your reading plan today. ✨",
+  ],
+  es: [
+    "¡Buenos días! Tu plan de lectura bíblica te está esperando. 📖",
+    "Tu próximo capítulo está listo: continúa hoy tu plan. ✨",
+  ],
+  ru: [
+    "Доброе утро! Твой план чтения Библии уже ждёт тебя. 📖",
+    "Следующая глава готова — продолжай план сегодня. ✨",
+  ],
+  pl: [
+    "Dzień dobry! Twój plan czytania Biblii już na Ciebie czeka. 📖",
+    "Kolejny rozdział jest gotowy — kontynuuj plan dzisiaj. ✨",
+  ],
+  tr: [
+    "Günaydın! Kutsal Kitap okuma planın seni bekliyor. 📖",
+    "Sıradaki bölüm hazır — planına bugün devam et. ✨",
+  ],
+  he: [
+    "בוקר טוב! תוכנית הקריאה שלך בתנ״ך מחכה לך. 📖",
+    "הפרק הבא מוכן — המשך היום את התוכנית שלך. ✨",
+  ],
+};
+
+const LOCALIZED_MESSAGES_WITH_NAME: Record<string, string[]> = {
+  en: [
+    "Good morning {name}! Your Bible reading plan is waiting for you. 📖",
+    "{name}, your next chapter is ready — continue your reading plan today. ✨",
+  ],
+  es: [
+    "¡Buenos días, {name}! Tu plan de lectura bíblica te está esperando. 📖",
+    "{name}, tu próximo capítulo está listo: continúa hoy tu plan. ✨",
+  ],
+  ru: [
+    "Доброе утро, {name}! Твой план чтения Библии уже ждёт тебя. 📖",
+    "{name}, следующая глава готова — продолжай план сегодня. ✨",
+  ],
+  pl: [
+    "Dzień dobry, {name}! Twój plan czytania Biblii już na Ciebie czeka. 📖",
+    "{name}, kolejny rozdział jest gotowy — kontynuuj plan dzisiaj. ✨",
+  ],
+  tr: [
+    "Günaydın {name}! Kutsal Kitap okuma planın seni bekliyor. 📖",
+    "{name}, sıradaki bölüm hazır — planına bugün devam et. ✨",
+  ],
+  he: [
+    "בוקר טוב {name}! תוכנית הקריאה שלך בתנ״ך מחכה לך. 📖",
+    "{name}, הפרק הבא מוכן — המשך היום את התוכנית שלך. ✨",
+  ],
+};
+
+function normalizeLanguage(language: string | null | undefined): string {
+  const raw = (language ?? "de").trim().toLowerCase();
+  if (raw.startsWith("en")) return "en";
+  if (raw.startsWith("es")) return "es";
+  if (raw.startsWith("ru")) return "ru";
+  if (raw.startsWith("pl")) return "pl";
+  if (raw.startsWith("tr")) return "tr";
+  if (raw.startsWith("he") || raw.startsWith("iw")) return "he";
+  return "de";
+}
+
+function getLocalizedTitle(language: string | null | undefined): string {
+  const lang = normalizeLanguage(language);
+  return LOCALIZED_TITLES[lang] ?? LOCALIZED_TITLES.de;
+}
+
 /** Pick a random personalized message, falling back to a generic one if no name is stored. */
-function pickMessage(userName: string | null): string {
+function pickMessage(language: string | null | undefined, userName: string | null): string {
+  const lang = normalizeLanguage(language);
+
+  if (lang != "de") {
+    if (userName && userName.trim().length > 0) {
+      const pool = LOCALIZED_MESSAGES_WITH_NAME[lang] ?? LOCALIZED_MESSAGES_WITH_NAME.en;
+      const template = pool[Math.floor(Math.random() * pool.length)];
+      return template.replaceAll("{name}", userName.trim());
+    }
+    const pool = LOCALIZED_GENERIC_MESSAGES[lang] ?? LOCALIZED_GENERIC_MESSAGES.en;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
   if (userName && userName.trim().length > 0) {
     const pool = MESSAGES_WITH_NAME;
     const template = pool[Math.floor(Math.random() * pool.length)];
@@ -205,7 +299,7 @@ serve(async (_req) => {
     // ── 1. Fetch devices that started the plan, opted in, and have a push token
     const { data: devices, error: devicesError } = await supabase
       .from("device_tokens")
-      .select("fcm_token, user_name, timezone, bible_plan_notification_hour")
+      .select("fcm_token, user_name, language, timezone, bible_plan_notification_hour")
       .eq("bible_plan_started", true)
       .eq("bible_plan_notifications_enabled", true)
       .not("fcm_token", "is", null);
@@ -246,13 +340,15 @@ serve(async (_req) => {
 
     await Promise.allSettled(
       devicesToNotify.map(async (device: Record<string, unknown>) => {
-        const body = pickMessage(device.user_name as string | null);
+        const language = normalizeLanguage(device.language as string | null);
+        const body = pickMessage(language, device.user_name as string | null);
+        const title = getLocalizedTitle(language);
 
         const message = {
           message: {
             token: device.fcm_token,
             notification: {
-              title: "Dein Bibelleseplan",
+              title,
               body,
             },
             data: {

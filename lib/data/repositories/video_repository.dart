@@ -133,25 +133,70 @@ class VideoRepository {
   /// This is used by deep links/shared links where the identifier may vary.
   Future<VideoModel?> getVideoByAnyId(String identifier, String language) async {
     try {
-      final trimmed = identifier.trim();
-      if (trimmed.isEmpty) return null;
+      final candidates = _buildIdentifierCandidates(identifier);
+      if (candidates.isEmpty) return null;
 
-      var video = await getVideoByIdLocalized(trimmed, language);
-      video ??= await getVideoByContentId(trimmed);
-      video ??= await getVideoById(trimmed);
+      VideoModel? video;
+      for (final candidate in candidates) {
+        video = await getVideoByIdLocalized(candidate, language);
+        video ??= await getVideoByContentId(candidate);
+        video ??= await getVideoById(candidate);
+        if (video != null) return video;
+      }
 
-      if (video != null) return video;
+      final normalizedCandidateSet = candidates.map(_normalizeLoose).toSet();
+
+      String? youtubeIdCandidate;
+      for (final candidate in candidates) {
+        final maybeId = _extractYoutubeId(candidate);
+        if (maybeId != null && maybeId.isNotEmpty) {
+          youtubeIdCandidate = maybeId;
+          normalizedCandidateSet.add(_normalizeLoose(maybeId));
+          break;
+        }
+      }
+
+      // Try fast exact URL matching before expensive list scans.
+      for (final candidate in candidates) {
+        final fromExactUrl = await _getVideoByExactUrl(candidate);
+        if (fromExactUrl != null) return fromExactUrl;
+      }
+
+      if (youtubeIdCandidate != null) {
+        final fromYoutubeScan = await _getVideoByYoutubeIdScan(youtubeIdCandidate);
+        if (fromYoutubeScan != null) return fromYoutubeScan;
+      }
 
       final allLocalized = await getVideoListLocalized(language, limit: 500);
       for (final item in allLocalized) {
-        if (item.id == trimmed || item.contentId == trimmed) {
+        final itemKeys = {
+          _normalizeLoose(item.id),
+          _normalizeLoose(item.contentId),
+          _normalizeLoose(item.videoUrl),
+        };
+        final itemYoutube = _extractYoutubeId(item.videoUrl);
+        if (itemYoutube != null) {
+          itemKeys.add(_normalizeLoose(itemYoutube));
+        }
+
+        if (itemKeys.any(normalizedCandidateSet.contains)) {
           return item;
         }
       }
 
       final allDefault = await getVideoList(limit: 500);
       for (final item in allDefault) {
-        if (item.id == trimmed || item.contentId == trimmed) {
+        final itemKeys = {
+          _normalizeLoose(item.id),
+          _normalizeLoose(item.contentId),
+          _normalizeLoose(item.videoUrl),
+        };
+        final itemYoutube = _extractYoutubeId(item.videoUrl);
+        if (itemYoutube != null) {
+          itemKeys.add(_normalizeLoose(itemYoutube));
+        }
+
+        if (itemKeys.any(normalizedCandidateSet.contains)) {
           return item;
         }
       }
@@ -165,5 +210,115 @@ class VideoRepository {
       );
       return null;
     }
+  }
+
+  Future<VideoModel?> _getVideoByExactUrl(String url) async {
+    try {
+      if (url.trim().isEmpty || !url.contains('http')) return null;
+      final response = await _supabase
+          .from('videos')
+          .select()
+          .eq('url', url)
+          .maybeSingle();
+
+      if (response == null) return null;
+      return VideoModel.fromJson(response);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<VideoModel?> _getVideoByYoutubeIdScan(String youtubeId) async {
+    try {
+      final response = await _supabase
+          .from('videos')
+          .select()
+          .ilike('url', '%$youtubeId%')
+          .limit(1)
+          .maybeSingle();
+
+      if (response == null) return null;
+      return VideoModel.fromJson(response);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Set<String> _buildIdentifierCandidates(String raw) {
+    final candidates = <String>{};
+    final base = raw.trim();
+    if (base.isEmpty) return candidates;
+
+    candidates.add(base);
+    candidates.add(base.replaceAll(RegExp(r'/$'), ''));
+
+    try {
+      candidates.add(Uri.decodeComponent(base));
+    } catch (_) {}
+
+    try {
+      candidates.add(Uri.decodeFull(base));
+    } catch (_) {}
+
+    final youtubeId = _extractYoutubeId(base);
+    if (youtubeId != null && youtubeId.isNotEmpty) {
+      candidates.add(youtubeId);
+    }
+
+    candidates.removeWhere((value) => value.trim().isEmpty);
+    return candidates;
+  }
+
+  String _normalizeLoose(String value) {
+    var normalized = value.trim().toLowerCase();
+    try {
+      normalized = Uri.decodeComponent(normalized);
+    } catch (_) {}
+    normalized = normalized.replaceAll(RegExp(r'^/+|/+$'), '');
+    normalized = normalized.replaceAll(RegExp(r'\s+'), '');
+    return normalized;
+  }
+
+  String? _extractYoutubeId(String input) {
+    final value = input.trim();
+    if (value.isEmpty) return null;
+
+    final idOnlyPattern = RegExp(r'^[A-Za-z0-9_-]{11}$');
+    if (idOnlyPattern.hasMatch(value)) {
+      return value;
+    }
+
+    Uri? uri;
+    try {
+      uri = Uri.parse(value);
+    } catch (_) {
+      return null;
+    }
+
+    final host = uri.host.toLowerCase();
+    if (host.contains('youtu.be')) {
+      if (uri.pathSegments.isNotEmpty) {
+        return uri.pathSegments.first;
+      }
+      return null;
+    }
+
+    if (host.contains('youtube.com')) {
+      final v = uri.queryParameters['v'];
+      if (v != null && v.isNotEmpty) {
+        return v;
+      }
+      final segments = uri.pathSegments;
+      final shortsIndex = segments.indexOf('shorts');
+      if (shortsIndex != -1 && segments.length > shortsIndex + 1) {
+        return segments[shortsIndex + 1];
+      }
+      final embedIndex = segments.indexOf('embed');
+      if (embedIndex != -1 && segments.length > embedIndex + 1) {
+        return segments[embedIndex + 1];
+      }
+    }
+
+    return null;
   }
 }

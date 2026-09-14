@@ -187,10 +187,13 @@ class _AppState extends ConsumerState<App> {
       // builder wraps EVERY route including pushed ones, so the mini player
       // is always visible regardless of navigation depth.
       builder: (context, child) {
-        return _MiniPlayerScaffold(
-          routeObserver: _routeObserver,
-          navigatorKey: _navigatorKey,
-          child: child ?? const SizedBox.shrink(),
+        return Directionality(
+          textDirection: language.isRtl ? TextDirection.rtl : TextDirection.ltr,
+          child: _MiniPlayerScaffold(
+            routeObserver: _routeObserver,
+            navigatorKey: _navigatorKey,
+            child: child ?? const SizedBox.shrink(),
+          ),
         );
       },
       home: MiniPlayerOverlayHost(

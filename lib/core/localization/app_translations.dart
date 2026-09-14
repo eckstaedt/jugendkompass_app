@@ -8,12 +8,13 @@ enum AppLanguage {
   es(Locale('es'), 'Español'),
   pl(Locale('pl'), 'Polski'),
   tr(Locale('tr'), 'Türkçe'),
-  he(Locale('he'), 'עברית');
+  he(Locale('he'), 'עברית', true);
 
   final Locale locale;
   final String displayName;
+  final bool isRtl;
 
-  const AppLanguage(this.locale, this.displayName);
+  const AppLanguage(this.locale, this.displayName, [this.isRtl = false]);
 
   /// Returns only the languages that should be shown in the language selector
   static List<AppLanguage> get availableLanguages => [de, en, ru, es, pl, tr, he];
