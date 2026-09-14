@@ -127,4 +127,43 @@ class VideoRepository {
       throw Exception('Failed to fetch video by content ID: $e');
     }
   }
+
+  /// Resolve a video from either video.id or video.content_id.
+  ///
+  /// This is used by deep links/shared links where the identifier may vary.
+  Future<VideoModel?> getVideoByAnyId(String identifier, String language) async {
+    try {
+      final trimmed = identifier.trim();
+      if (trimmed.isEmpty) return null;
+
+      var video = await getVideoByIdLocalized(trimmed, language);
+      video ??= await getVideoByContentId(trimmed);
+      video ??= await getVideoById(trimmed);
+
+      if (video != null) return video;
+
+      final allLocalized = await getVideoListLocalized(language, limit: 500);
+      for (final item in allLocalized) {
+        if (item.id == trimmed || item.contentId == trimmed) {
+          return item;
+        }
+      }
+
+      final allDefault = await getVideoList(limit: 500);
+      for (final item in allDefault) {
+        if (item.id == trimmed || item.contentId == trimmed) {
+          return item;
+        }
+      }
+
+      return null;
+    } catch (e) {
+      developer.log(
+        'Error resolving video by any id: $e',
+        name: 'VideoRepository',
+        error: e,
+      );
+      return null;
+    }
+  }
 }

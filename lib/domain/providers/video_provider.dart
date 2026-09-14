@@ -33,3 +33,12 @@ final videoByContentIdProvider = FutureProvider.family<VideoModel?, String>(
     return repository.getVideoByContentId(contentId);
   },
 );
+
+/// Video provider that resolves both video.id and video.content_id.
+final videoByAnyIdProvider = FutureProvider.family<VideoModel?, String>(
+  (ref, identifier) async {
+    final repository = ref.watch(videoRepositoryProvider);
+    final language = ref.watch(languageProvider).locale.languageCode;
+    return repository.getVideoByAnyId(identifier, language);
+  },
+);

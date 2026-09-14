@@ -154,10 +154,7 @@ class DeepLinkService {
     WidgetRef ref,
     String videoId,
   ) async {
-    // Notifications may reference either the video's own id or its
-    // content_id, depending on the trigger source. Try both to be safe.
-    var video = await ref.read(videoByIdProvider(videoId).future);
-    video ??= await ref.read(videoByContentIdProvider(videoId).future);
+    final video = await ref.read(videoByAnyIdProvider(videoId).future);
 
     if (video == null) {
       debugPrint('[DeepLink] Video not found: $videoId');
@@ -170,7 +167,7 @@ class DeepLinkService {
       MaterialPageRoute(
         settings: const RouteSettings(name: kVideoPlayerRouteName),
         builder: (context) => VideoPlayerScreen(
-          videoUrl: video!.videoUrl,
+          videoUrl: video.videoUrl,
           title: video.displayTitle,
           description: video.description,
           imageUrl: video.imageUrl,
