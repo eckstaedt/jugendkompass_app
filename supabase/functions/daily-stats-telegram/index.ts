@@ -2,7 +2,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const TELEGRAM_GATEWAY = "https://connector-gateway.lovable.dev/telegram";
-const CHAT_IDS = ["63117481", "8027531086"];
+// Daily report is disabled (cron job 4 deactivated). Chat IDs removed on user request.
+const CHAT_IDS: string[] = [];
 const TZ = "Europe/Berlin";
 
 function berlinDayBoundsUtc(): { startUtc: string; endUtc: string; label: string } {

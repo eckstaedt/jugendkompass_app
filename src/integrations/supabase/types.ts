@@ -225,6 +225,9 @@ export type Database = {
       }
       device_tokens: {
         Row: {
+          bible_plan_notification_hour: number
+          bible_plan_notifications_enabled: boolean
+          bible_plan_started: boolean
           content_notifications: boolean
           created_at: string
           device_id: string
@@ -235,9 +238,13 @@ export type Database = {
           notification_minute: number
           platform: string
           timezone: string
+          user_name: string | null
           verse_notifications: boolean
         }
         Insert: {
+          bible_plan_notification_hour?: number
+          bible_plan_notifications_enabled?: boolean
+          bible_plan_started?: boolean
           content_notifications?: boolean
           created_at?: string
           device_id: string
@@ -248,9 +255,13 @@ export type Database = {
           notification_minute?: number
           platform?: string
           timezone?: string
+          user_name?: string | null
           verse_notifications?: boolean
         }
         Update: {
+          bible_plan_notification_hour?: number
+          bible_plan_notifications_enabled?: boolean
+          bible_plan_started?: boolean
           content_notifications?: boolean
           created_at?: string
           device_id?: string
@@ -261,6 +272,7 @@ export type Database = {
           notification_minute?: number
           platform?: string
           timezone?: string
+          user_name?: string | null
           verse_notifications?: boolean
         }
         Relationships: []
@@ -638,6 +650,7 @@ export type Database = {
       subscriptions: {
         Row: {
           address_extra: string | null
+          bezahlt: boolean | null
           city: string
           country: string
           created_at: string
@@ -653,6 +666,7 @@ export type Database = {
         }
         Insert: {
           address_extra?: string | null
+          bezahlt?: boolean | null
           city: string
           country: string
           created_at?: string
@@ -668,6 +682,7 @@ export type Database = {
         }
         Update: {
           address_extra?: string | null
+          bezahlt?: boolean | null
           city?: string
           country?: string
           created_at?: string
@@ -710,6 +725,72 @@ export type Database = {
           label?: string
           language?: string
           platform?: string | null
+        }
+        Relationships: []
+      }
+      translation_jobs: {
+        Row: {
+          attempts: number
+          content_id: string
+          content_type: string
+          created_at: string
+          id: number
+          last_error: string | null
+          locked_at: string | null
+          locked_by: string | null
+          next_retry_at: string
+          record_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          content_id: string
+          content_type: string
+          created_at?: string
+          id?: number
+          last_error?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          next_retry_at?: string
+          record_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          id?: number
+          last_error?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          next_retry_at?: string
+          record_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      translation_targets: {
+        Row: {
+          created_at: string
+          is_active: boolean
+          language_code: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          is_active?: boolean
+          language_code: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          is_active?: boolean
+          language_code?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -837,6 +918,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      enqueue_translation_backfill_for_posts: {
+        Args: { max_rows?: number }
+        Returns: number
+      }
       get_analytics_summary: { Args: never; Returns: Json }
       get_categories_localized: {
         Args: { lang: string }
@@ -1026,12 +1111,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1055,11 +1140,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1080,11 +1165,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1105,11 +1190,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1122,11 +1207,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
