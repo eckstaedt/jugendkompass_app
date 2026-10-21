@@ -148,7 +148,7 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
       child: Opacity(
-        opacity: isRead ? 0.6 : 1.0,
+        opacity: 1.0,
         child: ScaleTransition(
           scale: _scaleAnimation,
           child: FadeTransition(

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/data/models/impulse_model.dart';
-import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
-import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
@@ -69,15 +67,12 @@ class _ImpulseCardState extends ConsumerState<ImpulseCard>
 
     final displayTitle = impulse.displayTitle;
 
-    // Check if impulse is read
-    final isRead = ref.watch(isContentReadProvider((id: impulse.id, type: ReadContentType.impulse)));
-
     return GestureDetector(
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
       child: Opacity(
-        opacity: isRead ? 0.6 : 1.0,
+        opacity: 1.0,
         child: ScaleTransition(
           scale: _scaleAnimation,
           child: FadeTransition(

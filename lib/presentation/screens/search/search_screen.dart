@@ -6,9 +6,7 @@ import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/impulse_provider.dart';
 import 'package:jugendkompass_app/domain/providers/message_provider.dart';
 import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
-import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
-import 'package:jugendkompass_app/data/models/read_history_item_model.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart' show currentAudioNotifier, kVideoPlayerRouteName;
 import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
@@ -369,30 +367,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     final textSecondary = DesignTokens.getTextSecondary(brightness);
     final cardBg = DesignTokens.getGlassBackground(brightness, 0.20);
 
-    // Determine content type for read history check
-    final ReadContentType readContentType;
-    switch (item.contentType) {
-      case 'VIDEO':
-        readContentType = ReadContentType.video;
-        break;
-      case 'IMPULS':
-        readContentType = ReadContentType.impulse;
-        break;
-      case 'KURZNACHRICHT':
-        readContentType = ReadContentType.message;
-        break;
-      case 'AUDIO':
-        readContentType = ReadContentType.audio;
-        break;
-      default:
-        readContentType = ReadContentType.post;
-    }
-
-    // Check if content is read
-    final isRead = ref.watch(isContentReadProvider((id: item.id, type: readContentType)));
-
     return Opacity(
-      opacity: isRead ? 0.6 : 1.0,
+      opacity: 1.0,
       child: RoundedCard(
         glass: true,
         backgroundColor: cardBg,
