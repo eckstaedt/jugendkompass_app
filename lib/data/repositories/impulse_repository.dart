@@ -163,6 +163,48 @@ class ImpulseRepository {
     }
   }
 
+  /// Get a localized impulse by content_id.
+  Future<ImpulseModel?> getImpulseByContentIdLocalized(String contentId, String language) async {
+    try {
+      if (language == 'de') {
+        return getImpulseByContentId(contentId);
+      }
+
+      final impulse = await getImpulseByContentId(contentId);
+      if (impulse == null) return null;
+
+      final translations = await _supabase
+          .from('content_translations')
+          .select('field_name, value')
+          .eq('content_id', impulse.contentId)
+          .eq('language', language);
+
+      String? translatedTitle;
+      String? translatedText;
+
+      for (final row in translations as List) {
+        final field = row['field_name'] as String;
+        final value = row['value'] as String;
+
+        if (field == 'title') translatedTitle = value;
+        if (field == 'impulse_text') translatedText = value;
+      }
+
+      return ImpulseModel(
+        id: impulse.id,
+        contentId: impulse.contentId,
+        title: translatedTitle ?? impulse.title,
+        date: impulse.date,
+        impulseText: translatedText ?? impulse.impulseText,
+        imageUrl: impulse.imageUrl,
+        createdAt: impulse.createdAt,
+        status: impulse.status,
+      );
+    } catch (e) {
+      throw Exception('Fehler beim Laden des lokalisierten Impulses: $e');
+    }
+  }
+
   /// Get localized impulses using Supabase RPC function.
   ///
   /// Uses get_impulses_localized(lang) which returns impulses with

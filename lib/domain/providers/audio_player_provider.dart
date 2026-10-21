@@ -137,13 +137,14 @@ final hasPreviousAudioProvider = Provider<bool>((ref) {
 final recommendedAudiosProvider = FutureProvider<List<AudioModel>>((ref) async {
   final audioRepository = ref.watch(audioRepositoryProvider);
   final currentQueue = ref.watch(audioQueueProvider);
+  final language = ref.watch(languageProvider).locale.languageCode;
 
   try {
     // Get IDs of all audios currently in the queue
     final queueAudioIds = currentQueue.map((audio) => audio.id).toSet();
 
     // Get all available audios (fetch more than 10 to ensure we have enough after filtering)
-    final allAudios = await audioRepository.getAudioList(limit: 50);
+    final allAudios = await audioRepository.getAudioListLocalized(language, limit: 50);
 
     // Filter out audios that are already in the queue
     final recommendedAudios = allAudios

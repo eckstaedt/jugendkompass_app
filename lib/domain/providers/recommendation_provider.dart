@@ -179,7 +179,11 @@ final paginatedContentProvider = FutureProvider.family<List<RecommendedItem>, in
     final batchSize = 50;
     final posts = await postRepository.getPostsLocalized(language, limit: batchSize, offset: page * batchSize);
     final videos = await videoRepository.getVideoListLocalized(language, limit: batchSize, offset: page * batchSize);
-    final messages = await messageRepository.getMessageList(limit: batchSize, offset: page * batchSize);
+    final messages = await messageRepository.getMessageListLocalized(
+      language,
+      limit: batchSize,
+      offset: page * batchSize,
+    );
 
     // Fetch polls with error handling (don't break entire feed if polls fail)
     List<dynamic> polls = [];
@@ -238,14 +242,16 @@ final paginatedContentProvider = FutureProvider.family<List<RecommendedItem>, in
 /// Latest content provider - returns the newest content item across all types
 final latestContentProvider = FutureProvider<RecommendedItem?>((ref) async {
   try {
+    final language = ref.watch(languageProvider).locale.languageCode;
+
     // Fetch posts, videos, and messages
     final postRepository = ref.watch(postRepositoryProvider);
     final videoRepository = ref.watch(videoRepositoryProvider);
     final messageRepository = ref.watch(messageRepositoryProvider);
     
-    final posts = await postRepository.getPostList(limit: 30);
-    final videos = await videoRepository.getVideoList(limit: 30);
-    final messages = await messageRepository.getMessageList(limit: 30);
+    final posts = await postRepository.getPostsLocalized(language, limit: 30);
+    final videos = await videoRepository.getVideoListLocalized(language, limit: 30);
+    final messages = await messageRepository.getMessageListLocalized(language, limit: 30);
 
     // Convert to RecommendedItems
     final allItems = <RecommendedItem>[];
@@ -277,14 +283,16 @@ final latestContentProvider = FutureProvider<RecommendedItem?>((ref) async {
 /// Recent content provider - returns content from last 4 weeks (excluding the latest one), sorted by date descending
 final recentContentProvider = FutureProvider<List<RecommendedItem>>((ref) async {
   try {
+    final language = ref.watch(languageProvider).locale.languageCode;
+
     // Fetch posts, videos, and messages
     final postRepository = ref.watch(postRepositoryProvider);
     final videoRepository = ref.watch(videoRepositoryProvider);
     final messageRepository = ref.watch(messageRepositoryProvider);
     
-    final posts = await postRepository.getPostList(limit: 30);
-    final videos = await videoRepository.getVideoList(limit: 30);
-    final messages = await messageRepository.getMessageList(limit: 30);
+    final posts = await postRepository.getPostsLocalized(language, limit: 30);
+    final videos = await videoRepository.getVideoListLocalized(language, limit: 30);
+    final messages = await messageRepository.getMessageListLocalized(language, limit: 30);
 
     // Convert to RecommendedItems
     final allItems = <RecommendedItem>[];

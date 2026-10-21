@@ -31,6 +31,7 @@ final impulseDetailProvider = FutureProvider.family<ImpulseModel?, String>((
 final impulseByContentIdProvider = FutureProvider.family<ImpulseModel?, String>(
   (ref, contentId) async {
     final repository = ref.watch(impulseRepositoryProvider);
-    return await repository.getImpulseByContentId(contentId);
+    final language = ref.watch(languageProvider).locale.languageCode;
+    return await repository.getImpulseByContentIdLocalized(contentId, language);
   },
 );

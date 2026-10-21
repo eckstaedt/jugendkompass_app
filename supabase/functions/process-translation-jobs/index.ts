@@ -4,10 +4,11 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 type JobStatus = "pending" | "processing" | "completed" | "failed";
+type ContentType = "post" | "message" | "impulse" | "video" | "verse";
 
 interface TranslationJob {
   id: number;
-  content_type: "post";
+  content_type: ContentType;
   record_id: string;
   content_id: string;
   status: JobStatus;
@@ -15,25 +16,27 @@ interface TranslationJob {
   next_retry_at: string;
 }
 
-interface PostRecord {
+interface SourceRecord {
   id: string;
   content_id: string;
-  title: string;
-  body: string;
+  fields: Record<string, string>;
 }
 
 interface WorkerPayload extends Record<string, unknown> {
   enqueueBackfill?: boolean;
   backfillMaxRows?: number;
+  backfillLanguage?: string;
   batchSize?: number;
   dryRun?: boolean;
   languages?: string[];
+  contentTypes?: string[];
   geminiApiKey?: string;
 }
 
 const MAX_ATTEMPTS = Number(Deno.env.get("TRANSLATION_MAX_ATTEMPTS") ?? "8");
 const DEFAULT_BATCH_SIZE = Number(Deno.env.get("TRANSLATION_BATCH_SIZE") ?? "15");
 const DEFAULT_TARGET_LANGUAGES = ["en", "ru", "pl", "es", "tr", "he"];
+const DEFAULT_TARGET_CONTENT_TYPES: ContentType[] = ["post", "message", "impulse", "video", "verse"];
 const GEMINI_MODELS = (Deno.env.get("GEMINI_TRANSLATION_MODELS") ?? "gemini-3.6-flash,gemini-2.5-flash,gemini-3.5-flash-lite")
   .split(",")
   .map((model) => model.trim())
@@ -42,6 +45,7 @@ const GEMINI_MODELS = (Deno.env.get("GEMINI_TRANSLATION_MODELS") ?? "gemini-3.6-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 let runtimeGeminiApiKey: string | null = null;
@@ -62,6 +66,36 @@ serve(async (req: Request) => {
     const supabase = createClient(supabaseUrl, serviceRole);
 
     const payload = await readPayload(req);
+    if (payload.enqueueBackfill === true) {
+      const maxRows = Number(payload.backfillMaxRows ?? 8000);
+      const backfillLanguage = typeof payload.backfillLanguage === "string"
+        ? payload.backfillLanguage.trim().toLowerCase()
+        : null;
+
+      let queuedJobs = 0;
+
+      const allResult = await supabase.rpc("enqueue_translation_backfill_for_all", {
+        max_rows_per_type: maxRows,
+        target_language: backfillLanguage,
+      });
+
+      if (!allResult.error) {
+        queuedJobs = Number(allResult.data ?? 0);
+      } else {
+        const postFallback = await supabase.rpc("enqueue_translation_backfill_for_posts", {
+          max_rows: maxRows,
+        });
+        if (postFallback.error) throw postFallback.error;
+        queuedJobs = Number(postFallback.data ?? 0);
+      }
+
+      return json({
+        ok: true,
+        action: "backfill-enqueue",
+        queuedJobs,
+      });
+    }
+
     runtimeGeminiApiKey =
       (typeof payload.geminiApiKey === "string" && payload.geminiApiKey.trim().length > 0)
         ? payload.geminiApiKey.trim()
@@ -71,25 +105,12 @@ serve(async (req: Request) => {
       throw new Error("Missing Gemini API key. Provide `geminiApiKey` in payload or set `GEMINI_API_KEY` secret.");
     }
 
-    if (payload.enqueueBackfill === true) {
-      const maxRows = Number(payload.backfillMaxRows ?? 8000);
-      const { data, error } = await supabase.rpc("enqueue_translation_backfill_for_posts", {
-        max_rows: maxRows,
-      });
-      if (error) throw error;
-
-      return json({
-        ok: true,
-        action: "backfill-enqueue",
-        queuedJobs: data ?? 0,
-      });
-    }
-
     const batchSize = Number(payload.batchSize ?? DEFAULT_BATCH_SIZE);
     const dryRun = payload.dryRun === true;
     const languages = resolveRequestedLanguages(payload, await loadActiveLanguages(supabase));
+    const contentTypes = resolveRequestedContentTypes(payload);
 
-    const jobs = await loadPendingJobs(supabase, batchSize);
+    const jobs = await loadPendingJobs(supabase, batchSize, contentTypes);
     if (jobs.length === 0) {
       return json({ ok: true, processed: 0, message: "No pending translation jobs." });
     }
@@ -101,16 +122,16 @@ serve(async (req: Request) => {
       if (!claim) continue;
 
       try {
-        const post = await loadPost(supabase, job.record_id);
-        if (!post || !post.content_id) {
-          await failJob(supabase, job.id, job.attempts, "Post not found or missing content_id.");
-          results.push({ jobId: job.id, status: "failed", reason: "missing_post" });
+        const sourceRecord = await loadSourceRecord(supabase, job);
+        if (!sourceRecord || !sourceRecord.content_id) {
+          await failJob(supabase, job.id, job.attempts, `Record not found or missing content_id for ${job.content_type}.`);
+          results.push({ jobId: job.id, status: "failed", reason: "missing_record", contentType: job.content_type });
           continue;
         }
 
-        const translatedFields = await translateMissingPostFields({
+        const translatedFields = await translateMissingFields({
           supabase,
-          post,
+          sourceRecord,
           targetLanguages: languages,
           dryRun,
         });
@@ -119,6 +140,7 @@ serve(async (req: Request) => {
         results.push({
           jobId: job.id,
           status: "completed",
+          contentType: job.content_type,
           translatedFields,
           dryRun,
         });
@@ -127,6 +149,7 @@ serve(async (req: Request) => {
         results.push({
           jobId: job.id,
           status: "failed",
+          contentType: job.content_type,
           error: stringifyError(error),
         });
       }
@@ -137,6 +160,7 @@ serve(async (req: Request) => {
       processed: results.length,
       results,
       activeLanguages: languages,
+      activeContentTypes: contentTypes,
       dryRun,
     });
   } catch (error) {
@@ -177,6 +201,24 @@ function resolveRequestedLanguages(payload: Record<string, unknown>, activeLangu
   return unique;
 }
 
+function resolveRequestedContentTypes(payload: Record<string, unknown>): ContentType[] {
+  const requested = payload.contentTypes;
+  if (!Array.isArray(requested) || requested.length === 0) {
+    return DEFAULT_TARGET_CONTENT_TYPES;
+  }
+
+  const normalized = requested
+    .map((item) => String(item ?? "").trim().toLowerCase())
+    .filter((item): item is ContentType =>
+      item === "post" || item === "message" || item === "impulse" || item === "video" || item === "verse"
+    );
+
+  const unique = Array.from(new Set(normalized));
+  if (unique.length === 0) return DEFAULT_TARGET_CONTENT_TYPES;
+
+  return unique;
+}
+
 async function loadActiveLanguages(supabase: ReturnType<typeof createClient>): Promise<string[]> {
   const { data, error } = await supabase
     .from("translation_targets")
@@ -199,13 +241,14 @@ async function loadActiveLanguages(supabase: ReturnType<typeof createClient>): P
 async function loadPendingJobs(
   supabase: ReturnType<typeof createClient>,
   batchSize: number,
+  contentTypes: ContentType[],
 ): Promise<TranslationJob[]> {
   const nowIso = new Date().toISOString();
 
   const { data, error } = await supabase
     .from("translation_jobs")
     .select("id, content_type, record_id, content_id, status, attempts, next_retry_at")
-    .eq("content_type", "post")
+    .in("content_type", contentTypes)
     .in("status", ["pending", "failed"])
     .lte("next_retry_at", nowIso)
     .order("created_at", { ascending: true })
@@ -240,37 +283,144 @@ async function claimJob(supabase: ReturnType<typeof createClient>, jobId: number
   return !!data;
 }
 
-async function loadPost(
+async function loadSourceRecord(
   supabase: ReturnType<typeof createClient>,
-  recordId: string,
-): Promise<PostRecord | null> {
-  const { data, error } = await supabase
-    .from("posts")
-    .select("id, content_id, title, body")
-    .eq("id", recordId)
-    .maybeSingle();
+  job: TranslationJob,
+): Promise<SourceRecord | null> {
+  if (job.content_type === "post") {
+    const { data, error } = await supabase
+      .from("posts")
+      .select("id, content_id, title, body")
+      .eq("id", job.record_id)
+      .maybeSingle();
 
-  if (error) {
-    throw new Error(`Failed to load post ${recordId}: ${error.message}`);
+    if (error) {
+      throw new Error(`Failed to load post ${job.record_id}: ${error.message}`);
+    }
+
+    if (!data) return null;
+
+    return {
+      id: String(data.id),
+      content_id: String(data.content_id ?? ""),
+      fields: {
+        title: String(data.title ?? ""),
+        body: String(data.body ?? ""),
+      },
+    };
   }
 
-  return (data as PostRecord | null) ?? null;
+  if (job.content_type === "message") {
+    const { data, error } = await supabase
+      .from("messages")
+      .select("id, content_id, title, message")
+      .eq("id", Number(job.record_id))
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to load message ${job.record_id}: ${error.message}`);
+    }
+
+    if (!data) return null;
+
+    return {
+      id: String(data.id),
+      content_id: String(data.content_id ?? ""),
+      fields: {
+        title: String(data.title ?? ""),
+        message: String(data.message ?? ""),
+      },
+    };
+  }
+
+  if (job.content_type === "impulse") {
+    const { data, error } = await supabase
+      .from("impulses")
+      .select("id, content_id, title, impulse_text")
+      .eq("id", job.record_id)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to load impulse ${job.record_id}: ${error.message}`);
+    }
+
+    if (!data) return null;
+
+    return {
+      id: String(data.id),
+      content_id: String(data.content_id ?? ""),
+      fields: {
+        title: String(data.title ?? ""),
+        impulse_text: String(data.impulse_text ?? ""),
+      },
+    };
+  }
+
+  if (job.content_type === "video") {
+    const { data, error } = await supabase
+      .from("videos")
+      .select("id, content_id, title, description")
+      .eq("id", Number(job.record_id))
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to load video ${job.record_id}: ${error.message}`);
+    }
+
+    if (!data) return null;
+
+    return {
+      id: String(data.id),
+      content_id: String(data.content_id ?? ""),
+      fields: {
+        title: String(data.title ?? ""),
+        description: String(data.description ?? ""),
+      },
+    };
+  }
+
+  if (job.content_type === "verse") {
+    const { data, error } = await supabase
+      .from("verse_of_the_day")
+      .select("id, content_id, verse, reference")
+      .eq("id", job.record_id)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to load verse ${job.record_id}: ${error.message}`);
+    }
+
+    if (!data) return null;
+
+    return {
+      id: String(data.id),
+      content_id: String(data.content_id ?? ""),
+      fields: {
+        verse: String(data.verse ?? ""),
+        reference: String(data.reference ?? ""),
+      },
+    };
+  }
+
+  return null;
 }
 
-async function translateMissingPostFields(args: {
+async function translateMissingFields(args: {
   supabase: ReturnType<typeof createClient>;
-  post: PostRecord;
+  sourceRecord: SourceRecord;
   targetLanguages: string[];
   dryRun: boolean;
 }): Promise<number> {
-  const { supabase, post, targetLanguages, dryRun } = args;
+  const { supabase, sourceRecord, targetLanguages, dryRun } = args;
+  const sourceFieldNames = Object.keys(sourceRecord.fields);
+  if (sourceFieldNames.length === 0) return 0;
 
   const { data: existingRows, error: existingError } = await supabase
     .from("content_translations")
     .select("language, field_name")
-    .eq("content_id", post.content_id)
+    .eq("content_id", sourceRecord.content_id)
     .in("language", targetLanguages)
-    .in("field_name", ["title", "body"]);
+    .in("field_name", sourceFieldNames);
 
   if (existingError) {
     throw new Error(`Failed to read existing translations: ${existingError.message}`);
@@ -284,105 +434,40 @@ async function translateMissingPostFields(args: {
   let translatedFieldCount = 0;
 
   for (const language of targetLanguages) {
-    const hasTitle = existing.has(`${language}:title`);
-    const hasBody = existing.has(`${language}:body`);
-    const needTitle = !hasTitle && !!post.title?.trim();
-    const needBody = !hasBody && !!post.body?.trim();
+    const fieldsNeedingTranslation = sourceFieldNames.filter((fieldName) => {
+      const key = `${language}:${fieldName}`;
+      const sourceValue = sourceRecord.fields[fieldName]?.trim() ?? "";
+      return sourceValue.length > 0 && !existing.has(key);
+    });
 
-    if (!needTitle && !needBody) {
+    if (fieldsNeedingTranslation.length === 0) {
       continue;
     }
 
-    if (needTitle && needBody) {
-      const bundle = await translateGermanTextBundle([post.title, post.body], language);
-      const translatedTitle = bundle[0]?.trim() ?? "";
-      const translatedBody = bundle[1]?.trim() ?? "";
+    const sourceTexts = fieldsNeedingTranslation
+      .map((fieldName) => sourceRecord.fields[fieldName] ?? "");
+    const translatedTexts = await translateGermanTextList(sourceTexts, language);
 
-      if (translatedTitle) {
-        translatedFieldCount += 1;
-        if (!dryRun) {
-          const { error } = await supabase
-            .from("content_translations")
-            .upsert(
-              {
-                content_id: post.content_id,
-                language,
-                field_name: "title",
-                value: translatedTitle,
-              },
-              { onConflict: "content_id,language,field_name" },
-            );
-          if (error) {
-            throw new Error(`Failed to upsert translation ${language}/title: ${error.message}`);
-          }
-        }
-      }
+    for (let index = 0; index < fieldsNeedingTranslation.length; index++) {
+      const fieldName = fieldsNeedingTranslation[index];
+      const translatedValue = translatedTexts[index]?.trim() ?? "";
+      if (!translatedValue) continue;
 
-      if (translatedBody) {
-        translatedFieldCount += 1;
-        if (!dryRun) {
-          const { error } = await supabase
-            .from("content_translations")
-            .upsert(
-              {
-                content_id: post.content_id,
-                language,
-                field_name: "body",
-                value: translatedBody,
-              },
-              { onConflict: "content_id,language,field_name" },
-            );
-          if (error) {
-            throw new Error(`Failed to upsert translation ${language}/body: ${error.message}`);
-          }
-        }
-      }
-
-      continue;
-    }
-
-    if (needTitle) {
-      const translatedTitle = await translateGermanText(post.title, language);
-      if (translatedTitle.trim()) {
-        translatedFieldCount += 1;
-        if (!dryRun) {
-          const { error } = await supabase
-            .from("content_translations")
-            .upsert(
-              {
-                content_id: post.content_id,
-                language,
-                field_name: "title",
-                value: translatedTitle,
-              },
-              { onConflict: "content_id,language,field_name" },
-            );
-          if (error) {
-            throw new Error(`Failed to upsert translation ${language}/title: ${error.message}`);
-          }
-        }
-      }
-    }
-
-    if (needBody) {
-      const translatedBody = await translateGermanText(post.body, language);
-      if (translatedBody.trim()) {
-        translatedFieldCount += 1;
-        if (!dryRun) {
-          const { error } = await supabase
-            .from("content_translations")
-            .upsert(
-              {
-                content_id: post.content_id,
-                language,
-                field_name: "body",
-                value: translatedBody,
-              },
-              { onConflict: "content_id,language,field_name" },
-            );
-          if (error) {
-            throw new Error(`Failed to upsert translation ${language}/body: ${error.message}`);
-          }
+      translatedFieldCount += 1;
+      if (!dryRun) {
+        const { error } = await supabase
+          .from("content_translations")
+          .upsert(
+            {
+              content_id: sourceRecord.content_id,
+              language,
+              field_name: fieldName,
+              value: translatedValue,
+            },
+            { onConflict: "content_id,language,field_name" },
+          );
+        if (error) {
+          throw new Error(`Failed to upsert translation ${language}/${fieldName}: ${error.message}`);
         }
       }
     }
@@ -391,27 +476,37 @@ async function translateMissingPostFields(args: {
   return translatedFieldCount;
 }
 
-async function translateGermanTextBundle(texts: [string, string], targetLanguage: string): Promise<[string, string]> {
+async function translateGermanTextList(texts: string[], targetLanguage: string): Promise<string[]> {
+  if (texts.length === 0) return [];
+  if (texts.length === 1) {
+    return [await translateGermanText(texts[0], targetLanguage)];
+  }
+
   const separator = "\n\n[[[JK_FIELD_SPLIT]]]\n\n";
-  const payload = `${texts[0]}${separator}${texts[1]}`;
+  const payload = texts.join(separator);
 
   const translated = await translateGermanText(payload, targetLanguage);
   if (!translated.includes("[[[JK_FIELD_SPLIT]]]") && !translated.includes("JK_FIELD_SPLIT")) {
-    return [
-      await translateGermanText(texts[0], targetLanguage),
-      await translateGermanText(texts[1], targetLanguage),
-    ];
+    const fallback: string[] = [];
+    for (const text of texts) {
+      fallback.push(await translateGermanText(text, targetLanguage));
+    }
+    return fallback;
   }
 
-  const parts = translated.split(/\[\[\[JK_FIELD_SPLIT\]\]\]|JK_FIELD_SPLIT/);
-  if (parts.length < 2) {
-    return [
-      await translateGermanText(texts[0], targetLanguage),
-      await translateGermanText(texts[1], targetLanguage),
-    ];
+  const parts = translated
+    .split(/\[\[\[JK_FIELD_SPLIT\]\]\]|JK_FIELD_SPLIT/)
+    .map((part) => part.trim());
+
+  if (parts.length !== texts.length) {
+    const fallback: string[] = [];
+    for (const text of texts) {
+      fallback.push(await translateGermanText(text, targetLanguage));
+    }
+    return fallback;
   }
 
-  return [parts[0].trim(), parts.slice(1).join(" ").trim()];
+  return parts;
 }
 
 async function translateGermanText(text: string, targetLanguage: string): Promise<string> {

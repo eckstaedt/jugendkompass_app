@@ -45,7 +45,8 @@ final verseByIdProvider = FutureProvider.family<VerseModel?, String>(
 final verseByContentIdProvider = FutureProvider.family<VerseModel?, String>(
   (ref, contentId) async {
     final repository = ref.watch(verseRepositoryProvider);
-    return await repository.getVerseByContentId(contentId);
+    final language = ref.watch(languageProvider).locale.languageCode;
+    return await repository.getVerseByContentIdLocalized(contentId, language);
   },
 );
 

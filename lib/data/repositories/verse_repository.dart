@@ -292,4 +292,49 @@ class VerseRepository {
       throw Exception('Fehler beim Laden des Verses: $e');
     }
   }
+
+  /// Get a localized verse by content_id.
+  Future<VerseModel?> getVerseByContentIdLocalized(String contentId, String language) async {
+    try {
+      if (language == 'de') {
+        return getVerseByContentId(contentId);
+      }
+
+      final verse = await getVerseByContentId(contentId);
+      if (verse == null || verse.contentId == null) {
+        return verse;
+      }
+
+      final translatedVerse = await _supabase.rpc(
+        'tr',
+        params: {
+          'content_id': verse.contentId,
+          'lang': language,
+          'field': 'verse',
+          'fallback': verse.verse,
+        },
+      );
+
+      final translatedReference = await _supabase.rpc(
+        'tr',
+        params: {
+          'content_id': verse.contentId,
+          'lang': language,
+          'field': 'reference',
+          'fallback': verse.reference,
+        },
+      );
+
+      return VerseModel(
+        id: verse.id,
+        contentId: verse.contentId,
+        verse: (translatedVerse as String?) ?? verse.verse,
+        reference: (translatedReference as String?) ?? verse.reference,
+        date: verse.date,
+        imageUrl: verse.imageUrl,
+      );
+    } catch (e) {
+      return getVerseByContentId(contentId);
+    }
+  }
 }

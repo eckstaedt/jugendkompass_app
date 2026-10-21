@@ -84,6 +84,51 @@ class PostRepository {
     }
   }
 
+  /// Get a localized post by content_id.
+  Future<PostModel?> getPostByContentIdLocalized(String contentId, String language) async {
+    try {
+      if (language == 'de') {
+        return getPostByContentId(contentId);
+      }
+
+      final post = await getPostByContentId(contentId);
+      if (post == null || post.contentId == null) return post;
+
+      final translations = await _supabase
+          .from('content_translations')
+          .select('field_name, value')
+          .eq('content_id', post.contentId!)
+          .eq('language', language);
+
+      String? translatedTitle;
+      String? translatedBody;
+
+      for (final row in translations as List) {
+        final field = row['field_name'] as String;
+        final value = row['value'] as String;
+
+        if (field == 'title') translatedTitle = value;
+        if (field == 'body') translatedBody = value;
+      }
+
+      return PostModel(
+        id: post.id,
+        title: translatedTitle ?? post.title,
+        body: translatedBody ?? post.body,
+        imageUrl: post.imageUrl,
+        categoryId: post.categoryId,
+        categoryName: post.categoryName,
+        categoryNames: post.categoryNames,
+        editionId: post.editionId,
+        audioId: post.audioId,
+        contentId: post.contentId,
+        createdAt: post.createdAt,
+      );
+    } catch (e) {
+      throw Exception('Fehler beim Laden des lokalisierten Posts: $e');
+    }
+  }
+
   /// Get posts by edition ID
   Future<List<PostModel>> getPostsByEdition(String editionId) async {
     try {

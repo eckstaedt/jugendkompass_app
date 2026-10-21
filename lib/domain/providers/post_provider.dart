@@ -43,7 +43,8 @@ final postDetailProvider = postByIdProvider;
 final postByContentIdProvider = FutureProvider.family<PostModel?, String>(
   (ref, contentId) async {
     final repository = ref.watch(postRepositoryProvider);
-    return await repository.getPostByContentId(contentId);
+    final language = ref.watch(languageProvider).locale.languageCode;
+    return await repository.getPostByContentIdLocalized(contentId, language);
   },
 );
 
