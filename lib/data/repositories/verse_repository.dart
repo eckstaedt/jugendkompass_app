@@ -159,21 +159,11 @@ class VerseRepository {
           },
         );
 
-        final translatedReference = await _supabase.rpc(
-          'tr',
-          params: {
-            'content_id': verse.contentId,
-            'lang': language,
-            'field': 'reference',
-            'fallback': verse.reference,
-          },
-        );
-
         return VerseModel(
           id: verse.id,
           contentId: verse.contentId,
           verse: translatedVerse ?? verse.verse,
-          reference: translatedReference ?? verse.reference,
+          reference: verse.reference,
           date: verse.date,
         );
       } catch (e) {
@@ -315,21 +305,11 @@ class VerseRepository {
         },
       );
 
-      final translatedReference = await _supabase.rpc(
-        'tr',
-        params: {
-          'content_id': verse.contentId,
-          'lang': language,
-          'field': 'reference',
-          'fallback': verse.reference,
-        },
-      );
-
       return VerseModel(
         id: verse.id,
         contentId: verse.contentId,
         verse: (translatedVerse as String?) ?? verse.verse,
-        reference: (translatedReference as String?) ?? verse.reference,
+        reference: verse.reference,
         date: verse.date,
         imageUrl: verse.imageUrl,
       );

@@ -188,7 +188,7 @@ async function readPayload(req: Request): Promise<WorkerPayload> {
 function resolveRequestedLanguages(payload: Record<string, unknown>, activeLanguages: string[]): string[] {
   const requested = payload.languages;
   if (!Array.isArray(requested) || requested.length === 0) {
-    return activeLanguages;
+    return prioritizeLanguages(activeLanguages);
   }
 
   const normalized = requested
@@ -198,7 +198,7 @@ function resolveRequestedLanguages(payload: Record<string, unknown>, activeLangu
   const unique = Array.from(new Set(normalized));
   if (unique.length === 0) return activeLanguages;
 
-  return unique;
+  return prioritizeLanguages(unique);
 }
 
 function resolveRequestedContentTypes(payload: Record<string, unknown>): ContentType[] {
@@ -235,7 +235,22 @@ async function loadActiveLanguages(supabase: ReturnType<typeof createClient>): P
     .map((row: { language_code: string }) => row.language_code.trim().toLowerCase())
     .filter((lang: string) => lang.length > 0 && lang !== "de");
 
-  return Array.from(new Set<string>(languages.length > 0 ? languages : DEFAULT_TARGET_LANGUAGES));
+  return prioritizeLanguages(Array.from(new Set<string>(languages.length > 0 ? languages : DEFAULT_TARGET_LANGUAGES)));
+}
+
+function prioritizeLanguages(languages: string[]): string[] {
+  const normalized = languages
+    .map((lang) => String(lang ?? "").trim().toLowerCase())
+    .filter((lang) => lang.length > 0 && lang !== "de");
+
+  const unique = Array.from(new Set(normalized));
+  unique.sort((left, right) => {
+    if (left === "en" && right !== "en") return -1;
+    if (right === "en" && left !== "en") return 1;
+    return left.localeCompare(right);
+  });
+
+  return unique;
 }
 
 async function loadPendingJobs(
