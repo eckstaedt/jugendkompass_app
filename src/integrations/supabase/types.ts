@@ -650,7 +650,6 @@ export type Database = {
       subscriptions: {
         Row: {
           address_extra: string | null
-          bezahlt: boolean | null
           city: string
           country: string
           created_at: string
@@ -658,6 +657,9 @@ export type Database = {
           first_name: string
           id: string
           last_name: string
+          paid: boolean
+          paid_at: string | null
+          paid_by: string | null
           phone: string | null
           postal_code: string
           shipping_method: Database["public"]["Enums"]["shipping_method"]
@@ -666,7 +668,6 @@ export type Database = {
         }
         Insert: {
           address_extra?: string | null
-          bezahlt?: boolean | null
           city: string
           country: string
           created_at?: string
@@ -674,6 +675,9 @@ export type Database = {
           first_name: string
           id?: string
           last_name: string
+          paid?: boolean
+          paid_at?: string | null
+          paid_by?: string | null
           phone?: string | null
           postal_code: string
           shipping_method?: Database["public"]["Enums"]["shipping_method"]
@@ -682,7 +686,6 @@ export type Database = {
         }
         Update: {
           address_extra?: string | null
-          bezahlt?: boolean | null
           city?: string
           country?: string
           created_at?: string
@@ -690,6 +693,9 @@ export type Database = {
           first_name?: string
           id?: string
           last_name?: string
+          paid?: boolean
+          paid_at?: string | null
+          paid_by?: string | null
           phone?: string | null
           postal_code?: string
           shipping_method?: Database["public"]["Enums"]["shipping_method"]

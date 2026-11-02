@@ -16,11 +16,16 @@ export type Subscription = {
   address_extra: string | null;
   shipping_method: ShippingMethod;
   paid: boolean;
+  paid_at: string | null;
+  paid_by: string | null;
   created_at: string;
   updated_at: string;
 };
 
-export type SubscriptionInput = Omit<Subscription, 'id' | 'created_at' | 'updated_at' | 'paid'> & {
+export type SubscriptionInput = Omit<
+  Subscription,
+  'id' | 'created_at' | 'updated_at' | 'paid' | 'paid_at' | 'paid_by'
+> & {
   paid?: boolean;
 };
 
@@ -29,11 +34,11 @@ export const useSubscriptions = () =>
     queryKey: ['subscriptions'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('subscriptions' as any)
+        .from('subscriptions')
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data ?? []) as unknown as Subscription[];
+      return (data ?? []) as Subscription[];
     },
   });
 
@@ -42,12 +47,12 @@ export const useCreateSubscription = () => {
   return useMutation({
     mutationFn: async (input: SubscriptionInput) => {
       const { data, error } = await supabase
-        .from('subscriptions' as any)
-        .insert(input as any)
+        .from('subscriptions')
+        .insert(input)
         .select()
         .single();
       if (error) throw error;
-      return data as unknown as Subscription;
+      return data as Subscription;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['subscriptions'] }),
   });
@@ -58,7 +63,7 @@ export const useDeleteSubscription = () => {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('subscriptions' as any)
+        .from('subscriptions')
         .delete()
         .eq('id', id);
       if (error) throw error;
@@ -70,16 +75,32 @@ export const useDeleteSubscription = () => {
 export const useUpdateSubscriptionPaid = () => {
   const qc = useQueryClient();
   return useMutation({
+    // paid_at / paid_by / updated_at werden per DB-Trigger gesetzt
     mutationFn: async ({ id, paid }: { id: string; paid: boolean }) => {
       const { data, error } = await supabase
-        .from('subscriptions' as any)
-        .update({ paid, updated_at: new Date().toISOString() } as any)
+        .from('subscriptions')
+        .update({ paid })
         .eq('id', id)
         .select()
         .single();
       if (error) throw error;
-      return data as unknown as Subscription;
+      return data as Subscription;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['subscriptions'] }),
+    onMutate: async ({ id, paid }) => {
+      await qc.cancelQueries({ queryKey: ['subscriptions'] });
+      const previous = qc.getQueryData<Subscription[]>(['subscriptions']);
+      qc.setQueryData<Subscription[]>(['subscriptions'], (old) =>
+        old?.map((s) =>
+          s.id === id
+            ? { ...s, paid, paid_at: paid ? new Date().toISOString() : null }
+            : s,
+        ),
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => {
+      if (ctx?.previous) qc.setQueryData(['subscriptions'], ctx.previous);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['subscriptions'] }),
   });
 };
