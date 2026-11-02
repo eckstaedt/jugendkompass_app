@@ -234,7 +234,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                         brightness: brightness,
                       ),
                       Text(
-                        'Jetzt läuft',
+                        context.tr('now_playing'),
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: DesignTokens.getTextPrimary(brightness),
@@ -342,7 +342,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                         Text(
                           currentAudio.title ??
                               currentAudio.post?.title ??
-                              'Unbekannter Titel',
+                              context.tr('unknown_title'),
                           style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w800,
                             color: DesignTokens.getTextPrimary(brightness),
@@ -575,7 +575,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                         MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
-                                        'Warteschlange (${queue.length})',
+                                        context.tr('queue_count', {'count': '${queue.length}'}),
                                         style: theme.textTheme.titleSmall
                                             ?.copyWith(
                                           fontWeight: FontWeight.w700,
@@ -631,7 +631,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                                 child: Icon(Icons.podcasts)),
                                       ),
                                       title: Text(
-                                        audio.title ?? 'Unbekannter Titel',
+                                        audio.title ?? context.tr('unknown_title'),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
@@ -693,7 +693,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                               children: [
                                 const SizedBox(height: 28),
                                 Text(
-                                  'Das könnte dir auch gefallen',
+                                  context.tr('you_might_also_like'),
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w700,
                                     color:
@@ -795,7 +795,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                                       child: Text(
                                                         audio.title ??
                                                             audio.post?.title ??
-                                                            'Unbekannter Titel',
+                                                            context.tr('unknown_title'),
                                                         style: theme
                                                             .textTheme.bodySmall
                                                             ?.copyWith(

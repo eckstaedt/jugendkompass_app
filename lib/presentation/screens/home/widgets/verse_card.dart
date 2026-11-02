@@ -221,7 +221,7 @@ class _VerseCardState extends State<VerseCard>
                 iconSize: 20,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
-                tooltip: 'Teilen',
+                tooltip: context.tr('share'),
               ),
             ],
           ),

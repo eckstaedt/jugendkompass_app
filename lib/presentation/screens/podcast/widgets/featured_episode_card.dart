@@ -105,7 +105,7 @@ class FeaturedEpisodeCard extends StatelessWidget {
 
                     // Title
                     Text(
-                      audio.title ?? audio.post?.title ?? 'Unbekannter Titel',
+                      audio.title ?? audio.post?.title ?? context.tr('unknown_title'),
                         style: theme.textTheme.titleLarge?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,

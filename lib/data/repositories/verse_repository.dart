@@ -1,11 +1,40 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jugendkompass_app/data/models/verse_model.dart';
 import 'package:jugendkompass_app/core/constants/supabase_constants.dart';
+import 'package:jugendkompass_app/data/services/content_localizer.dart';
 
 class VerseRepository {
   final SupabaseClient _supabase;
 
-  VerseRepository(this._supabase);
+  VerseRepository(this._supabase) : _localizer = ContentLocalizer.forClient(_supabase);
+
+  final ContentLocalizer _localizer;
+
+  static const _fields = {'verse': 'verse', 'reference': 'reference'};
+
+  /// Overlays translated verse text and Bible reference.
+  Future<List<VerseModel>> localizeVerses(List<VerseModel> verses, String language) async {
+    if (!ContentLocalizer.needsTranslation(language) || verses.isEmpty) return verses;
+    final rows = await _localizer.localizeContentRows(
+      [
+        for (final v in verses) {'content_id': v.contentId, 'verse': v.verse, 'reference': v.reference},
+      ],
+      language,
+      fields: _fields,
+    );
+    return [
+      for (var i = 0; i < verses.length; i++)
+        verses[i].copyWith(
+          verse: rows[i]['verse'] as String?,
+          reference: rows[i]['reference'] as String?,
+        ),
+    ];
+  }
+
+  Future<VerseModel?> _localizeOne(VerseModel? verse, String language) async {
+    if (verse == null) return null;
+    return (await localizeVerses([verse], language)).first;
+  }
 
   Future<VerseModel?> getTodaysVerse() async {
     try {
@@ -57,48 +86,9 @@ class VerseRepository {
     }
   }
 
-  /// Get today's verse localized using Supabase RPC function.
-  ///
-  /// Uses get_verse_of_day_localized(lang) which returns verse with
-  /// translated verse and reference fields. German (de) returns original.
+  /// Get today's verse localized (German row + translation overlay).
   Future<VerseModel?> getTodaysVerseLocalized(String language) async {
-    try {
-      // For German, use regular method
-      if (language == 'de') {
-        return getTodaysVerse();
-      }
-
-      final response = await _supabase.rpc(
-        'get_verse_of_day_localized',
-        params: {'lang': language},
-      );
-
-      if (response == null || (response is List && response.isEmpty)) {
-        // Fallback to German if no translation
-        return getTodaysVerse();
-      }
-
-      // RPC returns a list, get the first (today's) verse
-      final verseData = response is List ? response.first : response;
-      var verse = VerseModel.fromJson(verseData);
-
-      // RPC may not return image_url – fetch it directly from the table.
-      if (verse.imageUrl == null) {
-        final row = await _supabase
-            .from(SupabaseConstants.verseOfTheDayTable)
-            .select('image_url')
-            .eq('id', verse.id)
-            .maybeSingle();
-        if (row != null && row['image_url'] != null) {
-          verse = verse.copyWith(imageUrl: row['image_url'] as String);
-        }
-      }
-
-      return verse;
-    } catch (e) {
-      // Fallback to German on error
-      return getTodaysVerse();
-    }
+    return _localizeOne(await getTodaysVerse(), language);
   }
 
   /// Get recent verses localized.
@@ -106,74 +96,12 @@ class VerseRepository {
     String language, {
     int limit = 10,
   }) async {
-    try {
-      // For German, use regular method
-      if (language == 'de') {
-        return getRecentVerses(limit: limit);
-      }
-
-      final response = await _supabase.rpc(
-        'get_recent_verses_localized',
-        params: {'lang': language, 'verse_limit': limit},
-      );
-
-      if (response == null || (response is List && response.isEmpty)) {
-        // Fallback to German if no translations
-        return getRecentVerses(limit: limit);
-      }
-
-      final verses = (response as List)
-          .map((json) => VerseModel.fromJson(json))
-          .toList();
-
-      return verses;
-    } catch (e) {
-      // Fallback to German on error
-      return getRecentVerses(limit: limit);
-    }
+    return localizeVerses(await getRecentVerses(limit: limit), language);
   }
 
   /// Get a specific verse by ID with localization.
   Future<VerseModel?> getVerseByIdLocalized(String verseId, String language) async {
-    try {
-      // For German, use regular method
-      if (language == 'de') {
-        return getVerseById(verseId);
-      }
-
-      // Get the verse first
-      final verse = await getVerseById(verseId);
-      if (verse == null || verse.contentId == null) {
-        return verse;
-      }
-
-      // Use tr() RPC function to get translated verse and reference
-      try {
-        final translatedVerse = await _supabase.rpc(
-          'tr',
-          params: {
-            'content_id': verse.contentId,
-            'lang': language,
-            'field': 'verse',
-            'fallback': verse.verse,
-          },
-        );
-
-        return VerseModel(
-          id: verse.id,
-          contentId: verse.contentId,
-          verse: translatedVerse ?? verse.verse,
-          reference: verse.reference,
-          date: verse.date,
-        );
-      } catch (e) {
-        // If translation fails, return original verse
-        return verse;
-      }
-    } catch (e) {
-      // Fallback to German on error
-      return getVerseById(verseId);
-    }
+    return _localizeOne(await getVerseById(verseId), language);
   }
 
   /// Increment the usage counter for a verse (share or save-to-gallery).
@@ -207,38 +135,18 @@ class VerseRepository {
       final today = DateTime.now();
       final todayStr = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
 
-      // For German, query the table directly (already fully RLS-readable).
-      if (language == 'de') {
-        final response = await _supabase
-            .from(SupabaseConstants.verseOfTheDayTable)
-            .select()
-            .lte('date', todayStr)
-            .order('date', ascending: false)
-            .order('created_at', ascending: false)
-            .range(offset, offset + limit - 1);
+      final response = await _supabase
+          .from(SupabaseConstants.verseOfTheDayTable)
+          .select()
+          .lte('date', todayStr)
+          .order('date', ascending: false)
+          .order('created_at', ascending: false)
+          .range(offset, offset + limit - 1);
 
-        return (response as List)
-            .map((json) => VerseModel.fromJson(json as Map<String, dynamic>))
-            .toList();
-      }
-
-      // For other languages, use the localized + paginated RPC.
-      final response = await _supabase.rpc(
-        'get_verse_archive_localized',
-        params: {
-          'lang': language,
-          'page_limit': limit,
-          'page_offset': offset,
-        },
-      );
-
-      if (response == null || (response is List && response.isEmpty)) {
-        return [];
-      }
-
-      return (response as List)
+      final verses = (response as List)
           .map((json) => VerseModel.fromJson(json as Map<String, dynamic>))
           .toList();
+      return localizeVerses(verses, language);
     } catch (e) {
       throw Exception('Fehler beim Laden des Vers-Archivs: $e');
     }
@@ -285,36 +193,6 @@ class VerseRepository {
 
   /// Get a localized verse by content_id.
   Future<VerseModel?> getVerseByContentIdLocalized(String contentId, String language) async {
-    try {
-      if (language == 'de') {
-        return getVerseByContentId(contentId);
-      }
-
-      final verse = await getVerseByContentId(contentId);
-      if (verse == null || verse.contentId == null) {
-        return verse;
-      }
-
-      final translatedVerse = await _supabase.rpc(
-        'tr',
-        params: {
-          'content_id': verse.contentId,
-          'lang': language,
-          'field': 'verse',
-          'fallback': verse.verse,
-        },
-      );
-
-      return VerseModel(
-        id: verse.id,
-        contentId: verse.contentId,
-        verse: (translatedVerse as String?) ?? verse.verse,
-        reference: verse.reference,
-        date: verse.date,
-        imageUrl: verse.imageUrl,
-      );
-    } catch (e) {
-      return getVerseByContentId(contentId);
-    }
+    return _localizeOne(await getVerseByContentId(contentId), language);
   }
 }

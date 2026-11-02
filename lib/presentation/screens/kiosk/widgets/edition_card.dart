@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:jugendkompass_app/data/models/edition_model.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
@@ -74,7 +75,7 @@ class EditionCard extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    'Cover nicht verfügbar',
+                                    context.tr('no_cover_available'),
                                     style: TextStyle(
                                       color: secondaryColor,
                                     ),
@@ -95,7 +96,7 @@ class EditionCard extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'Cover nicht verfügbar',
+                                  context.tr('no_cover_available'),
                                   style: TextStyle(
                                     color: secondaryColor,
                                   ),

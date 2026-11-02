@@ -2,17 +2,23 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jugendkompass_app/data/models/content_model.dart';
 import 'package:jugendkompass_app/data/models/category_model.dart';
 import 'package:jugendkompass_app/core/constants/supabase_constants.dart';
+import 'package:jugendkompass_app/data/services/content_localizer.dart';
 
 class ContentRepository {
   final SupabaseClient _supabase;
 
-  ContentRepository(this._supabase);
+  ContentRepository(this._supabase) : _localizer = ContentLocalizer.forClient(_supabase);
+
+  final ContentLocalizer _localizer;
+
+  static const _fields = {'title': 'title', 'body': 'body'};
 
   Future<List<ContentModel>> getContentList({
     String? categoryId,
     String? contentType,
     int limit = 20,
     int offset = 0,
+    String language = ContentLocalizer.sourceLanguage,
   }) async {
     try {
       // JOIN with posts table to get displayable metadata
@@ -47,12 +53,12 @@ class ContentRepository {
 
       final response = await query;
 
-      var contentList = (response as List).map((json) {
+      final rows = (response as List).map((json) {
         // Extract posts data from JOIN result
         final posts = json['posts'];
         final postData = (posts is List && posts.isNotEmpty) ? posts[0] : null;
 
-        return ContentModel.fromJson({
+        return <String, dynamic>{
           'id': json['id'],
           'content_type': json['content_type'],
           'status': json['status'],
@@ -63,8 +69,12 @@ class ContentRepository {
           'category_id': postData?['category_id'],
           'edition_id': postData?['edition_id'],
           'audio_id': postData?['audio_id'],
-        });
+        };
       }).toList();
+
+      // content.id is the content_id of the translations
+      await _localizer.localizeContentRows(rows, language, fields: _fields, contentIdKey: 'id');
+      var contentList = rows.map(ContentModel.fromJson).toList();
 
       // Apply category filter client-side if needed
       if (categoryId != null) {
@@ -79,7 +89,10 @@ class ContentRepository {
     }
   }
 
-  Future<ContentModel?> getContentById(String id) async {
+  Future<ContentModel?> getContentById(
+    String id, {
+    String language = ContentLocalizer.sourceLanguage,
+  }) async {
     try {
       // JOIN with posts table to get displayable metadata
       final response = await _supabase
@@ -106,7 +119,7 @@ class ContentRepository {
         final posts = response['posts'];
         final postData = (posts is List && posts.isNotEmpty) ? posts[0] : null;
 
-        return ContentModel.fromJson({
+        final row = <String, dynamic>{
           'id': response['id'],
           'content_type': response['content_type'],
           'status': response['status'],
@@ -117,7 +130,9 @@ class ContentRepository {
           'category_id': postData?['category_id'],
           'edition_id': postData?['edition_id'],
           'audio_id': postData?['audio_id'],
-        });
+        };
+        await _localizer.localizeContentRow(row, language, fields: _fields, contentIdKey: 'id');
+        return ContentModel.fromJson(row);
       }
       return null;
     } catch (e) {
@@ -125,16 +140,18 @@ class ContentRepository {
     }
   }
 
-  Future<List<CategoryModel>> getCategories() async {
+  Future<List<CategoryModel>> getCategories({
+    String language = ContentLocalizer.sourceLanguage,
+  }) async {
     try {
       final response = await _supabase
           .from(SupabaseConstants.categoriesTable)
           .select()
           .order('name', ascending: true);
 
-      return (response as List)
-          .map((json) => CategoryModel.fromJson(json))
-          .toList();
+      final rows = (response as List).map((json) => Map<String, dynamic>.from(json as Map)).toList();
+      await _localizer.localizeEntityRows(rows, language, entityType: 'category', fields: const {'name': 'name'});
+      return rows.map(CategoryModel.fromJson).toList();
     } catch (e) {
       throw Exception('Fehler beim Laden der Kategorien: $e');
     }

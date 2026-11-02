@@ -3,6 +3,7 @@ import 'package:jugendkompass_app/data/models/content_model.dart';
 import 'package:jugendkompass_app/data/models/category_model.dart';
 import 'package:jugendkompass_app/data/repositories/content_repository.dart';
 import 'package:jugendkompass_app/domain/providers/supabase_provider.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 
 final contentRepositoryProvider = Provider<ContentRepository>((ref) {
   final supabase = ref.watch(supabaseProvider);
@@ -12,9 +13,11 @@ final contentRepositoryProvider = Provider<ContentRepository>((ref) {
 final contentListProvider = FutureProvider.family<List<ContentModel>, ContentFilter>(
   (ref, filter) async {
     final repository = ref.watch(contentRepositoryProvider);
+    final language = ref.watch(languageProvider).locale.languageCode;
     return await repository.getContentList(
       categoryId: filter.categoryId,
       contentType: filter.contentType,
+      language: language,
     );
   },
 );
@@ -22,13 +25,15 @@ final contentListProvider = FutureProvider.family<List<ContentModel>, ContentFil
 final contentDetailProvider = FutureProvider.family<ContentModel?, String>(
   (ref, contentId) async {
     final repository = ref.watch(contentRepositoryProvider);
-    return await repository.getContentById(contentId);
+    final language = ref.watch(languageProvider).locale.languageCode;
+    return await repository.getContentById(contentId, language: language);
   },
 );
 
 final categoriesProvider = FutureProvider<List<CategoryModel>>((ref) async {
   final repository = ref.watch(contentRepositoryProvider);
-  return await repository.getCategories();
+  final language = ref.watch(languageProvider).locale.languageCode;
+  return await repository.getCategories(language: language);
 });
 
 class ContentFilter {

@@ -33,8 +33,8 @@ class FavoritesScreen extends ConsumerWidget {
       body: favorites.isEmpty
           ? EmptyState(
               icon: Icons.favorite_border,
-              title: 'Keine Favoriten',
-              message: 'Markiere Inhalte als Favoriten, um sie hier zu sehen.',
+              title: context.tr('no_favorites'),
+              message: context.tr('mark_as_favorite'),
             )
           : RefreshIndicator(
               onRefresh: () async {

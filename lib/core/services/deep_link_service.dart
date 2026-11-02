@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/data/models/verse_model.dart';
@@ -170,7 +171,7 @@ class DeepLinkService {
           settings: const RouteSettings(name: kVideoPlayerRouteName),
           builder: (context) => VideoPlayerScreen(
             videoUrl: fallbackUrl,
-            title: 'Video',
+            title: AppTranslations.t('video_type'),
             description: null,
             imageUrl: null,
             shareContentId: null,

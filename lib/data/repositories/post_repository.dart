@@ -1,11 +1,14 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jugendkompass_app/data/models/post_model.dart';
 import 'package:jugendkompass_app/core/constants/supabase_constants.dart';
+import 'package:jugendkompass_app/data/services/content_localizer.dart';
 
 class PostRepository {
   final SupabaseClient _supabase;
 
-  PostRepository(this._supabase);
+  PostRepository(this._supabase) : _localizer = ContentLocalizer.forClient(_supabase);
+
+  final ContentLocalizer _localizer;
 
   /// Get all posts with optional filters
   Future<List<PostModel>> getPostList({
@@ -87,43 +90,14 @@ class PostRepository {
   /// Get a localized post by content_id.
   Future<PostModel?> getPostByContentIdLocalized(String contentId, String language) async {
     try {
-      if (language == 'de') {
-        return getPostByContentId(contentId);
-      }
-
-      final post = await getPostByContentId(contentId);
-      if (post == null || post.contentId == null) return post;
-
-      final translations = await _supabase
-          .from('content_translations')
-          .select('field_name, value')
-          .eq('content_id', post.contentId!)
-          .eq('language', language);
-
-      String? translatedTitle;
-      String? translatedBody;
-
-      for (final row in translations as List) {
-        final field = row['field_name'] as String;
-        final value = row['value'] as String;
-
-        if (field == 'title') translatedTitle = value;
-        if (field == 'body') translatedBody = value;
-      }
-
-      return PostModel(
-        id: post.id,
-        title: translatedTitle ?? post.title,
-        body: translatedBody ?? post.body,
-        imageUrl: post.imageUrl,
-        categoryId: post.categoryId,
-        categoryName: post.categoryName,
-        categoryNames: post.categoryNames,
-        editionId: post.editionId,
-        audioId: post.audioId,
-        contentId: post.contentId,
-        createdAt: post.createdAt,
-      );
+      final response = await _supabase
+          .from(SupabaseConstants.postsTable)
+          .select()
+          .eq('content_id', contentId)
+          .maybeSingle();
+      if (response == null) return null;
+      final rows = await _localize([Map<String, dynamic>.from(response)], language);
+      return PostModel.fromJson(rows.first);
     } catch (e) {
       throw Exception('Fehler beim Laden des lokalisierten Posts: $e');
     }
@@ -164,11 +138,10 @@ class PostRepository {
     }
   }
 
-  /// Get localized posts using Supabase RPC function.
+  /// Get localized posts.
   ///
-  /// This uses the get_posts_localized(lang) function which returns posts
-  /// with translated title and body fields based on content_translations table.
-  /// German (de) returns the original content from posts table.
+  /// Always loads the German source rows (same shape for every language,
+  /// including the categories join) and overlays the translations.
   Future<List<PostModel>> getPostsLocalized(
     String language, {
     int limit = 20,
@@ -177,74 +150,104 @@ class PostRepository {
     try {
       final response = await _supabase.rpc(
         'get_posts_localized',
-        params: {'lang': language},
+        params: {'lang': ContentLocalizer.sourceLanguage},
       );
 
-      final posts = (response as List)
-          .map((json) => PostModel.fromJson(json))
+      final rows = (response as List)
+          .map((json) => Map<String, dynamic>.from(json as Map))
+          .skip(offset)
+          .take(limit)
           .toList();
 
-      // Apply limit and offset client-side
-      // (RPC function returns all posts, we paginate here)
-      return posts.skip(offset).take(limit).toList();
+      final localized = await _localize(rows, language);
+      return localized.map(PostModel.fromJson).toList();
     } catch (e) {
-      // Fallback to regular posts if RPC fails
       throw Exception('Fehler beim Laden der lokalisierten Posts: $e');
     }
   }
 
-  /// Get a single localized post by ID.
-  ///
-  /// Falls back to German content if translation not available.
+  /// Get a single localized post by ID (falls back to German per field).
   Future<PostModel?> getPostByIdLocalized(String id, String language) async {
     try {
-      // For German, just use regular method
-      if (language == 'de') {
-        return getPostById(id);
-      }
-
-      // Get post with translations
-      final post = await getPostById(id);
-      if (post == null) return null;
-
-      // If no content_id, return as-is
-      if (post.contentId == null) return post;
-
-      // Fetch translations for this content
-      final translations = await _supabase
-          .from('content_translations')
-          .select('field_name, value')
-          .eq('content_id', post.contentId!)
-          .eq('language', language);
-
-      // Apply translations
-      String? translatedTitle;
-      String? translatedBody;
-
-      for (final row in translations as List) {
-        final field = row['field_name'] as String;
-        final value = row['value'] as String;
-
-        if (field == 'title') translatedTitle = value;
-        if (field == 'body') translatedBody = value;
-      }
-
-      // Return post with translations (fallback to German if not found)
-      return PostModel(
-        id: post.id,
-        title: translatedTitle ?? post.title,
-        body: translatedBody ?? post.body,
-        imageUrl: post.imageUrl,
-        categoryId: post.categoryId,
-        categoryName: post.categoryName,
-        categoryNames: post.categoryNames,
-        editionId: post.editionId,
-        audioId: post.audioId,
-        contentId: post.contentId,
-        createdAt: post.createdAt,
-      );
+      final response = await _supabase
+          .from(SupabaseConstants.postsTable)
+          .select()
+          .eq('id', id)
+          .maybeSingle();
+      if (response == null) return null;
+      final rows = await _localize([Map<String, dynamic>.from(response)], language);
+      return PostModel.fromJson(rows.first);
     } catch (e) {
       throw Exception('Fehler beim Laden des lokalisierten Posts: $e');
     }
+  }
+
+  /// Localized posts of an edition.
+  Future<List<PostModel>> getPostsByEditionLocalized(String editionId, String language) async {
+    try {
+      final response = await _supabase
+          .from(SupabaseConstants.postsTable)
+          .select()
+          .eq('edition_id', editionId)
+          .order('id', ascending: false);
+      final rows = (response as List).map((json) => Map<String, dynamic>.from(json as Map)).toList();
+      final localized = await _localize(rows, language);
+      return localized.map(PostModel.fromJson).toList();
+    } catch (e) {
+      throw Exception('Fehler beim Laden der Posts: $e');
+    }
+  }
+
+  /// Localized post for an audio.
+  Future<PostModel?> getPostByAudioIdLocalized(String audioId, String language) async {
+    try {
+      final response = await _supabase
+          .from(SupabaseConstants.postsTable)
+          .select()
+          .eq('audio_id', audioId)
+          .maybeSingle();
+      if (response == null) return null;
+      final rows = await _localize([Map<String, dynamic>.from(response)], language);
+      return PostModel.fromJson(rows.first);
+    } catch (e) {
+      throw Exception('Fehler beim Laden des Posts: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _localize(
+    List<Map<String, dynamic>> rows,
+    String language,
+  ) async {
+    if (!ContentLocalizer.needsTranslation(language)) return rows;
+
+    // RPC rows may come without content_id → resolve it from the posts table.
+    final missingIds = rows
+        .where((row) => row['content_id'] == null && row['id'] != null)
+        .map((row) => row['id'].toString())
+        .toList();
+    if (missingIds.isNotEmpty) {
+      try {
+        final mapping = await _supabase
+            .from(SupabaseConstants.postsTable)
+            .select('id, content_id')
+            .inFilter('id', missingIds);
+        final byId = {
+          for (final m in mapping as List) m['id'].toString(): m['content_id'],
+        };
+        for (final row in rows) {
+          row['content_id'] ??= byId[row['id']?.toString()];
+        }
+      } catch (_) {
+        // keep German on failure
+      }
+    }
+
+    await _localizer.localizeContentRows(
+      rows,
+      language,
+      fields: const {'title': 'title', 'body': 'body'},
+    );
+    await _localizer.localizeNestedCategories(rows, language);
+    return rows;
   }
 }

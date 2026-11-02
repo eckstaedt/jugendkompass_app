@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/data/models/category_model.dart';
 import 'package:jugendkompass_app/data/repositories/category_repository.dart';
 import 'package:jugendkompass_app/domain/providers/supabase_provider.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 
 /// Provider for CategoryRepository
 final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
@@ -12,13 +13,15 @@ final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
 /// Provider for fetching all categories
 final categoriesProvider = FutureProvider<List<CategoryModel>>((ref) async {
   final repository = ref.watch(categoryRepositoryProvider);
-  return repository.getCategories();
+  final language = ref.watch(languageProvider).locale.languageCode;
+  return repository.getCategories(language: language);
 });
 
 /// Provider for fetching a single category by ID
 final categoryByIdProvider = FutureProvider.family<CategoryModel?, String>((ref, id) async {
   final repository = ref.watch(categoryRepositoryProvider);
-  return repository.getCategoryById(id);
+  final language = ref.watch(languageProvider).locale.languageCode;
+  return repository.getCategoryById(id, language: language);
 });
 
 /// Provider for fetching a single category by name

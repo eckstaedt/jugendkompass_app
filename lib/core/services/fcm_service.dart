@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'dart:io' show Platform;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -324,10 +325,10 @@ class FCMService {
           presentBadge: true,
           presentSound: true,
         ),
-        android: const AndroidNotificationDetails(
+        android: AndroidNotificationDetails(
           'push_notifications',
-          'Push-Benachrichtigungen',
-          channelDescription: 'Benachrichtigungen für neue Beiträge',
+          AppTranslations.t('push_notifications'),
+          channelDescription: AppTranslations.t('notification_channel_desc'),
           importance: Importance.high,
           priority: Priority.high,
         ),

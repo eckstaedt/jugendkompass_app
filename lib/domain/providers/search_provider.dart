@@ -3,6 +3,7 @@ import 'package:jugendkompass_app/data/models/content_model.dart';
 import 'package:jugendkompass_app/data/models/impulse_model.dart';
 import 'package:jugendkompass_app/domain/providers/content_provider.dart';
 import 'package:jugendkompass_app/domain/providers/impulse_provider.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 
 /// Combined search results
 class SearchResult {
@@ -26,13 +27,14 @@ final searchProvider = FutureProvider.family<SearchResult, String>((ref, query) 
   }
 
   final searchQuery = query.toLowerCase().trim();
+  final language = ref.watch(languageProvider).locale.languageCode;
 
   try {
     // Get all contents (articles, videos, audios)
-    final allContents = await ref.read(contentRepositoryProvider).getContentList(limit: 100);
+    final allContents = await ref.read(contentRepositoryProvider).getContentList(limit: 100, language: language);
 
     // Get all impulses
-    final allImpulses = await ref.read(impulseRepositoryProvider).getDailyImpulses(limit: 100);
+    final allImpulses = await ref.read(impulseRepositoryProvider).getImpulsesLocalized(language, limit: 100);
 
     // Filter contents by search query (search in title and body)
     final filteredContents = allContents.where((content) {

@@ -2,54 +2,57 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/edition_model.dart';
 import '../../core/constants/supabase_constants.dart';
 import 'dart:developer' as developer;
+import '../services/content_localizer.dart';
 
 class EditionRepository {
   final SupabaseClient _supabaseClient;
 
-  EditionRepository(this._supabaseClient);
+  EditionRepository(this._supabaseClient)
+      : _localizer = ContentLocalizer.forClient(_supabaseClient);
+
+  final ContentLocalizer _localizer;
+
+  static const _editionFields = {'name': 'name', 'title': 'title', 'body': 'body'};
+  static const _postFields = {'title': 'title', 'body': 'body'};
+
+  Future<EditionModel> _localizeEdition(EditionModel edition, String language) async {
+    if (!ContentLocalizer.needsTranslation(language)) return edition;
+    final rows = await _localizer.localizeEntityRows(
+      [
+        {'id': edition.id, 'name': edition.name, 'title': edition.title, 'body': edition.body},
+      ],
+      language,
+      entityType: 'edition',
+      fields: _editionFields,
+    );
+    final row = rows.first;
+    return edition.copyWith(
+      name: row['name'] as String?,
+      title: row['title'] as String?,
+      body: row['body'] as String?,
+    );
+  }
 
   /// Get all editions with localization
   Future<List<EditionModel>> getAllEditionsLocalized(String language) async {
-    try {
-      developer.log('Fetching all editions for language: $language', name: 'EditionRepository');
-
-      // For German, use regular method
-      if (language == 'de') {
-        return getAllEditions();
-      }
-
-      // Use RPC function to get localized editions
-      final response = await _supabaseClient.rpc(
-        'get_editions_localized',
-        params: {'lang': language},
-      );
-
-      if (response == null || (response is List && response.isEmpty)) {
-        // Fallback to German if no translations
-        return getAllEditions();
-      }
-
-      final responseList = response as List;
-      developer.log('Got ${responseList.length} localized editions', name: 'EditionRepository');
-
-      final editions = responseList
-          .map((json) => EditionModel.fromJson(json))
-          .toList();
-
-      // Sort in code
-      editions.sort((a, b) {
-        if (a.publishedAt == null && b.publishedAt == null) return 0;
-        if (a.publishedAt == null) return 1;
-        if (b.publishedAt == null) return -1;
-        return b.publishedAt!.compareTo(a.publishedAt!);
-      });
-
-      return editions;
-    } catch (e, stackTrace) {
-      developer.log('Error fetching localized editions: $e', name: 'EditionRepository', error: e, stackTrace: stackTrace);
-      // Fallback to German on error
-      return getAllEditions();
-    }
+    final editions = await getAllEditions();
+    if (!ContentLocalizer.needsTranslation(language)) return editions;
+    final rows = await _localizer.localizeEntityRows(
+      [
+        for (final e in editions) {'id': e.id, 'name': e.name, 'title': e.title, 'body': e.body},
+      ],
+      language,
+      entityType: 'edition',
+      fields: _editionFields,
+    );
+    return [
+      for (var i = 0; i < editions.length; i++)
+        editions[i].copyWith(
+          name: rows[i]['name'] as String?,
+          title: rows[i]['title'] as String?,
+          body: rows[i]['body'] as String?,
+        ),
+    ];
   }
 
   /// Get all editions with direct fields from editions table
@@ -105,29 +108,9 @@ class EditionRepository {
 
   /// Get edition by ID with localization
   Future<EditionModel?> getEditionByIdLocalized(String id, String language) async {
-    try {
-      // For German, use regular method
-      if (language == 'de') {
-        return getEditionById(id);
-      }
-
-      // Use RPC function to get localized edition
-      final response = await _supabaseClient.rpc(
-        'get_edition_by_id_localized',
-        params: {'edition_id': id, 'lang': language},
-      );
-
-      if (response == null) {
-        // Fallback to German if no translation
-        return getEditionById(id);
-      }
-
-      return EditionModel.fromJson(response);
-    } catch (e) {
-      developer.log('Error fetching localized edition: $e', name: 'EditionRepository', error: e);
-      // Fallback to German on error
-      return getEditionById(id);
-    }
+    final edition = await getEditionById(id);
+    if (edition == null) return null;
+    return _localizeEdition(edition, language);
   }
 
   /// Get edition by ID
@@ -181,12 +164,16 @@ class EditionRepository {
   }
 
   /// Get posts for a specific edition with category information
-  Future<List<Map<String, dynamic>>> getEditionPosts(String editionId) async {
+  Future<List<Map<String, dynamic>>> getEditionPosts(
+    String editionId, {
+    String language = ContentLocalizer.sourceLanguage,
+  }) async {
     try {
       final response = await _supabaseClient
           .from(SupabaseConstants.postsTable)
           .select('''
             id,
+            content_id,
             title,
             body,
             image_url,
@@ -201,14 +188,22 @@ class EditionRepository {
           .eq('edition_id', editionId)
           .order('created_at', ascending: true);
 
-      return (response as List).cast<Map<String, dynamic>>();
+      final rows = (response as List)
+          .map((json) => Map<String, dynamic>.from(json as Map))
+          .toList();
+      await _localizer.localizeContentRows(rows, language, fields: _postFields);
+      await _localizer.localizeNestedCategories(rows, language);
+      return rows;
     } catch (e) {
       throw Exception('Failed to fetch edition posts: $e');
     }
   }
 
   /// Get audios for posts in an edition
-  Future<List<Map<String, dynamic>>> getEditionAudios(String editionId) async {
+  Future<List<Map<String, dynamic>>> getEditionAudios(
+    String editionId, {
+    String language = ContentLocalizer.sourceLanguage,
+  }) async {
     try {
       // First get all posts with audio_id for this edition
       final posts = await _supabaseClient
@@ -245,7 +240,24 @@ class EditionRepository {
           ''')
           .inFilter('id', audioIds);
 
-      return (audios as List).cast<Map<String, dynamic>>();
+      final rows = (audios as List)
+          .map((json) => Map<String, dynamic>.from(json as Map))
+          .toList();
+
+      // Translate the joined posts (title/body) of every audio.
+      final joinedPosts = <Map<String, dynamic>>[];
+      for (final row in rows) {
+        final posts = row['posts'];
+        if (posts is List) {
+          for (final post in posts) {
+            if (post is Map<String, dynamic>) joinedPosts.add(post);
+          }
+        } else if (posts is Map<String, dynamic>) {
+          joinedPosts.add(posts);
+        }
+      }
+      await _localizer.localizeContentRows(joinedPosts, language, fields: _postFields);
+      return rows;
     } catch (e) {
       throw Exception('Failed to fetch edition audios: $e');
     }

@@ -112,8 +112,10 @@ lib/
 - Bottom padding for overlays: `overlayPaddingBase` (navbar only) or `overlayPaddingWithMiniPlayer` (navbar + mini player)
 
 ### Localization
-- Translations in `lib/core/localization/app_translations.dart` (German/English map)
-- Access via `context.tr('key')` extension on `BuildContext`
+- 7 languages: de (source), en, ru, es, pl, tr, he (RTL). Full docs: `TRANSLATION.md`
+- UI strings: `lib/core/localization/app_translations.dart` + `supplement_translations.dart` (new keys go there, with ALL languages); `test/localization_test.dart` enforces completeness
+- Access via `context.tr('key')` / `context.tr('key', {'param': 'x'})` — use placeholders, never concatenate sentence fragments
+- Database content is translated automatically server-side (Claude worker `process-translation-jobs`, queue `translation_jobs`). In the app, repositories load the German rows and apply translations via `ContentLocalizer` (`lib/data/services/content_localizer.dart`) — never translate content on the client
 - Language toggle via `languageProvider`
 - Date formatting initialized for German (`de_DE`) in `main.dart`
 

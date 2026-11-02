@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -61,7 +62,7 @@ class VerseShareService {
 
       await Share.shareXFiles(
         [XFile(file.path, mimeType: 'image/png')],
-        subject: 'Vers des Tages',
+        subject: AppTranslations.t('verse_of_day'),
       );
       _trackUsage(verse);
     } catch (e) {

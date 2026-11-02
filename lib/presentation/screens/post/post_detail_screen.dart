@@ -72,14 +72,14 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
         backgroundColor: Colors.transparent,
         actions: [
           IconButton(
-            tooltip: 'Teilen',
+            tooltip: context.tr('share'),
             icon: const Icon(Icons.share_outlined),
             onPressed: () {
               ContentShareService.shareContent(
                 contentType: 'post',
                 contentId: post.contentId ?? post.id,
                 title: HtmlUtils.stripHtml(displayTitle),
-                intro: 'Schau dir diesen Artikel im Jugendkompass an',
+                intro: context.tr('share_intro_article'),
               );
             },
           ),
@@ -327,10 +327,10 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                                 ),
                                 label: Text(
                                   isThisPlaying
-                                      ? 'Pausieren'
+                                      ? context.tr('pause')
                                       : isThisAudio
-                                          ? 'Weiter anhören'
-                                          : 'Artikel anhören',
+                                          ? context.tr('continue_listening')
+                                          : context.tr('listen_to_article'),
                                 ),
                                 style: FilledButton.styleFrom(
                                   padding:
@@ -549,7 +549,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
       if (context.mounted) {
         SnackBarUtils.show(
           context,
-          '${HtmlUtils.stripHtml(widget.post.title)} zur Warteschlange hinzugefügt',
+          '${HtmlUtils.stripHtml(widget.post.title)} ${context.tr('added_to_queue')}',
           duration: const Duration(seconds: 2),
           backgroundColor: Colors.green,
           topPosition: false,
@@ -557,7 +557,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
       }
     } catch (e) {
       if (context.mounted) {
-        SnackBarUtils.showError(context, 'Fehler: $e');
+        SnackBarUtils.showError(context, '${context.tr('error')}: $e');
       }
     }
   }

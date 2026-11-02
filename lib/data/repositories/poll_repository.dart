@@ -3,17 +3,22 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jugendkompass_app/data/models/poll_model.dart';
 import 'package:jugendkompass_app/data/models/poll_vote_model.dart';
 import 'package:jugendkompass_app/core/constants/supabase_constants.dart';
+import 'package:jugendkompass_app/data/services/content_localizer.dart';
 
 class PollRepository {
   final SupabaseClient _supabase;
 
-  PollRepository(this._supabase);
+  PollRepository(this._supabase) : _localizer = ContentLocalizer.forClient(_supabase);
+
+  final ContentLocalizer _localizer;
 
   /// Get list of polls with optional filtering and calculate votes from poll_votes table
   Future<List<PollModel>> getPollList({
     int limit = 20,
     int offset = 0,
     bool activeOnly = true,
+    bool hideExpired = true,
+    String language = ContentLocalizer.sourceLanguage,
   }) async {
     try {
       var query = _supabase
@@ -65,12 +70,14 @@ class PollRepository {
         return pollData;
       }).toList();
 
+      await _localizer.localizePolls(pollsData, language);
+
       final polls = pollsData
           .map((json) => PollModel.fromJson(json))
           .toList();
 
       // Filter out expired polls if activeOnly
-      if (activeOnly) {
+      if (activeOnly && hideExpired) {
         return polls.where((poll) => poll.isActiveNow).toList();
       }
 
@@ -83,7 +90,10 @@ class PollRepository {
   }
 
   /// Get a single poll by ID with options and calculate votes from poll_votes table
-  Future<PollModel?> getPollById(String id) async {
+  Future<PollModel?> getPollById(
+    String id, {
+    String language = ContentLocalizer.sourceLanguage,
+  }) async {
     try {
       // Fetch poll basic data
       final pollResponse = await _supabase
@@ -109,6 +119,7 @@ class PollRepository {
       // Combine poll data with options
       final pollData = Map<String, dynamic>.from(pollResponse);
       pollData['poll_options'] = options;
+      await _localizer.localizePolls([pollData], language);
 
       return PollModel.fromJson(pollData);
     } catch (e) {
@@ -118,7 +129,10 @@ class PollRepository {
   }
 
   /// Get a single poll by content_id with options.
-  Future<PollModel?> getPollByContentId(String contentId) async {
+  Future<PollModel?> getPollByContentId(
+    String contentId, {
+    String language = ContentLocalizer.sourceLanguage,
+  }) async {
     try {
       final pollResponse = await _supabase
           .from(SupabaseConstants.pollsTable)
@@ -141,6 +155,7 @@ class PollRepository {
 
       final pollData = Map<String, dynamic>.from(pollResponse);
       pollData['poll_options'] = options;
+      await _localizer.localizePolls([pollData], language);
 
       return PollModel.fromJson(pollData);
     } catch (e) {
@@ -191,27 +206,19 @@ class PollRepository {
     }
   }
 
-  /// Get localized polls using Supabase RPC function
+  /// Get localized polls for the content feed (active polls, including
+  /// ones that already ended so their results stay visible).
   Future<List<PollModel>> getPollsLocalized(
     String language, {
     int limit = 20,
     int offset = 0,
-  }) async {
-    try {
-      final response = await _supabase.rpc(
-        'get_polls_localized',
-        params: {'lang': language},
-      );
-
-      final polls = (response as List)
-          .map((json) => PollModel.fromJson(json))
-          .toList();
-
-      // Apply limit and offset client-side
-      return polls.skip(offset).take(limit).toList();
-    } catch (e) {
-      // Fallback to regular polls if RPC fails
-      return getPollList(limit: limit, offset: offset);
-    }
+  }) {
+    return getPollList(
+      limit: limit,
+      offset: offset,
+      activeOnly: true,
+      hideExpired: false,
+      language: language,
+    );
   }
 }

@@ -30,7 +30,9 @@ final videoByIdProvider = FutureProvider.family<VideoModel?, String>(
 final videoByContentIdProvider = FutureProvider.family<VideoModel?, String>(
   (ref, contentId) async {
     final repository = ref.watch(videoRepositoryProvider);
-    return repository.getVideoByContentId(contentId);
+    final language = ref.watch(languageProvider).locale.languageCode;
+    final video = await repository.getVideoByContentId(contentId);
+    return video == null ? null : repository.localizeVideo(video, language);
   },
 );
 

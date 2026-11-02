@@ -175,7 +175,7 @@ class ProfileScreen extends ConsumerWidget {
                                   if (context.mounted) {
                                     SnackBarUtils.show(
                                       context,
-                                      '${translate('Vers des Tages')} ${translate('um')} ${selectedHour.toString().padLeft(2, '0')}:00 ${translate('Uhr')}',
+                                      context.tr('verse_at_time', {'time': '${selectedHour.toString().padLeft(2, '0')}:00'}),
                                     );
                                   }
                                 }
@@ -184,7 +184,7 @@ class ProfileScreen extends ConsumerWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    '${translate('Um')} ${notificationTime.hour.toString().padLeft(2, '0')}:00 ${translate('Uhr')}',
+                                    context.tr('at_time', {'time': '${notificationTime.hour.toString().padLeft(2, '0')}:00'}),
                                   ),
                                   const SizedBox(width: 4),
                                   const Icon(Icons.edit_outlined, size: 14),
@@ -285,7 +285,7 @@ class ProfileScreen extends ConsumerWidget {
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             leading: const Icon(Icons.schedule_outlined),
             title: Text(translate('Zeitzone')),
-            subtitle: Text(LocalVerseNotificationService.displayNameForId(currentTimezone)),
+            subtitle: Text(LocalVerseNotificationService.localizedDisplay(currentTimezone, AppTranslations.currentLanguage.locale.languageCode)),
             trailing: const Icon(Icons.chevron_right, size: 20),
             onTap: () => _showTimezoneDialog(context, ref, translate),
           ),
@@ -468,7 +468,7 @@ class ProfileScreen extends ConsumerWidget {
             shrinkWrap: true,
             children: LocalVerseNotificationService.commonTimezones.map((tz) {
               return RadioListTile<String>(
-                title: Text(tz.display),
+                title: Text(LocalVerseNotificationService.localizedDisplay(tz.id, AppTranslations.currentLanguage.locale.languageCode)),
                 value: tz.id,
                 groupValue: currentTimezone,
                 activeColor: DesignTokens.primaryRed,
@@ -491,7 +491,7 @@ class ProfileScreen extends ConsumerWidget {
       if (context.mounted) {
         SnackBarUtils.show(
           context,
-          LocalVerseNotificationService.displayNameForId(selected),
+          LocalVerseNotificationService.localizedDisplay(selected, AppTranslations.currentLanguage.locale.languageCode),
         );
       }
     }

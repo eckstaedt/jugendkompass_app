@@ -1,48 +1,45 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/video_model.dart';
 import 'dart:developer' as developer;
+import '../services/content_localizer.dart';
 
 class VideoRepository {
   final SupabaseClient _supabase;
 
-  VideoRepository(this._supabase);
+  VideoRepository(this._supabase) : _localizer = ContentLocalizer.forClient(_supabase);
 
-  /// Fetch all videos with localization
+  final ContentLocalizer _localizer;
+
+  static const _fields = {'title': 'title', 'description': 'description'};
+
+  /// Applies translations to an already loaded video.
+  Future<VideoModel> localizeVideo(VideoModel video, String language) async {
+    if (!ContentLocalizer.needsTranslation(language) || video.contentId.isEmpty) return video;
+    final values = await _localizer.translationsForContent(video.contentId, language);
+    final title = values['title'];
+    final description = values['description'];
+    return video.copyWith(
+      title: (title != null && title.trim().isNotEmpty) ? title : null,
+      description: (description != null && description.trim().isNotEmpty) ? description : null,
+    );
+  }
+
+  /// Fetch all videos with localization (German rows + translation overlay)
   Future<List<VideoModel>> getVideoListLocalized(String language, {
     int limit = 20,
     int offset = 0,
   }) async {
     try {
-      developer.log('Fetching videos for language: $language', name: 'VideoRepository');
-
-      // For German, use regular method
-      if (language == 'de') {
-        return getVideoList(limit: limit, offset: offset);
-      }
-
-      // Use RPC function to get localized videos
-      final response = await _supabase.rpc(
-        'get_videos_localized',
-        params: {'lang': language},
-      );
-
-      if (response == null || (response is List && response.isEmpty)) {
-        // Fallback to German if no translations
-        return getVideoList(limit: limit, offset: offset);
-      }
-
-      final videoList = (response as List)
-          .map((json) => VideoModel.fromJson(json))
-          .toList();
-
-      // Apply pagination in code
-      final startIndex = offset.clamp(0, videoList.length);
-      final endIndex = (offset + limit).clamp(0, videoList.length);
-
-      return videoList.sublist(startIndex, endIndex);
+      final response = await _supabase
+          .from('videos')
+          .select()
+          .order('created_at', ascending: false)
+          .range(offset, offset + limit - 1);
+      final rows = (response as List).map((json) => Map<String, dynamic>.from(json as Map)).toList();
+      await _localizer.localizeContentRows(rows, language, fields: _fields);
+      return rows.map(VideoModel.fromJson).toList();
     } catch (e) {
       developer.log('Error fetching localized videos: $e', name: 'VideoRepository', error: e);
-      // Fallback to German on error
       return getVideoList(limit: limit, offset: offset);
     }
   }
@@ -70,27 +67,12 @@ class VideoRepository {
   /// Fetch a single video by ID with localization
   Future<VideoModel?> getVideoByIdLocalized(String id, String language) async {
     try {
-      // For German, use regular method
-      if (language == 'de') {
-        return getVideoById(id);
-      }
-
-      // Use RPC function to get localized video
-      final response = await _supabase.rpc(
-        'get_video_by_id_localized',
-        params: {'video_id': id, 'lang': language},
-      );
-
-      if (response == null) {
-        // Fallback to German if no translation
-        return getVideoById(id);
-      }
-
-      return VideoModel.fromJson(response);
+      final video = await getVideoById(id);
+      if (video == null) return null;
+      return localizeVideo(video, language);
     } catch (e) {
       developer.log('Error fetching localized video: $e', name: 'VideoRepository', error: e);
-      // Fallback to German on error
-      return getVideoById(id);
+      return null;
     }
   }
 
@@ -139,9 +121,8 @@ class VideoRepository {
       VideoModel? video;
       for (final candidate in candidates) {
         video = await getVideoByIdLocalized(candidate, language);
-        video ??= await getVideoByContentId(candidate);
-        video ??= await getVideoById(candidate);
-        if (video != null) return video;
+        video ??= await _safe(() => getVideoByContentId(candidate));
+        if (video != null) return localizeVideo(video, language);
       }
 
       final normalizedCandidateSet = candidates.map(_normalizeLoose).toSet();
@@ -159,12 +140,12 @@ class VideoRepository {
       // Try fast exact URL matching before expensive list scans.
       for (final candidate in candidates) {
         final fromExactUrl = await _getVideoByExactUrl(candidate);
-        if (fromExactUrl != null) return fromExactUrl;
+        if (fromExactUrl != null) return localizeVideo(fromExactUrl, language);
       }
 
       if (youtubeIdCandidate != null) {
         final fromYoutubeScan = await _getVideoByYoutubeIdScan(youtubeIdCandidate);
-        if (fromYoutubeScan != null) return fromYoutubeScan;
+        if (fromYoutubeScan != null) return localizeVideo(fromYoutubeScan, language);
       }
 
       final allLocalized = await getVideoListLocalized(language, limit: 500);
@@ -197,7 +178,7 @@ class VideoRepository {
         }
 
         if (itemKeys.any(normalizedCandidateSet.contains)) {
-          return item;
+          return localizeVideo(item, language);
         }
       }
 
@@ -208,6 +189,14 @@ class VideoRepository {
         name: 'VideoRepository',
         error: e,
       );
+      return null;
+    }
+  }
+
+  Future<VideoModel?> _safe(Future<VideoModel?> Function() load) async {
+    try {
+      return await load();
+    } catch (_) {
       return null;
     }
   }

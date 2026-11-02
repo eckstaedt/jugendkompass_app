@@ -198,3 +198,17 @@ For issues or questions:
 2. Check Supabase logs: Supabase Dashboard → Logs
 3. Check Edge Function logs: Supabase Dashboard → Edge Functions → Logs
 4. Review documentation: `ANALYTICS.md`, `DEEP_LINK_IMPLEMENTATION.md`
+
+
+## Übersetzung (automatisch)
+
+Siehe `TRANSLATION.md`. Kurzfassung:
+
+```bash
+supabase db push
+supabase secrets set ANTHROPIC_API_KEY=sk-ant-... TRANSLATION_WORKER_SECRET=<geheim>
+supabase functions deploy process-translation-jobs --no-verify-jwt
+supabase functions deploy send-push-notification
+```
+
+Danach im SQL-Editor `vault.create_secret(...)` für `translation_project_url` und `translation_worker_secret` ausführen.

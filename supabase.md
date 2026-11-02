@@ -50,7 +50,7 @@ Zentrale Tabelle für alle Inhaltstypen. Wird als FK von Posts, Impulsen, Versen
 ---
 
 ### `content_translations`
-Speichert Übersetzungen für alle Content-Felder (en, es, ru). Deutsch (`de`) ist die Quellsprache und liegt direkt in den Quelltabellen.
+Speichert automatische Übersetzungen (Claude) für alle Content-Felder (en, ru, es, pl, tr, he). Deutsch (`de`) ist die Quellsprache und liegt direkt in den Quelltabellen. Details: `TRANSLATION.md`.
 
 | Spalte | Typ | Nullable | Default |
 |--------|-----|----------|---------|
@@ -66,13 +66,27 @@ Speichert Übersetzungen für alle Content-Felder (en, es, ru). Deutsch (`de`) i
 
 **FK:** `content_id` → `content.id`
 
-**Sprachen:** `en`, `es`, `ru` (DE ist Quellsprache)
+**Sprachen:** aus `translation_targets` (aktuell `en`, `ru`, `es`, `pl`, `tr`, `he`; DE ist Quellsprache)
+
+**status:** `auto` (vom Worker, wird bei Quelländerung neu übersetzt) oder `manual` (wird nie überschrieben). `source_hash` = SHA-256 des deutschen Quelltexts.
 
 **field_name Beispiele:** `title`, `body`, `impulse_text`, `verse`, `reference`, `question`, `message`, `description`, `option:<uuid>` (für Poll-Optionen)
 
 **Trigger:** `touch_content_translations_updated_at` aktualisiert `updated_at` bei UPDATE.
 
 **RLS:** Jeder kann lesen, nur Admins können erstellen/bearbeiten/löschen.
+
+---
+
+### `entity_translations`
+Übersetzungen für Zeilen ohne `content_id` (`edition`, `category`). Spalten: `entity_type`, `entity_id`, `language`, `field_name`, `value`, `source_hash`, `status`. Unique: (entity_type, entity_id, language, field_name).
+
+**RLS:** Jeder kann lesen, nur Admins/Service-Role schreiben.
+
+---
+
+### `translation_jobs` / `translation_targets`
+Queue des Übersetzungs-Workers (`pending`/`processing`/`completed`/`failed`, `revision`, Backoff) und aktive Zielsprachen. Monitoring: View `translation_queue_status`.
 
 ---
 
@@ -369,12 +383,23 @@ Analytics tracking für App-Installationen und App-Öffnungen.
 | `get_categories_localized(lang)` | Kategorien in Zielsprache |
 | `touch_content_translations_updated_at()` | Trigger: aktualisiert `updated_at` |
 
-### Notifications & Auto-Translation (HTTP-Trigger)
+### Notifications
 | Funktion | Beschreibung |
 |----------|-------------|
 | `notify_new_content()` | Sendet Push via Edge Function `send-push-notification` |
-| `notify_translate_content()` | Triggert Edge Function `translate-content` für `en`, `es`, `ru` |
-| `notify_translate_poll_option()` | Triggert Übersetzung neuer Poll-Optionen |
+
+### Auto-Translation v2 (siehe `TRANSLATION.md`)
+| Funktion | Beschreibung |
+|----------|-------------|
+| `trg_enqueue_translation()` | Generischer Trigger auf posts, messages, impulses, videos, verse_of_the_day, polls, poll_options, editions, categories |
+| `enqueue_translation(type, id)` | Job anlegen/erneuern (revision+1) |
+| `claim_translation_jobs(n, worker)` | Jobs atomar übernehmen (SKIP LOCKED) |
+| `finish_translation_job(...)` | Abschluss/Retry mit Backoff, Revisionsprüfung |
+| `kick_translation_worker()` | Ruft Edge Function `process-translation-jobs` per pg_net auf (Vault-Secrets) |
+| `enqueue_translation_backfill()` | Alle Inhalte erneut prüfen/übersetzen |
+| `retry_failed_translations()` | Fehlgeschlagene Jobs erneut einreihen |
+
+Die `get_*_localized`-RPCs werden von der App nicht mehr für Übersetzungen genutzt (nur `get_posts_localized('de')` als Datenquelle).
 
 ---
 
@@ -403,15 +428,14 @@ Alle Buckets sind **öffentlich** (public).
 |----------|-------------------|-------------|
 | `delete-user` | Ja | Löscht einen User (nur Admins) |
 | `send-push-notification` | Nein | Sendet Push-Benachrichtigungen via FCM |
-| `translate-content` | Nein | Übersetzt einen einzelnen Content-Eintrag |
-| `translate-backfill` | Ja | Backfill für fehlende Übersetzungen (batchweise) |
+| `process-translation-jobs` | Nein (eigenes Secret `x-translation-secret`) | Übersetzungs-Worker (Claude), verarbeitet `translation_jobs` |
 
 ---
 
 ## Unterstützte Sprachen
 
 - **Quellsprache:** `de` (Deutsch) – direkt in Quelltabellen
-- **Übersetzungen:** `en` (Englisch), `es` (Spanisch), `ru` (Russisch) – in `content_translations`
+- **Übersetzungen:** `en`, `ru`, `es`, `pl`, `tr`, `he` – automatisch in `content_translations` / `entity_translations`
 
 ---
 
