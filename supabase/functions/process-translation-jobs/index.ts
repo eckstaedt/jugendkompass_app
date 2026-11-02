@@ -6,12 +6,13 @@
 //   • a pg_cron safety net every 2 minutes
 //   • manual invoke (Dashboard / CLI) with {"action": "..."}
 //
-// Auth: header `x-translation-secret: <TRANSLATION_WORKER_SECRET>` or
+// Auth: header `x-translation-secret: <vault translation_worker_secret>` or
 //       `Authorization: Bearer <SERVICE_ROLE_KEY>`.
 //
 // Secrets (supabase secrets set ...):
 //   ANTHROPIC_API_KEY            required
-//   TRANSLATION_WORKER_SECRET    required (same value stored in Vault)
+//   TRANSLATION_WORKER_SECRET    optional override; by default the secret is
+//                                read from Vault (created by the migration)
 //   TRANSLATION_MODEL            optional, default claude-opus-5-5
 //   TRANSLATION_EFFORT           optional, low|medium|high, default medium
 //
@@ -133,13 +134,13 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = requireEnv("SUPABASE_URL");
     const serviceRole = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!isAuthorized(req, serviceRole)) {
-      return json({ ok: false, error: "unauthorized" }, 401);
-    }
-
     const supabase = createClient(supabaseUrl, serviceRole, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
+
+    if (!(await isAuthorized(req, serviceRole, supabase))) {
+      return json({ ok: false, error: "unauthorized" }, 401);
+    }
 
     const payload = await readPayload(req);
     const action = String(payload.action ?? "process");
@@ -728,13 +729,30 @@ async function sourceHash(text: string): Promise<string> {
   return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-function isAuthorized(req: Request, serviceRole: string): boolean {
-  const secret = Deno.env.get("TRANSLATION_WORKER_SECRET");
-  const headerSecret = req.headers.get("x-translation-secret");
-  if (secret && headerSecret && timingSafeEqual(secret, headerSecret)) return true;
+let cachedWorkerSecret: string | null = null;
 
+/** Secret shared with the database (Vault), optionally overridden by env. */
+async function workerSecret(supabase: SupabaseClient): Promise<string | null> {
+  const fromEnv = Deno.env.get("TRANSLATION_WORKER_SECRET");
+  if (fromEnv) return fromEnv;
+  if (cachedWorkerSecret) return cachedWorkerSecret;
+  const { data, error } = await supabase.rpc("get_translation_worker_secret");
+  if (error) {
+    console.warn("[translation] cannot read worker secret:", error.message);
+    return null;
+  }
+  cachedWorkerSecret = typeof data === "string" && data.length > 0 ? data : null;
+  return cachedWorkerSecret;
+}
+
+async function isAuthorized(req: Request, serviceRole: string, supabase: SupabaseClient): Promise<boolean> {
   const bearer = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  return !!bearer && timingSafeEqual(bearer, serviceRole);
+  if (bearer && timingSafeEqual(bearer, serviceRole)) return true;
+
+  const headerSecret = req.headers.get("x-translation-secret");
+  if (!headerSecret) return false;
+  const secret = await workerSecret(supabase);
+  return !!secret && timingSafeEqual(secret, headerSecret);
 }
 
 function timingSafeEqual(a: string, b: string): boolean {

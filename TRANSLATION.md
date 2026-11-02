@@ -57,43 +57,32 @@ App: ContentLocalizer legt Übersetzungen über die deutschen Datensätze
 - **App fällt pro Feld auf Deutsch zurück**, solange noch keine Übersetzung existiert – nie Fehler/Leere.
 - Lange Artikel werden an HTML-Absatzgrenzen gesplittet und verlustfrei wieder zusammengesetzt.
 
-### Einmalige Einrichtung
+### Einmalige Einrichtung (automatisch per GitHub Actions)
 
-1. Migration anwenden (`supabase/migrations/20261102000000_translation_system_v2.sql`):
+Der Workflow `.github/workflows/supabase-deploy.yml` läuft bei jedem Push auf `main`, der etwas unter `supabase/` ändert. Er setzt den Anthropic-Key, deployt die Edge Functions, spielt neue/geänderte Migrationen ein und startet die Übersetzung.
 
-   ```bash
-   supabase db push
-   ```
+Einmalig drei Repository-Secrets anlegen (GitHub → Settings → Secrets and variables → Actions → *New repository secret*):
 
-   Die Migration entfernt den alten Gemini-Cronjob und alte Trigger, legt Queue/Trigger/Cron an und **stellt automatisch alle bestehenden Inhalte in die Warteschlange**.
+| Secret | Woher |
+|---|---|
+| `SUPABASE_ACCESS_TOKEN` | https://supabase.com/dashboard/account/tokens → *Generate new token* |
+| `SUPABASE_DB_URL` | Supabase Dashboard → *Connect* → *Session pooler* → URI kopieren, `[YOUR-PASSWORD]` durch das DB-Passwort ersetzen |
+| `ANTHROPIC_API_KEY` | https://console.anthropic.com/settings/keys |
 
-2. Secrets setzen (Worker-Secret frei wählen, z. B. `openssl rand -hex 32`):
+Danach: GitHub → *Actions* → *Supabase Deploy* → *Run workflow* (bzw. läuft automatisch beim nächsten Merge).
 
-   ```bash
-   supabase secrets set ANTHROPIC_API_KEY=sk-ant-... TRANSLATION_WORKER_SECRET=<geheim>
-   ```
+Die Migration legt die Vault-Einträge (Projekt-URL + zufälliges Worker-Secret) selbst an und stellt **alle bestehenden Inhalte** in die Warteschlange. Optionale Function-Secrets: `TRANSLATION_MODEL` (Standard `claude-opus-5-5`), `TRANSLATION_EFFORT` (`low`/`medium`/`high`, Standard `medium`).
 
-   Optional: `TRANSLATION_MODEL` (Standard `claude-opus-5-5`), `TRANSLATION_EFFORT` (`low`/`medium`/`high`, Standard `medium`).
+<details><summary>Manuell ohne GitHub Actions</summary>
 
-3. Worker deployen (eigene Authentifizierung über das Secret):
+```bash
+supabase secrets set --project-ref vdcdibvclaulqxfjyzpq ANTHROPIC_API_KEY=sk-ant-...
+supabase functions deploy process-translation-jobs --project-ref vdcdibvclaulqxfjyzpq --no-verify-jwt
+supabase functions deploy send-push-notification --project-ref vdcdibvclaulqxfjyzpq --no-verify-jwt
+```
 
-   ```bash
-   supabase functions deploy process-translation-jobs --no-verify-jwt
-   supabase functions deploy send-push-notification
-   ```
-
-4. Im SQL-Editor die Vault-Einträge anlegen, damit die Datenbank den Worker aufrufen kann:
-
-   ```sql
-   select vault.create_secret('https://vdcdibvclaulqxfjyzpq.supabase.co', 'translation_project_url');
-   select vault.create_secret('<gleiches TRANSLATION_WORKER_SECRET>', 'translation_worker_secret');
-   ```
-
-5. Backfill anstoßen (oder einfach 2 Minuten auf den Cron warten):
-
-   ```sql
-   select public.kick_translation_worker();
-   ```
+Dann den Inhalt von `supabase/migrations/20261102000000_translation_system_v2.sql` im SQL-Editor ausführen (nicht `supabase db push` – ältere Migrationen im Ordner sind nicht in der Migrations-Historie).
+</details>
 
 ### Betrieb
 
