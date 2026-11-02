@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/core/services/device_registration_service.dart';
-import 'package:jugendkompass_app/core/services/translation_service.dart';
+import 'package:jugendkompass_app/data/services/content_localizer.dart';
 
 /// Language provider
 final languageProvider = StateNotifierProvider<LanguageNotifier, AppLanguage>(
@@ -32,7 +32,6 @@ class LanguageNotifier extends StateNotifier<AppLanguage> {
 
   /// Set language
   Future<void> setLanguage(AppLanguage language) async {
-    print('🌐 Setting language to: ${language.displayName}');
     state = language;
     AppTranslations.setLanguage(language);
     await UserPreferencesService.instance.setLanguage(language.locale.languageCode);
@@ -42,10 +41,9 @@ class LanguageNotifier extends StateNotifier<AppLanguage> {
       language.locale.languageCode,
     );
 
-    // Clear translation cache when switching languages
-    TranslationService.instance.clearCache();
+    // Fresh content translations for the new language
+    ContentLocalizer.clearSharedCache();
 
-    print('✅ Language set to: ${language.displayName}');
   }
 }
 

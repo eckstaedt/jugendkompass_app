@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/data/models/poll_model.dart';
 import 'package:jugendkompass_app/data/models/poll_vote_model.dart';
 import 'package:jugendkompass_app/data/repositories/poll_repository.dart';
 import 'package:jugendkompass_app/domain/providers/supabase_provider.dart';
+import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 
 /// Provider for PollRepository
 final pollRepositoryProvider = Provider<PollRepository>((ref) {
@@ -13,20 +15,23 @@ final pollRepositoryProvider = Provider<PollRepository>((ref) {
 /// Provider for active polls list
 final activePollListProvider = FutureProvider.autoDispose<List<PollModel>>((ref) async {
   final repository = ref.watch(pollRepositoryProvider);
-  return repository.getPollList(activeOnly: true);
+  final language = ref.watch(languageProvider).locale.languageCode;
+  return repository.getPollList(activeOnly: true, language: language);
 });
 
 /// Provider for fetching a single poll by ID
 final pollByIdProvider = FutureProvider.family<PollModel?, String>((ref, id) async {
   final repository = ref.watch(pollRepositoryProvider);
-  return repository.getPollById(id);
+  final language = ref.watch(languageProvider).locale.languageCode;
+  return repository.getPollById(id, language: language);
 });
 
 /// Provider for fetching a single poll by content_id
 final pollByContentIdProvider =
     FutureProvider.family<PollModel?, String>((ref, contentId) async {
   final repository = ref.watch(pollRepositoryProvider);
-  return repository.getPollByContentId(contentId);
+  final language = ref.watch(languageProvider).locale.languageCode;
+  return repository.getPollByContentId(contentId, language: language);
 });
 
 /// Provider for checking user's vote on a specific poll
@@ -56,7 +61,7 @@ class PollVoteNotifier extends AutoDisposeAsyncNotifier<void> {
       final userId = supabase.auth.currentUser?.id;
 
       if (userId == null) {
-        throw Exception('Bitte melde dich an, um abzustimmen');
+        throw Exception(AppTranslations.t('login_to_vote'));
       }
 
       await repository.submitVote(pollId, optionId, userId);

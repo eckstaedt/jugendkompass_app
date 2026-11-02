@@ -2,11 +2,44 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jugendkompass_app/data/models/impulse_model.dart';
 import 'package:jugendkompass_app/core/constants/supabase_constants.dart';
 import 'dart:developer' as developer;
+import 'package:jugendkompass_app/data/services/content_localizer.dart';
 
 class ImpulseRepository {
   final SupabaseClient _supabase;
 
-  ImpulseRepository(this._supabase);
+  ImpulseRepository(this._supabase) : _localizer = ContentLocalizer.forClient(_supabase);
+
+  final ContentLocalizer _localizer;
+
+  /// Overlays translated title and impulse text.
+  Future<List<ImpulseModel>> localizeImpulses(List<ImpulseModel> impulses, String language) async {
+    if (!ContentLocalizer.needsTranslation(language) || impulses.isEmpty) return impulses;
+    final rows = await _localizer.localizeContentRows(
+      [
+        for (final i in impulses) {'content_id': i.contentId, 'title': i.title, 'impulse_text': i.impulseText},
+      ],
+      language,
+      fields: const {'title': 'title', 'impulse_text': 'impulse_text'},
+    );
+    return [
+      for (var i = 0; i < impulses.length; i++)
+        ImpulseModel(
+          id: impulses[i].id,
+          contentId: impulses[i].contentId,
+          title: rows[i]['title'] as String,
+          date: impulses[i].date,
+          impulseText: rows[i]['impulse_text'] as String,
+          imageUrl: impulses[i].imageUrl,
+          createdAt: impulses[i].createdAt,
+          status: impulses[i].status,
+        ),
+    ];
+  }
+
+  Future<ImpulseModel?> _localizeOne(ImpulseModel? impulse, String language) async {
+    if (impulse == null) return null;
+    return (await localizeImpulses([impulse], language)).first;
+  }
 
   /// Get daily impulses with JOIN to content table for status
   /// Direct fields (title, date, image_url) come from impulses table
@@ -166,73 +199,53 @@ class ImpulseRepository {
   /// Get a localized impulse by content_id.
   Future<ImpulseModel?> getImpulseByContentIdLocalized(String contentId, String language) async {
     try {
-      if (language == 'de') {
-        return getImpulseByContentId(contentId);
-      }
-
-      final impulse = await getImpulseByContentId(contentId);
-      if (impulse == null) return null;
-
-      final translations = await _supabase
-          .from('content_translations')
-          .select('field_name, value')
-          .eq('content_id', impulse.contentId)
-          .eq('language', language);
-
-      String? translatedTitle;
-      String? translatedText;
-
-      for (final row in translations as List) {
-        final field = row['field_name'] as String;
-        final value = row['value'] as String;
-
-        if (field == 'title') translatedTitle = value;
-        if (field == 'impulse_text') translatedText = value;
-      }
-
-      return ImpulseModel(
-        id: impulse.id,
-        contentId: impulse.contentId,
-        title: translatedTitle ?? impulse.title,
-        date: impulse.date,
-        impulseText: translatedText ?? impulse.impulseText,
-        imageUrl: impulse.imageUrl,
-        createdAt: impulse.createdAt,
-        status: impulse.status,
-      );
+      return _localizeOne(await getImpulseByContentId(contentId), language);
     } catch (e) {
       throw Exception('Fehler beim Laden des lokalisierten Impulses: $e');
     }
   }
 
-  /// Get localized impulses using Supabase RPC function.
-  ///
-  /// Uses get_impulses_localized(lang) which returns impulses with
-  /// translated title and impulse_text fields. German (de) returns original.
+  /// Get localized, published impulses up to today (newest first).
   Future<List<ImpulseModel>> getImpulsesLocalized(
     String language, {
     int limit = 10,
     int offset = 0,
   }) async {
     try {
-      final response = await _supabase.rpc(
-        'get_impulses_localized',
-        params: {'lang': language},
-      );
+      final now = DateTime.now();
+      final today =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+      final response = await _supabase
+          .from(SupabaseConstants.impulsesTable)
+          .select('''
+            id,
+            content_id,
+            title,
+            date,
+            impulse_text,
+            image_url,
+            created_at,
+            content!content_id(
+              status
+            )
+          ''')
+          .lte('date', today)
+          .order('date', ascending: false)
+          .range(offset, offset + limit - 1);
 
       final impulses = (response as List)
-          .map((json) => ImpulseModel.fromJson(json))
+          .map((json) => ImpulseModel.fromJson({
+                ...Map<String, dynamic>.from(json as Map),
+                'status': (json['content'] as Map?)?['status'],
+              }))
+          .where((impulse) {
+            final status = impulse.status?.toLowerCase();
+            return status == null || status == 'published';
+          })
           .toList();
 
-      // Filter out future impulses
-      final now = DateTime.now();
-      final published = impulses.where((i) => !i.date.isAfter(now)).toList();
-
-      // Sort by date descending (newest first)
-      published.sort((a, b) => b.date.compareTo(a.date));
-
-      // Apply limit and offset client-side
-      return published.skip(offset).take(limit).toList();
+      return localizeImpulses(impulses, language);
     } catch (e) {
       throw Exception('Fehler beim Laden der lokalisierten Impulse: $e');
     }
@@ -241,44 +254,7 @@ class ImpulseRepository {
   /// Get a single localized impulse by ID.
   Future<ImpulseModel?> getImpulseByIdLocalized(String id, String language) async {
     try {
-      // For German, use regular method
-      if (language == 'de') {
-        return getImpulseById(id);
-      }
-
-      // Get impulse
-      final impulse = await getImpulseById(id);
-      if (impulse == null) return null;
-
-      // Fetch translations
-      final translations = await _supabase
-          .from('content_translations')
-          .select('field_name, value')
-          .eq('content_id', impulse.contentId)
-          .eq('language', language);
-
-      String? translatedTitle;
-      String? translatedText;
-
-      for (final row in translations as List) {
-        final field = row['field_name'] as String;
-        final value = row['value'] as String;
-
-        if (field == 'title') translatedTitle = value;
-        if (field == 'impulse_text') translatedText = value;
-      }
-
-      // Return impulse with translations
-      return ImpulseModel(
-        id: impulse.id,
-        contentId: impulse.contentId,
-        title: translatedTitle ?? impulse.title,
-        date: impulse.date,
-        impulseText: translatedText ?? impulse.impulseText,
-        imageUrl: impulse.imageUrl,
-        createdAt: impulse.createdAt,
-        status: impulse.status,
-      );
+      return _localizeOne(await getImpulseById(id), language);
     } catch (e) {
       throw Exception('Fehler beim Laden des lokalisierten Impulses: $e');
     }

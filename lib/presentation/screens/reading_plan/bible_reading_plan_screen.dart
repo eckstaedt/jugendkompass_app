@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -159,7 +160,7 @@ class _BibleReadingPlanScreenState extends ConsumerState<BibleReadingPlanScreen>
               ),
               const SizedBox(height: 8),
               Text(
-                '$completedDaysCount / 365 ${translate('Tage abgeschlossen')}',
+                context.tr('days_completed_progress', {'done': '$completedDaysCount', 'total': '365'}),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: isDark ? DesignTokens.darkTextSecondary : DesignTokens.textSecondary,
                 ),
@@ -185,7 +186,7 @@ class _BibleReadingPlanScreenState extends ConsumerState<BibleReadingPlanScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      '${translate('Tag')} ${day.dayNumber}',
+                      context.tr('day_number', {'day': '${day.dayNumber}'}),
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
                         textStyle: theme.textTheme.headlineSmall?.copyWith(
@@ -280,7 +281,7 @@ class _BibleReadingPlanScreenState extends ConsumerState<BibleReadingPlanScreen>
                     if (nowChecked && allChecked) {
                       SnackBarUtils.showSuccessBottom(
                         context,
-                        '${translate('Du hast Tag')} ${day.dayNumber} ${translate('abgeschlossen')}! 🎉',
+                        '${context.tr('day_completed', {'day': '${day.dayNumber}'})} 🎉',
                       );
                     }
                   },
@@ -316,7 +317,7 @@ class _BibleReadingPlanScreenState extends ConsumerState<BibleReadingPlanScreen>
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
-                    '${translate('Du hast Tag')} ${day.dayNumber} ${translate('abgeschlossen')}!',
+                    context.tr('day_completed', {'day': '${day.dayNumber}'}),
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w700,

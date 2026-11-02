@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -100,8 +101,8 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                   if (filteredVideos.isEmpty) {
                     return EmptyState(
                       icon: Icons.video_library_outlined,
-                      title: 'Keine Videos gefunden',
-                      message: 'Versuche eine andere Suche',
+                      title: context.tr('no_videos_found'),
+                      message: context.tr('try_different_search'),
                     );
                   }
 
@@ -127,7 +128,7 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
                 },
                 loading: () => const VideoListSkeleton(),
                 error: (error, stack) => Center(
-                  child: Text('Fehler: $error'),
+                  child: Text('${context.tr('error')}: $error'),
                 ),
               ),
             ),

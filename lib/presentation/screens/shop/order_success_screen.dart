@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
@@ -67,7 +68,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen>
         actions: [
           IconButton(
             icon: const Icon(Icons.close),
-            tooltip: 'Schließen',
+            tooltip: context.tr('close'),
             onPressed: () {
               // Pop back to settings (remove all shop screens from stack)
               Navigator.of(context).popUntil(
@@ -113,7 +114,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen>
                 child: Column(
                   children: [
                     Text(
-                      'Bestellung aufgegeben!',
+                      context.tr('order_placed'),
                       style: GoogleFonts.poppins(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
@@ -123,7 +124,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen>
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Deine Bestellung wurde erfolgreich aufgegeben. Du erhältst dein Heft bald per Post. 📬',
+                      context.tr('order_placed_message'),
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: DesignTokens.getTextSecondary(brightness),
                         height: 1.5,
@@ -153,9 +154,9 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen>
                       ),
                     ),
                     icon: const Icon(Icons.favorite_outline),
-                    label: const Text(
-                      'Für diese Ausgabe spenden',
-                      style: TextStyle(
+                    label: Text(
+                      context.tr('donate_for_edition'),
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),

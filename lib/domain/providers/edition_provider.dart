@@ -41,7 +41,7 @@ final recentEditionsProvider =
 final editionPostsProvider =
     FutureProvider.family<List<PostModel>, String>((ref, editionId) async {
   final repository = ref.watch(editionRepositoryProvider);
-  final postsData = await repository.getEditionPosts(editionId);
+  final postsData = await repository.getEditionPosts(editionId, language: ref.watch(languageProvider).locale.languageCode);
 
   // Convert Map<String, dynamic> to PostModel
   return postsData.map((json) => PostModel.fromJson(json)).toList();
@@ -51,7 +51,7 @@ final editionPostsProvider =
 final editionAudiosProvider =
     FutureProvider.family<List<AudioModel>, String>((ref, editionId) async {
   final repository = ref.watch(editionRepositoryProvider);
-  final audiosData = await repository.getEditionAudios(editionId);
+  final audiosData = await repository.getEditionAudios(editionId, language: ref.watch(languageProvider).locale.languageCode);
 
   // Convert to AudioModel
   return audiosData.map((json) {

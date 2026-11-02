@@ -1,699 +1,762 @@
-// @ts-nocheck
+// Translation worker v2 — translates German source content into every active
+// target language using Claude (Anthropic API).
+//
+// Triggered by:
+//   • the database (pg_net) immediately after content is created/changed
+//   • a pg_cron safety net every 2 minutes
+//   • manual invoke (Dashboard / CLI) with {"action": "..."}
+//
+// Auth: header `x-translation-secret: <TRANSLATION_WORKER_SECRET>` or
+//       `Authorization: Bearer <SERVICE_ROLE_KEY>`.
+//
+// Secrets (supabase secrets set ...):
+//   ANTHROPIC_API_KEY            required
+//   TRANSLATION_WORKER_SECRET    required (same value stored in Vault)
+//   TRANSLATION_MODEL            optional, default claude-opus-5-5
+//   TRANSLATION_EFFORT           optional, low|medium|high, default medium
+//
+// Actions (POST body):
+//   {}                                   process the queue (default)
+//   {"action": "backfill"}               queue ALL content, then process
+//   {"action": "retry_failed"}           re-queue failed jobs, then process
+//   {"action": "status"}                 queue statistics
 
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import Anthropic from "npm:@anthropic-ai/sdk@1.3.0";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.45.4";
 
-type JobStatus = "pending" | "processing" | "completed" | "failed";
-type ContentType = "post" | "message" | "impulse" | "video" | "verse";
+// ─── Configuration ──────────────────────────────────────────────────────────
 
-interface TranslationJob {
-  id: number;
-  content_type: ContentType;
-  record_id: string;
-  content_id: string;
-  status: JobStatus;
-  attempts: number;
-  next_retry_at: string;
-}
+const MODEL = Deno.env.get("TRANSLATION_MODEL") ?? "claude-opus-5-5";
+const EFFORT = (Deno.env.get("TRANSLATION_EFFORT") ?? "medium") as "low" | "medium" | "high";
+const MAX_ATTEMPTS = 8;
+const CLAIM_BATCH = 3;
+/** Stop claiming new jobs after this much wall-clock time (edge limit ~150s). */
+const TIME_BUDGET_MS = Number(Deno.env.get("TRANSLATION_TIME_BUDGET_MS") ?? "100000");
+/** Max characters of German source per Claude request. Longer texts are split. */
+const MAX_CHARS_PER_REQUEST = 14000;
+/** Bump to force re-translation of everything (e.g. after prompt changes). */
+const HASH_VERSION = "v2";
+const FALLBACK_LANGUAGES = ["en", "ru", "es", "pl", "tr", "he"];
 
-interface SourceRecord {
-  id: string;
-  content_id: string;
-  fields: Record<string, string>;
-}
+const LANGUAGE_NAMES: Record<string, string> = {
+  en: "English",
+  ru: "Russian",
+  es: "Spanish",
+  pl: "Polish",
+  tr: "Turkish",
+  he: "Modern Hebrew (without niqqud/vowel points)",
+  fr: "French",
+  it: "Italian",
+  uk: "Ukrainian",
+  ro: "Romanian",
+  ar: "Arabic",
+  fa: "Persian",
+  pt: "Portuguese",
+  nl: "Dutch",
+};
 
-interface WorkerPayload extends Record<string, unknown> {
-  enqueueBackfill?: boolean;
-  backfillMaxRows?: number;
-  backfillLanguage?: string;
-  batchSize?: number;
-  dryRun?: boolean;
-  languages?: string[];
-  contentTypes?: string[];
-  geminiApiKey?: string;
-}
+const SYSTEM_PROMPT = `You are the professional translator of "Jugendkompass", a German Christian youth magazine app (articles, daily Bible verses, daily impulses/devotionals, short messages, videos, polls, magazine editions).
 
-const MAX_ATTEMPTS = Number(Deno.env.get("TRANSLATION_MAX_ATTEMPTS") ?? "8");
-const DEFAULT_BATCH_SIZE = Number(Deno.env.get("TRANSLATION_BATCH_SIZE") ?? "15");
-const DEFAULT_TARGET_LANGUAGES = ["en", "ru", "pl", "es", "tr", "he"];
-const DEFAULT_TARGET_CONTENT_TYPES: ContentType[] = ["post", "message", "impulse", "video", "verse"];
-const GEMINI_MODELS = (Deno.env.get("GEMINI_TRANSLATION_MODELS") ?? "gemini-3.6-flash,gemini-2.5-flash,gemini-3.5-flash-lite")
-  .split(",")
-  .map((model) => model.trim())
-  .filter((model) => model.length > 0);
+You receive a JSON object of German source segments and translate every segment into the requested target language.
+
+Rules:
+- Translate faithfully and completely. Never summarize, shorten, add notes or explanations.
+- Use natural, warm, contemporary language suitable for teenagers and young adults, in the tone of the original. Keep the same form of address (informal "du" → informal in the target language where the language distinguishes it).
+- Keep Christian terminology accurate (e.g. Gnade, Heiliger Geist, Evangelium, Gemeinde, Abendmahl) using the terms established in that language's churches.
+- Bible quotations: when a segment quotes a recognizable Bible passage, render it the way it reads in a widely used modern Bible translation of the target language instead of translating word by word.
+- Bible references (segment kind "reference" or references inside text): localize the book name and use the target language's citation convention, keep numbers unchanged. Examples: "Johannes 3,16" → en "John 3:16", es "Juan 3:16", ru "Иоанна 3:16", pl "J 3,16" or "Ewangelia Jana 3,16", tr "Yuhanna 3:16", he "יוחנן ג׳ 16" or "יוחנן 3:16". "1. Korinther 13,4-7" → en "1 Corinthians 13:4-7".
+- HTML and Markdown: keep every tag, attribute, entity, link URL, image source, line break and list structure exactly as in the source. Translate only human-readable text (including alt/title attribute text). Never wrap the output in code fences.
+- Keep URLs, e-mail addresses, @handles, #hashtags, emojis, numbers, dates' values and placeholders like {name} unchanged.
+- Keep personal names and the brand "Jugendkompass" unchanged.
+- Titles stay short and title-like; poll options stay short.
+- Output must be a JSON object with exactly the same keys as the input and the translated strings as values.`;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-translation-secret",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-let runtimeGeminiApiKey: string | null = null;
+// ─── Types ──────────────────────────────────────────────────────────────────
 
-serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+type JobType = "post" | "message" | "impulse" | "video" | "verse" | "poll" | "edition" | "category";
+type SegmentKind = "title" | "body" | "html" | "verse" | "reference" | "question" | "option" | "name";
+
+interface ClaimedJob {
+  id: number;
+  content_type: JobType;
+  record_id: string;
+  revision: number;
+  attempts: number;
+}
+
+interface SourceField {
+  /** field_name stored in the translation table, e.g. "title", "option:<uuid>" */
+  name: string;
+  text: string;
+  kind: SegmentKind;
+}
+
+interface TranslationUnit {
+  store: "content" | "entity";
+  /** content_id (content store) or row id (entity store) */
+  key: string;
+  entityType?: "edition" | "category";
+  contentLabel: string;
+  fields: SourceField[];
+  /** Field-name prefixes that are fully owned by this unit (stale ones get deleted). */
+  ownedPrefixes?: string[];
+}
+
+interface ExistingTranslation {
+  language: string;
+  field_name: string;
+  source_hash: string | null;
+  status: string;
+}
+
+interface TranslatedRow {
+  language: string;
+  field_name: string;
+  value: string;
+  source_hash: string;
+}
+
+// ─── HTTP entry point ───────────────────────────────────────────────────────
+
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  const startedAt = Date.now();
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL");
-    const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const supabaseUrl = requireEnv("SUPABASE_URL");
+    const serviceRole = requireEnv("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!supabaseUrl || !serviceRole) {
-      throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+    if (!isAuthorized(req, serviceRole)) {
+      return json({ ok: false, error: "unauthorized" }, 401);
     }
 
-    const supabase = createClient(supabaseUrl, serviceRole);
+    const supabase = createClient(supabaseUrl, serviceRole, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
 
     const payload = await readPayload(req);
-    if (payload.enqueueBackfill === true) {
-      const maxRows = Number(payload.backfillMaxRows ?? 8000);
-      const backfillLanguage = typeof payload.backfillLanguage === "string"
-        ? payload.backfillLanguage.trim().toLowerCase()
-        : null;
+    const action = String(payload.action ?? "process");
 
-      let queuedJobs = 0;
-
-      const allResult = await supabase.rpc("enqueue_translation_backfill_for_all", {
-        max_rows_per_type: maxRows,
-        target_language: backfillLanguage,
-      });
-
-      if (!allResult.error) {
-        queuedJobs = Number(allResult.data ?? 0);
-      } else {
-        const postFallback = await supabase.rpc("enqueue_translation_backfill_for_posts", {
-          max_rows: maxRows,
-        });
-        if (postFallback.error) throw postFallback.error;
-        queuedJobs = Number(postFallback.data ?? 0);
-      }
-
-      return json({
-        ok: true,
-        action: "backfill-enqueue",
-        queuedJobs,
-      });
+    if (action === "status") {
+      const { data, error } = await supabase.from("translation_queue_status").select("*");
+      if (error) throw error;
+      return json({ ok: true, status: data });
     }
 
-    runtimeGeminiApiKey =
-      (typeof payload.geminiApiKey === "string" && payload.geminiApiKey.trim().length > 0)
-        ? payload.geminiApiKey.trim()
-        : Deno.env.get("GEMINI_API_KEY");
-
-    if (!runtimeGeminiApiKey) {
-      throw new Error("Missing Gemini API key. Provide `geminiApiKey` in payload or set `GEMINI_API_KEY` secret.");
+    let queued: number | null = null;
+    if (action === "backfill") {
+      const { data, error } = await supabase.rpc("enqueue_translation_backfill");
+      if (error) throw error;
+      queued = Number(data ?? 0);
+    } else if (action === "retry_failed") {
+      const { data, error } = await supabase.rpc("retry_failed_translations");
+      if (error) throw error;
+      queued = Number(data ?? 0);
     }
 
-    const batchSize = Number(payload.batchSize ?? DEFAULT_BATCH_SIZE);
-    const dryRun = payload.dryRun === true;
-    const languages = resolveRequestedLanguages(payload, await loadActiveLanguages(supabase));
-    const contentTypes = resolveRequestedContentTypes(payload);
-
-    const jobs = await loadPendingJobs(supabase, batchSize, contentTypes);
-    if (jobs.length === 0) {
-      return json({ ok: true, processed: 0, message: "No pending translation jobs." });
-    }
+    const anthropicKey = requireEnv("ANTHROPIC_API_KEY");
+    const anthropic = new Anthropic({ apiKey: anthropicKey, maxRetries: 4, timeout: 120_000 });
+    const languages = await loadActiveLanguages(supabase);
+    const workerId = `edge-${crypto.randomUUID().slice(0, 8)}`;
 
     const results: Array<Record<string, unknown>> = [];
 
-    for (const job of jobs) {
-      const claim = await claimJob(supabase, job.id);
-      if (!claim) continue;
+    while (Date.now() - startedAt < TIME_BUDGET_MS) {
+      const { data: jobs, error } = await supabase.rpc("claim_translation_jobs", {
+        p_batch_size: CLAIM_BATCH,
+        p_worker: workerId,
+      });
+      if (error) throw new Error(`claim failed: ${error.message}`);
+      const claimed = (jobs ?? []) as ClaimedJob[];
+      if (claimed.length === 0) break;
 
-      try {
-        const sourceRecord = await loadSourceRecord(supabase, job);
-        if (!sourceRecord || !sourceRecord.content_id) {
-          await failJob(supabase, job.id, job.attempts, `Record not found or missing content_id for ${job.content_type}.`);
-          results.push({ jobId: job.id, status: "failed", reason: "missing_record", contentType: job.content_type });
-          continue;
-        }
-
-        const translatedFields = await translateMissingFields({
-          supabase,
-          sourceRecord,
-          targetLanguages: languages,
-          dryRun,
-        });
-
-        await completeJob(supabase, job.id);
-        results.push({
-          jobId: job.id,
-          status: "completed",
-          contentType: job.content_type,
-          translatedFields,
-          dryRun,
-        });
-      } catch (error) {
-        await failJob(supabase, job.id, job.attempts, stringifyError(error));
-        results.push({
-          jobId: job.id,
-          status: "failed",
-          contentType: job.content_type,
-          error: stringifyError(error),
-        });
-      }
+      // Jobs run in parallel; inside a job, languages run in parallel too.
+      const batchResults = await Promise.all(
+        claimed.map((job) => processJob({ supabase, anthropic, job, languages })),
+      );
+      results.push(...batchResults);
     }
 
     return json({
       ok: true,
+      action,
+      queued,
       processed: results.length,
+      languages,
+      durationMs: Date.now() - startedAt,
       results,
-      activeLanguages: languages,
-      activeContentTypes: contentTypes,
-      dryRun,
     });
   } catch (error) {
-    return json(
-      {
-        ok: false,
-        error: stringifyError(error),
-      },
-      500,
-    );
+    console.error("[translation] fatal", error);
+    return json({ ok: false, error: stringifyError(error) }, 500);
   }
 });
 
-async function readPayload(req: Request): Promise<WorkerPayload> {
+// ─── Job processing ─────────────────────────────────────────────────────────
+
+async function processJob(args: {
+  supabase: SupabaseClient;
+  anthropic: Anthropic;
+  job: ClaimedJob;
+  languages: string[];
+}): Promise<Record<string, unknown>> {
+  const { supabase, anthropic, job, languages } = args;
+
+  try {
+    const unit = await loadUnit(supabase, job);
+    let written = 0;
+    let skipped = 0;
+
+    if (unit) {
+      const outcome = await translateUnit({ supabase, anthropic, unit, languages });
+      written = outcome.written;
+      skipped = outcome.skipped;
+    }
+
+    const { data: finish } = await supabase.rpc("finish_translation_job", {
+      p_job_id: job.id,
+      p_revision: job.revision,
+      p_success: true,
+      p_error: null,
+      p_max_attempts: MAX_ATTEMPTS,
+    });
+
+    return {
+      jobId: job.id,
+      type: job.content_type,
+      recordId: job.record_id,
+      result: finish ?? "completed",
+      written,
+      skipped,
+      missing: unit === null,
+    };
+  } catch (error) {
+    const message = stringifyError(error);
+    console.error(`[translation] job ${job.id} (${job.content_type}/${job.record_id}) failed:`, message);
+    const { data: finish } = await supabase.rpc("finish_translation_job", {
+      p_job_id: job.id,
+      p_revision: job.revision,
+      p_success: false,
+      p_error: message,
+      p_max_attempts: MAX_ATTEMPTS,
+    });
+    return { jobId: job.id, type: job.content_type, recordId: job.record_id, result: finish ?? "retry", error: message };
+  }
+}
+
+async function translateUnit(args: {
+  supabase: SupabaseClient;
+  anthropic: Anthropic;
+  unit: TranslationUnit;
+  languages: string[];
+}): Promise<{ written: number; skipped: number }> {
+  const { supabase, anthropic, unit, languages } = args;
+
+  const hashes = new Map<string, string>();
+  for (const field of unit.fields) {
+    hashes.set(field.name, await sourceHash(field.text));
+  }
+
+  const existing = await loadExisting(supabase, unit, languages);
+  const existingByKey = new Map(existing.map((row) => [`${row.language}|${row.field_name}`, row]));
+
+  await deleteStaleTranslations(supabase, unit, existing);
+
+  let written = 0;
+  let skipped = 0;
+
+  const perLanguage = await Promise.all(
+    languages.map(async (language) => {
+      const todo = unit.fields.filter((field) => {
+        const current = existingByKey.get(`${language}|${field.name}`);
+        if (current?.status === "manual") return false; // never overwrite editor work
+        return current?.source_hash !== hashes.get(field.name);
+      });
+
+      if (todo.length === 0) return { language, rows: [] as TranslatedRow[], skipped: unit.fields.length };
+
+      const translated = await translateFields(anthropic, todo, language, unit.contentLabel);
+      const rows: TranslatedRow[] = todo.map((field) => ({
+        language,
+        field_name: field.name,
+        value: translated.get(field.name)!,
+        source_hash: hashes.get(field.name)!,
+      }));
+      return { language, rows, skipped: unit.fields.length - todo.length };
+    }),
+  );
+
+  const allRows = perLanguage.flatMap((entry) => entry.rows);
+  skipped = perLanguage.reduce((sum, entry) => sum + entry.skipped, 0);
+
+  if (allRows.length > 0) {
+    await upsertTranslations(supabase, unit, allRows);
+    written = allRows.length;
+  }
+
+  return { written, skipped };
+}
+
+// ─── Source loading ─────────────────────────────────────────────────────────
+
+async function loadUnit(supabase: SupabaseClient, job: ClaimedJob): Promise<TranslationUnit | null> {
+  const id = job.record_id;
+
+  switch (job.content_type) {
+    case "post": {
+      const row = await single(supabase.from("posts").select("id, content_id, title, body").eq("id", id));
+      if (!row?.content_id) return null;
+      return contentUnit(row.content_id, "magazine article", [
+        field("title", row.title, "title"),
+        field("body", row.body, "html"),
+      ]);
+    }
+    case "message": {
+      const row = await single(supabase.from("messages").select("id, content_id, title, message").eq("id", Number(id)));
+      if (!row?.content_id) return null;
+      return contentUnit(row.content_id, "short message / announcement", [
+        field("title", row.title, "title"),
+        field("message", row.message, "body"),
+      ]);
+    }
+    case "impulse": {
+      const row = await single(supabase.from("impulses").select("id, content_id, title, impulse_text").eq("id", id));
+      if (!row?.content_id) return null;
+      return contentUnit(row.content_id, "daily impulse (short devotional)", [
+        field("title", row.title, "title"),
+        field("impulse_text", row.impulse_text, "body"),
+      ]);
+    }
+    case "video": {
+      const row = await single(supabase.from("videos").select("id, content_id, title, description").eq("id", Number(id)));
+      if (!row?.content_id) return null;
+      return contentUnit(row.content_id, "video", [
+        field("title", row.title, "title"),
+        field("description", row.description, "body"),
+      ]);
+    }
+    case "verse": {
+      const row = await single(supabase.from("verse_of_the_day").select("id, content_id, verse, reference").eq("id", id));
+      if (!row?.content_id) return null;
+      return contentUnit(row.content_id, "Bible verse of the day", [
+        field("verse", row.verse, "verse"),
+        field("reference", row.reference, "reference"),
+      ]);
+    }
+    case "poll": {
+      const row = await single(supabase.from("polls").select("id, content_id, question").eq("id", id));
+      if (!row?.content_id) return null;
+      const { data: options, error } = await supabase
+        .from("poll_options")
+        .select("id, option_text")
+        .eq("poll_id", id);
+      if (error) throw new Error(`load poll options: ${error.message}`);
+      const unit = contentUnit(row.content_id, "poll", [
+        field("question", row.question, "question"),
+        ...(options ?? []).map((option: { id: string; option_text: string }) =>
+          field(`option:${option.id}`, option.option_text, "option")
+        ),
+      ]);
+      unit.ownedPrefixes = ["option:"];
+      return unit;
+    }
+    case "edition": {
+      const row = await single(supabase.from("editions").select("id, name, title, body").eq("id", id));
+      if (!row) return null;
+      return {
+        store: "entity",
+        entityType: "edition",
+        key: String(row.id),
+        contentLabel: "magazine edition",
+        fields: compact([
+          field("name", row.name, "name"),
+          field("title", row.title, "title"),
+          field("body", row.body, "html"),
+        ]),
+      };
+    }
+    case "category": {
+      const row = await single(supabase.from("categories").select("id, name").eq("id", id));
+      if (!row) return null;
+      return {
+        store: "entity",
+        entityType: "category",
+        key: String(row.id),
+        contentLabel: "article category / tag (one or two words)",
+        fields: compact([field("name", row.name, "name")]),
+      };
+    }
+    default:
+      throw new Error(`Unsupported job type ${job.content_type}`);
+  }
+}
+
+function contentUnit(contentId: string, label: string, fields: Array<SourceField | null>): TranslationUnit {
+  return { store: "content", key: String(contentId), contentLabel: label, fields: compact(fields) };
+}
+
+function field(name: string, value: unknown, kind: SegmentKind): SourceField | null {
+  const text = typeof value === "string" ? value.trim() : "";
+  if (!text) return null;
+  return { name, text, kind };
+}
+
+function compact<T>(items: Array<T | null>): T[] {
+  return items.filter((item): item is T => item !== null);
+}
+
+// deno-lint-ignore no-explicit-any
+async function single(query: any): Promise<any | null> {
+  const { data, error } = await query.maybeSingle();
+  if (error) throw new Error(error.message);
+  return data ?? null;
+}
+
+// ─── Translation storage ────────────────────────────────────────────────────
+
+async function loadExisting(
+  supabase: SupabaseClient,
+  unit: TranslationUnit,
+  languages: string[],
+): Promise<ExistingTranslation[]> {
+  const query = unit.store === "content"
+    ? supabase
+      .from("content_translations")
+      .select("language, field_name, source_hash, status")
+      .eq("content_id", unit.key)
+    : supabase
+      .from("entity_translations")
+      .select("language, field_name, source_hash, status")
+      .eq("entity_type", unit.entityType!)
+      .eq("entity_id", unit.key);
+
+  const { data, error } = await query.in("language", languages);
+  if (error) throw new Error(`load existing translations: ${error.message}`);
+  return (data ?? []) as ExistingTranslation[];
+}
+
+/** Removes automatic translations whose source field no longer exists (cleared description, deleted poll option). */
+async function deleteStaleTranslations(
+  supabase: SupabaseClient,
+  unit: TranslationUnit,
+  existing: ExistingTranslation[],
+): Promise<void> {
+  const current = new Set(unit.fields.map((f) => f.name));
+  const knownFixed = new Set(["title", "body", "message", "impulse_text", "description", "verse", "reference", "question", "name"]);
+
+  const stale = existing.filter((row) =>
+    row.status !== "manual" &&
+    !current.has(row.field_name) &&
+    (knownFixed.has(row.field_name) || (unit.ownedPrefixes ?? []).some((p) => row.field_name.startsWith(p)))
+  );
+  if (stale.length === 0) return;
+
+  const staleFields = Array.from(new Set(stale.map((row) => row.field_name)));
+  const query = unit.store === "content"
+    ? supabase.from("content_translations").delete().eq("content_id", unit.key)
+    : supabase.from("entity_translations").delete().eq("entity_type", unit.entityType!).eq("entity_id", unit.key);
+
+  const { error } = await query.in("field_name", staleFields).neq("status", "manual");
+  if (error) console.warn("[translation] stale cleanup failed:", error.message);
+}
+
+async function upsertTranslations(supabase: SupabaseClient, unit: TranslationUnit, rows: TranslatedRow[]): Promise<void> {
+  if (unit.store === "content") {
+    const { error } = await supabase.from("content_translations").upsert(
+      rows.map((row) => ({ content_id: unit.key, status: "auto", ...row })),
+      { onConflict: "content_id,language,field_name" },
+    );
+    if (error) throw new Error(`upsert content_translations: ${error.message}`);
+  } else {
+    const { error } = await supabase.from("entity_translations").upsert(
+      rows.map((row) => ({ entity_type: unit.entityType, entity_id: unit.key, status: "auto", ...row })),
+      { onConflict: "entity_type,entity_id,language,field_name" },
+    );
+    if (error) throw new Error(`upsert entity_translations: ${error.message}`);
+  }
+}
+
+async function loadActiveLanguages(supabase: SupabaseClient): Promise<string[]> {
+  const { data, error } = await supabase.from("translation_targets").select("language_code").eq("is_active", true);
+  if (error || !data || data.length === 0) {
+    if (error) console.warn("[translation] translation_targets unavailable:", error.message);
+    return FALLBACK_LANGUAGES;
+  }
+  const langs = data
+    .map((row: { language_code: string }) => row.language_code.trim().toLowerCase())
+    .filter((code: string) => code.length > 0 && code !== "de");
+  return Array.from(new Set(langs)).sort((a, b) => (a === "en" ? -1 : b === "en" ? 1 : a.localeCompare(b)));
+}
+
+// ─── Claude translation ─────────────────────────────────────────────────────
+
+interface Segment {
+  key: string;
+  fieldName: string;
+  kind: SegmentKind;
+  text: string;
+}
+
+/** Translates the given fields into one language. Returns field_name → translated text. */
+async function translateFields(
+  anthropic: Anthropic,
+  fields: SourceField[],
+  language: string,
+  contentLabel: string,
+): Promise<Map<string, string>> {
+  // 1) split long fields into segments at paragraph / HTML block boundaries
+  const segments: Segment[] = [];
+  fields.forEach((f, fieldIndex) => {
+    splitIntoChunks(f.text, MAX_CHARS_PER_REQUEST).forEach((chunk, chunkIndex) => {
+      segments.push({ key: `s${fieldIndex}_${chunkIndex}`, fieldName: f.name, kind: f.kind, text: chunk });
+    });
+  });
+
+  // 2) group segments into requests that respect the size budget
+  const requests: Segment[][] = [];
+  let current: Segment[] = [];
+  let size = 0;
+  for (const segment of segments) {
+    if (current.length > 0 && size + segment.text.length > MAX_CHARS_PER_REQUEST) {
+      requests.push(current);
+      current = [];
+      size = 0;
+    }
+    current.push(segment);
+    size += segment.text.length;
+  }
+  if (current.length > 0) requests.push(current);
+
+  // 3) translate
+  const translatedSegments = new Map<string, string>();
+  for (const group of requests) {
+    const output = await translateSegmentsWithValidation(anthropic, group, language, contentLabel);
+    for (const [key, value] of output) translatedSegments.set(key, value);
+  }
+
+  // 4) re-assemble fields
+  const result = new Map<string, string>();
+  for (const f of fields) {
+    const parts = segments.filter((s) => s.fieldName === f.name).map((s) => translatedSegments.get(s.key) ?? "");
+    result.set(f.name, parts.join(f.kind === "html" ? "" : "\n\n").trim());
+  }
+  return result;
+}
+
+async function translateSegmentsWithValidation(
+  anthropic: Anthropic,
+  segments: Segment[],
+  language: string,
+  contentLabel: string,
+): Promise<Map<string, string>> {
+  let lastError: unknown = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const output = await callClaude(anthropic, segments, language, contentLabel);
+      for (const segment of segments) {
+        validateSegment(segment, output.get(segment.key));
+      }
+      return output;
+    } catch (error) {
+      lastError = error;
+      console.warn(`[translation] ${language} attempt ${attempt} failed: ${stringifyError(error)}`);
+      if (error instanceof Anthropic.AuthenticationError || error instanceof Anthropic.PermissionDeniedError) {
+        break; // retrying cannot help
+      }
+    }
+  }
+  throw new Error(`translation to ${language} failed: ${stringifyError(lastError)}`);
+}
+
+async function callClaude(
+  anthropic: Anthropic,
+  segments: Segment[],
+  language: string,
+  contentLabel: string,
+): Promise<Map<string, string>> {
+  const languageName = LANGUAGE_NAMES[language] ?? language;
+
+  const input: Record<string, { kind: SegmentKind; text: string }> = {};
+  const properties: Record<string, { type: "string" }> = {};
+  for (const segment of segments) {
+    input[segment.key] = { kind: segment.kind, text: segment.text };
+    properties[segment.key] = { type: "string" };
+  }
+
+  const userText = [
+    `Target language: ${languageName} (code "${language}")`,
+    `Content type: ${contentLabel}`,
+    `Translate the "text" of every segment. Return {"<key>": "<translation>"} for all keys.`,
+    "",
+    JSON.stringify(input, null, 2),
+  ].join("\n");
+
+  const sourceChars = segments.reduce((sum, s) => sum + s.text.length, 0);
+  // Hebrew/Russian need more tokens per character; leave generous headroom.
+  const maxTokens = Math.min(64000, Math.max(8000, Math.ceil(sourceChars * 1.5) + 4000));
+
+  const stream = anthropic.beta.messages.stream({
+    model: MODEL,
+    max_tokens: maxTokens,
+    betas: ["server-side-fallback-2026-07-01"],
+    fallbacks: "default",
+    system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
+    output_config: {
+      effort: EFFORT,
+      format: {
+        type: "json_schema",
+        schema: {
+          type: "object",
+          properties,
+          required: Object.keys(properties),
+          additionalProperties: false,
+        },
+      },
+    },
+    messages: [{ role: "user", content: userText }],
+  });
+
+  const message = await stream.finalMessage();
+
+  if (message.stop_reason === "refusal") {
+    throw new Error(`model refused (${message.stop_details?.category ?? "unknown"})`);
+  }
+  if (message.stop_reason === "max_tokens") {
+    throw new Error("output truncated (max_tokens)");
+  }
+
+  const text = message.content
+    .filter((block): block is Anthropic.Beta.BetaTextBlock => block.type === "text")
+    .map((block) => block.text)
+    .join("");
+
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error(`invalid JSON from model: ${text.slice(0, 200)}`);
+  }
+
+  const out = new Map<string, string>();
+  for (const segment of segments) {
+    const value = parsed[segment.key];
+    if (typeof value === "string") out.set(segment.key, value.trim());
+  }
+  return out;
+}
+
+function validateSegment(segment: Segment, translated: string | undefined): void {
+  if (!translated || translated.trim().length === 0) {
+    throw new Error(`segment ${segment.key} missing in output`);
+  }
+
+  // Implausible length → probably truncated or summarized.
+  if (segment.text.length > 200 && translated.length < segment.text.length * 0.35) {
+    throw new Error(`segment ${segment.key} suspiciously short (${translated.length}/${segment.text.length})`);
+  }
+
+  // HTML structure must survive.
+  const sourceTags = countTags(segment.text);
+  if (sourceTags > 0) {
+    const translatedTags = countTags(translated);
+    if (Math.abs(sourceTags - translatedTags) > Math.max(2, Math.round(sourceTags * 0.1))) {
+      throw new Error(`segment ${segment.key} HTML tags changed (${sourceTags} → ${translatedTags})`);
+    }
+  }
+
+  if (/^```/.test(translated.trim())) {
+    throw new Error(`segment ${segment.key} wrapped in code fence`);
+  }
+}
+
+function countTags(text: string): number {
+  return (text.match(/<\/?[a-zA-Z][^>]*>/g) ?? []).length;
+}
+
+/** Splits text at HTML block ends / blank lines / sentences, never inside a tag. */
+function splitIntoChunks(text: string, maxLength: number): string[] {
+  if (text.length <= maxLength) return [text];
+
+  const isHtml = /<\/(p|div|h[1-6]|li|ul|ol|blockquote|figure|table)>/i.test(text);
+  const pieces = isHtml
+    ? text.split(/(?<=<\/(?:p|div|h[1-6]|li|ul|ol|blockquote|figure|table)>)/i)
+    : text.split(/(?<=\n\s*\n)/);
+
+  const chunks: string[] = [];
+  let buffer = "";
+  for (const piece of pieces) {
+    if (piece.length > maxLength) {
+      if (buffer) {
+        chunks.push(buffer);
+        buffer = "";
+      }
+      // last resort: sentence boundaries
+      let rest = piece;
+      while (rest.length > maxLength) {
+        let cut = rest.lastIndexOf(". ", maxLength);
+        if (cut < maxLength * 0.5) cut = rest.lastIndexOf(" ", maxLength);
+        if (cut <= 0) cut = maxLength;
+        chunks.push(rest.slice(0, cut + 1));
+        rest = rest.slice(cut + 1);
+      }
+      buffer = rest;
+      continue;
+    }
+    if (buffer.length + piece.length > maxLength) {
+      chunks.push(buffer);
+      buffer = piece;
+    } else {
+      buffer += piece;
+    }
+  }
+  if (buffer) chunks.push(buffer);
+  return chunks.filter((c) => c.trim().length > 0);
+}
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+async function sourceHash(text: string): Promise<string> {
+  const bytes = new TextEncoder().encode(`${HASH_VERSION}:${text}`);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function isAuthorized(req: Request, serviceRole: string): boolean {
+  const secret = Deno.env.get("TRANSLATION_WORKER_SECRET");
+  const headerSecret = req.headers.get("x-translation-secret");
+  if (secret && headerSecret && timingSafeEqual(secret, headerSecret)) return true;
+
+  const bearer = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+  return !!bearer && timingSafeEqual(bearer, serviceRole);
+}
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+function requireEnv(name: string): string {
+  const value = Deno.env.get(name);
+  if (!value) throw new Error(`Missing environment variable ${name}`);
+  return value;
+}
+
+async function readPayload(req: Request): Promise<Record<string, unknown>> {
   if (req.method !== "POST") return {};
   try {
     const body = await req.json();
-    if (body && typeof body === "object") return body as WorkerPayload;
+    return body && typeof body === "object" ? body as Record<string, unknown> : {};
+  } catch {
     return {};
-  } catch (_) {
-    return {};
-  }
-}
-
-function resolveRequestedLanguages(payload: Record<string, unknown>, activeLanguages: string[]): string[] {
-  const requested = payload.languages;
-  if (!Array.isArray(requested) || requested.length === 0) {
-    return prioritizeLanguages(activeLanguages);
-  }
-
-  const normalized = requested
-    .map((item) => String(item ?? "").trim().toLowerCase())
-    .filter((item) => item.length > 0 && item !== "de");
-
-  const unique = Array.from(new Set(normalized));
-  if (unique.length === 0) return activeLanguages;
-
-  return prioritizeLanguages(unique);
-}
-
-function resolveRequestedContentTypes(payload: Record<string, unknown>): ContentType[] {
-  const requested = payload.contentTypes;
-  if (!Array.isArray(requested) || requested.length === 0) {
-    return DEFAULT_TARGET_CONTENT_TYPES;
-  }
-
-  const normalized = requested
-    .map((item) => String(item ?? "").trim().toLowerCase())
-    .filter((item): item is ContentType =>
-      item === "post" || item === "message" || item === "impulse" || item === "video" || item === "verse"
-    );
-
-  const unique = Array.from(new Set(normalized));
-  if (unique.length === 0) return DEFAULT_TARGET_CONTENT_TYPES;
-
-  return unique;
-}
-
-async function loadActiveLanguages(supabase: ReturnType<typeof createClient>): Promise<string[]> {
-  const { data, error } = await supabase
-    .from("translation_targets")
-    .select("language_code")
-    .eq("is_active", true);
-
-  if (error || !data) {
-    console.warn("[translation-jobs] Failed to load translation_targets, fallback to defaults:", error?.message);
-    return DEFAULT_TARGET_LANGUAGES;
-  }
-
-  const rows = (data ?? []) as Array<{ language_code: string }>;
-  const languages = rows
-    .map((row: { language_code: string }) => row.language_code.trim().toLowerCase())
-    .filter((lang: string) => lang.length > 0 && lang !== "de");
-
-  return prioritizeLanguages(Array.from(new Set<string>(languages.length > 0 ? languages : DEFAULT_TARGET_LANGUAGES)));
-}
-
-function prioritizeLanguages(languages: string[]): string[] {
-  const normalized = languages
-    .map((lang) => String(lang ?? "").trim().toLowerCase())
-    .filter((lang) => lang.length > 0 && lang !== "de");
-
-  const unique = Array.from(new Set(normalized));
-  unique.sort((left, right) => {
-    if (left === "en" && right !== "en") return -1;
-    if (right === "en" && left !== "en") return 1;
-    return left.localeCompare(right);
-  });
-
-  return unique;
-}
-
-async function loadPendingJobs(
-  supabase: ReturnType<typeof createClient>,
-  batchSize: number,
-  contentTypes: ContentType[],
-): Promise<TranslationJob[]> {
-  const nowIso = new Date().toISOString();
-
-  const { data, error } = await supabase
-    .from("translation_jobs")
-    .select("id, content_type, record_id, content_id, status, attempts, next_retry_at")
-    .in("content_type", contentTypes)
-    .in("status", ["pending", "failed"])
-    .lte("next_retry_at", nowIso)
-    .order("created_at", { ascending: true })
-    .limit(batchSize);
-
-  if (error) {
-    throw new Error(`Failed to load jobs: ${error.message}`);
-  }
-
-  return (data ?? []) as TranslationJob[];
-}
-
-async function claimJob(supabase: ReturnType<typeof createClient>, jobId: number): Promise<boolean> {
-  const { data, error } = await supabase
-    .from("translation_jobs")
-    .update({
-      status: "processing",
-      locked_at: new Date().toISOString(),
-      locked_by: "process-translation-jobs",
-      last_error: null,
-    })
-    .eq("id", jobId)
-    .in("status", ["pending", "failed"])
-    .select("id")
-    .maybeSingle();
-
-  if (error) {
-    console.warn("[translation-jobs] claimJob failed", jobId, error.message);
-    return false;
-  }
-
-  return !!data;
-}
-
-async function loadSourceRecord(
-  supabase: ReturnType<typeof createClient>,
-  job: TranslationJob,
-): Promise<SourceRecord | null> {
-  if (job.content_type === "post") {
-    const { data, error } = await supabase
-      .from("posts")
-      .select("id, content_id, title, body")
-      .eq("id", job.record_id)
-      .maybeSingle();
-
-    if (error) {
-      throw new Error(`Failed to load post ${job.record_id}: ${error.message}`);
-    }
-
-    if (!data) return null;
-
-    return {
-      id: String(data.id),
-      content_id: String(data.content_id ?? ""),
-      fields: {
-        title: String(data.title ?? ""),
-        body: String(data.body ?? ""),
-      },
-    };
-  }
-
-  if (job.content_type === "message") {
-    const { data, error } = await supabase
-      .from("messages")
-      .select("id, content_id, title, message")
-      .eq("id", Number(job.record_id))
-      .maybeSingle();
-
-    if (error) {
-      throw new Error(`Failed to load message ${job.record_id}: ${error.message}`);
-    }
-
-    if (!data) return null;
-
-    return {
-      id: String(data.id),
-      content_id: String(data.content_id ?? ""),
-      fields: {
-        title: String(data.title ?? ""),
-        message: String(data.message ?? ""),
-      },
-    };
-  }
-
-  if (job.content_type === "impulse") {
-    const { data, error } = await supabase
-      .from("impulses")
-      .select("id, content_id, title, impulse_text")
-      .eq("id", job.record_id)
-      .maybeSingle();
-
-    if (error) {
-      throw new Error(`Failed to load impulse ${job.record_id}: ${error.message}`);
-    }
-
-    if (!data) return null;
-
-    return {
-      id: String(data.id),
-      content_id: String(data.content_id ?? ""),
-      fields: {
-        title: String(data.title ?? ""),
-        impulse_text: String(data.impulse_text ?? ""),
-      },
-    };
-  }
-
-  if (job.content_type === "video") {
-    const { data, error } = await supabase
-      .from("videos")
-      .select("id, content_id, title, description")
-      .eq("id", Number(job.record_id))
-      .maybeSingle();
-
-    if (error) {
-      throw new Error(`Failed to load video ${job.record_id}: ${error.message}`);
-    }
-
-    if (!data) return null;
-
-    return {
-      id: String(data.id),
-      content_id: String(data.content_id ?? ""),
-      fields: {
-        title: String(data.title ?? ""),
-        description: String(data.description ?? ""),
-      },
-    };
-  }
-
-  if (job.content_type === "verse") {
-    const { data, error } = await supabase
-      .from("verse_of_the_day")
-      .select("id, content_id, verse, reference")
-      .eq("id", job.record_id)
-      .maybeSingle();
-
-    if (error) {
-      throw new Error(`Failed to load verse ${job.record_id}: ${error.message}`);
-    }
-
-    if (!data) return null;
-
-    return {
-      id: String(data.id),
-      content_id: String(data.content_id ?? ""),
-      fields: {
-        verse: String(data.verse ?? ""),
-        reference: String(data.reference ?? ""),
-      },
-    };
-  }
-
-  return null;
-}
-
-async function translateMissingFields(args: {
-  supabase: ReturnType<typeof createClient>;
-  sourceRecord: SourceRecord;
-  targetLanguages: string[];
-  dryRun: boolean;
-}): Promise<number> {
-  const { supabase, sourceRecord, targetLanguages, dryRun } = args;
-  const sourceFieldNames = Object.keys(sourceRecord.fields);
-  if (sourceFieldNames.length === 0) return 0;
-
-  const { data: existingRows, error: existingError } = await supabase
-    .from("content_translations")
-    .select("language, field_name")
-    .eq("content_id", sourceRecord.content_id)
-    .in("language", targetLanguages)
-    .in("field_name", sourceFieldNames);
-
-  if (existingError) {
-    throw new Error(`Failed to read existing translations: ${existingError.message}`);
-  }
-
-  const translationRows = (existingRows ?? []) as Array<{ language: string; field_name: string }>;
-  const existing = new Set(
-    translationRows.map((row: { language: string; field_name: string }) => `${row.language}:${row.field_name}`),
-  );
-
-  let translatedFieldCount = 0;
-
-  for (const language of targetLanguages) {
-    const fieldsNeedingTranslation = sourceFieldNames.filter((fieldName) => {
-      const key = `${language}:${fieldName}`;
-      const sourceValue = sourceRecord.fields[fieldName]?.trim() ?? "";
-      return sourceValue.length > 0 && !existing.has(key);
-    });
-
-    if (fieldsNeedingTranslation.length === 0) {
-      continue;
-    }
-
-    const sourceTexts = fieldsNeedingTranslation
-      .map((fieldName) => sourceRecord.fields[fieldName] ?? "");
-    const translatedTexts = await translateGermanTextList(sourceTexts, language);
-
-    for (let index = 0; index < fieldsNeedingTranslation.length; index++) {
-      const fieldName = fieldsNeedingTranslation[index];
-      const translatedValue = translatedTexts[index]?.trim() ?? "";
-      if (!translatedValue) continue;
-
-      translatedFieldCount += 1;
-      if (!dryRun) {
-        const { error } = await supabase
-          .from("content_translations")
-          .upsert(
-            {
-              content_id: sourceRecord.content_id,
-              language,
-              field_name: fieldName,
-              value: translatedValue,
-            },
-            { onConflict: "content_id,language,field_name" },
-          );
-        if (error) {
-          throw new Error(`Failed to upsert translation ${language}/${fieldName}: ${error.message}`);
-        }
-      }
-    }
-  }
-
-  return translatedFieldCount;
-}
-
-async function translateGermanTextList(texts: string[], targetLanguage: string): Promise<string[]> {
-  if (texts.length === 0) return [];
-  if (texts.length === 1) {
-    return [await translateGermanText(texts[0], targetLanguage)];
-  }
-
-  const separator = "\n\n[[[JK_FIELD_SPLIT]]]\n\n";
-  const payload = texts.join(separator);
-
-  const translated = await translateGermanText(payload, targetLanguage);
-  if (!translated.includes("[[[JK_FIELD_SPLIT]]]") && !translated.includes("JK_FIELD_SPLIT")) {
-    const fallback: string[] = [];
-    for (const text of texts) {
-      fallback.push(await translateGermanText(text, targetLanguage));
-    }
-    return fallback;
-  }
-
-  const parts = translated
-    .split(/\[\[\[JK_FIELD_SPLIT\]\]\]|JK_FIELD_SPLIT/)
-    .map((part) => part.trim());
-
-  if (parts.length !== texts.length) {
-    const fallback: string[] = [];
-    for (const text of texts) {
-      fallback.push(await translateGermanText(text, targetLanguage));
-    }
-    return fallback;
-  }
-
-  return parts;
-}
-
-async function translateGermanText(text: string, targetLanguage: string): Promise<string> {
-  const cleaned = text.trim();
-  if (!cleaned) return cleaned;
-  if (targetLanguage === "de") return cleaned;
-
-  return await translateWithGeminiRetry(cleaned, targetLanguage);
-}
-
-async function translateWithGeminiRetry(text: string, targetLanguage: string): Promise<string> {
-  const chunks = splitText(text, 2500);
-  const translatedChunks: string[] = [];
-
-  for (const chunk of chunks) {
-    translatedChunks.push(await translateChunkWithGeminiRetry(chunk, targetLanguage));
-  }
-
-  return translatedChunks.join("\n\n");
-}
-
-async function translateChunkWithGeminiRetry(text: string, targetLanguage: string): Promise<string> {
-  const attempts = 3;
-  let lastError: unknown;
-
-  for (let i = 1; i <= attempts; i++) {
-    try {
-      return await translateChunkWithGemini(text, targetLanguage);
-    } catch (error) {
-      lastError = error;
-      if (i < attempts) {
-        await delay(500 * i);
-      }
-    }
-  }
-
-  throw new Error(`Gemini retries exhausted: ${stringifyError(lastError)}`);
-}
-
-async function translateChunkWithGemini(text: string, targetLanguage: string): Promise<string> {
-  const apiKey = runtimeGeminiApiKey;
-  if (!apiKey) {
-    throw new Error("Missing Gemini API key at runtime");
-  }
-
-  const prompt = [
-    "Translate the following German text into the target language.",
-    "Return only translated text.",
-    "Preserve punctuation, markdown, html tags, links, and line breaks.",
-    "Do not add explanations.",
-    `Target language code: ${targetLanguage}`,
-    "Text:",
-    text,
-  ].join("\n");
-
-  const models = GEMINI_MODELS.length > 0 ? GEMINI_MODELS : ["gemini-3.6-flash"];
-  let lastError: string | null = null;
-
-  for (const model of models) {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          generationConfig: {
-            temperature: 0.1,
-            topP: 0.8,
-            maxOutputTokens: 8192,
-          },
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: prompt }],
-            },
-          ],
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      const body = await response.text();
-      lastError = `Model ${model} HTTP ${response.status}: ${body}`;
-      continue;
-    }
-
-    const json = await response.json();
-    const translatedText = json?.candidates?.[0]?.content?.parts
-      ?.map((part: { text?: string }) => part?.text ?? "")
-      .join("")
-      .trim();
-
-    if (typeof translatedText === "string" && translatedText.trim()) {
-      return translatedText;
-    }
-
-    lastError = `Model ${model} returned empty translation`;
-  }
-
-  throw new Error(lastError ?? "All Gemini models failed");
-}
-
-function splitText(text: string, maxLength: number): string[] {
-  if (text.length <= maxLength) return [text];
-
-  const paragraphs = text.split(/\n{2,}/g);
-  const chunks: string[] = [];
-
-  for (const paragraph of paragraphs) {
-    if (paragraph.length <= maxLength) {
-      chunks.push(paragraph);
-      continue;
-    }
-
-    let start = 0;
-    while (start < paragraph.length) {
-      let end = Math.min(start + maxLength, paragraph.length);
-      if (end < paragraph.length) {
-        const breakAt = paragraph.lastIndexOf(" ", end);
-        if (breakAt > start) end = breakAt;
-      }
-      chunks.push(paragraph.slice(start, end).trim());
-      start = end;
-    }
-  }
-
-  return chunks.filter((chunk) => chunk.trim().length > 0);
-}
-
-async function completeJob(supabase: ReturnType<typeof createClient>, jobId: number): Promise<void> {
-  const { error } = await supabase
-    .from("translation_jobs")
-    .update({
-      status: "completed",
-      last_error: null,
-      locked_at: null,
-      locked_by: null,
-    })
-    .eq("id", jobId);
-
-  if (error) {
-    throw new Error(`Failed to complete job ${jobId}: ${error.message}`);
-  }
-}
-
-async function failJob(
-  supabase: ReturnType<typeof createClient>,
-  jobId: number,
-  attemptsDone: number,
-  reason: string,
-): Promise<void> {
-  const nextAttempts = attemptsDone + 1;
-  const terminal = nextAttempts >= MAX_ATTEMPTS;
-  const retryDelayMinutes = Math.min(60, Math.pow(2, Math.min(nextAttempts, 6)));
-  const nextRetryAt = terminal
-    ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
-    : new Date(Date.now() + retryDelayMinutes * 60 * 1000).toISOString();
-
-  const { error } = await supabase
-    .from("translation_jobs")
-    .update({
-      status: terminal ? "failed" : "pending",
-      attempts: nextAttempts,
-      next_retry_at: nextRetryAt,
-      last_error: reason.slice(0, 2000),
-      locked_at: null,
-      locked_by: null,
-    })
-    .eq("id", jobId);
-
-  if (error) {
-    console.error("[translation-jobs] failJob update error", error.message);
   }
 }
 
@@ -703,21 +766,14 @@ function stringifyError(error: unknown): string {
   if (error instanceof Error) return `${error.name}: ${error.message}`;
   try {
     return JSON.stringify(error);
-  } catch (_) {
+  } catch {
     return String(error);
   }
-}
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function json(payload: unknown, status = 200): Response {
   return new Response(JSON.stringify(payload, null, 2), {
     status,
-    headers: {
-      ...corsHeaders,
-      "Content-Type": "application/json",
-    },
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }

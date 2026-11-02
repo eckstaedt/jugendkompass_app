@@ -91,14 +91,14 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen> {
         elevation: 0,
         actions: [
           IconButton(
-            tooltip: 'Teilen',
+            tooltip: context.tr('share'),
             icon: const Icon(Icons.share_outlined),
             onPressed: () {
               ContentShareService.shareContent(
                 contentType: 'poll',
                 contentId: currentPoll.contentId ?? currentPoll.id,
                 title: currentPoll.question,
-                intro: 'Mach mit bei dieser Umfrage im Jugendkompass',
+                intro: context.tr('share_intro_poll'),
               );
             },
           ),
@@ -397,7 +397,7 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Bitte melde dich an, um abzustimmen',
+                            context.tr('login_to_vote'),
                             style: TextStyle(
                               fontSize: 14,
                               color: DesignTokens.getTextSecondary(brightness),

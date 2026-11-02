@@ -215,7 +215,29 @@ class StringTranslator {
     'Rückgängig': 'undo',
     'Neueste zuerst': 'newest_first',
     'Älteste zuerst': 'oldest_first',
+
+    // Added with translation system v2
+    '365 Tage, ein Kapitel nach dem anderen – lies die komplette Bibel in einem Jahr.': 'reading_plan_description',
+    'BENACHRICHTIGUNGEN': 'notifications_section',
+    'Bibel in 365 Tagen': 'bible_in_365_days',
+    'Bibelleseplan starten': 'start_reading_plan',
+    'Das Heft bequem zu dir nach Hause bestellen': 'order_magazine_home',
+    'Die ganze Bibel in einem Jahr': 'whole_bible_one_year',
+    'Erstes Heft kostenlos': 'first_issue_free',
+    'Heft bestellen': 'order_magazine',
+    'Kein Vers für heute verfügbar': 'no_verse_today',
+    'Keine Inhalte verfügbar': 'no_content_available',
+    'Keine Podcasts gefunden': 'no_podcasts_found',
+    'Keine Podcasts in dieser Kategorie': 'no_podcasts_in_category',
+    'Podcasts suchen...': 'search_podcasts',
+    'Sprache auswählen': 'select_language',
+    'Vers des Tages — Uhrzeit wählen': 'verse_time_picker_title',
+    'Zu heute springen': 'jump_to_today',
+    'Teilen': 'share',
   };
+
+  /// Translation key for a known German UI string (null if unknown).
+  static String? keyFor(String germanString) => _germanToKeyMap[germanString];
 
   /// Translates a German string to the current language
   /// If the string is not found in the map, returns the original string

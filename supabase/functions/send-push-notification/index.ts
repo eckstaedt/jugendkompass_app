@@ -215,6 +215,76 @@ function getNotificationContent(
   }
 }
 
+// ─── Localized notification texts ───────────────────────────────────────────
+
+/** Which translated fields a notification of [table] needs. */
+const NOTIFICATION_FIELDS: Record<string, string[]> = {
+  posts: ["title"],
+  videos: ["title"],
+  impulses: ["title"],
+  messages: ["title", "message"],
+  verse_of_the_day: ["reference"],
+  editions: ["title", "name"],
+};
+
+/**
+ * Loads translations of the notification text for every language. New content
+ * is translated right after insert, so we wait up to ~60 s for it. Languages
+ * without a translation get `{}` and fall back to the generic localized text
+ * (never the German title).
+ */
+async function loadTranslatedTexts(
+  // deno-lint-ignore no-explicit-any
+  supabase: any,
+  table: string,
+  record: Record<string, unknown>,
+  languages: string[],
+): Promise<Record<string, Record<string, string>>> {
+  const result: Record<string, Record<string, string>> = {};
+  for (const lang of languages) result[lang] = {};
+  const fields = NOTIFICATION_FIELDS[table];
+  if (!fields || languages.length === 0) return result;
+
+  const isEntity = table === "editions";
+  const key = isEntity ? String(record.id ?? "") : String(record.content_id ?? "");
+  if (!key) return result;
+
+  const deadline = Date.now() + 60_000;
+  while (true) {
+    const query = isEntity
+      ? supabase.from("entity_translations").select("language, field_name, value")
+        .eq("entity_type", "edition").eq("entity_id", key)
+      : supabase.from("content_translations").select("language, field_name, value")
+        .eq("content_id", key);
+
+    const { data, error } = await query.in("language", languages).in("field_name", fields);
+    if (!error) {
+      for (const row of (data ?? []) as Array<{ language: string; field_name: string; value: string }>) {
+        result[row.language][row.field_name] = row.value;
+      }
+    }
+
+    const complete = languages.every((lang) => Object.keys(result[lang]).length > 0);
+    if (complete || Date.now() > deadline) break;
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+  }
+  return result;
+}
+
+/** Replaces German text fields with translations; drops untranslated ones. */
+function localizeRecord(
+  table: string,
+  record: Record<string, unknown>,
+  texts: Record<string, string> | undefined,
+): Record<string, unknown> {
+  const fields = NOTIFICATION_FIELDS[table] ?? [];
+  const copy: Record<string, unknown> = { ...record };
+  for (const field of fields) {
+    copy[field] = texts?.[field] ?? null; // null → generic localized fallback text
+  }
+  return copy;
+}
+
 // ─── JWT / OAuth helpers ────────────────────────────────────────────────────
 
 /** Create a signed JWT for Google OAuth 2.0 service account flow. */
@@ -370,6 +440,10 @@ serve(async (req) => {
 
     console.log(`[send-push] Devices by language:`, Object.keys(devicesByLanguage).map(lang => `${lang}: ${devicesByLanguage[lang].length}`).join(", "));
 
+    // ── Translated texts for non-German devices (waits briefly for the worker) ──
+    const foreignLanguages = Object.keys(devicesByLanguage).filter((lang) => lang !== "de");
+    const translatedTexts = await loadTranslatedTexts(supabase, table, record, foreignLanguages);
+
     // ── Get FCM access token via service account ──
     const projectId = FCM_PROJECT_ID;
     const serviceAccount = FCM_SERVICE_ACCOUNT;
@@ -380,7 +454,11 @@ serve(async (req) => {
     const allResults: PromiseSettledResult<unknown>[] = [];
 
     for (const [language, tokens] of Object.entries(devicesByLanguage)) {
-      const notification = getNotificationContent(table, record, language);
+      const notification = getNotificationContent(
+        table,
+        language === "de" ? record : localizeRecord(table, record, translatedTexts[language]),
+        language,
+      );
       if (!notification) {
         console.log(`[send-push] No notification mapping for table: ${payload.table}`);
         continue;

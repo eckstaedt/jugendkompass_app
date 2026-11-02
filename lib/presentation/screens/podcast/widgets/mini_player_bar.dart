@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -194,7 +195,7 @@ class MiniPlayerBar extends ConsumerWidget {
                                 Text(
                                   audio.title ??
                                       audio.post?.title ??
-                                      'Unbekannter Titel',
+                                      context.tr('unknown_title'),
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),

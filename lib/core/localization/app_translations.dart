@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jugendkompass_app/core/localization/he_translations.dart';
+import 'package:jugendkompass_app/core/localization/supplement_translations.dart';
 
 enum AppLanguage {
   de(Locale('de'), 'Deutsch'),
@@ -1484,11 +1485,23 @@ class Translations {
   };
 
   String get(String key) {
-    return _translations[language]?[key] ??
-        _translations[AppLanguage.en]?[key] ??
-        _translations[AppLanguage.de]?[key] ??
+    return lookup(language, key) ??
+        lookup(AppLanguage.en, key) ??
+        lookup(AppLanguage.de, key) ??
         key;
   }
+
+  /// Exact lookup without fallback (base maps first, then supplement).
+  static String? lookup(AppLanguage language, String key) {
+    return _translations[language]?[key] ??
+        supplementTranslations[key]?[language.locale.languageCode];
+  }
+
+  /// All keys known in any language (used by tests).
+  static Set<String> get allKeys => {
+        for (final map in _translations.values) ...map.keys,
+        ...supplementTranslations.keys,
+      };
 
   String getWithParams(String key, Map<String, String> params) {
     String value = get(key);

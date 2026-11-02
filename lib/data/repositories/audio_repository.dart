@@ -1,69 +1,52 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
 import 'package:jugendkompass_app/core/constants/supabase_constants.dart';
-import 'dart:developer' as developer;
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
+import 'package:jugendkompass_app/data/services/content_localizer.dart';
 
 class AudioRepository {
   final SupabaseClient _supabase;
 
-  AudioRepository(this._supabase);
+  AudioRepository(this._supabase) : _localizer = ContentLocalizer.forClient(_supabase);
+
+  final ContentLocalizer _localizer;
+
+  static String get _currentLanguage => AppTranslations.currentLanguage.locale.languageCode;
+
+  /// Builds AudioModels from `audios` rows joined with `posts`, translating the
+  /// joined post (title/body/categories) into [language].
+  Future<List<AudioModel>> _toAudioModels(List rows, String language) async {
+    final mapped = <Map<String, dynamic>>[];
+    final posts = <Map<String, dynamic>>[];
+    for (final raw in rows) {
+      final json = Map<String, dynamic>.from(raw as Map);
+      final joined = json['posts'];
+      Map<String, dynamic>? postData;
+      if (joined is List && joined.isNotEmpty) {
+        postData = Map<String, dynamic>.from(joined[0] as Map);
+      } else if (joined is Map) {
+        postData = Map<String, dynamic>.from(joined);
+      }
+      if (postData != null) {
+        postData['audio_id'] = json['id'];
+        posts.add(postData);
+      }
+      mapped.add({'id': json['id'], 'url': json['url'], 'post': postData});
+    }
+
+    await _localizer.localizeContentRows(posts, language, fields: const {'title': 'title', 'body': 'body'});
+    await _localizer.localizeNestedCategories(posts, language);
+
+    return mapped.map(AudioModel.fromJson).toList();
+  }
 
   /// Get audio list with localized metadata from posts table
   Future<List<AudioModel>> getAudioListLocalized(String language, {
     String? categoryId,
     int limit = 50,
     int offset = 0,
-  }) async {
-    try {
-      developer.log('Fetching audio list for language: $language', name: 'AudioRepository');
-
-      // For German, use regular method
-      if (language == 'de') {
-        return getAudioList(categoryId: categoryId, limit: limit, offset: offset);
-      }
-
-      // Get all audios first
-      final audios = await getAudioList(categoryId: categoryId, limit: limit, offset: offset);
-
-      // For each audio with a post, get the localized post data
-      final localizedAudios = <AudioModel>[];
-      for (final audio in audios) {
-        if (audio.post?.contentId != null) {
-          try {
-            // Get localized post title and body using content_id
-            final translatedPost = await _supabase.rpc(
-              'tr',
-              params: {
-                'content_id': audio.post!.contentId,
-                'lang': language,
-                'field': 'title',
-                'fallback': audio.post!.title,
-              },
-            );
-
-            // Create a copy with translated title
-            final updatedPost = audio.post!.copyWith(
-              title: translatedPost ?? audio.post!.title,
-            );
-
-            localizedAudios.add(audio.copyWith(
-              title: updatedPost.title,
-            ));
-          } catch (e) {
-            developer.log('Error translating audio post: $e', name: 'AudioRepository');
-            localizedAudios.add(audio);
-          }
-        } else {
-          localizedAudios.add(audio);
-        }
-      }
-
-      return localizedAudios;
-    } catch (e) {
-      developer.log('Error fetching localized audios: $e', name: 'AudioRepository', error: e);
-      // Fallback to German on error
-      return getAudioList(categoryId: categoryId, limit: limit, offset: offset);
-    }
+  }) {
+    return getAudioList(categoryId: categoryId, limit: limit, offset: offset, language: language);
   }
 
   /// Get audio list with metadata from posts table
@@ -72,6 +55,7 @@ class AudioRepository {
     String? categoryId,
     int limit = 50,
     int offset = 0,
+    String? language,
   }) async {
     try {
       // Join audios with posts to get full post data
@@ -98,30 +82,14 @@ class AudioRepository {
 
       final response = await query;
 
-      // Transform the response to include full post in AudioModel
-      return (response as List).map((json) {
-        // Extract posts data if available
-        final posts = json['posts'];
-        Map<String, dynamic>? postData;
-        if (posts is List && posts.isNotEmpty) {
-          postData = posts[0] as Map<String, dynamic>;
-          // Add audio_id to post data
-          postData['audio_id'] = json['id'];
-        }
-
-        return AudioModel.fromJson({
-          'id': json['id'],
-          'url': json['url'],
-          'post': postData,
-        });
-      }).toList();
+      return _toAudioModels(response as List, language ?? _currentLanguage);
     } catch (e) {
       throw Exception('Fehler beim Laden der Audios: $e');
     }
   }
 
   /// Get audio by ID with metadata from posts table
-  Future<AudioModel?> getAudioById(String id) async {
+  Future<AudioModel?> getAudioById(String id, {String? language}) async {
     try {
       final response = await _supabase
           .from(SupabaseConstants.audiosTable)
@@ -145,23 +113,9 @@ class AudioRepository {
           .eq('id', id)
           .maybeSingle();
 
-      if (response != null) {
-        // Extract posts data if available
-        final posts = response['posts'];
-        Map<String, dynamic>? postData;
-        if (posts is List && posts.isNotEmpty) {
-          postData = posts[0] as Map<String, dynamic>;
-          // Add audio_id to post data
-          postData['audio_id'] = response['id'];
-        }
-
-        return AudioModel.fromJson({
-          'id': response['id'],
-          'url': response['url'],
-          'post': postData,
-        });
-      }
-      return null;
+      if (response == null) return null;
+      final models = await _toAudioModels([response], language ?? _currentLanguage);
+      return models.first;
     } catch (e) {
       throw Exception('Fehler beim Laden des Audios: $e');
     }
@@ -172,6 +126,7 @@ class AudioRepository {
     String? categoryId,
     String? excludeAudioId,
     int limit = 10,
+    String? language,
   }) async {
     try {
       var query = _supabase
@@ -201,21 +156,7 @@ class AudioRepository {
 
       final response = await query.limit(limit);
 
-      // Transform the response
-      var audioList = (response as List).map((json) {
-        final posts = json['posts'];
-        Map<String, dynamic>? postData;
-        if (posts is List && posts.isNotEmpty) {
-          postData = posts[0] as Map<String, dynamic>;
-          postData['audio_id'] = json['id'];
-        }
-
-        return AudioModel.fromJson({
-          'id': json['id'],
-          'url': json['url'],
-          'post': postData,
-        });
-      }).toList();
+      var audioList = await _toAudioModels(response as List, language ?? _currentLanguage);
 
       // Filter by category if provided
       if (categoryId != null) {

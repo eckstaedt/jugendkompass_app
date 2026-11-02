@@ -1,11 +1,22 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jugendkompass_app/data/models/message_model.dart';
 import 'package:jugendkompass_app/core/constants/supabase_constants.dart';
+import 'package:jugendkompass_app/data/services/content_localizer.dart';
 
 class MessageRepository {
   final SupabaseClient _supabase;
 
-  MessageRepository(this._supabase);
+  MessageRepository(this._supabase) : _localizer = ContentLocalizer.forClient(_supabase);
+
+  final ContentLocalizer _localizer;
+
+  static const _fields = {'title': 'title', 'message': 'message'};
+
+  Future<List<MessageModel>> _toLocalizedModels(dynamic response, String language) async {
+    final rows = (response as List).map((json) => Map<String, dynamic>.from(json as Map)).toList();
+    await _localizer.localizeContentRows(rows, language, fields: _fields);
+    return rows.map(MessageModel.fromJson).toList();
+  }
 
   /// Fetch all messages (Kurznachrichten) with optional pagination
   Future<List<MessageModel>> getMessageList({
@@ -27,32 +38,19 @@ class MessageRepository {
     }
   }
 
-  /// Fetch localized messages using Supabase RPC function.
-  ///
-  /// Uses get_messages_localized(lang) which returns translated title/message
-  /// from content_translations. German (de) returns original content.
+  /// Fetch localized messages (German rows + translation overlay).
   Future<List<MessageModel>> getMessageListLocalized(
     String language, {
     int limit = 20,
     int offset = 0,
   }) async {
     try {
-      if (language == 'de') {
-        return getMessageList(limit: limit, offset: offset);
-      }
-
-      final response = await _supabase.rpc(
-        'get_messages_localized',
-        params: {'lang': language},
-      );
-
-      final messages = (response as List)
-          .map((json) => MessageModel.fromJson(json))
-          .toList();
-
-      messages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
-      return messages.skip(offset).take(limit).toList();
+      final response = await _supabase
+          .from(SupabaseConstants.messagesTable)
+          .select()
+          .order('created_at', ascending: false)
+          .range(offset, offset + limit - 1);
+      return _toLocalizedModels(response, language);
     } catch (e) {
       throw Exception('Fehler beim Laden der lokalisierten Kurznachrichten: $e');
     }
@@ -78,36 +76,14 @@ class MessageRepository {
   /// Fetch a single localized message by ID.
   Future<MessageModel?> getMessageByIdLocalized(String id, String language) async {
     try {
-      if (language == 'de') {
-        return getMessageById(id);
-      }
-
-      final baseMessage = await getMessageById(id);
-      if (baseMessage == null || baseMessage.contentId == null) {
-        return baseMessage;
-      }
-
-      final translations = await _supabase
-          .from('content_translations')
-          .select('field_name, value')
-          .eq('content_id', baseMessage.contentId!)
-          .eq('language', language);
-
-      String? translatedTitle;
-      String? translatedMessage;
-
-      for (final row in translations as List) {
-        final field = row['field_name'] as String;
-        final value = row['value'] as String;
-
-        if (field == 'title') translatedTitle = value;
-        if (field == 'message') translatedMessage = value;
-      }
-
-      return baseMessage.copyWith(
-        title: translatedTitle ?? baseMessage.title,
-        message: translatedMessage ?? baseMessage.message,
-      );
+      final response = await _supabase
+          .from(SupabaseConstants.messagesTable)
+          .select()
+          .eq('id', id)
+          .maybeSingle();
+      if (response == null) return null;
+      final models = await _toLocalizedModels([response], language);
+      return models.first;
     } catch (e) {
       throw Exception('Fehler beim Laden der lokalisierten Kurznachricht: $e');
     }
@@ -133,14 +109,14 @@ class MessageRepository {
   /// Fetch a single localized message by content_id.
   Future<MessageModel?> getMessageByContentIdLocalized(String contentId, String language) async {
     try {
-      if (language == 'de') {
-        return getMessageByContentId(contentId);
-      }
-
-      final baseMessage = await getMessageByContentId(contentId);
-      if (baseMessage == null) return null;
-
-      return getMessageByIdLocalized(baseMessage.id, language);
+      final response = await _supabase
+          .from(SupabaseConstants.messagesTable)
+          .select()
+          .eq('content_id', contentId)
+          .maybeSingle();
+      if (response == null) return null;
+      final models = await _toLocalizedModels([response], language);
+      return models.first;
     } catch (e) {
       throw Exception('Fehler beim Laden der lokalisierten Kurznachricht: $e');
     }

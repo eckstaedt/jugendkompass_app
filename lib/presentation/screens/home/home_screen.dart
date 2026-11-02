@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
@@ -239,7 +240,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           return Padding(
                             padding: const EdgeInsets.symmetric(vertical: 24),
                             child: Center(
-                                child: Text('Keine Impulse verfügbar')),
+                                child: Text(context.tr('no_impulses'))),
                           );
                         }
                         return SizedBox(
@@ -273,7 +274,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 24),
                         child: Center(
                           child: Text(
-                              'Fehler beim Laden: $error'),
+                              '${context.tr('error_loading')}: $error'),
                         ),
                       ),
                     ),

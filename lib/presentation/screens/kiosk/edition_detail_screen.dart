@@ -80,14 +80,14 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
         backgroundColor: Colors.transparent,
         actions: [
           IconButton(
-            tooltip: 'Teilen',
+            tooltip: context.tr('share'),
             icon: const Icon(Icons.share_outlined),
             onPressed: () {
               ContentShareService.shareContent(
                 contentType: 'edition',
                 contentId: edition.id,
                 title: HtmlUtils.stripHtml(edition.displayTitle),
-                intro: 'Schau dir diese Ausgabe im Jugendkompass an',
+                intro: context.tr('share_intro_edition'),
               );
             },
           ),
@@ -124,13 +124,13 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
         data: (audios) => postsAsync.when(
           data: (posts) => _buildContent(context, posts, audios, translate),
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, s) => Center(child: Text('Fehler: $e')),
+          error: (e, s) => Center(child: Text('${context.tr('error')}: $e')),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, s) => postsAsync.when(
           data: (posts) => _buildContent(context, posts, [], translate),
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, s) => Center(child: Text('Fehler: $e')),
+          error: (e, s) => Center(child: Text('${context.tr('error')}: $e')),
         ),
       ),
     );

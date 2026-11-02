@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -49,15 +50,15 @@ class _SubscriptionFormScreenState
 
   String? _required(String? value, String fieldName) {
     if (value == null || value.trim().isEmpty) {
-      return '$fieldName ist ein Pflichtfeld';
+      return context.tr('field_required', {'field': fieldName});
     }
     return null;
   }
 
   String? _validateEmail(String? value) {
-    if (value == null || value.trim().isEmpty) return 'E-Mail ist ein Pflichtfeld';
+    if (value == null || value.trim().isEmpty) return context.tr('field_required', {'field': context.tr('email_field')});
     final emailRegex = RegExp(r'^[\w.+-]+@[\w-]+\.[a-zA-Z]{2,}$');
-    if (!emailRegex.hasMatch(value.trim())) return 'Bitte eine gültige E-Mail eingeben';
+    if (!emailRegex.hasMatch(value.trim())) return context.tr('email_invalid');
     return null;
   }
 
@@ -94,7 +95,7 @@ class _SubscriptionFormScreenState
       if (mounted) {
         SnackBarUtils.showError(
           context,
-          'Fehler beim Absenden. Bitte versuche es erneut.',
+          context.tr('submit_error'),
         );
       }
     } finally {
@@ -184,25 +185,25 @@ class _SubscriptionFormScreenState
             ),
 
             // ── Persönliche Daten ───────────────────────────────────────
-            sectionTitle('PERSÖNLICHE DATEN'),
+            sectionTitle(context.tr('personal_data_section')),
 
             Row(
               children: [
                 Expanded(
                   child: TextFormField(
                     controller: _firstNameCtrl,
-                    decoration: inputDecoration.copyWith(labelText: 'Vorname *'),
+                    decoration: inputDecoration.copyWith(labelText: '${context.tr('first_name')} *'),
                     textCapitalization: TextCapitalization.words,
-                    validator: (v) => _required(v, 'Vorname'),
+                    validator: (v) => _required(v, context.tr('first_name')),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: TextFormField(
                     controller: _lastNameCtrl,
-                    decoration: inputDecoration.copyWith(labelText: 'Nachname *'),
+                    decoration: inputDecoration.copyWith(labelText: '${context.tr('last_name')} *'),
                     textCapitalization: TextCapitalization.words,
-                    validator: (v) => _required(v, 'Nachname'),
+                    validator: (v) => _required(v, context.tr('last_name')),
                   ),
                 ),
               ],
@@ -213,7 +214,7 @@ class _SubscriptionFormScreenState
             TextFormField(
               controller: _emailCtrl,
               decoration: inputDecoration.copyWith(
-                labelText: 'E-Mail *',
+                labelText: '${context.tr('email_field')} *',
                 prefixIcon: const Icon(Icons.email_outlined),
               ),
               keyboardType: TextInputType.emailAddress,
@@ -226,22 +227,22 @@ class _SubscriptionFormScreenState
             TextFormField(
               controller: _phoneCtrl,
               decoration: inputDecoration.copyWith(
-                labelText: 'Telefon (optional)',
+                labelText: context.tr('phone_optional'),
                 prefixIcon: const Icon(Icons.phone_outlined),
               ),
               keyboardType: TextInputType.phone,
             ),
 
             // ── Lieferadresse ────────────────────────────────────────
-            sectionTitle('LIEFERADRESSE'),
+            sectionTitle(context.tr('delivery_address_section')),
 
             TextFormField(
               controller: _streetCtrl,
               decoration: inputDecoration.copyWith(
-                labelText: 'Straße & Hausnummer *',
+                labelText: '${context.tr('street_and_number')} *',
                 prefixIcon: const Icon(Icons.location_on_outlined),
               ),
-              validator: (v) => _required(v, 'Straße & Hausnummer'),
+              validator: (v) => _required(v, context.tr('street_and_number')),
             ),
 
             const SizedBox(height: 12),
@@ -249,7 +250,7 @@ class _SubscriptionFormScreenState
             TextFormField(
               controller: _addressExtraCtrl,
               decoration: inputDecoration.copyWith(
-                labelText: 'Adresszusatz (optional)',
+                labelText: context.tr('address_extra_optional'),
               ),
             ),
 
@@ -261,7 +262,7 @@ class _SubscriptionFormScreenState
                   width: 120,
                   child: TextFormField(
                     controller: _postalCodeCtrl,
-                    decoration: inputDecoration.copyWith(labelText: 'PLZ *'),
+                    decoration: inputDecoration.copyWith(labelText: '${context.tr('postal_code')} *'),
                     keyboardType: TextInputType.number,
                     validator: (v) => _required(v, 'PLZ'),
                   ),
@@ -270,7 +271,7 @@ class _SubscriptionFormScreenState
                 Expanded(
                   child: TextFormField(
                     controller: _cityCtrl,
-                    decoration: inputDecoration.copyWith(labelText: 'Ort *'),
+                    decoration: inputDecoration.copyWith(labelText: '${context.tr('city')} *'),
                     textCapitalization: TextCapitalization.words,
                     validator: (v) => _required(v, 'Ort'),
                   ),
@@ -283,15 +284,15 @@ class _SubscriptionFormScreenState
             TextFormField(
               controller: _countryCtrl,
               decoration: inputDecoration.copyWith(
-                labelText: 'Land *',
+                labelText: '${context.tr('country')} *',
                 prefixIcon: const Icon(Icons.flag_outlined),
               ),
               textCapitalization: TextCapitalization.words,
-              validator: (v) => _required(v, 'Land'),
+              validator: (v) => _required(v, context.tr('country')),
             ),
 
             // ── Versandart ───────────────────────────────────────────
-            sectionTitle('VERSANDART'),
+            sectionTitle(context.tr('shipping_method_section')),
 
             _ShippingMethodSelector(
               selected: _shippingMethod,
@@ -327,7 +328,7 @@ class _SubscriptionFormScreenState
                       )
                     : const Icon(Icons.check_circle_outline),
                 label: Text(
-                  _isSubmitting ? 'Wird gesendet...' : 'Bestellung aufgeben',
+                  _isSubmitting ? context.tr('sending') : context.tr('place_order'),
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w700,
@@ -339,7 +340,7 @@ class _SubscriptionFormScreenState
             const SizedBox(height: 12),
 
             Text(
-              '* Pflichtfelder. Deine Daten werden nur für den Versand verwendet.',
+              context.tr('required_fields_note'),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: DesignTokens.getTextSecondary(brightness),
               ),
@@ -373,8 +374,8 @@ class _ShippingMethodSelector extends StatelessWidget {
           value: 'standard',
           selected: selected,
           icon: Icons.local_shipping_outlined,
-          title: 'Standardversand',
-          subtitle: 'Kostenlos per Post zu dir nach Hause',
+          title: context.tr('standard_shipping'),
+          subtitle: context.tr('standard_shipping_desc'),
           onChanged: onChanged,
           brightness: brightness,
         ),
@@ -383,8 +384,8 @@ class _ShippingMethodSelector extends StatelessWidget {
           value: 'pickup',
           selected: selected,
           icon: Icons.store_outlined,
-          title: 'Selbstabholung',
-          subtitle: 'Abholung vor Ort',
+          title: context.tr('pickup'),
+          subtitle: context.tr('pickup_desc'),
           onChanged: onChanged,
           brightness: brightness,
         ),

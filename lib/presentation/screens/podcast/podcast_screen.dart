@@ -424,7 +424,7 @@ class _PodcastListItem extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        audio.title ?? audio.post?.title ?? 'Unbekannter Titel',
+                        audio.title ?? audio.post?.title ?? context.tr('unknown_title'),
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: isCurrentAndPlaying ? FontWeight.bold : FontWeight.normal,
                         ),
@@ -509,7 +509,7 @@ class _PodcastListItem extends ConsumerWidget {
                 IconButton(
                   icon: const Icon(Icons.playlist_add),
                   onPressed: () => _addToQueue(context, ref, audio),
-                  tooltip: 'Zur Warteschlange hinzufügen',
+                  tooltip: context.tr('add_to_queue'),
                 ),
               ],
             ),

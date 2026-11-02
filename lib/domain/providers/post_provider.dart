@@ -52,7 +52,8 @@ final postByContentIdProvider = FutureProvider.family<PostModel?, String>(
 final postsByEditionProvider = FutureProvider.family<List<PostModel>, String>(
   (ref, editionId) async {
     final repository = ref.watch(postRepositoryProvider);
-    return await repository.getPostsByEdition(editionId);
+    final language = ref.watch(languageProvider).locale.languageCode;
+    return await repository.getPostsByEditionLocalized(editionId, language);
   },
 );
 
@@ -60,7 +61,8 @@ final postsByEditionProvider = FutureProvider.family<List<PostModel>, String>(
 final postByAudioIdProvider = FutureProvider.family<PostModel?, String>(
   (ref, audioId) async {
     final repository = ref.watch(postRepositoryProvider);
-    return await repository.getPostByAudioId(audioId);
+    final language = ref.watch(languageProvider).locale.languageCode;
+    return await repository.getPostByAudioIdLocalized(audioId, language);
   },
 );
 

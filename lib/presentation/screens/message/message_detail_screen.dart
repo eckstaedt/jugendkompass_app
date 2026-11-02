@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -69,14 +70,14 @@ class _MessageDetailScreenState extends ConsumerState<MessageDetailScreen> {
         backgroundColor: Colors.transparent,
         actions: [
           IconButton(
-            tooltip: 'Teilen',
+            tooltip: context.tr('share'),
             icon: const Icon(Icons.share_outlined),
             onPressed: () {
               ContentShareService.shareContent(
                 contentType: 'message',
                 contentId: message.contentId ?? message.id,
                 title: HtmlUtils.stripHtml(message.displayTitle),
-                intro: 'Schau dir diese Kurznachricht im Jugendkompass an',
+                intro: context.tr('share_intro_message'),
               );
             },
           ),

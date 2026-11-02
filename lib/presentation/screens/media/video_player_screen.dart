@@ -330,14 +330,14 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
         actions: [
           if (widget.shareContentId != null && widget.shareContentId!.isNotEmpty)
             IconButton(
-              tooltip: 'Teilen',
+              tooltip: context.tr('share'),
               icon: const Icon(Icons.share_outlined, size: 24),
               onPressed: () {
                 ContentShareService.shareContent(
                   contentType: 'video',
                   contentId: widget.shareContentId!,
                   title: HtmlUtils.stripHtml(widget.title),
-                  intro: 'Schau dir dieses Video im Jugendkompass an',
+                  intro: context.tr('share_intro_video'),
                 );
               },
             ),

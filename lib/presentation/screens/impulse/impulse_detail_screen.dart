@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -73,14 +74,14 @@ class _ImpulseDetailScreenState extends ConsumerState<ImpulseDetailScreen> {
         backgroundColor: Colors.transparent,
         actions: [
           IconButton(
-            tooltip: 'Teilen',
+            tooltip: context.tr('share'),
             icon: const Icon(Icons.share_outlined),
             onPressed: () {
               ContentShareService.shareContent(
                 contentType: 'impulse',
                 contentId: impulse.contentId,
                 title: HtmlUtils.stripHtml(displayTitle),
-                intro: 'Schau dir diesen Impuls im Jugendkompass an',
+                intro: context.tr('share_intro_impulse'),
               );
             },
           ),

@@ -422,14 +422,14 @@ class _PersistentNavBar extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _item(context, Icons.home_outlined, Icons.home, 'Home', 0),
+                  _item(context, Icons.home_outlined, Icons.home, context.tr('nav_home'), 0),
                   _item(context, Icons.explore_outlined, Icons.explore,
-                      'Kiosk', 1),
+                      context.tr('nav_kiosk'), 1),
                   _item(
-                      context, Icons.mic_outlined, Icons.mic, 'Podcast', 2),
+                      context, Icons.mic_outlined, Icons.mic, context.tr('nav_podcast'), 2),
                   _item(context, Icons.video_library_outlined,
-                      Icons.video_library, 'Videos', 3),
-                  _item(context, Icons.menu, Icons.menu, 'Menü', 4),
+                      Icons.video_library, context.tr('nav_videos'), 3),
+                  _item(context, Icons.menu, Icons.menu, context.tr('nav_menu'), 4),
                 ],
               ),
             ),

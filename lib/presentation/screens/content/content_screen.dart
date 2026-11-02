@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/domain/providers/content_provider.dart';
@@ -116,10 +117,10 @@ class _ContentScreenState extends ConsumerState<ContentScreen> {
             child: contentAsync.when(
               data: (contentList) {
                 if (contentList.isEmpty) {
-                  return const EmptyState(
+                  return EmptyState(
                     icon: Icons.inbox_outlined,
-                    title: 'Keine Inhalte gefunden',
-                    message: 'Es sind noch keine Inhalte verfügbar.',
+                    title: context.tr('no_content_found'),
+                    message: context.tr('no_content_yet'),
                   );
                 }
 

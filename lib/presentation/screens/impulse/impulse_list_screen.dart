@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/localization/localization_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,8 +32,8 @@ class ImpulseListScreen extends ConsumerWidget {
             if (impulses.isEmpty) {
               return EmptyState(
                 icon: Icons.lightbulb_outline,
-                title: 'Keine Impulse verfügbar',
-                message: 'Aktuell gibt es keine Impulse zum Anzeigen.',
+                title: context.tr('no_impulses'),
+                message: context.tr('no_impulses_message'),
               );
             }
 
@@ -58,10 +59,10 @@ class ImpulseListScreen extends ConsumerWidget {
             );
           },
           loading: () => LoadingIndicator(
-            message: 'Lade Impulse...',
+            message: context.tr('loading_impulses'),
           ),
           error: (error, stack) => ErrorView(
-            message: '${'Fehler beim Laden der Impulse'}: $error',
+            message: '${context.tr('error_loading_impulses')}: $error',
             onRetry: () => ref.invalidate(dailyImpulsesProvider),
           ),
         ),
