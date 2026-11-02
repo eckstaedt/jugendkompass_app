@@ -45,7 +45,9 @@ BEGIN
   IF to_regclass('cron.job') IS NOT NULL THEN
     FOR j IN
       SELECT jobid FROM cron.job
-      WHERE jobname IN ('process_translation_jobs', 'translation_worker', 'translate_backfill')
+      WHERE jobname IN ('process_translation_jobs', 'translation_worker', 'translate_backfill',
+                        'process_translation_jobs_en_fastlane',
+                        'process_translation_jobs_maintenance')
     LOOP
       PERFORM cron.unschedule(j.jobid);
     END LOOP;
