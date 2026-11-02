@@ -202,13 +202,4 @@ For issues or questions:
 
 ## Übersetzung (automatisch)
 
-Siehe `TRANSLATION.md`. Kurzfassung:
-
-```bash
-supabase db push
-supabase secrets set ANTHROPIC_API_KEY=sk-ant-... TRANSLATION_WORKER_SECRET=<geheim>
-supabase functions deploy process-translation-jobs --no-verify-jwt
-supabase functions deploy send-push-notification
-```
-
-Danach im SQL-Editor `vault.create_secret(...)` für `translation_project_url` und `translation_worker_secret` ausführen.
+Siehe `TRANSLATION.md`. Deploy läuft über GitHub Actions (`Supabase Deploy`), sobald die Repository-Secrets `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_URL` und `ANTHROPIC_API_KEY` gesetzt sind.

@@ -1,0 +1,116 @@
+name: Supabase Deploy
+
+# Applies new SQL migrations, sets the Anthropic key and deploys the edge
+# functions whenever something under supabase/ lands on main.
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   SUPABASE_ACCESS_TOKEN  https://supabase.com/dashboard/account/tokens
+#   SUPABASE_DB_URL        Dashboard → Connect → "Session pooler" URI (with password)
+#   ANTHROPIC_API_KEY      https://console.anthropic.com/settings/keys
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/**"
+      - ".github/workflows/supabase-deploy.yml"
+  workflow_dispatch:
+    inputs:
+      migration:
+        description: "Migration file to apply (empty = none)"
+        required: false
+        default: "supabase/migrations/20261102000000_translation_system_v2.sql"
+      deploy_all_functions:
+        description: "Deploy translation + push functions"
+        type: boolean
+        default: true
+
+concurrency:
+  group: supabase-deploy
+  cancel-in-progress: false
+
+env:
+  PROJECT_REF: vdcdibvclaulqxfjyzpq
+  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+  SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check secrets
+        run: |
+          missing=""
+          [ -z "$SUPABASE_ACCESS_TOKEN" ] && missing="$missing SUPABASE_ACCESS_TOKEN"
+          [ -z "$SUPABASE_DB_URL" ] && missing="$missing SUPABASE_DB_URL"
+          [ -z "$ANTHROPIC_API_KEY" ] && missing="$missing ANTHROPIC_API_KEY"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secrets:$missing (see TRANSLATION.md)"
+            exit 1
+          fi
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Install psql
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client >/dev/null
+
+      - name: Determine changes
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "migrations=${{ inputs.migration }}" >> "$GITHUB_OUTPUT"
+            if [ "${{ inputs.deploy_all_functions }}" = "true" ]; then
+              echo "functions=process-translation-jobs send-push-notification" >> "$GITHUB_OUTPUT"
+            fi
+            exit 0
+          fi
+
+          before="${{ github.event.before }}"
+          if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ]; then
+            before="$(git rev-list --max-parents=0 HEAD | tail -1)"
+          fi
+
+          migrations=$(git diff --name-only --diff-filter=AM "$before" "${{ github.sha }}" -- 'supabase/migrations/*.sql' | sort | tr '\n' ' ')
+          functions=$(git diff --name-only "$before" "${{ github.sha }}" -- 'supabase/functions/' \
+            | cut -d/ -f3 | sort -u | while read -r fn; do [ -f "supabase/functions/$fn/index.ts" ] && echo "$fn"; done | tr '\n' ' ')
+          # Translation + push functions are always (re)deployed – cheap and
+          # guarantees the first deployment happens even without file changes.
+          functions=$(echo "$functions process-translation-jobs send-push-notification" | tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n' ' ')
+          echo "migrations=$migrations" >> "$GITHUB_OUTPUT"
+          echo "functions=$functions" >> "$GITHUB_OUTPUT"
+          echo "Migrations: ${migrations:-none}"
+          echo "Functions:  ${functions:-none}"
+
+      - name: Set function secrets
+        run: supabase secrets set --project-ref "$PROJECT_REF" ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY"
+
+      - name: Deploy edge functions
+        if: steps.changes.outputs.functions != ''
+        run: |
+          for fn in ${{ steps.changes.outputs.functions }}; do
+            echo "Deploying $fn"
+            # Both functions authenticate themselves (worker secret / webhook);
+            # send-push-notification was already deployed without JWT check.
+            supabase functions deploy "$fn" --project-ref "$PROJECT_REF" --no-verify-jwt
+          done
+
+      - name: Apply migrations
+        if: steps.changes.outputs.migrations != ''
+        run: |
+          for file in ${{ steps.changes.outputs.migrations }}; do
+            echo "Applying $file"
+            psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -q -f "$file"
+          done
+
+      - name: Start translation and show status
+        run: |
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -q -c "select public.kick_translation_worker();" || true
+          sleep 60
+          psql "$SUPABASE_DB_URL" -c "select * from public.translation_queue_status order by content_type;" || true

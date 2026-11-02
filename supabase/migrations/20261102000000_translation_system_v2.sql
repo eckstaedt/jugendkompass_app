@@ -21,11 +21,10 @@
 -- Source language is ALWAYS German (`de`), stored in the original tables.
 -- Target languages are managed in `translation_targets` (is_active = true).
 --
--- One-time setup after applying (see DEPLOYMENT.md → "Übersetzung"):
---   supabase secrets set ANTHROPIC_API_KEY=... TRANSLATION_WORKER_SECRET=...
+-- One-time setup after applying (see TRANSLATION.md):
+--   supabase secrets set ANTHROPIC_API_KEY=...
 --   supabase functions deploy process-translation-jobs --no-verify-jwt
---   select vault.create_secret('https://<project>.supabase.co', 'translation_project_url');
---   select vault.create_secret('<same TRANSLATION_WORKER_SECRET>', 'translation_worker_secret');
+-- Vault secrets (project URL + random worker secret) are created below.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;
@@ -645,6 +644,52 @@ BEGIN
   END IF;
 END
 $$;
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- 11) Vault secrets: created automatically (no manual setup needed).
+--     The worker secret is random; the edge function reads it via
+--     get_translation_worker_secret() with the service role.
+-- ───────────────────────────────────────────────────────────────────────────
+DO $$
+BEGIN
+  IF to_regclass('vault.secrets') IS NULL THEN
+    RAISE WARNING 'Supabase Vault not available – translation worker will only run via manual invoke';
+    RETURN;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM vault.decrypted_secrets WHERE name = 'translation_project_url') THEN
+    PERFORM vault.create_secret(
+      'https://vdcdibvclaulqxfjyzpq.supabase.co',
+      'translation_project_url',
+      'Base URL used by kick_translation_worker()'
+    );
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM vault.decrypted_secrets WHERE name = 'translation_worker_secret') THEN
+    PERFORM vault.create_secret(
+      encode(extensions.gen_random_bytes(32), 'hex'),
+      'translation_worker_secret',
+      'Shared secret between database and process-translation-jobs'
+    );
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  RAISE WARNING 'Could not create vault secrets automatically: %', SQLERRM;
+END
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_translation_worker_secret()
+RETURNS text
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT decrypted_secret FROM vault.decrypted_secrets
+  WHERE name = 'translation_worker_secret' LIMIT 1;
+$$;
+
+REVOKE ALL ON FUNCTION public.get_translation_worker_secret() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_translation_worker_secret() TO service_role;
 
 -- Queue ALL existing content for translation into all active languages.
 SELECT public.enqueue_translation_backfill();
