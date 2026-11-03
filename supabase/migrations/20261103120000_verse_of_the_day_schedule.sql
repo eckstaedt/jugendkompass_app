@@ -169,6 +169,27 @@ CREATE TRIGGER trg_verse_of_the_day_pool
 BEFORE INSERT OR UPDATE OF verse, reference ON public.verse_of_the_day
 FOR EACH ROW EXECUTE FUNCTION public.trg_verse_of_the_day_pool();
 
+-- An image_url changed by anyone except the image generator (which always
+-- sets image_source_hash together with image_url) is a manual upload from the
+-- admin panel -> mark it manual so it is never overwritten.
+CREATE OR REPLACE FUNCTION public.trg_verse_of_the_day_manual_image()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.image_url IS DISTINCT FROM OLD.image_url
+     AND NEW.image_source_hash IS NOT DISTINCT FROM OLD.image_source_hash THEN
+    NEW.image_source_hash := NULL;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_verse_of_the_day_manual_image ON public.verse_of_the_day;
+CREATE TRIGGER trg_verse_of_the_day_manual_image
+BEFORE UPDATE OF image_url ON public.verse_of_the_day
+FOR EACH ROW EXECUTE FUNCTION public.trg_verse_of_the_day_manual_image();
+
 -- ───────────────────────────────────────────────────────────────────────────
 -- 5) The rule: same passage not in the same calendar year and not within
 --    364 days. The forbidden window around day d is one contiguous range:

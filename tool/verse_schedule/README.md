@@ -19,9 +19,12 @@ es sind immer mindestens 10 Jahre geplant.
 
 ## Bearbeiten
 
-Im Admin-Bereich (Vers des Tages) kann jeder geplante Tag wie bisher
-bearbeitet werden. Beim Speichern wird gegen die Regeln geprüft
-(`check_verse_conflicts`). Einen Vers aus der künftigen Planung nehmen:
+Im Admin-Bereich unter „Vers des Tages“ erscheinen die geplanten Tage und
+können wie bisher bearbeitet werden. Regelverstöße zeigt die View
+`verse_schedule_conflicts`, eine Prüfung für einen Vers
+`select * from check_verse_conflicts('<vers>', '<referenz>', '<datum>');`.
+Wird im Admin ein eigenes Bild hochgeladen, wird es automatisch als manuell
+markiert und nie überschrieben. Einen Vers aus der künftigen Planung nehmen:
 `update verse_pool set is_active = false where reference = '…';`
 (bereits geplante Tage bleiben, neue Tage nutzen ihn nicht mehr).
 
