@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,14 +8,44 @@ import { useDailyVerses } from '@/hooks/use-daily-verses';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, isToday, isFuture } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { CalendarPlus, LayoutList, ViewIcon, Loader2, Download } from 'lucide-react';
+import { CalendarPlus, LayoutList, ViewIcon, Loader2, Download, Search, X, CalendarSearch } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { DailyVerse } from '@/lib/supabase';
 import { useTranslationsForContents, summarizeLang, SUPPORTED_LANGS } from '@/hooks/use-translations';
 import { TranslationStatusList } from '@/components/translations/TranslationStatusBadge';
 
 const DailyVersesPage = () => {
-  const { verses, isLoading, createVerse, updateVerse, fetchNextPage, hasNextPage, isFetchingNextPage } = useDailyVerses();
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
+  const [jumpDate, setJumpDate] = useState('');
+  const { verses, isLoading, createVerse, updateVerse, fetchNextPage, hasNextPage, isFetchingNextPage } = useDailyVerses({ search, jumpDate: jumpDate || undefined });
+  const isSearching = search.trim().length >= 2;
+
+  // Suche erst nach kurzer Tipp-Pause starten
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput), 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  const jumpTo = (date: string) => {
+    setSearchInput('');
+    setSearch('');
+    setJumpDate(date);
+  };
+
+  const resetFilters = () => {
+    setSearchInput('');
+    setSearch('');
+    setJumpDate('');
+  };
+
+  // Nach dem Sprung den Vers des gewählten Tages in den Blick scrollen
+  useEffect(() => {
+    if (!jumpDate || isLoading) return;
+    document.getElementById(`verse-${jumpDate}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [jumpDate, isLoading, verses.length]);
+  const jumpTarget = jumpDate && !isSearching ? verses.find((v) => v.date === jumpDate) : undefined;
   const { data: translationsMap } = useTranslationsForContents((verses ?? []).map((v: any) => v.content_id));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedVerse, setSelectedVerse] = useState<DailyVerse | undefined>();
@@ -93,6 +123,47 @@ const DailyVersesPage = () => {
         </div>
       </div>
 
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <div className="relative w-full sm:w-80">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Vers oder Bibelstelle suchen…"
+            className="pl-9"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <CalendarSearch className="h-4 w-4 text-muted-foreground" />
+          <Input
+            type="date"
+            value={jumpDate}
+            onChange={(e) => jumpTo(e.target.value)}
+            className="w-[170px]"
+            aria-label="Zu Datum springen"
+          />
+        </div>
+        {(searchInput || jumpDate) && (
+          <Button variant="ghost" size="sm" onClick={resetFilters}>
+            <X className="mr-1 h-4 w-4" />
+            Zurücksetzen
+          </Button>
+        )}
+      </div>
+
+      {isSearching && !isLoading && (
+        <p className="mb-4 text-sm text-muted-foreground">
+          {verses.length === 0
+            ? `Keine Verse zu „${search.trim()}“ gefunden.`
+            : `Treffer zu „${search.trim()}“${hasNextPage ? ' (weitere beim Scrollen)' : ''}:`}
+        </p>
+      )}
+      {jumpDate && !isSearching && !isLoading && !jumpTarget && (
+        <p className="mb-4 text-sm text-muted-foreground">
+          Für den {format(new Date(jumpDate), 'dd.MM.yyyy')} ist kein Vers eingetragen – angezeigt werden die Tage davor.
+        </p>
+      )}
+
       {isLoading ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
@@ -112,10 +183,12 @@ const DailyVersesPage = () => {
               return (
                 <Card
                   key={verse.id}
+                  id={`verse-${verse.date}`}
                   className={cn(
                     "relative overflow-hidden transition-colors",
                     isCurrentOrFuture && "border-primary",
-                    isToday(verseDate) && "bg-primary/5"
+                    isToday(verseDate) && "bg-primary/5",
+                    jumpTarget?.id === verse.id && "ring-2 ring-primary ring-offset-2"
                   )}
                 >
                   {verse.image_url && (
@@ -149,15 +222,22 @@ const DailyVersesPage = () => {
                         <span>{verse.usage_count} Teilen/Downloads</span>
                       </div>
                     )}
-                    {isAdmin && (
-                      <Button
-                        variant="outline"
-                        className="mt-4"
-                        onClick={() => handleEdit(verse)}
-                      >
-                        Bearbeiten
-                      </Button>
-                    )}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {isAdmin && (
+                        <Button
+                          variant="outline"
+                          onClick={() => handleEdit(verse)}
+                        >
+                          Bearbeiten
+                        </Button>
+                      )}
+                      {isSearching && (
+                        <Button variant="ghost" onClick={() => jumpTo(verse.date)}>
+                          <CalendarSearch className="mr-2 h-4 w-4" />
+                          Zum Datum
+                        </Button>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               );

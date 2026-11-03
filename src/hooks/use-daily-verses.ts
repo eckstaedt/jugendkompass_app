@@ -6,8 +6,29 @@ import { usePreviewLocale } from '@/contexts/PreviewLocaleContext';
 
 const PAGE_SIZE = 20;
 
-export const useDailyVerses = () => {
+export type VerseFilter = {
+  /** Text in Vers oder Bibelstelle (ab 2 Zeichen) */
+  search?: string;
+  /** yyyy-MM-dd: Liste beginnt bei diesem Datum (und geht zurück in die Vergangenheit) */
+  jumpDate?: string;
+};
+
+/** Bibelstelle vergleichbar machen: "Römerbrief 8:28" ~ "römer8,28" (wie ref_key in der DB) */
+const refKey = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/brief/g, '')
+    .replace(/[\s.]/g, '')
+    .replace(/:/g, ',');
+
+/** Wert für PostgREST-or()-Filter sicher in Anführungszeichen setzen */
+const quoted = (value: string) => `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+
+export const useDailyVerses = (filter: VerseFilter = {}) => {
   const { previewLang } = usePreviewLocale();
+  const search = (filter.search ?? '').trim();
+  const activeSearch = search.length >= 2 ? search : '';
+  const jumpDate = activeSearch ? undefined : filter.jumpDate;
   const {
     data,
     isLoading,
@@ -16,7 +37,7 @@ export const useDailyVerses = () => {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ['dailyVerses', previewLang],
+    queryKey: ['dailyVerses', previewLang, activeSearch, jumpDate ?? ''],
     queryFn: async ({ pageParam = 0 }) => {
       const from = pageParam * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
@@ -25,9 +46,15 @@ export const useDailyVerses = () => {
         const { data: localized, error: rpcError } = await supabase
           .rpc('get_verse_of_day_localized', { lang: previewLang });
         if (rpcError) throw rpcError;
-        const sorted = [...(localized ?? [])].sort((a: any, b: any) =>
-          (b.date ?? '').localeCompare(a.date ?? '')
-        );
+        const needle = activeSearch.toLowerCase();
+        const sorted = [...(localized ?? [])]
+          .filter((v) =>
+            (!jumpDate || (v.date ?? '') <= jumpDate) &&
+            (!needle ||
+              (v.verse ?? '').toLowerCase().includes(needle) ||
+              (v.reference ?? '').toLowerCase().includes(needle) ||
+              refKey(v.reference ?? '').includes(refKey(needle))))
+          .sort((a: any, b: any) => (b.date ?? '').localeCompare(a.date ?? ''));
         const slice = sorted.slice(from, to + 1);
         const contentIds = slice.map((v: any) => v.content_id).filter(Boolean);
         let contentMap: Record<string, any> = {};
@@ -41,7 +68,7 @@ export const useDailyVerses = () => {
         return slice.map((v: any) => ({ ...v, content: contentMap[v.content_id] })) as unknown as DailyVerse[];
       }
 
-      const { data: dailyVerses, error } = await supabase
+      let query = supabase
         .from('verse_of_the_day')
         .select(`
           id, 
@@ -56,7 +83,23 @@ export const useDailyVerses = () => {
             status,
             created_at
           )
-        `)
+        `);
+
+      if (activeSearch) {
+        const like = (v: string) => quoted(`%${v}%`);
+        query = query.or(
+          [
+            `verse.ilike.${like(activeSearch)}`,
+            `reference.ilike.${like(activeSearch)}`,
+            `ref_key.ilike.${like(refKey(activeSearch))}`,
+          ].join(','),
+        );
+      }
+      if (jumpDate) {
+        query = query.lte('date', jumpDate);
+      }
+
+      const { data: dailyVerses, error } = await query
         .order('date', { ascending: false })
         .range(from, to);
 
