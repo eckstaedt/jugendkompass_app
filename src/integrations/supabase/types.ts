@@ -834,11 +834,6 @@ export type Database = {
           date: string
           id: string
           image_url: string | null
-          image_source_hash: string | null
-          auto_scheduled: boolean
-          pool_id: number | null
-          ref_key: string | null
-          text_key: string | null
           reference: string
           usage_count: number
           verse: string
@@ -849,9 +844,6 @@ export type Database = {
           date?: string
           id?: string
           image_url?: string | null
-          image_source_hash?: string | null
-          auto_scheduled?: boolean
-          pool_id?: number | null
           reference: string
           usage_count?: number
           verse: string
@@ -862,9 +854,6 @@ export type Database = {
           date?: string
           id?: string
           image_url?: string | null
-          image_source_hash?: string | null
-          auto_scheduled?: boolean
-          pool_id?: number | null
           reference?: string
           usage_count?: number
           verse?: string
@@ -932,40 +921,9 @@ export type Database = {
       }
     }
     Views: {
-      verse_schedule_conflicts: {
-        Row: {
-          first_id: string | null
-          first_date: string | null
-          second_id: string | null
-          second_date: string | null
-          reference: string | null
-          days_between: number | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
-      check_verse_conflicts: {
-        Args: { p_verse: string; p_reference: string; p_date: string; p_exclude_id?: string | null }
-        Returns: {
-          id: string
-          date: string
-          reference: string
-          verse: string
-        }[]
-      }
-      get_verse_schedule_overview: {
-        Args: never
-        Returns: {
-          year: number
-          days_in_year: number
-          days_planned: number
-          auto_planned: number
-          with_image: number
-          conflicts: number
-          first_free_day: string | null
-        }[]
-      }
       enqueue_translation_backfill_for_posts: {
         Args: { max_rows?: number }
         Returns: number
