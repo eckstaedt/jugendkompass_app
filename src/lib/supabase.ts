@@ -80,6 +80,10 @@ export type DailyVerse = {
   reference: string;
   date: string;
   image_url?: string | null;
+  /** set = image was generated automatically (nature photo); null = uploaded manually */
+  image_source_hash?: string | null;
+  /** true = created by the automatic 10-year planning */
+  auto_scheduled?: boolean;
   usage_count?: number;
   created_at?: string;
   content?: {

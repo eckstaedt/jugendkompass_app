@@ -29,7 +29,6 @@ import { CalendarIcon } from "lucide-react";
 import { DailyVerse, supabase } from "@/lib/supabase";
 import { RetranslateButton } from '@/components/translations/RetranslateButton';
 import { VerseImageUploader } from "./VerseImageUploader";
-import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -89,42 +88,36 @@ export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }:
   const [pendingData, setPendingData] = useState<FormData | null>(null);
   const [checking, setChecking] = useState(false);
 
-  const normalizeReference = (value: string) =>
-    value.trim().replace(/[,:]/g, ':').toLowerCase();
-
   const proceedSubmit = (data: FormData) => {
-    onSubmit(data);
+    // A changed/cleared image is no longer the automatically generated one:
+    // null = manual upload (never overwritten) or empty (gets regenerated).
+    const imageChanged = (data.image_url || '') !== (initialData?.image_url || '');
+    onSubmit({
+      ...data,
+      image_source_hash: mode === 'edit' && !imageChanged ? undefined : null,
+    });
     setPendingData(null);
     setDuplicates([]);
   };
 
   const handleSubmit = async (data: FormData) => {
-    if (!data.image_url) {
-      toast.error("Bitte ein Bild hochladen.");
-      return;
-    }
-
     setChecking(true);
     try {
-      const normalizedReference = normalizeReference(data.reference);
-      const { data: rows, error } = await supabase
-        .from('verse_of_the_day')
-        .select('id, reference, date')
-        .order('date', { ascending: false })
-        .limit(50);
+      // Same verse (reference or text) in the same calendar year or within 365 days?
+      const { data: rows, error } = await supabase.rpc('check_verse_conflicts', {
+        p_verse: data.verse,
+        p_reference: data.reference,
+        p_date: data.date,
+        p_exclude_id: initialData?.id ?? null,
+      });
 
-      if (!error && rows) {
-        const matches = rows.filter((r: any) => {
-          if (r.id === initialData?.id) return false;
-          return normalizeReference(r.reference) === normalizedReference;
-        });
-        if (matches.length > 0) {
-          setDuplicates(matches as any);
-          setPendingData(data);
-          setChecking(false);
-          return;
-        }
+      if (!error && rows && rows.length > 0) {
+        setDuplicates(rows);
+        setPendingData(data);
+        setChecking(false);
+        return;
       }
+      if (error) console.error('Duplicate check failed', error);
     } catch (e) {
       console.error('Duplicate check failed', e);
     }
@@ -219,9 +212,24 @@ export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }:
                     <VerseImageUploader
                       value={field.value || ''}
                       onChange={(url) => field.onChange(url)}
-                      required
                     />
                   </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    {field.value && initialData?.image_source_hash && field.value === initialData.image_url
+                      ? 'Automatisch erzeugtes Naturbild – wird bei Text-Änderungen neu erzeugt.'
+                      : 'Ohne eigenes Bild wird automatisch ein Naturbild erzeugt (ca. 45 Tage vorher).'}
+                  </p>
+                  {field.value && (
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      className="h-auto p-0 text-xs"
+                      onClick={() => field.onChange('')}
+                    >
+                      Bild entfernen &amp; automatisch neu erzeugen lassen
+                    </Button>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
@@ -253,7 +261,10 @@ export function VerseDialog({ open, onOpenChange, onSubmit, initialData, mode }:
             <AlertDialogTitle>Vers wurde bereits verwendet</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2">
-                <p>Dieser Vers war bereits an folgenden Tagen Vers des Tages:</p>
+                <p>
+                  Dieser Vers ist im selben Kalenderjahr oder mit weniger als 365 Tagen Abstand
+                  bereits Vers des Tages:
+                </p>
                 <ul className="list-disc pl-5">
                   {duplicates.map((d) => (
                     <li key={d.id}>
