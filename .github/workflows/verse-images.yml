@@ -1,0 +1,85 @@
+name: Verse Images
+
+# Renders the "Vers des Tages" share images (nature photo + verse, different
+# design every day) for the upcoming days and stores them in Supabase Storage.
+# Runs daily, after every Supabase deploy and on demand.
+#
+# Uses the existing SUPABASE_ACCESS_TOKEN secret to look up the service-role
+# key (or a SUPABASE_SERVICE_ROLE_KEY repository secret, if you add one).
+
+on:
+  schedule:
+    - cron: "23 3 * * *"
+  workflow_run:
+    workflows: ["Supabase Deploy"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "How many days ahead (from today) to render"
+        required: false
+        default: "45"
+      from:
+        description: "Start date YYYY-MM-DD (empty = today)"
+        required: false
+        default: ""
+
+concurrency:
+  group: verse-images
+  cancel-in-progress: false
+
+env:
+  PROJECT_REF: vdcdibvclaulqxfjyzpq
+  SUPABASE_URL: https://vdcdibvclaulqxfjyzpq.supabase.co
+  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+jobs:
+  render:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: tool/verse_images
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Service-role key
+        env:
+          REPO_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          key="$REPO_KEY"
+          if [ -z "$key" ]; then
+            key=$(supabase projects api-keys --project-ref "$PROJECT_REF" -o json \
+              | jq -r '[.[] | select(.name == "service_role" or .type == "secret")][0].api_key // empty')
+          fi
+          if [ -z "$key" ]; then
+            echo "::error::Could not determine the Supabase service-role key (SUPABASE_ACCESS_TOKEN missing?)"
+            exit 1
+          fi
+          echo "::add-mask::$key"
+          echo "SUPABASE_SERVICE_ROLE_KEY=$key" >> "$GITHUB_ENV"
+
+      - name: Install
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      - name: Render & upload images
+        env:
+          DAYS_INPUT: ${{ github.event.inputs.days || '45' }}
+          FROM_INPUT: ${{ github.event.inputs.from }}
+        run: |
+          if [ -n "$FROM_INPUT" ]; then
+            node generate.mjs --days "$DAYS_INPUT" --from "$FROM_INPUT"
+          else
+            node generate.mjs --days "$DAYS_INPUT"
+          fi
