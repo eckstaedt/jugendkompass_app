@@ -1,0 +1,12 @@
+{
+  "name": "verse-images",
+  "private": true,
+  "type": "module",
+  "description": "Renders the daily Vers-des-Tages share images and uploads them to Supabase Storage",
+  "scripts": {
+    "generate": "node generate.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.49.1"
+  }
+}
