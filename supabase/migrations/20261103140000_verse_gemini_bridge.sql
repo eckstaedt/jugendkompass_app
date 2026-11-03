@@ -8,9 +8,9 @@
 --  • Neu angelegte / geänderte Verse (Admin) werden sofort übersetzt.
 --  • Der Claude-Übersetzer überschreibt diese Übersetzungen später automatisch.
 --
--- Für die Anmeldung wird derselbe Schlüssel verwendet, den die bestehende
--- Funktion notify_translate_content() bereits nutzt (er wird aus deren
--- Definition gelesen, damit er nicht noch einmal im Repo steht).
+-- Anmeldung: service_role-Schlüssel aus dem Supabase Vault (Secret-Name
+-- 'service_role_key'), ersatzweise der Schlüssel aus notify_translate_content().
+-- Der Schlüssel steht nie im Repo.
 --
 -- Abschalten (wenn Claude läuft):  select public.disable_verse_gemini_bridge();
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -38,19 +38,29 @@ BEGIN
     RETURN false;
   END IF;
 
-  SELECT substring(pg_get_functiondef(p.oid) FROM 'v_key text := ''([^'']+)'''),
-         substring(pg_get_functiondef(p.oid) FROM 'v_url text := ''([^'']+)''')
-    INTO v_key, v_url
-  FROM pg_proc p
-  JOIN pg_namespace n ON n.oid = p.pronamespace
-  WHERE n.nspname = 'public' AND p.proname = 'notify_translate_content'
-  LIMIT 1;
+  -- 1) service-role key from Supabase Vault (secret name 'service_role_key')
+  BEGIN
+    SELECT decrypted_secret INTO v_key
+    FROM vault.decrypted_secrets WHERE name = 'service_role_key' LIMIT 1;
+  EXCEPTION WHEN OTHERS THEN
+    v_key := NULL;
+  END;
+
+  -- 2) fallback: key embedded in the old notify_translate_content()
+  IF v_key IS NULL THEN
+    SELECT substring(pg_get_functiondef(p.oid) FROM 'v_key text := ''([^'']+)''')
+      INTO v_key
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'notify_translate_content'
+    LIMIT 1;
+  END IF;
 
   IF v_key IS NULL THEN
-    RAISE WARNING 'gemini_translate_verse: notify_translate_content() not found – cannot call translate-content';
+    RAISE WARNING 'gemini_translate_verse: no service-role key (vault secret service_role_key missing)';
     RETURN false;
   END IF;
-  v_url := coalesce(v_url, 'https://vdcdibvclaulqxfjyzpq.supabase.co/functions/v1/translate-content');
+  v_url := 'https://vdcdibvclaulqxfjyzpq.supabase.co/functions/v1/translate-content';
 
   PERFORM net.http_post(
     url := v_url,
