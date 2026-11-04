@@ -1,0 +1,69 @@
+name: Web → Vercel
+
+# Builds the Flutter web app (incl. web/vercel.json + web/api/share.js for the
+# share-link previews) and deploys build/web to the existing Vercel project
+# behind www.jugendkompass.com.
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   VERCEL_TOKEN       vercel.com → Account Settings → Tokens → Create
+#   VERCEL_ORG_ID      vercel.com → Team Settings → General → "Team ID"
+#                      (personal account: Account Settings → General → "Vercel ID")
+#   VERCEL_PROJECT_ID  vercel.com → Project → Settings → General → "Project ID"
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "lib/**"
+      - "assets/**"
+      - "pubspec.yaml"
+      - ".github/workflows/web-deploy.yml"
+
+concurrency:
+  group: web-deploy
+  cancel-in-progress: true
+
+env:
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Build web
+        run: |
+          flutter pub get
+          flutter build web --release
+          test -f build/web/vercel.json
+          test -f build/web/api/share.js
+          test -f build/web/.well-known/apple-app-site-association
+
+      - name: Deploy to Vercel
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "::warning::VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID missing – build ok, deploy skipped."
+            exit 0
+          fi
+          npm install --global vercel@latest
+          cd build/web
+          vercel deploy --prod --yes --token "$VERCEL_TOKEN"
+
+      - name: Smoke test
+        if: env.VERCEL_TOKEN != ''
+        run: |
+          sleep 10
+          curl -fsS "https://www.jugendkompass.com/post/61c0980f-fe27-4be0-a9d0-c9ab88b320d6" | grep -q 'og:image' \
+            && echo "Share preview OK" || { echo "::error::Share preview not served"; exit 1; }
+          curl -fsSI "https://www.jugendkompass.com/.well-known/apple-app-site-association" | grep -i 'content-type: application/json'
