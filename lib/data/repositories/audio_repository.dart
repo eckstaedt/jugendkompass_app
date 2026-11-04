@@ -36,6 +36,7 @@ class AudioRepository {
 
     await _localizer.localizeContentRows(posts, language, fields: const {'title': 'title', 'body': 'body'});
     await _localizer.localizeNestedCategories(posts, language);
+    await _localizer.localizeAudioUrls(mapped, language);
 
     return mapped.map(AudioModel.fromJson).toList();
   }
