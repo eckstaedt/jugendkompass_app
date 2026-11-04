@@ -1,0 +1,29 @@
+# www.jugendkompass.com auf dem VPS hinter dem bestehenden Traefik (ersetzt Vercel).
+# Start:  cd deploy && docker compose --env-file /opt/jugendkompass/vps.env up -d --build
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.web
+    container_name: jk-web
+    restart: unless-stopped
+    environment:
+      SUPABASE_URL: https://api.jugendkompass.com
+    networks: [traefik]
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK}
+      - traefik.http.routers.jk-web.rule=Host(`jugendkompass.com`) || Host(`www.jugendkompass.com`)
+      - traefik.http.routers.jk-web.entrypoints=${TRAEFIK_ENTRYPOINT}
+      - traefik.http.routers.jk-web.tls.certresolver=${TRAEFIK_CERTRESOLVER}
+      - traefik.http.routers.jk-web.middlewares=jk-www
+      # jugendkompass.com -> www.jugendkompass.com (wie bisher bei Vercel)
+      - traefik.http.middlewares.jk-www.redirectregex.regex=^https?://jugendkompass\.com/(.*)
+      - traefik.http.middlewares.jk-www.redirectregex.replacement=https://www.jugendkompass.com/$${1}
+      - traefik.http.middlewares.jk-www.redirectregex.permanent=true
+      - traefik.http.services.jk-web.loadbalancer.server.port=8080
+
+networks:
+  traefik:
+    external: true
+    name: ${TRAEFIK_NETWORK}

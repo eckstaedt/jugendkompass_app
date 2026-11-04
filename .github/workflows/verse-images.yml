@@ -30,7 +30,7 @@ concurrency:
 
 env:
   PROJECT_REF: vdcdibvclaulqxfjyzpq
-  SUPABASE_URL: https://vdcdibvclaulqxfjyzpq.supabase.co
+  SUPABASE_URL: https://api.jugendkompass.com
   SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
 jobs:

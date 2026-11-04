@@ -216,7 +216,7 @@ ClipRRect(
 
 ### Supabase Project
 - Project ID: `vdcdibvclaulqxfjyzpq`
-- URL: `https://vdcdibvclaulqxfjyzpq.supabase.co`
+- URL: `https://api.jugendkompass.com` (self-hosted Supabase auf dem VPS; vorher `https://vdcdibvclaulqxfjyzpq.supabase.co`)
 - See `supabase.md` for complete schema
 
 ## Common Pitfalls

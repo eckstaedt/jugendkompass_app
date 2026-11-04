@@ -1,0 +1,16 @@
+# Website www.jugendkompass.com (Flutter-Web + Share-Link-Vorschau) für den VPS – ersetzt Vercel
+FROM ghcr.io/cirruslabs/flutter:stable AS build
+WORKDIR /app
+COPY . .
+RUN flutter pub get \
+ && flutter build web --release \
+ && test -f build/web/api/share.js \
+ && test -f build/web/.well-known/apple-app-site-association
+
+FROM node:22-alpine
+ENV NODE_ENV=production WEB_ROOT=/srv/web PORT=8080
+COPY --from=build /app/build/web /srv/web
+COPY deploy/server.js /srv/server.js
+EXPOSE 8080
+HEALTHCHECK CMD wget -qO- http://127.0.0.1:8080/healthz || exit 1
+CMD ["node", "/srv/server.js"]
