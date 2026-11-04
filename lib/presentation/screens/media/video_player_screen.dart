@@ -328,14 +328,20 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
           foregroundColor: Colors.white,
           elevation: 0,
         actions: [
-          if (widget.shareContentId != null && widget.shareContentId!.isNotEmpty)
+          if ((widget.shareContentId?.trim().isNotEmpty ?? false) ||
+              widget.videoUrl.trim().isNotEmpty)
             IconButton(
               tooltip: context.tr('share'),
               icon: const Icon(Icons.share_outlined, size: 24),
               onPressed: () {
+                // Prefer the content id; fall back to the video URL, which
+                // the deep link handler resolves as well (videoByAnyId).
+                final shareId = (widget.shareContentId?.trim().isNotEmpty ?? false)
+                    ? widget.shareContentId!.trim()
+                    : widget.videoUrl.trim();
                 ContentShareService.shareContent(
                   contentType: 'video',
-                  contentId: widget.shareContentId!,
+                  contentId: shareId,
                   title: HtmlUtils.stripHtml(widget.title),
                   intro: context.tr('share_intro_video'),
                 );

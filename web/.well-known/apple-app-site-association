@@ -25,6 +25,71 @@
           "/bibelplan",
           "/bible-plan",
           "/reading-plan"
+        ],
+        "appIDs": [
+          "MXM3YWAKPL.io.stephanus.jugendkompass"
+        ],
+        "components": [
+          {
+            "/": "/post/*"
+          },
+          {
+            "/": "/artikel/*"
+          },
+          {
+            "/": "/audio/*"
+          },
+          {
+            "/": "/video/*"
+          },
+          {
+            "/": "/verse/*"
+          },
+          {
+            "/": "/vers/*"
+          },
+          {
+            "/": "/message/*"
+          },
+          {
+            "/": "/kurznachricht/*"
+          },
+          {
+            "/": "/impulse/*"
+          },
+          {
+            "/": "/impuls/*"
+          },
+          {
+            "/": "/edition/*"
+          },
+          {
+            "/": "/ausgabe/*"
+          },
+          {
+            "/": "/poll/*"
+          },
+          {
+            "/": "/umfrage/*"
+          },
+          {
+            "/": "/content/*"
+          },
+          {
+            "/": "/open"
+          },
+          {
+            "/": "/share/*/*"
+          },
+          {
+            "/": "/bibelplan"
+          },
+          {
+            "/": "/bible-plan"
+          },
+          {
+            "/": "/reading-plan"
+          }
         ]
       }
     ]

@@ -275,8 +275,12 @@ class DeepLinkService {
     debugPrint('[DeepLink] _navigateToMessage called with contentId: $contentId');
 
     // Fetch message data by content_id (not by message id)
-    final messageAsync = ref.read(messageByContentIdProvider(contentId).future);
-    final message = await messageAsync;
+    // Shared links normally carry the content_id, but fall back to the
+    // message's own id (used when a message has no content row).
+    var message = await ref.read(messageByContentIdProvider(contentId).future);
+    if (message == null && int.tryParse(contentId) != null) {
+      message = await ref.read(messageDetailProvider(contentId).future);
+    }
 
     if (message == null) {
       debugPrint('[DeepLink] Message not found for contentId: $contentId');
@@ -288,7 +292,7 @@ class DeepLinkService {
     debugPrint('[DeepLink] Pushing MessageDetailScreen');
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => MessageDetailScreen(message: message),
+        builder: (context) => MessageDetailScreen(message: message!),
       ),
     );
   }

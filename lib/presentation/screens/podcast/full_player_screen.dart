@@ -6,6 +6,8 @@ import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:just_audio/just_audio.dart' as just_audio;
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
+import 'package:jugendkompass_app/core/services/content_share_service.dart';
+import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
@@ -240,37 +242,60 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                           color: DesignTokens.getTextPrimary(brightness),
                         ),
                       ),
-                      // Speed pill button
-                      GestureDetector(
-                        onTap: () => _showSpeedPicker(context),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(50),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: DesignTokens.getGlassBackground(
-                                    brightness, 0.5),
-                                borderRadius: BorderRadius.circular(50),
-                                border: Border.all(
-                                    color: Colors.white.withOpacity(0.25),
-                                    width: 1),
-                              ),
-                              child: Text(
-                                _currentSpeed == 1.0
-                                    ? '1×'
-                                    : '$_currentSpeed×',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13,
-                                  color: DesignTokens.getTextPrimary(brightness),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (currentAudio.post != null) ...[
+                            _GlassCircleButton(
+                              icon: Icons.share_outlined,
+                              brightness: brightness,
+                              onTap: () {
+                                final post = currentAudio.post!;
+                                ContentShareService.shareContent(
+                                  contentType: 'post',
+                                  contentId: post.contentId ?? post.id,
+                                  title: HtmlUtils.stripHtml(
+                                    currentAudio.title ?? post.title,
+                                  ),
+                                  intro: context.tr('share_intro_article'),
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          // Speed pill button
+                          GestureDetector(
+                            onTap: () => _showSpeedPicker(context),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(50),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: DesignTokens.getGlassBackground(
+                                        brightness, 0.5),
+                                    borderRadius: BorderRadius.circular(50),
+                                    border: Border.all(
+                                        color: Colors.white.withOpacity(0.25),
+                                        width: 1),
+                                  ),
+                                  child: Text(
+                                    _currentSpeed == 1.0
+                                        ? '1×'
+                                        : '$_currentSpeed×',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                      color: DesignTokens.getTextPrimary(brightness),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
                     ],
                   ),

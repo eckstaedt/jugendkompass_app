@@ -3,14 +3,24 @@ import 'package:share_plus/share_plus.dart';
 /// Central service for generating and sharing Jugendkompass deep links.
 ///
 /// Canonical shared URL format:
-/// - https://jugendkompass.com/open?type={type}&id={id}
+/// - https://www.jugendkompass.com/{type}/{id}
 ///
-/// Supported types include: post, video, impulse, message, edition, poll,
-/// verse, content.
+/// The `www.` host is deliberate: it is the host that serves
+/// `apple-app-site-association` / `assetlinks.json` directly (the bare
+/// domain only redirects there, and iOS/Android do not follow redirects when
+/// verifying Universal Links / App Links). Links on this host therefore open
+/// the app directly when it is installed, without a detour via the browser.
+///
+/// The website renders the same URL server-side with Open Graph tags (title,
+/// description, cover image), so messengers show a preview card with the
+/// content's cover image (see `web/api/share.js`).
+///
+/// Supported types: post, video, impulse, message, edition, poll, verse,
+/// content.
 class ContentShareService {
   ContentShareService._();
 
-  static const String _baseUrl = 'https://jugendkompass.com';
+  static const String _baseUrl = 'https://www.jugendkompass.com';
 
   static const Map<String, String> _typePathMap = {
     'post': 'post',
@@ -22,6 +32,8 @@ class ContentShareService {
     'verse': 'verse',
     'content': 'content',
     'post_audio': 'post',
+    'podcast': 'post',
+    'audio': 'post',
     'article': 'post',
     'ausgabe': 'edition',
   };
@@ -36,11 +48,9 @@ class ContentShareService {
     required String contentId,
   }) {
     final typePath = _normalizeType(contentType);
-    final uri = Uri.parse('$_baseUrl/open').replace(queryParameters: {
-      'type': typePath,
-      'id': contentId,
-    });
-    return uri.toString();
+    return Uri.parse(_baseUrl)
+        .replace(pathSegments: [typePath, contentId.trim()])
+        .toString();
   }
 
   static Future<void> shareContent({

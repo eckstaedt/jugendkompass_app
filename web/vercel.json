@@ -1,0 +1,27 @@
+{
+  "cleanUrls": false,
+  "rewrites": [
+    {
+      "source": "/:type(post|artikel|audio|video|verse|vers|message|kurznachricht|impulse|impuls|edition|ausgabe|poll|umfrage|content)/:id",
+      "destination": "/api/share?type=:type&id=:id"
+    },
+    {
+      "source": "/share/:type/:id",
+      "destination": "/api/share?type=:type&id=:id"
+    },
+    {
+      "source": "/open",
+      "destination": "/api/share"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/.well-known/apple-app-site-association",
+      "headers": [{ "key": "Content-Type", "value": "application/json" }]
+    },
+    {
+      "source": "/.well-known/assetlinks.json",
+      "headers": [{ "key": "Content-Type", "value": "application/json" }]
+    }
+  ]
+}

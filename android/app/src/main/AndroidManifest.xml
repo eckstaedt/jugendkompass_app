@@ -36,16 +36,77 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
 
-            <!-- Deep link intent filter for jugendkompass.com -->
+            <!-- App Links for shared content (https://www.jugendkompass.com/...).
+                 www is the canonical share host: it serves
+                 /.well-known/assetlinks.json directly, so Android verifies it
+                 and opens these links straight in the app (no browser). -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="www.jugendkompass.com" />
+                <data android:pathPrefix="/post/" />
+                <data android:pathPrefix="/artikel/" />
+                <data android:pathPrefix="/audio/" />
+                <data android:pathPrefix="/video/" />
+                <data android:pathPrefix="/verse/" />
+                <data android:pathPrefix="/vers/" />
+                <data android:pathPrefix="/message/" />
+                <data android:pathPrefix="/kurznachricht/" />
+                <data android:pathPrefix="/impulse/" />
+                <data android:pathPrefix="/impuls/" />
+                <data android:pathPrefix="/edition/" />
+                <data android:pathPrefix="/ausgabe/" />
+                <data android:pathPrefix="/poll/" />
+                <data android:pathPrefix="/umfrage/" />
+                <data android:pathPrefix="/content/" />
+                <data android:pathPrefix="/share/" />
+                <data android:pathPrefix="/open" />
+                <data android:pathPrefix="/bibelplan" />
+                <data android:pathPrefix="/bible-plan" />
+                <data android:pathPrefix="/reading-plan" />
+            </intent-filter>
 
-                <!-- Main domain -->
-                <data android:scheme="https" android:host="jugendkompass.com" />
-                <!-- Optional: www subdomain -->
-                <data android:scheme="https" android:host="www.jugendkompass.com" />
+            <!-- Bare domain (older shared links). Kept in its own filter
+                 WITHOUT autoVerify: jugendkompass.com currently redirects to
+                 www, which makes verification fail – on Android 11 and older
+                 a failing host would otherwise disable App Links for www too. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="jugendkompass.com" />
+                <data android:pathPrefix="/post/" />
+                <data android:pathPrefix="/artikel/" />
+                <data android:pathPrefix="/audio/" />
+                <data android:pathPrefix="/video/" />
+                <data android:pathPrefix="/verse/" />
+                <data android:pathPrefix="/vers/" />
+                <data android:pathPrefix="/message/" />
+                <data android:pathPrefix="/kurznachricht/" />
+                <data android:pathPrefix="/impulse/" />
+                <data android:pathPrefix="/impuls/" />
+                <data android:pathPrefix="/edition/" />
+                <data android:pathPrefix="/ausgabe/" />
+                <data android:pathPrefix="/poll/" />
+                <data android:pathPrefix="/umfrage/" />
+                <data android:pathPrefix="/content/" />
+                <data android:pathPrefix="/share/" />
+                <data android:pathPrefix="/open" />
+                <data android:pathPrefix="/bibelplan" />
+                <data android:pathPrefix="/bible-plan" />
+                <data android:pathPrefix="/reading-plan" />
+            </intent-filter>
+
+            <!-- Custom scheme fallback (jugendkompass://post/<id>), used by
+                 the "In der App öffnen" button on the web fallback page. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="jugendkompass" />
             </intent-filter>
         </activity>
         <!-- just_audio_background: background audio service for lock screen controls -->

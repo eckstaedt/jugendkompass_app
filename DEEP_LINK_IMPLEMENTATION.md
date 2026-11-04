@@ -138,3 +138,33 @@ Added `getVerseById()` method to support verse deep linking.
 - The dialog includes translation support via `translateVerseProvider`
 - All navigation is done via standard `Navigator.push()` to maintain compatibility with the persistent bottom navbar
 - Deep links only work on mobile (iOS/Android), not on web
+
+## Shared links (Teilen) – open directly in the app
+
+Shared links have the form `https://www.jugendkompass.com/{type}/{id}`
+(`ContentShareService`), types: post, video, impulse, message, edition, poll,
+verse, content. Podcast episodes are shared as their post.
+
+- **Why `www.`**: `jugendkompass.com` redirects to `www.` on Vercel. Apple and
+  Android don't follow redirects when they verify
+  `apple-app-site-association` / `assetlinks.json`, so only `www.` links open
+  the app directly. Links on the bare domain (shared before this change) open
+  the browser first. To make them open the app as well, set up the bare
+  domain in Vercel → Domains so it **serves** the site rather than
+  redirecting.
+- **Android**: `www.` has its own `autoVerify` intent filter, limited to
+  content paths. The bare domain is in a separate filter without
+  `autoVerify`, so it can't break verification on Android ≤ 11. The
+  `jugendkompass://` scheme is registered for the fallback page's button.
+  `assetlinks.json` must contain the SHA-256 of the **Play App Signing** key
+  (Play Console → App integrity).
+- **Preview image**: `web/vercel.json` rewrites the content paths (and the old
+  `/open?type=&id=`) to the serverless function `web/api/share.js`. It loads
+  the content from Supabase (anon key) and renders Open Graph tags with the
+  title, a teaser and the cover image (`image_url`). Messengers (WhatsApp,
+  iMessage, Telegram, …) show these as a preview card. People without the app
+  see the same preview, with buttons to open the app, install it or view it in
+  the web app.
+- **Deploy**: `flutter build web` copies `web/vercel.json` and `web/api/` into
+  `build/web`, so deploy `build/web` as the Vercel project root, e.g.
+  `vercel deploy build/web --prod`.
