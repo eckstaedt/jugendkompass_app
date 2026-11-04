@@ -72,6 +72,12 @@ jobs:
             echo "::warning::App Store Connect secrets missing – building unsigned only (no TestFlight upload)."
           fi
 
+      # Firebase comes in via CocoaPods; newer Flutter versions additionally
+      # pull it via Swift Package Manager, which causes "redefinition of
+      # module 'FirebaseCore'". Stay on CocoaPods only.
+      - name: Disable Swift Package Manager
+        run: flutter config --no-enable-swift-package-manager
+
       - name: Flutter pub get
         run: flutter pub get
 
