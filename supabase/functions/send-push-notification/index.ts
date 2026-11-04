@@ -30,20 +30,28 @@
 //
 // Environment variables (automatically provided by Supabase):
 //   - SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (auto-set)
-// Firebase config is hardcoded below (private project).
+// Firebase-Dienstkonto kommt aus dem Secret FCM_SERVICE_ACCOUNT_JSON.
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// ─── Firebase Config (hardcoded for private project) ────────────────────────
+// ─── Firebase Config (aus Secrets) ──────────────────────────────────────────
 
-const FCM_PROJECT_ID = "jugendkompass-46aa7";
+const FCM_PROJECT_ID = Deno.env.get("FCM_PROJECT_ID") ?? "jugendkompass-46aa7";
 
-const FCM_SERVICE_ACCOUNT: ServiceAccountKey = {
-  client_email: "firebase-adminsdk-lqlr9@jugendkompass-46aa7.iam.gserviceaccount.com",
-  private_key: "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCYhKa4DFSp0dQY\nUUwjXqg+2PnZPMigupvuPDfFvLxrjAsYNvMX9KCtxPXt01rl+hiMdIQwdyb8LgI0\neXIHiqQTfR3KDqdwMLomhaLHmA34ck1aM2jyLv8Xizh+Th/7xeD+vWL9HnD+ZPB2\nnVuYtYZnOhR5IFExzKfQTAxUCE25b85lnALi2XRHqKkUfab6Byu3sg55ePPoR3/x\nvi/yAUhChO3fH0XnJPzj91RY+8IkH8xPYE1aLPE3xRki8q54SgHl3axs4XX75s7l\nlSSJRq8/iHkY9+gsoC9Wqos4bjk0DyEH3XEaeL/cjOfY2Dhab4l0WYQxTqR372RU\n9E0MBoVDAgMBAAECggEADrMmUHHbzRxMqWVYhcYvSBNojVAG9DrYIY+LPpMww9rV\nDOnq5yGsRONJYrkutyCyMgNe5D7vsnmKu90CqQhrRPeXoexkpfMEVgcmR793hT0b\nCHkRAdqWuoGwGbhU69LIGzVMr6G5+ULoTD5hYCgKwrM92ujK+pZDjFdwDr9YImmm\nrmxkWWOPNRYPifD6cOnOvbE/DyB0uk+0/yzBKAtEkSCiKhhI2FirjYCvON3+1zvn\nVUzMu2/zUFR1ZVhRvbR3IR4sjY07PPMWx2hHj+0S31v0OLlzd2tvOkKPNznXemBX\nEyIvq7N9ikzO4z6Jue5fpvRpT5p7/qm2QAaiss0qeQKBgQDIi3qv0HOiQvVGnpqC\nfWNm4sSXOth8g2f1hQsDIcqfx/hj4vourADMW/7QzBjXMAV9OZzXWL561zE6n/Hz\nstM81nabTB/ZCdr3lrxY3QtK0H9GSVRwZhQt1XAUvPhbTA2GoUhsmXVvx4LlNiZP\no/T3tb9IkW9L7kmTITmAZI0YOwKBgQDCsWAiD6pug6qgFZxIYSaw2d9kYjXhsK9W\n6tXlELfWzq24YZH5RmMyFaElHb9n+bny9HGH3oIwk0nQYAm+Zc7Dsvblh7VH0+Zc\n6UeFfSb+ht+2ySrOVHuQxCE24YzRb1GmQaZaAQQ8NhixwhuWyP8TI71Mv0+Q6ED3\nAXqILvJ+mQKBgHYk/Z0wD79q9Paqn1n6pqHJPInfaARKoecZfvhUYvuooiOuZzcx\nq7K5C7BUXNoA92rjkwumw2i4986SxcaM9jckHXG18hk53h74VXOAnZNwq1pr/uvM\np1ytHj+JaELY1isXPwSDj5TPk8SXFxDaBYodL1iAHXI9KmkcLLUAB8NbAoGAZMj5\noOhHK+qQ+0n0mytfohFHKWoFxo12VyI+E9RxtotLNrWboVUkqJq1zsb1fNezwOd1\nlgZDku3MOkhdAukk/f24/d0gpMw25kYEtj+xXfVn/fFpbWIijTBamVRtV0WvGMfH\nW7RHAvxmEC8RpR7rnHbV2dL3V2ZDqxpi2fijo5ECgYEAr2oCcfSvSOgJoryWZhMI\n4Bf2J4qNfmnsErjZi7ITlQ/T8suf/Tuon5iHc8/C2spx7KztJ/mplgOINA911CCi\nzeJdX4Q63rBgz48wTo5k0LLazUiDLAGemKxUNBwMRhuwBk/IGBP0sdkOWvgULF1P\n1UiCGQeMIZe0z4fbnbjLfbY=\n-----END PRIVATE KEY-----\n",
-  token_uri: "https://oauth2.googleapis.com/token",
-};
+const FCM_SERVICE_ACCOUNT: ServiceAccountKey = loadServiceAccount();
+
+/** Firebase-Dienstkonto aus dem Secret FCM_SERVICE_ACCOUNT_JSON (nie im Code ablegen!). */
+function loadServiceAccount(): ServiceAccountKey {
+  const raw = Deno.env.get("FCM_SERVICE_ACCOUNT_JSON") ?? Deno.env.get("FCM_SERVICE_ACCOUNT_KEY") ?? "";
+  if (!raw) throw new Error("Secret FCM_SERVICE_ACCOUNT_JSON fehlt");
+  const sa = JSON.parse(raw);
+  return {
+    client_email: sa.client_email,
+    private_key: sa.private_key,
+    token_uri: sa.token_uri ?? "https://oauth2.googleapis.com/token",
+  };
+}
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 

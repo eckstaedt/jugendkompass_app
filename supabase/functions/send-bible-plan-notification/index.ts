@@ -19,9 +19,9 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// ─── Firebase Config (hardcoded for private project) ────────────────────────
+// ─── Firebase Config (aus Secrets) ──────────────────────────────────────────
 
-const FCM_PROJECT_ID = "jugendkompass-46aa7";
+const FCM_PROJECT_ID = Deno.env.get("FCM_PROJECT_ID") ?? "jugendkompass-46aa7";
 
 interface ServiceAccountKey {
   client_email: string;
@@ -29,11 +29,19 @@ interface ServiceAccountKey {
   token_uri: string;
 }
 
-const FCM_SERVICE_ACCOUNT: ServiceAccountKey = {
-  client_email: "firebase-adminsdk-lqlr9@jugendkompass-46aa7.iam.gserviceaccount.com",
-  private_key: Deno.env.get("FCM_PRIVATE_KEY") ?? "",
-  token_uri: "https://oauth2.googleapis.com/token",
-};
+const FCM_SERVICE_ACCOUNT: ServiceAccountKey = loadServiceAccount();
+
+/** Firebase-Dienstkonto aus dem Secret FCM_SERVICE_ACCOUNT_JSON (nie im Code ablegen!). */
+function loadServiceAccount(): ServiceAccountKey {
+  const raw = Deno.env.get("FCM_SERVICE_ACCOUNT_JSON") ?? Deno.env.get("FCM_SERVICE_ACCOUNT_KEY") ?? "";
+  if (!raw) throw new Error("Secret FCM_SERVICE_ACCOUNT_JSON fehlt");
+  const sa = JSON.parse(raw);
+  return {
+    client_email: sa.client_email,
+    private_key: sa.private_key,
+    token_uri: sa.token_uri ?? "https://oauth2.googleapis.com/token",
+  };
+}
 
 // ─── 50 motivating "Dein Bibelleseplan" messages ────────────────────────────
 //
