@@ -177,16 +177,10 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
   const handleDispatchPush = async () => {
     if (!defaultValues?.id) return;
     const values = form.getValues();
-    const savedTitle = defaultValues.notification_title?.trim() ?? '';
-    const savedBody = defaultValues.notification_body?.trim() ?? '';
-    const formTitle = values.notification_title.trim();
-    const formBody = values.notification_body.trim();
-    if (!savedTitle) {
-      toast({ title: 'Kein Push-Titel gespeichert', description: 'Bitte zuerst Push-Titel hinterlegen und speichern.', variant: 'destructive' });
-      return;
-    }
-    if (formTitle !== savedTitle || formBody !== savedBody) {
-      toast({ title: 'Änderungen nicht gespeichert', description: 'Bitte Push-Titel und Push-Text vor dem Senden speichern.', variant: 'destructive' });
+    const formTitle = (values.notification_title ?? '').trim();
+    const formBody = (values.notification_body ?? '').trim();
+    if (!formTitle) {
+      toast({ title: 'Kein Push-Titel', description: 'Bitte zuerst einen Push-Titel eintragen.', variant: 'destructive' });
       return;
     }
     if (defaultValues.notification_sent_at) {
@@ -197,6 +191,14 @@ export function ImpulseDialog({ open, onOpenChange, onSubmit, defaultValues, tit
     if (!ok) return;
     setIsDispatching(true);
     try {
+      // Push-Titel/-Text aus dem Formular speichern, damit die Edge Function
+      // immer den aktuell eingegebenen Stand versendet.
+      const { error: saveError } = await supabase
+        .from('impulses')
+        .update({ notification_title: formTitle, notification_body: formBody || null })
+        .eq('id', defaultValues.id);
+      if (saveError) throw saveError;
+
       const { data, error } = await supabase.functions.invoke('dispatch-impulse-pushes', {
         body: { impulse_id: defaultValues.id },
       });
