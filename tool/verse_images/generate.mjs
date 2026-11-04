@@ -117,11 +117,17 @@ function supabase() {
   const headers = { apikey: key, Authorization: `Bearer ${key}` };
   return {
     async rows(from, to) {
-      const q = `${url}/rest/v1/verse_of_the_day?select=id,date,verse,reference,image_url,image_source_hash` +
-        `&date=gte.${from}&date=lte.${to}&order=date.asc`;
-      const res = await fetchRetry(q, { headers });
-      if (!res.ok) throw new Error(`select failed: ${res.status} ${await res.text()}`);
-      return res.json();
+      // PostgREST returns at most 1000 rows per request -> page through.
+      const all = [];
+      for (let offset = 0; ; offset += 1000) {
+        const q = `${url}/rest/v1/verse_of_the_day?select=id,date,verse,reference,image_url,image_source_hash` +
+          `&date=gte.${from}&date=lte.${to}&order=date.asc&limit=1000&offset=${offset}`;
+        const res = await fetchRetry(q, { headers });
+        if (!res.ok) throw new Error(`select failed: ${res.status} ${await res.text()}`);
+        const page = await res.json();
+        all.push(...page);
+        if (page.length < 1000) return all;
+      }
     },
     async upload(path, jpeg) {
       const res = await fetchRetry(`${url}/storage/v1/object/verse-images/${path}`, {
