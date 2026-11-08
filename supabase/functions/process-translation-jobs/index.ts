@@ -14,7 +14,7 @@
 //                                `translation_anthropic_api_key`
 //   TRANSLATION_WORKER_SECRET    optional override; by default the secret is
 //                                read from Vault (created by the migration)
-//   TRANSLATION_MODEL            optional, default claude-opus-5-5
+//   TRANSLATION_MODEL            optional, default claude-haiku-5-5
 //   TRANSLATION_EFFORT           optional, low|medium|high, default medium
 //
 // Actions (POST body):
@@ -28,7 +28,7 @@ import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.4
 
 // ─── Configuration ──────────────────────────────────────────────────────────
 
-const MODEL = Deno.env.get("TRANSLATION_MODEL") ?? "claude-opus-5-5";
+const MODEL = Deno.env.get("TRANSLATION_MODEL") ?? "claude-haiku-5-5";
 const EFFORT = (Deno.env.get("TRANSLATION_EFFORT") ?? "medium") as "low" | "medium" | "high";
 const MAX_ATTEMPTS = 8;
 const CLAIM_BATCH = 3;
