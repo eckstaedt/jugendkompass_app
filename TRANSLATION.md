@@ -71,7 +71,7 @@ Einmalig drei Repository-Secrets anlegen (GitHub → Settings → Secrets and va
 
 Danach: GitHub → *Actions* → *Supabase Deploy* → *Run workflow* (bzw. läuft automatisch beim nächsten Merge).
 
-Die Migration legt die Vault-Einträge (Projekt-URL + zufälliges Worker-Secret) selbst an und stellt **alle bestehenden Inhalte** in die Warteschlange. Optionale Function-Secrets: `TRANSLATION_MODEL` (Standard `claude-opus-5-5`), `TRANSLATION_EFFORT` (`low`/`medium`/`high`, Standard `medium`).
+Die Migration legt die Vault-Einträge (Projekt-URL + zufälliges Worker-Secret) selbst an und stellt **alle bestehenden Inhalte** in die Warteschlange. Optionale Function-Secrets: `TRANSLATION_MODEL` (Standard `claude-haiku-5-5`, günstigstes Modell; für höhere Qualität z. B. `claude-sonnet-5-5`), `TRANSLATION_EFFORT` (`low`/`medium`/`high`, Standard `medium`).
 
 <details><summary>Manuell ohne GitHub Actions</summary>
 
