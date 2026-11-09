@@ -22,6 +22,7 @@ import 'package:jugendkompass_app/core/services/fcm_service.dart'
     if (dart.library.html) 'package:jugendkompass_app/stubs/fcm_service_stub.dart';
 import 'package:jugendkompass_app/core/services/deep_link_service.dart';
 import 'package:jugendkompass_app/core/services/url_parser_service.dart';
+import 'package:jugendkompass_app/presentation/widgets/announcement/announcement_overlay.dart';
 
 class App extends ConsumerStatefulWidget {
   const App({super.key});
@@ -189,10 +190,12 @@ class _AppState extends ConsumerState<App> {
       builder: (context, child) {
         return Directionality(
           textDirection: language.isRtl ? TextDirection.rtl : TextDirection.ltr,
-          child: _MiniPlayerScaffold(
-            routeObserver: _routeObserver,
-            navigatorKey: _navigatorKey,
-            child: child ?? const SizedBox.shrink(),
+          child: AnnouncementOverlay(
+            child: _MiniPlayerScaffold(
+              routeObserver: _routeObserver,
+              navigatorKey: _navigatorKey,
+              child: child ?? const SizedBox.shrink(),
+            ),
           ),
         );
       },
