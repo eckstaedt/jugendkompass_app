@@ -32,8 +32,9 @@ final recentEditionsProvider =
     FutureProvider<List<EditionModel>>((ref) async {
   final repository = ref.watch(editionRepositoryProvider);
   final language = ref.watch(languageProvider).locale.languageCode;
-  // Get all localized editions and take first 10
-  final allEditions = await repository.getAllEditionsLocalized(language);
+  // Newest first (same order as the kiosk), then the latest 10.
+  final allEditions = [...await repository.getAllEditionsLocalized(language)]
+    ..sort((a, b) => b.publishedDate.compareTo(a.publishedDate));
   return allEditions.take(10).toList();
 });
 

@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/presentation/widgets/common/page_header.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,9 +39,6 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
   @override
   Widget build(BuildContext context) {
     final videosAsync = ref.watch(videosListProvider);
-    final theme = Theme.of(context);
-    final brightness = theme.brightness;
-    final textPrimary = DesignTokens.getTextPrimary(brightness);
     final translate = ref.watch(stringTranslatorProvider);
 
     return Scaffold(
@@ -49,19 +47,7 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
         child: Column(
           children: [
             // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  translate('Videos'),
-                  style: theme.textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: textPrimary,
-                  ),
-                ),
-              ),
-            ),
+            PageHeader(title: translate('Videos')),
 
             // Search Bar at Top
             Padding(
@@ -254,7 +240,7 @@ class _VideoCardState extends ConsumerState<VideoCard> {
           children: [
             // YouTube-style Thumbnail (16:9 aspect ratio)
             ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
               child: AspectRatio(
                 aspectRatio: 16 / 9,
                 child: Stack(
@@ -279,8 +265,8 @@ class _VideoCardState extends ConsumerState<VideoCard> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.7),
-                          borderRadius: BorderRadius.circular(2),
+                          color: Colors.black.withValues(alpha: 0.7),
+                          borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           _formatDuration(_duration),
@@ -292,12 +278,23 @@ class _VideoCardState extends ConsumerState<VideoCard> {
                       ),
                     ),
 
-                  // Play Icon (center)
-                  Center(
-                    child: Icon(
-                      Icons.play_circle_filled,
-                      color: Colors.white.withOpacity(0.8),
-                      size: 48,
+                  // Small play badge (bottom left) – keeps the title that is
+                  // usually printed in the thumbnail readable.
+                  Positioned(
+                    left: 8,
+                    bottom: 8,
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.55),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.play_arrow_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ),
                   ),
                 ],

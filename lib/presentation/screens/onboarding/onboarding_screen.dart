@@ -1,9 +1,9 @@
+import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/services/fcm_service.dart'
     if (dart.library.html) 'package:jugendkompass_app/stubs/fcm_service_stub.dart';
@@ -96,7 +96,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             const SizedBox(width: 12),
             Text(
               translate('Benachrichtigungen'),
-              style: GoogleFonts.inter(
+              style: AppFonts.uiStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 18,
               ),
@@ -105,7 +105,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         ),
         content: Text(
           translate('Damit du täglich deinen Bibelvers und Infos über neue Beiträge erhältst, benötigen wir deine Erlaubnis für Benachrichtigungen.'),
-          style: GoogleFonts.inter(
+          style: AppFonts.uiStyle(
             fontSize: 15,
             color: DesignTokens.getTextSecondary(brightness),
             height: 1.5,
@@ -224,7 +224,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       Text(
                         translate('Der Jugendkompass'),
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
+                        style: AppFonts.uiStyle(
                           textStyle: theme.textTheme.titleLarge?.copyWith(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w800,
@@ -243,7 +243,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       Text(
                         translate('Dein täglicher Begleiter für dein Glaubensleben.'),
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
+                        style: AppFonts.uiStyle(
                           textStyle: theme.textTheme.bodyMedium?.copyWith(
                                 color: DesignTokens.getTextSecondary(brightness),
                               ) ??
@@ -260,7 +260,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           onChanged: _onNameChanged,
                           onSubmitted: (_) => _onSubmit(),
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
+                          style: AppFonts.uiStyle(
                             textStyle: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w400,
@@ -268,7 +268,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           ),
                           decoration: InputDecoration(
                             hintText: translate('Wie heißt du?'),
-                            hintStyle: GoogleFonts.inter(
+                            hintStyle: AppFonts.uiStyle(
                               textStyle: TextStyle(
                                 color: DesignTokens.getTextSecondary(brightness),
                                 fontSize: 16,

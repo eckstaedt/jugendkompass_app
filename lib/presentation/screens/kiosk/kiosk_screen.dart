@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/presentation/widgets/common/page_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
@@ -18,7 +19,6 @@ class KioskScreen extends ConsumerWidget {
     ref.watch(languageProvider);
     final translate = ref.watch(stringTranslatorProvider);
     final editionsAsync = ref.watch(editionsListProvider);
-    final theme = Theme.of(context);
 
     return Scaffold(
       body: SafeArea(
@@ -45,20 +45,7 @@ class KioskScreen extends ConsumerWidget {
                 slivers: [
                   // Header
                   SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        DesignTokens.paddingHorizontal,
-                        40,
-                        DesignTokens.paddingHorizontal,
-                        24,
-                      ),
-                      child: Text(
-                        translate('Alle Ausgaben'),
-                        style: theme.textTheme.displaySmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
+                    child: PageHeader(title: translate('Alle Ausgaben')),
                   ),
 
                   // Magazine Grid

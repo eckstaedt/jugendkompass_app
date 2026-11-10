@@ -1,9 +1,10 @@
+import 'package:jugendkompass_app/presentation/widgets/common/page_header.dart';
+import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/services/device_registration_service.dart';
 import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
@@ -46,14 +47,20 @@ class ProfileScreen extends ConsumerWidget {
 
     return Scaffold(
       extendBody: true,
-      appBar: AppBar(
-        title: Text(translate('Einstellungen')),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-      ),
-      body: ListView(
-        padding: EdgeInsets.symmetric(horizontal: DesignTokens.paddingHorizontal, vertical: DesignTokens.spacingMedium),
+      body: SafeArea(
+        bottom: false,
+        child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          DesignTokens.paddingHorizontal,
+          0,
+          DesignTokens.paddingHorizontal,
+          DesignTokens.spacingMedium,
+        ),
         children: [
+          PageHeader(
+            title: translate('Einstellungen'),
+            padding: const EdgeInsets.fromLTRB(0, 24, 0, 16),
+          ),
           // App-wide Search Bar
           RoundedCard(
             glass: true,
@@ -96,7 +103,7 @@ class ProfileScreen extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
                 translate('BENACHRICHTIGUNGEN'),
-                style: GoogleFonts.inter(
+                style: AppFonts.uiStyle(
                   textStyle: theme.textTheme.labelMedium?.copyWith(
                     color: textSecondary,
                     letterSpacing: 1.2,
@@ -249,7 +256,7 @@ class ProfileScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(
               translate('EINSTELLUNGEN'),
-              style: GoogleFonts.inter(
+              style: AppFonts.uiStyle(
                 textStyle: theme.textTheme.labelMedium?.copyWith(
                   color: textSecondary,
                   letterSpacing: 1.2,
@@ -399,7 +406,7 @@ class ProfileScreen extends ConsumerWidget {
               children: [
                 Text(
                   translate('GEFAHRENBEREICH'),
-                  style: GoogleFonts.inter(
+                  style: AppFonts.uiStyle(
                     textStyle: theme.textTheme.labelMedium?.copyWith(
                       color: DesignTokens.primaryRed,
                       letterSpacing: 1.2,
@@ -422,7 +429,7 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Text(
                   translate('Löscht alle deine lokalen Daten und setzt die App zurück.'),
-                  style: GoogleFonts.inter(
+                  style: AppFonts.uiStyle(
                     textStyle: theme.textTheme.bodySmall?.copyWith(
                       color: textSecondary,
                     ),
@@ -450,6 +457,7 @@ class ProfileScreen extends ConsumerWidget {
                 : DesignTokens.overlayPaddingBase,
           ),
         ],
+        ),
       ),
     );
   }
@@ -735,7 +743,7 @@ class _HourPickerDialogState extends State<_HourPickerDialog> {
       ),
       title: Text(
         widget.title,
-        style: GoogleFonts.inter(
+        style: AppFonts.uiStyle(
           fontWeight: FontWeight.w600,
           fontSize: 16,
         ),
@@ -761,7 +769,7 @@ class _HourPickerDialogState extends State<_HourPickerDialog> {
               return Center(
                 child: Text(
                   '${index.toString().padLeft(2, '0')}:00',
-                  style: GoogleFonts.inter(
+                  style: AppFonts.uiStyle(
                     fontSize: isSelected ? 24 : 18,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
                     color: isSelected

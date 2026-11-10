@@ -1,7 +1,7 @@
+import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
@@ -147,7 +147,7 @@ class _SubscriptionFormScreenState
           padding: const EdgeInsets.only(top: 24, bottom: 8),
           child: Text(
             text,
-            style: GoogleFonts.poppins(
+            style: AppFonts.uiStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: DesignTokens.primaryRed,
@@ -176,7 +176,7 @@ class _SubscriptionFormScreenState
             const SizedBox(height: 8),
             Text(
               translate('Das Heft bequem zu dir nach Hause bestellen'),
-              style: GoogleFonts.poppins(
+              style: AppFonts.uiStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
                 height: 1.4,

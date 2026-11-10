@@ -174,7 +174,7 @@ const Map<String, String> heTranslations = {
   'no_audio_content': 'עדיין אין תוכן שמע זמין.',
   'loading_audios': 'טוען אודיו...',
   'app_title': 'מצפן נוער',
-  'lets_go': 'בוא נלך 🚀',
+  'lets_go': 'בוא נלך',
   'no_impulses_message': 'כרגע אין השראות להצגה.',
   'loading_impulses': 'טוען השראות...',
   'error_loading_impulses': 'שגיאה בטעינת ההשראות',

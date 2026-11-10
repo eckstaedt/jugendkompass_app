@@ -1,7 +1,7 @@
+import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
@@ -70,7 +70,7 @@ class _BibleReadingPlanScreenState extends ConsumerState<BibleReadingPlanScreen>
             Text(
               translate('Die ganze Bibel in einem Jahr'),
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
+              style: AppFonts.uiStyle(
                 textStyle: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                 ),
@@ -103,7 +103,7 @@ class _BibleReadingPlanScreenState extends ConsumerState<BibleReadingPlanScreen>
                   ),
                 ),
                 child: Text(
-                  '${translate('Bibelleseplan starten')} 🚀',
+                  translate('Bibelleseplan starten'),
                   style: theme.textTheme.titleMedium?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w700,
@@ -188,7 +188,7 @@ class _BibleReadingPlanScreenState extends ConsumerState<BibleReadingPlanScreen>
                     Text(
                       context.tr('day_number', {'day': '${day.dayNumber}'}),
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
+                      style: AppFonts.uiStyle(
                         textStyle: theme.textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
@@ -281,7 +281,7 @@ class _BibleReadingPlanScreenState extends ConsumerState<BibleReadingPlanScreen>
                     if (nowChecked && allChecked) {
                       SnackBarUtils.showSuccessBottom(
                         context,
-                        '${context.tr('day_completed', {'day': '${day.dayNumber}'})} 🎉',
+                        context.tr('day_completed', {'day': '${day.dayNumber}'}),
                       );
                     }
                   },

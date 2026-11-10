@@ -194,6 +194,7 @@ class _VerseCardState extends State<VerseCard>
         child: FadeTransition(
           opacity: _opacityAnimation,
           child: RoundedCard(
+            radius: DesignTokens.radiusVerseCard,
             padding: const EdgeInsets.all(DesignTokens.spacingMedium),
             glass: true,
             backgroundColor: DesignTokens.glassBackgroundDeep(0.30),
@@ -207,6 +208,7 @@ class _VerseCardState extends State<VerseCard>
             children: [
               BadgeWidget(
                 label: context.tr('verse_of_day_badge'),
+                accent: true,
               ),
               const Spacer(),
               IconButton(

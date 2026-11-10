@@ -38,18 +38,19 @@ class EditionCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-          // Cover Image with rounded corners - LARGE BORDER RADIUS
+          // Cover in the print format of the magazine (A4, 1 : 1.414) with
+          // a small radius, so the cover art is not clipped.
           AspectRatio(
-            aspectRatio: 0.72,
+            aspectRatio: 1 / 1.414,
             child: Stack(
               children: [
                 Container(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
                     boxShadow: [DesignTokens.shadowGlass],
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
+                    borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
                     child: edition.coverImageUrl != null
                         ? CorsNetworkImage(
                             imageUrl: edition.coverImageUrl!,

@@ -5,6 +5,8 @@ class DesignTokens {
   // ⸻ FARBPALETTE - LIGHT MODE
   static const Color primaryRed = Color(0xFF8B0000);
   static const Color primaryRedActive = Color(0xFF7A0000);
+  /// Readable red for text/links on dark backgrounds.
+  static const Color primaryRedOnDark = Color(0xFFFF6B6B);
   static const Color redBackground = Color(0xFFF2DCDC);
   
   static const Color appBackground = Color(0xFFF0F0F3);
@@ -13,6 +15,14 @@ class DesignTokens {
   static const Color textPrimary = Color(0xFF111111);
   static const Color textSecondary = Color(0xFF6F7479);
   static const Color iconGrey = Color(0xFF9AA0A6);
+
+  // Neutral chip / tag colors (red is reserved for primary actions and the
+  // active state).
+  static const Color chipBackground = Color(0xFFECEDEF);
+  static const Color darkChipBackground = Color(0xFF2A2A2C);
+
+  static Color getChipBackground(Brightness brightness) =>
+      brightness == Brightness.dark ? darkChipBackground : chipBackground;
 
   // Badge colors
   static const Color pollBadgeColor = Color(0xFF7C3AED); // Purple for polls
@@ -32,14 +42,22 @@ class DesignTokens {
   // Dark mode red background (more visible for dark theme)
   static const Color darkRedBackground = Color(0xFF4A1818);
 
-  // ⸻ BORDER RADIUS SYSTEM (iOS 26 Liquid Glass Design)
-  static const double radiusLargeCards = 40; // Increased for flowing iOS 26 aesthetic
-  static const double radiusMiddleContainers = 32; // Increased for consistency
-  static const double radiusButtons = 24; // Rounded button appearance
-  static const double radiusInputFields = 20; // Smooth input fields
-  static const double radiusBadges = 50; // Full pill-style badges
+  // ⸻ BORDER RADIUS SYSTEM
+  // Three steps only – small (12), medium (16), large (24) – so shapes feel
+  // deliberate instead of "everything maximally rounded".
+  static const double radiusSmall = 12;
+  static const double radiusMedium = 16;
+  static const double radiusLarge = 24;
+
+  static const double radiusLargeCards = radiusLarge; // big cards, search bar
+  static const double radiusMiddleContainers = radiusMedium; // tiles, images, list cards
+  static const double radiusButtons = radiusMedium;
+  static const double radiusInputFields = radiusSmall;
+  static const double radiusBadges = 6; // small tag shape, not a pill
   static const double radiusFloatingButton = 100; // Perfect circles
-  static const double radiusNavBar = 40; // iOS 26 navbar radius
+  static const double radiusNavBar = 40; // floating pill navbar
+  /// The verse-of-the-day card keeps its original, larger radius.
+  static const double radiusVerseCard = 40;
 
   // ⸻ SHADOW SYSTEM - iOS 26 Liquid Glass Aesthetic
   

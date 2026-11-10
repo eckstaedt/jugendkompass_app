@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'package:jugendkompass_app/core/localization/localization_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -24,7 +25,6 @@ import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image
 import 'package:jugendkompass_app/presentation/widgets/common/like_button.dart';
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 
-import 'package:google_fonts/google_fonts.dart';
 
 class EditionDetailScreen extends ConsumerStatefulWidget {
   final EditionModel edition;
@@ -74,7 +74,7 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
       appBar: AppBar(
         title: Text(
           HtmlUtils.stripHtml(edition.displayTitle),
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          style: AppFonts.uiStyle(fontWeight: FontWeight.w600),
         ),
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -231,7 +231,7 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
     final cardBg = DesignTokens.getCardBackground(brightness);
     final textPrimary = DesignTokens.getTextPrimary(brightness);
     final textSecondary = DesignTokens.getTextSecondary(brightness);
-    final redBg = DesignTokens.getRedBackground(brightness);
+    final chipBg = DesignTokens.getChipBackground(brightness);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -307,12 +307,12 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: redBg,
-                                  borderRadius: BorderRadius.circular(4),
+                                  color: chipBg,
+                                  borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
                                 ),
                                 child: Text(
                                   tag.toUpperCase(),
-                                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: DesignTokens.primaryRed),
+                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: textSecondary),
                                 ),
                               ),
                             ))

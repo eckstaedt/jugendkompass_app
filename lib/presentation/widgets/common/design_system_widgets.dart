@@ -135,6 +135,9 @@ class RoundedCard extends StatefulWidget {
   /// blurred backdrop and semi-translucent background colour.
   final bool glass;
 
+  /// Corner radius; defaults to [DesignTokens.radiusLargeCards].
+  final double? radius;
+
   const RoundedCard({
     super.key,
     required this.child,
@@ -143,6 +146,7 @@ class RoundedCard extends StatefulWidget {
     this.onTap,
     this.withShadow = true,
     this.glass = false,
+    this.radius,
   });
 
   @override
@@ -172,6 +176,7 @@ class _RoundedCardState extends State<RoundedCard> {
         ? DesignTokens.darkCardBackground
         : const Color(0xFFFFFFFF));
     final scale = _pressed ? 0.96 : 1.0;
+    final radius = widget.radius ?? DesignTokens.radiusLargeCards;
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -185,7 +190,7 @@ class _RoundedCardState extends State<RoundedCard> {
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
             color: widget.glass ? Colors.transparent : bg,
-            borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
+            borderRadius: BorderRadius.circular(radius),
             border: widget.glass
               ? DesignTokens.cardBorder(brightness)
               : DesignTokens.cardBorder(brightness),
@@ -194,7 +199,7 @@ class _RoundedCardState extends State<RoundedCard> {
                 : [DesignTokens.shadowGlass],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
+              borderRadius: BorderRadius.circular(radius),
               child: widget.glass
                   ? BackdropFilter(
                       filter: ImageFilter.blur(
@@ -205,7 +210,7 @@ class _RoundedCardState extends State<RoundedCard> {
                           color: brightness == Brightness.dark
                             ? DesignTokens.glassDarkBackground(0.16)
                             : DesignTokens.glassBackground(0.22),
-                          borderRadius: BorderRadius.circular(DesignTokens.radiusLargeCards),
+                          borderRadius: BorderRadius.circular(radius),
                         ),
                         child: Padding(
                           padding: widget.padding ?? const EdgeInsets.all(DesignTokens.spacingMedium),
@@ -231,12 +236,17 @@ class BadgeWidget extends StatelessWidget {
   final Color? textColor;
   final IconData? icon;
 
+  /// Red pill highlight (verse of the day label, "new" marker). Default
+  /// badges are neutral tags.
+  final bool accent;
+
   const BadgeWidget({
     super.key,
     required this.label,
     this.backgroundColor,
     this.textColor,
     this.icon,
+    this.accent = false,
   });
 
   @override
@@ -244,12 +254,15 @@ class BadgeWidget extends StatelessWidget {
     final brightness = Theme.of(context).brightness;
     final isDark = brightness == Brightness.dark;
 
-    // Dark mode: use white text on solid red background for maximum contrast
-    // Light mode: use dark red text on light red background
+    // Neutral by default – red is reserved for primary actions / active state.
     final badgeBgColor = backgroundColor ??
-        (isDark ? DesignTokens.primaryRed : DesignTokens.getRedBackground(brightness));
+        (accent
+            ? (isDark ? DesignTokens.primaryRed : DesignTokens.getRedBackground(brightness))
+            : DesignTokens.getChipBackground(brightness));
     final badgeTextColor = textColor ??
-        (isDark ? Colors.white : DesignTokens.primaryRed);
+        (accent
+            ? (isDark ? Colors.white : DesignTokens.primaryRed)
+            : (isDark ? DesignTokens.darkTextSecondary : DesignTokens.textSecondary));
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -258,7 +271,7 @@ class BadgeWidget extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: badgeBgColor,
-        borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
+        borderRadius: BorderRadius.circular(accent ? 50 : DesignTokens.radiusBadges),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

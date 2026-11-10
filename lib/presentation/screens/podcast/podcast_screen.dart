@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/presentation/widgets/common/page_header.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -102,16 +103,7 @@ class PodcastScreen extends ConsumerWidget {
                 slivers: [
                   // Header
                   SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
-                      child: Text(
-                        translate('Podcast'),
-                        style: theme.textTheme.displaySmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: DesignTokens.getTextPrimary(brightness),
-                        ),
-                      ),
-                    ),
+                    child: PageHeader(title: translate('Podcast')),
                   ),
 
                   // Search Bar
@@ -449,17 +441,18 @@ class _PodcastListItem extends ConsumerWidget {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: isDark
-                                          ? DesignTokens.primaryRed
-                                          : DesignTokens.primaryRed.withOpacity(0.1),
+                                      color: DesignTokens.getChipBackground(
+                                          Theme.of(context).brightness),
                                       borderRadius: BorderRadius.circular(
                                           DesignTokens.radiusBadges),
                                     ),
                                     child: Text(
                                       tag,
                                       style: theme.textTheme.labelSmall?.copyWith(
-                                        color: isDark ? Colors.white : DesignTokens.primaryRed,
-                                        fontWeight: FontWeight.bold,
+                                        color: isDark
+                                            ? DesignTokens.darkTextSecondary
+                                            : DesignTokens.textSecondary,
+                                        fontWeight: FontWeight.w600,
                                         letterSpacing: 0.5,
                                       ),
                                     ),

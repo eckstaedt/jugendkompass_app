@@ -1,6 +1,6 @@
+import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -115,7 +115,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen>
                   children: [
                     Text(
                       context.tr('order_placed'),
-                      style: GoogleFonts.poppins(
+                      style: AppFonts.uiStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
                         height: 1.2,

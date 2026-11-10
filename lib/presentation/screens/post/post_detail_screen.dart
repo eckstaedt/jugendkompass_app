@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -19,7 +20,6 @@ import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 import 'package:jugendkompass_app/domain/providers/post_view_count_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/like_button.dart';
 
-import 'package:google_fonts/google_fonts.dart';
 
 class PostDetailScreen extends ConsumerStatefulWidget {
   final PostModel post;
@@ -66,7 +66,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
       appBar: AppBar(
         title: Text(
           HtmlUtils.stripHtml(displayTitle),
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          style: AppFonts.uiStyle(fontWeight: FontWeight.w600),
         ),
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -129,7 +129,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
             // Title
             Text(
               HtmlUtils.stripHtml(displayTitle),
-              style: GoogleFonts.poppins(
+              style: AppFonts.uiStyle(
                 textStyle: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: theme.colorScheme.onSurface,

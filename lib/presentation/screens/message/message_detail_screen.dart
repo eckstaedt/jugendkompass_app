@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,7 +16,6 @@ import 'package:jugendkompass_app/domain/providers/post_view_count_provider.dart
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/html_inline_image.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/like_button.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 class MessageDetailScreen extends ConsumerStatefulWidget {
@@ -65,7 +65,7 @@ class _MessageDetailScreenState extends ConsumerState<MessageDetailScreen> {
       appBar: AppBar(
         title: Text(
           HtmlUtils.stripHtml(message.displayTitle),
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          style: AppFonts.uiStyle(fontWeight: FontWeight.w600),
         ),
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -128,7 +128,7 @@ class _MessageDetailScreenState extends ConsumerState<MessageDetailScreen> {
             if (message.title != null && message.title!.isNotEmpty) ...[
               Text(
                 message.title!,
-                style: GoogleFonts.poppins(
+                style: AppFonts.uiStyle(
                   textStyle: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: textColor,
@@ -142,7 +142,7 @@ class _MessageDetailScreenState extends ConsumerState<MessageDetailScreen> {
               children: [
                 Text(
                   dateFormat.format(message.createdAt),
-                  style: GoogleFonts.poppins(
+                  style: AppFonts.uiStyle(
                     textStyle: theme.textTheme.bodySmall?.copyWith(
                       color: textSecondary,
                     ),
@@ -156,7 +156,7 @@ class _MessageDetailScreenState extends ConsumerState<MessageDetailScreen> {
                           ? const SizedBox.shrink()
                           : Text(
                               ' · ${_formatViewCount(count)}',
-                              style: GoogleFonts.poppins(
+                              style: AppFonts.uiStyle(
                                 textStyle: theme.textTheme.bodySmall?.copyWith(
                                   color: textSecondary,
                                 ),

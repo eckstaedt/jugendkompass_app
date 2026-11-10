@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,8 +20,10 @@ import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.da
     show kVideoPlayerRouteName;
 import 'package:jugendkompass_app/presentation/navigation/fade_page_route.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
+import 'package:jugendkompass_app/domain/providers/bottom_nav_provider.dart';
+import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
+import 'package:jugendkompass_app/presentation/screens/kiosk/widgets/edition_card.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -136,9 +139,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       child: Text(
                         '${translate('Shalom')}, ${userName ?? translate('Benutzer')}',
-                        style: GoogleFonts.poppins(
+                        style: AppFonts.uiStyle(
                           textStyle: theme.textTheme.displaySmall?.copyWith(
+                                fontSize: 30,
                                 fontWeight: FontWeight.w800,
+                                letterSpacing: -0.5,
                               ) ??
                               const TextStyle(fontWeight: FontWeight.w800),
                         ),
@@ -212,17 +217,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   // Impulses Section Header
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        DesignTokens.paddingHorizontal,
-                        DesignTokens.spacingMedium,
-                        DesignTokens.paddingHorizontal,
-                        DesignTokens.spacingSmall,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: DesignTokens.paddingHorizontal,
                       ),
                       child: Text(
                         translate('Impulse'),
-                        style: GoogleFonts.poppins(
+                        style: AppFonts.uiStyle(
                           textStyle: theme.textTheme.headlineSmall?.copyWith(
+                                fontSize: 22,
                                 fontWeight: FontWeight.w700,
+                                letterSpacing: -0.3,
                               ) ??
                               const TextStyle(fontWeight: FontWeight.w700),
                         ),
@@ -282,20 +286,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                   const SliverToBoxAdapter(child: SizedBox(height: 32)),
 
+                  // ── Editions (latest magazine covers) ────────────────
+                  const SliverToBoxAdapter(child: _HomeEditionsSection()),
+
+                  const SliverToBoxAdapter(child: SizedBox(height: 32)),
+
                   // ── Unified "Neueste Beiträge" Section ──────────────
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        DesignTokens.paddingHorizontal,
-                        DesignTokens.spacingMedium,
-                        DesignTokens.paddingHorizontal,
-                        DesignTokens.spacingSmall,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: DesignTokens.paddingHorizontal,
                       ),
                       child: Text(
                         translate('Neueste Beiträge'),
-                        style: GoogleFonts.poppins(
+                        style: AppFonts.uiStyle(
                           textStyle: theme.textTheme.headlineSmall?.copyWith(
+                                fontSize: 22,
                                 fontWeight: FontWeight.w700,
+                                letterSpacing: -0.3,
                               ) ??
                               const TextStyle(fontWeight: FontWeight.w700),
                         ),
@@ -430,5 +438,71 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       );
     }
+  }
+}
+
+
+/// Horizontal row with the latest editions (magazine covers in print format).
+class _HomeEditionsSection extends ConsumerWidget {
+  const _HomeEditionsSection();
+
+  static const double _cardWidth = 132;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final editions = ref.watch(recentEditionsProvider).valueOrNull;
+    if (editions == null || editions.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: DesignTokens.paddingHorizontal),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  context.tr('home_editions'),
+                  style: AppFonts.uiStyle(
+                    textStyle: theme.textTheme.headlineSmall,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => ref.read(bottomNavIndexProvider.notifier).setIndex(1),
+                style: TextButton.styleFrom(
+                  foregroundColor: theme.brightness == Brightness.dark
+                      ? DesignTokens.primaryRedOnDark
+                      : DesignTokens.primaryRed,
+                ),
+                child: Text(
+                  context.tr('home_show_all'),
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          // cover (A4) + gap + two lines of title
+          height: _cardWidth * 1.414 + DesignTokens.spacingSmall + 48,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: DesignTokens.paddingHorizontal),
+            itemCount: editions.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 16),
+            itemBuilder: (context, index) => SizedBox(
+              width: _cardWidth,
+              child: EditionCard(edition: editions[index]),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

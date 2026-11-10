@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,7 +17,6 @@ import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/domain/providers/post_view_count_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/like_button.dart';
 
-import 'package:google_fonts/google_fonts.dart';
 
 class ImpulseDetailScreen extends ConsumerStatefulWidget {
   final ImpulseModel impulse;
@@ -68,7 +68,7 @@ class _ImpulseDetailScreenState extends ConsumerState<ImpulseDetailScreen> {
       appBar: AppBar(
         title: Text(
           HtmlUtils.stripHtml(displayTitle),
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          style: AppFonts.uiStyle(fontWeight: FontWeight.w600),
         ),
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -131,7 +131,7 @@ class _ImpulseDetailScreenState extends ConsumerState<ImpulseDetailScreen> {
             // Title
             Text(
               HtmlUtils.stripHtml(displayTitle),
-              style: GoogleFonts.poppins(
+              style: AppFonts.uiStyle(
                 textStyle: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: theme.colorScheme.onSurface,
@@ -155,7 +155,7 @@ class _ImpulseDetailScreenState extends ConsumerState<ImpulseDetailScreen> {
                       ];
                       return Text(
                         parts.join('  ·  '),
-                        style: GoogleFonts.poppins(
+                        style: AppFonts.uiStyle(
                           textStyle: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                             fontSize: 13,

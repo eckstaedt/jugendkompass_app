@@ -12,6 +12,7 @@ class AppTheme {
   // ⸻ LIGHT THEME - Modern, Soft, Premium Minimal
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
+    fontFamily: 'Inter',
     scaffoldBackgroundColor: DesignTokens.appBackground,
     
     // Color Scheme
@@ -306,6 +307,7 @@ class AppTheme {
   // ⸻ DARK THEME - Premium Dark Minimal
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
+    fontFamily: 'Inter',
     scaffoldBackgroundColor: DesignTokens.darkAppBackground,
     
     colorScheme: ColorScheme.dark(

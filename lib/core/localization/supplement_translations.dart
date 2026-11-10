@@ -5,6 +5,25 @@
 /// `test/localization_test.dart` enforces that every key used in the app is
 /// available in every [AppLanguage].
 const Map<String, Map<String, String>> supplementTranslations = {
+  // ── Home ─────────────────────────────────────────────────────────────────
+  'home_editions': {
+    'de': 'Ausgaben',
+    'en': 'Editions',
+    'ru': 'Выпуски',
+    'es': 'Ediciones',
+    'pl': 'Wydania',
+    'tr': 'Sayılar',
+    'he': 'גיליונות',
+  },
+  'home_show_all': {
+    'de': 'Alle',
+    'en': 'All',
+    'ru': 'Все',
+    'es': 'Todas',
+    'pl': 'Wszystkie',
+    'tr': 'Tümü',
+    'he': 'הכול',
+  },
   // ── In-app popups ────────────────────────────────────────────────────────
   'announcement_ok': {
     'de': 'Verstanden',
@@ -279,13 +298,13 @@ const Map<String, Map<String, String>> supplementTranslations = {
   'item': {'de': 'Element', 'en': 'item', 'ru': 'элемент', 'es': 'elemento', 'pl': 'element', 'tr': 'öğe', 'he': 'פריט'},
   'items': {'de': 'Elemente', 'en': 'items', 'ru': 'элементов', 'es': 'elementos', 'pl': 'elementów', 'tr': 'öğe', 'he': 'פריטים'},
   'lets_go': {
-    'de': "Los geht's 🚀",
-    'en': "Let's go 🚀",
-    'ru': 'Поехали 🚀',
-    'es': '¡Vamos! 🚀',
-    'pl': 'Zaczynamy 🚀',
-    'tr': 'Haydi başlayalım 🚀',
-    'he': 'יאללה 🚀',
+    'de': "Los geht's",
+    'en': "Let's go",
+    'ru': 'Поехали',
+    'es': '¡Vamos!',
+    'pl': 'Zaczynamy',
+    'tr': 'Haydi başlayalım',
+    'he': 'יאללה',
   },
   'like_verse_to_save': {
     'de': 'Like den Vers des Tages, um ihn hier zu speichern',
@@ -908,13 +927,13 @@ const Map<String, Map<String, String>> supplementTranslations = {
     'he': 'ההזמנה בוצעה!',
   },
   'order_placed_message': {
-    'de': 'Deine Bestellung wurde erfolgreich aufgegeben. Du erhältst dein Heft bald per Post. 📬',
-    'en': 'Your order was placed successfully. Your magazine will arrive by post soon. 📬',
-    'ru': 'Твой заказ успешно оформлен. Скоро ты получишь журнал по почте. 📬',
-    'es': 'Tu pedido se ha realizado correctamente. Pronto recibirás tu revista por correo. 📬',
-    'pl': 'Twoje zamówienie zostało złożone. Wkrótce otrzymasz magazyn pocztą. 📬',
-    'tr': 'Siparişin başarıyla verildi. Dergin yakında postayla gelecek. 📬',
-    'he': 'ההזמנה שלך בוצעה בהצלחה. המגזין יגיע אליך בדואר בקרוב. 📬',
+    'de': 'Deine Bestellung wurde erfolgreich aufgegeben. Du erhältst dein Heft bald per Post.',
+    'en': 'Your order was placed successfully. Your magazine will arrive by post soon.',
+    'ru': 'Твой заказ успешно оформлен. Скоро ты получишь журнал по почте.',
+    'es': 'Tu pedido se ha realizado correctamente. Pronto recibirás tu revista por correo.',
+    'pl': 'Twoje zamówienie zostało złożone. Wkrótce otrzymasz magazyn pocztą.',
+    'tr': 'Siparişin başarıyla verildi. Dergin yakında postayla gelecek.',
+    'he': 'ההזמנה שלך בוצעה בהצלחה. המגזין יגיע אליך בדואר בקרוב.',
   },
   'donate_for_edition': {
     'de': 'Für diese Ausgabe spenden',

@@ -231,7 +231,6 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
                               const SizedBox(height: 8),
                               Builder(
                                 builder: (context) {
-                                  final isDark = Theme.of(context).brightness == Brightness.dark;
                                   return Wrap(
                                     spacing: 8,
                                     runSpacing: 4,
@@ -239,8 +238,7 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
                                       if (isNew)
                                         BadgeWidget(
                                           label: context.tr('new_badge'),
-                                          backgroundColor: isDark ? DesignTokens.primaryRed : null,
-                                          textColor: isDark ? Colors.white : null,
+                                          accent: true,
                                         ),
                                       BadgeWidget(
                                         label: item.isVideo
@@ -248,8 +246,6 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
                                           : item.isKurznachricht
                                             ? context.tr('short_message_badge')
                                             : context.tr('article_badge'),
-                                        backgroundColor: isDark ? DesignTokens.primaryRed : null,
-                                        textColor: isDark ? Colors.white : null,
                                       ),
                                       if (item.hasAudio)
                                         BadgeWidget(
