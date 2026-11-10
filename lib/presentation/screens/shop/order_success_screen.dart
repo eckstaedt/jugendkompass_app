@@ -1,6 +1,8 @@
 import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -165,7 +167,15 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen>
                 ),
               ),
 
-              SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
+              // Keep the button above the floating navbar (and the mini
+              // player when audio is playing).
+              Consumer(
+                builder: (context, ref, _) => SizedBox(
+                  height: ref.watch(currentAudioProvider) != null
+                      ? DesignTokens.overlayPaddingWithMiniPlayer
+                      : DesignTokens.overlayPaddingBase,
+                ),
+              ),
             ],
           ),
         ),
