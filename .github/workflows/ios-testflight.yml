@@ -35,6 +35,8 @@ concurrency:
 env:
   BUNDLE_ID: io.stephanus.jugendkompass
   WIDGET_BUNDLE_ID: io.stephanus.jugendkompass.VerseWidget
+  # Notification Service Extension (shows images in push notifications)
+  NSE_BUNDLE_ID: io.stephanus.jugendkompass.NotificationService
   APP_STORE_APP_ID: "1559123537"
   APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
   APP_STORE_CONNECT_KEY_IDENTIFIER: ${{ secrets.APP_STORE_CONNECT_KEY_IDENTIFIER }}
@@ -103,6 +105,14 @@ jobs:
             --certificate-key=@env:CERTIFICATE_PRIVATE_KEY \
             --create
           app-store-connect fetch-signing-files "$WIDGET_BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --certificate-key=@env:CERTIFICATE_PRIVATE_KEY \
+            --create
+          # Register the notification extension's bundle ID once (ignore
+          # "already exists"), then fetch/create its profile.
+          app-store-connect bundle-ids create "$NSE_BUNDLE_ID" \
+            --name "Jugendkompass Notification Service" --platform IOS || true
+          app-store-connect fetch-signing-files "$NSE_BUNDLE_ID" \
             --type IOS_APP_STORE \
             --certificate-key=@env:CERTIFICATE_PRIVATE_KEY \
             --create

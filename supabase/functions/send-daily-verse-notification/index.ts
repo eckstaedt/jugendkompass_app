@@ -226,13 +226,16 @@ serve(async (_req) => {
 
       console.log(`[verse] Sending ${language}: "${title}" to ${tokens.length} devices`)
 
+      // The verse always has an image (auto-generated or uploaded).
+      const imageUrl: string | null = (verseData.image_url as string) || null
+
       // Send to each token
       for (const token of tokens) {
         try {
           const message = {
             message: {
               token,
-              notification: { title, body },
+              notification: { title, body, ...(imageUrl ? { image: imageUrl } : {}) },
               // Data payload for deep linking
               data: {
                 contentType: 'verse',
@@ -242,14 +245,18 @@ serve(async (_req) => {
                 notification: {
                   sound: "default",
                   channel_id: "verse_of_day",
+                  ...(imageUrl ? { image: imageUrl } : {}),
                 },
               },
               apns: {
                 payload: {
                   aps: {
                     sound: "default",
+                    // lets the Notification Service Extension attach the image
+                    ...(imageUrl ? { "mutable-content": 1 } : {}),
                   },
                 },
+                ...(imageUrl ? { fcm_options: { image: imageUrl } } : {}),
               },
             },
           }

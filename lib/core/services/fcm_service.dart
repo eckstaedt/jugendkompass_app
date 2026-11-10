@@ -1,8 +1,10 @@
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
-import 'dart:io' show Platform;
+import 'dart:io' show File, Platform;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:jugendkompass_app/core/services/device_registration_service.dart';
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
@@ -303,7 +305,7 @@ class FCMService {
   ///
   /// Firebase doesn't automatically show notifications when the app is in
   /// the foreground, so we show them manually via flutter_local_notifications.
-  void _handleForegroundMessage(RemoteMessage message) {
+  Future<void> _handleForegroundMessage(RemoteMessage message) async {
     debugPrint('[FCM] Foreground message: ${message.notification?.title}');
 
     final notification = message.notification;
@@ -315,15 +317,22 @@ class FCMService {
         ? '${data['contentType']}|${data['contentId']}'
         : null;
 
+    // Image of the push (if any) – shown big on Android, attached on iOS.
+    final imageUrl = notification.android?.imageUrl ??
+        notification.apple?.imageUrl ??
+        data['image'] as String?;
+    final imagePath = imageUrl == null ? null : await _downloadImage(imageUrl);
+
     _localNotifications.show(
       notification.hashCode,
       notification.title,
       notification.body,
       NotificationDetails(
-        iOS: const DarwinNotificationDetails(
+        iOS: DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
+          attachments: imagePath == null ? null : [DarwinNotificationAttachment(imagePath)],
         ),
         android: AndroidNotificationDetails(
           'push_notifications',
@@ -331,10 +340,34 @@ class FCMService {
           channelDescription: AppTranslations.t('notification_channel_desc'),
           importance: Importance.high,
           priority: Priority.high,
+          largeIcon: imagePath == null ? null : FilePathAndroidBitmap(imagePath),
+          styleInformation: imagePath == null
+              ? null
+              : BigPictureStyleInformation(
+                  FilePathAndroidBitmap(imagePath),
+                  hideExpandedLargeIcon: true,
+                  contentTitle: notification.title,
+                  summaryText: notification.body,
+                ),
         ),
       ),
       payload: payload,
     );
+  }
+
+  /// Downloads a notification image to a temp file; null on failure.
+  Future<String?> _downloadImage(String url) async {
+    try {
+      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 8));
+      if (response.statusCode != 200 || response.bodyBytes.isEmpty) return null;
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/push_${url.hashCode.abs()}');
+      await file.writeAsBytes(response.bodyBytes);
+      return file.path;
+    } catch (e) {
+      debugPrint('[FCM] notification image failed: $e');
+      return null;
+    }
   }
 }
 

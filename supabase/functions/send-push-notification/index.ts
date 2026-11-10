@@ -206,7 +206,7 @@ function getNotificationContent(
       return {
         title: translation.title,
         body: (record.reference as string) || translation.fallback,
-        imageUrl: null,
+        imageUrl: (record.image_url as string) || null,
         data: { contentType: "verse", contentId },
       };
     }

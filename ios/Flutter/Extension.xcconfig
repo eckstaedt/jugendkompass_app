@@ -1,0 +1,4 @@
+// Build settings for app extensions (widget, notification service).
+// Only takes the version from Flutter (FLUTTER_BUILD_NAME / _NUMBER) so the
+// extensions always match the app version; no CocoaPods settings.
+#include? "Generated.xcconfig"

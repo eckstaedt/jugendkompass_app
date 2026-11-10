@@ -20,6 +20,8 @@
 		VW10000001 /* VerseWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = VW10000002 /* VerseWidget.swift */; };
 		VW10000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = VW10000004 /* Assets.xcassets */; };
 		VW10000005 /* VerseWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = VW10000006 /* VerseWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		NS10000001 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = NS10000002 /* NotificationService.swift */; };
+		NS10000005 /* NotificationService.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = NS10000006 /* NotificationService.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -36,6 +38,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = VW10000008;
 			remoteInfo = VerseWidgetExtension;
+		};
+		NS10000007 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = NS10000008;
+			remoteInfo = NotificationService;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -57,6 +66,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				VW10000005 /* VerseWidgetExtension.appex in Embed Foundation Extensions */,
+				NS10000005 /* NotificationService.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -93,6 +103,10 @@
 		VW10000004 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		VW10000006 /* VerseWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = VerseWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		VW1000000A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		NS10000002 /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		NS10000006 /* NotificationService.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationService.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		NS1000000A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		EX10000001 /* Extension.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Extension.xcconfig; path = Flutter/Extension.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -119,6 +133,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		NS1000000B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -138,6 +159,7 @@
 				7AFA3C8E1D35360C0083082E /* Release.xcconfig */,
 				F0E1D2C3B4A5968776655443 /* Profile.xcconfig */,
 				9740EEB31CF90195004384FC /* Generated.xcconfig */,
+				EX10000001 /* Extension.xcconfig */,
 			);
 			name = Flutter;
 			sourceTree = "<group>";
@@ -150,6 +172,7 @@
 				97C146EF1CF9000F007C117D /* Products */,
 				331C8082294A63A400263BE5 /* RunnerTests */,
 				VW1000000C /* VerseWidget */,
+				NS1000000C /* NotificationService */,
 				A9384DF8A681E5862E9917FE /* Pods */,
 				CD805D5200F5A0823FDC9D3F /* Frameworks */,
 			);
@@ -161,6 +184,7 @@
 				97C146EE1CF9000F007C117D /* Runner.app */,
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
 				VW10000006 /* VerseWidgetExtension.appex */,
+				NS10000006 /* NotificationService.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -213,6 +237,15 @@
 			path = VerseWidget;
 			sourceTree = "<group>";
 		};
+		NS1000000C /* NotificationService */ = {
+			isa = PBXGroup;
+			children = (
+				NS10000002 /* NotificationService.swift */,
+				NS1000000A /* Info.plist */,
+			);
+			path = NotificationService;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -254,6 +287,7 @@
 			);
 			dependencies = (
 				VW10000010 /* PBXTargetDependency */,
+				NS10000010 /* PBXTargetDependency */,
 			);
 			name = Runner;
 			productName = Runner;
@@ -277,6 +311,23 @@
 			productReference = VW10000006 /* VerseWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		NS10000008 /* NotificationService */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = NS1000000D /* Build configuration list for PBXNativeTarget "NotificationService" */;
+			buildPhases = (
+				NS1000000E /* Sources */,
+				NS1000000B /* Frameworks */,
+				NS1000000F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = NotificationService;
+			productName = NotificationService;
+			productReference = NS10000006 /* NotificationService.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -298,6 +349,9 @@
 					VW10000008 = {
 						CreatedOnToolsVersion = 15.0;
 					};
+					NS10000008 = {
+						CreatedOnToolsVersion = 15.0;
+					};
 				};
 			};
 			buildConfigurationList = 97C146E91CF9000F007C117D /* Build configuration list for PBXProject "Runner" */;
@@ -316,6 +370,7 @@
 				97C146ED1CF9000F007C117D /* Runner */,
 				331C8080294A63A400263BE5 /* RunnerTests */,
 				VW10000008 /* VerseWidgetExtension */,
+				NS10000008 /* NotificationService */,
 			);
 		};
 /* End PBXProject section */
@@ -345,6 +400,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				VW10000003 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		NS1000000F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -489,6 +551,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		NS1000000E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				NS10000001 /* NotificationService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -501,6 +571,11 @@
 			isa = PBXTargetDependency;
 			target = VW10000008 /* VerseWidgetExtension */;
 			targetProxy = VW10000007 /* PBXContainerItemProxy */;
+		};
+		NS10000010 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = NS10000008 /* NotificationService */;
+			targetProxy = NS10000007 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -815,6 +890,7 @@
 		};
 		VW10000011 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = EX10000001 /* Extension.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = AppIcon;
@@ -846,6 +922,7 @@
 		};
 		VW10000012 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = EX10000001 /* Extension.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = AppIcon;
@@ -875,6 +952,7 @@
 		};
 		VW10000013 /* Profile */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = EX10000001 /* Extension.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = AppIcon;
@@ -897,6 +975,87 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Profile;
+		};
+		NS10000011 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = EX10000001 /* Extension.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = MXM3YWAKPL;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = NotificationService/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = io.stephanus.jugendkompass.NotificationService;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		NS10000012 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = EX10000001 /* Extension.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = MXM3YWAKPL;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = NotificationService/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = io.stephanus.jugendkompass.NotificationService;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		NS10000013 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = EX10000001 /* Extension.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = MXM3YWAKPL;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = NotificationService/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = io.stephanus.jugendkompass.NotificationService;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -941,6 +1100,16 @@
 				VW10000011 /* Debug */,
 				VW10000012 /* Release */,
 				VW10000013 /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		NS1000000D /* Build configuration list for PBXNativeTarget "NotificationService" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				NS10000011 /* Debug */,
+				NS10000012 /* Release */,
+				NS10000013 /* Profile */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
