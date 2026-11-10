@@ -28,7 +28,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(opacity(), 1);
     final max = controller.position.maxScrollExtent;
-    expect(value(), closeTo(800 / max, 0.01));
+    // the image (first 300 px) does not count
+    expect(value(), closeTo((800 - 300) / (max - 300), 0.01));
+
+    controller.jumpTo(301); // just below the image → starts at ~0
+    await tester.pumpAndSettle();
+    expect(value(), lessThan(0.01));
 
     controller.jumpTo(max);
     await tester.pumpAndSettle();

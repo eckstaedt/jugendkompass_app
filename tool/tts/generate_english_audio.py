@@ -150,6 +150,39 @@ def split_long(paragraph: str, limit: int = 450) -> list[str]:
     return final
 
 
+# ─── Job status (table audio_tts_jobs, shown in the translation panel) ───────
+
+JOBS_AVAILABLE = True
+STALE_AFTER_S = 6 * 3600
+
+
+def now_iso() -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def load_jobs() -> dict:
+    """audio_id -> job row; empty when the table does not exist (yet)."""
+    global JOBS_AVAILABLE
+    try:
+        rows = rest("GET", f"/rest/v1/audio_tts_jobs?select=*&language=eq.{LANGUAGE}")
+        return {r["audio_id"]: r for r in rows}
+    except Exception as e:  # noqa: BLE001
+        JOBS_AVAILABLE = False
+        log(f"(job tracking off: {str(e)[:120]})")
+        return {}
+
+
+def set_job(audio_id: str, **fields):
+    if not JOBS_AVAILABLE:
+        return
+    body = {"audio_id": audio_id, "language": LANGUAGE, "updated_at": now_iso(), **fields}
+    try:
+        rest("POST", "/rest/v1/audio_tts_jobs?on_conflict=audio_id,language", body=body,
+             headers={"Prefer": "resolution=merge-duplicates,return=minimal"})
+    except Exception as e:  # noqa: BLE001
+        log(f"  (could not update job status: {str(e)[:120]})")
+
+
 # ─── Work list ───────────────────────────────────────────────────────────────
 
 def pending_items() -> list[dict]:
@@ -169,27 +202,43 @@ def pending_items() -> list[dict]:
         for r in rows:
             by_content.setdefault(r["content_id"], {})[r["field_name"]] = r["value"] or ""
 
+    jobs = load_jobs()
     items = []
     seen_audio = set()
     for p in posts:
         audio_id = p["audio_id"]
         if audio_id in seen_audio:
             continue
+        seen_audio.add(audio_id)
+        job = jobs.get(audio_id) or {}
+        forced = bool(job.get("force")) and job.get("status") == "pending"
         tr = by_content.get(p["content_id"], {})
         if not tr.get("body", "").strip():
-            continue  # English translation not ready yet
-        seen_audio.add(audio_id)
+            # English translation not ready yet – show it in the panel
+            if job.get("status") != "skipped":
+                set_job(audio_id, status="skipped", error="Englische Übersetzung des Artikels fehlt noch")
+            continue
         title, body = tr.get("title", ""), tr["body"]
         digest = hashlib.sha1(f"{HASH_VERSION}|{title}|{body}".encode()).hexdigest()[:10]
         current = existing.get(audio_id)
-        if current:
+        if current and not forced:
             path = current.get("storage_path") or ""
             if not path.startswith(TTS_PREFIX):
                 continue  # manual upload – keep it
             if path.endswith(f"-{digest}.mp3"):
+                if job and job.get("status") not in ("completed",):
+                    set_job(audio_id, status="completed", error=None, force=False)
                 continue  # up to date
+        # A job that is "processing" for too long died – take it again.
+        if job.get("status") == "processing" and job.get("started_at"):
+            started = time.mktime(time.strptime(job["started_at"][:19], "%Y-%m-%dT%H:%M:%S")) - time.timezone
+            if time.time() - started < STALE_AFTER_S:
+                continue
         items.append({"audio_id": audio_id, "title": title, "body": body, "digest": digest,
-                      "old_path": (current or {}).get("storage_path")})
+                      "old_path": (current or {}).get("storage_path"),
+                      "attempts": int(job.get("attempts") or 0)})
+        if job.get("status") not in ("pending",) or job.get("error"):
+            set_job(audio_id, status="pending", error=None, requested_at=job.get("requested_at") or now_iso())
     items.sort(key=lambda i: i["audio_id"])
     return items
 
@@ -276,15 +325,21 @@ def main():
             log("time budget reached – the next run continues")
             break
         t0 = time.time()
+        set_job(item["audio_id"], status="processing", started_at=now_iso(), finished_at=None,
+                attempts=item.get("attempts", 0) + 1, error=None,
+                worker=f"github-{os.environ.get('GITHUB_RUN_ID', 'local')}-{shard}")
         try:
             samples, sr = synthesize(kokoro, voice, paragraphs(item["title"], item["body"]))
             url = store(item, to_mp3(samples, sr))
+            set_job(item["audio_id"], status="completed", finished_at=now_iso(), force=False,
+                    text_digest=item["digest"], duration_seconds=round(len(samples) / sr, 1))
             done += 1
             log(f"✓ {item['audio_id']} {len(samples) / sr / 60:.1f} min audio in "
                 f"{(time.time() - t0) / 60:.1f} min – {item['title'][:60]}")
             log(f"  {url}")
         except Exception as e:  # noqa: BLE001
             failed += 1
+            set_job(item["audio_id"], status="failed", finished_at=now_iso(), error=str(e)[:500])
             log(f"✗ {item['audio_id']}: {e}")
     log(f"done={done} failed={failed}")
     if failed and not done:

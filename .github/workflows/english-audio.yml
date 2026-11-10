@@ -4,7 +4,7 @@ name: English Audio (AI voice)
 # open Kokoro-82M model (Apache-2.0, runs on the GitHub CPU – no API costs).
 # The app plays it automatically when the app language is English.
 #
-# Runs every hour: new audios (and changed English texts) are picked up
+# Runs every 15 minutes: new audios, restarts from the translation panel (and changed English texts) are picked up
 # automatically. The first run works through the backlog in parallel.
 #
 # Needs ONE repository secret (Settings → Secrets and variables → Actions):
@@ -13,7 +13,7 @@ name: English Audio (AI voice)
 
 on:
   schedule:
-    - cron: "41 * * * *"
+    - cron: "*/15 * * * *"
   workflow_dispatch:
     inputs:
       shards:

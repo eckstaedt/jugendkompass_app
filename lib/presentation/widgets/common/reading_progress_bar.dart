@@ -4,8 +4,8 @@ import 'package:jugendkompass_app/core/config/design_tokens.dart';
 /// Thin reading-progress bar for detail screens (use as `AppBar.bottom`).
 ///
 /// Stays invisible until the reader has scrolled past [revealAfter] pixels
-/// (e.g. the height of the cover image) and then fills up with the scroll
-/// position of [controller].
+/// (e.g. the height of the cover image). The progress only counts what comes
+/// after that point: 0 % right below the image, 100 % at the end.
 class ReadingProgressBar extends StatefulWidget implements PreferredSizeWidget {
   const ReadingProgressBar({
     super.key,
@@ -53,9 +53,11 @@ class _ReadingProgressBarState extends State<ReadingProgressBar> {
   void _update() {
     if (!widget.controller.hasClients) return;
     final position = widget.controller.position;
-    final max = position.maxScrollExtent;
-    final offset = position.pixels.clamp(0.0, max > 0 ? max : 0.0);
-    final progress = max > 0 ? offset / max : 0.0;
+    // Progress counts only the text: it starts at 0 once the cover has
+    // scrolled out ([revealAfter]) and reaches 1 at the end of the page.
+    final start = widget.revealAfter.clamp(0.0, position.maxScrollExtent);
+    final range = position.maxScrollExtent - start;
+    final progress = range > 0 ? ((position.pixels - start) / range).clamp(0.0, 1.0) : 0.0;
     final visible = position.pixels > widget.revealAfter;
     if ((progress - _progress).abs() > 0.002 || visible != _visible) {
       setState(() {
