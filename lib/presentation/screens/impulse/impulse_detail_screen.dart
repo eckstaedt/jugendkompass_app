@@ -140,103 +140,35 @@ class _ImpulseDetailScreenState extends ConsumerState<ImpulseDetailScreen> {
             ),
             const SizedBox(height: 12),
 
-            // Meta information
-            Wrap(
-                    spacing: 12,
-                    runSpacing: 8,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
+            // Meta information: one quiet line (duration · date · views) + like
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Consumer(
+                    builder: (context, ref, _) {
+                      final views = ref.watch(postViewCountProvider(impulse.id)).valueOrNull ?? 0;
+                      final parts = <String>[
+                        '${impulse.durationMinutes} ${context.tr('min')}',
+                        dateFormat.format(impulse.date),
+                        if (views > 0) _formatViewCount(views),
+                      ];
+                      return Text(
+                        parts.join('  ·  '),
+                        style: GoogleFonts.poppins(
+                          textStyle: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontSize: 13,
+                          ),
                         ),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.access_time,
-                              size: 16,
-                              color: theme.colorScheme.onPrimaryContainer,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              impulse.durationLabel,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: theme.colorScheme.onPrimaryContainer,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.secondaryContainer,
-                          borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.calendar_today,
-                              size: 16,
-                              color: theme.colorScheme.onSecondaryContainer,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              dateFormat.format(impulse.date),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: theme.colorScheme.onSecondaryContainer,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                      // View count badge
-                      Consumer(
-                        builder: (context, ref, _) {
-                          final viewCountAsync = ref.watch(postViewCountProvider(impulse.id));
-                          return viewCountAsync.whenOrNull(
-                            data: (count) => count == 0
-                                ? const SizedBox.shrink()
-                                : Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: theme.colorScheme.tertiaryContainer,
-                                      borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.visibility_outlined, size: 16, color: theme.colorScheme.onTertiaryContainer),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          _formatViewCount(count),
-                                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: theme.colorScheme.onTertiaryContainer),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                          ) ?? const SizedBox.shrink();
-                        },
-                      ),
-                      // Like button
-                      LikeButton(contentId: impulse.id, contentType: 'impulse'),
-                    ],
+                      );
+                    },
                   ),
+                ),
+                const SizedBox(width: 12),
+                LikeButton(contentId: impulse.id, contentType: 'impulse'),
+              ],
+            ),
 
                   const SizedBox(height: 32),
 
