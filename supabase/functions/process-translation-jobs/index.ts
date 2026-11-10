@@ -66,6 +66,7 @@ Rules:
 - Translate faithfully and completely. Never summarize, shorten, add notes or explanations.
 - Use natural, warm, contemporary language suitable for teenagers and young adults, in the tone of the original. Keep the same form of address (informal "du" → informal in the target language where the language distinguishes it).
 - Keep Christian terminology accurate (e.g. Gnade, Heiliger Geist, Evangelium, Gemeinde, Abendmahl) using the terms established in that language's churches.
+- "Zeugnis" in this context almost always means a personal faith testimony (EN "testimony", RU "свидетельство"), not a school report card or certificate.
 - Bible quotations: when a segment quotes a recognizable Bible passage, render it the way it reads in a widely used modern Bible translation of the target language instead of translating word by word.
 - Bible references (segment kind "reference" or references inside text): localize the book name and use the target language's citation convention, keep numbers unchanged. Examples: "Johannes 3,16" → en "John 3:16", es "Juan 3:16", ru "Иоанна 3:16", pl "J 3,16" or "Ewangelia Jana 3,16", tr "Yuhanna 3:16", he "יוחנן ג׳ 16" or "יוחנן 3:16". "1. Korinther 13,4-7" → en "1 Corinthians 13:4-7".
 - HTML and Markdown: keep every tag, attribute, entity, link URL, image source, line break and list structure exactly as in the source. Translate only human-readable text (including alt/title attribute text). Never wrap the output in code fences.
