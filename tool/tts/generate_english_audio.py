@@ -30,6 +30,7 @@ import io
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -313,6 +314,8 @@ def main():
     log(f"{len(items)} pending in total, {len(mine)} for shard {shard}/{shards}")
     if not mine:
         return
+    if shutil.which("ffmpeg") is None:
+        sys.exit("ffmpeg is not installed – needed to encode MP3 (apt-get install ffmpeg)")
 
     from kokoro_onnx import Kokoro
 
