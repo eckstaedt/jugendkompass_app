@@ -115,11 +115,14 @@ class _MessageDetailScreenState extends ConsumerState<MessageDetailScreen> {
             if (message.imageUrl != null && message.imageUrl!.isNotEmpty) ...[
               ClipRRect(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
-                child: CorsNetworkImage(
-                  imageUrl: message.imageUrl!,
-                  width: double.infinity,
-                  height: 220,
-                  fit: BoxFit.cover,
+                // Square (1:1) cover, like the cards in the lists.
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: CorsNetworkImage(
+                    imageUrl: message.imageUrl!,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),

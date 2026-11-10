@@ -59,10 +59,18 @@ class KioskScreen extends ConsumerWidget {
                           : DesignTokens.overlayPaddingBase,
                     ),
                     sliver: SliverGrid(
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      // Row height follows the real cover width: A4 cover
+                      // + gap + two title lines, so nothing overflows on
+                      // wide phones and there are no gaps on narrow ones.
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        mainAxisExtent: 295,
-                        mainAxisSpacing: DesignTokens.spacingLarge,
+                        mainAxisExtent: (MediaQuery.sizeOf(context).width -
+                                    3 * DesignTokens.paddingHorizontal) /
+                                2 *
+                                1.414 +
+                            DesignTokens.spacingSmall +
+                            48,
+                        mainAxisSpacing: DesignTokens.spacingMedium,
                         crossAxisSpacing: DesignTokens.paddingHorizontal,
                       ),
                       delegate: SliverChildBuilderDelegate(

@@ -119,11 +119,14 @@ class _ImpulseDetailScreenState extends ConsumerState<ImpulseDetailScreen> {
             if (impulse.imageUrl != null) ...[
               ClipRRect(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
-                child: CorsNetworkImage(
-                  imageUrl: impulse.imageUrl!,
-                  width: double.infinity,
-                  height: 220,
-                  fit: BoxFit.cover,
+                // Square (1:1) cover, like the cards in the lists.
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: CorsNetworkImage(
+                    imageUrl: impulse.imageUrl!,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
               const SizedBox(height: 20),

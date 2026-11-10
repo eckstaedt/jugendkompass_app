@@ -5,25 +5,6 @@
 /// `test/localization_test.dart` enforces that every key used in the app is
 /// available in every [AppLanguage].
 const Map<String, Map<String, String>> supplementTranslations = {
-  // ── Home ─────────────────────────────────────────────────────────────────
-  'home_editions': {
-    'de': 'Ausgaben',
-    'en': 'Editions',
-    'ru': 'Выпуски',
-    'es': 'Ediciones',
-    'pl': 'Wydania',
-    'tr': 'Sayılar',
-    'he': 'גיליונות',
-  },
-  'home_show_all': {
-    'de': 'Alle',
-    'en': 'All',
-    'ru': 'Все',
-    'es': 'Todas',
-    'pl': 'Wszystkie',
-    'tr': 'Tümü',
-    'he': 'הכול',
-  },
   // ── In-app popups ────────────────────────────────────────────────────────
   'announcement_ok': {
     'de': 'Verstanden',

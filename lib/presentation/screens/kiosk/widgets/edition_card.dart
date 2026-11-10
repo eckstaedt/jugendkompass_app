@@ -43,6 +43,8 @@ class EditionCard extends StatelessWidget {
           AspectRatio(
             aspectRatio: 1 / 1.414,
             child: Stack(
+              // Fill the whole A4 frame so every cover has the same height.
+              fit: StackFit.expand,
               children: [
                 Container(
                   decoration: BoxDecoration(
