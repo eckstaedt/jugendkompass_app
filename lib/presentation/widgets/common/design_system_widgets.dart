@@ -437,6 +437,9 @@ class AppSearchBar extends StatefulWidget {
   /// Focus the field (and open the keyboard) as soon as it appears.
   final bool autofocus;
 
+  /// Called when the user presses the keyboard's search/enter key.
+  final ValueChanged<String>? onSubmitted;
+
   const AppSearchBar({
     super.key,
     required this.hint,
@@ -445,6 +448,7 @@ class AppSearchBar extends StatefulWidget {
     this.onClear,
     this.showClear = false,
     this.autofocus = false,
+    this.onSubmitted,
   });
 
   @override
@@ -509,6 +513,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
               focusNode: _focusNode,
               autofocus: widget.autofocus,
               textInputAction: TextInputAction.search,
+              onSubmitted: widget.onSubmitted,
               controller: widget.controller,
               onChanged: widget.onChanged,
               decoration: InputDecoration(

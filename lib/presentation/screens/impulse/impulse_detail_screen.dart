@@ -1,6 +1,8 @@
 import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
+import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
+import 'package:jugendkompass_app/core/services/impulse_share_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:intl/intl.dart';
@@ -51,6 +53,62 @@ class _ImpulseDetailScreenState extends ConsumerState<ImpulseDetailScreen> {
     return '$count Aufrufe';
   }
 
+  /// Share sheet: as image (Instagram etc.), save to photos, or link.
+  void _showShareOptions(BuildContext context, ImpulseModel impulse, VoidCallback shareLink) {
+    final brightness = Theme.of(context).brightness;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: DesignTokens.getCardBackground(brightness),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(DesignTokens.radiusLarge)),
+      ),
+      builder: (sheetContext) => Padding(
+        // Leave room for the floating navbar.
+        padding: const EdgeInsets.only(top: 8, bottom: DesignTokens.overlayPaddingBase - 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.image_outlined),
+              title: Text(context.tr('share_as_image')),
+              subtitle: Text(context.tr('share_as_image_subtitle')),
+              onTap: () async {
+                Navigator.pop(sheetContext);
+                try {
+                  await ImpulseShareService.shareImage(impulse);
+                } catch (_) {
+                  if (context.mounted) SnackBarUtils.showError(context, context.tr('error'));
+                }
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.save_alt_outlined),
+              title: Text(context.tr('save_to_gallery')),
+              subtitle: Text(context.tr('save_image_to_photos')),
+              onTap: () async {
+                Navigator.pop(sheetContext);
+                final ok = await ImpulseShareService.saveToGallery(impulse);
+                if (!context.mounted) return;
+                ok
+                    ? SnackBarUtils.showSuccess(context, context.tr('image_saved_to_gallery'))
+                    : SnackBarUtils.showError(context, context.tr('gallery_permission_denied'));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.link_rounded),
+              title: Text(context.tr('share_link')),
+              subtitle: Text(context.tr('share_via_apps')),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                shareLink();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final impulse = widget.impulse;
@@ -77,12 +135,17 @@ class _ImpulseDetailScreenState extends ConsumerState<ImpulseDetailScreen> {
             tooltip: context.tr('share'),
             icon: const Icon(Icons.share_outlined),
             onPressed: () {
-              ContentShareService.shareContent(
-                contentType: 'impulse',
-                contentId: impulse.contentId,
-                title: HtmlUtils.stripHtml(displayTitle),
-                intro: context.tr('share_intro_impulse'),
-              );
+              void shareLink() => ContentShareService.shareContent(
+                    contentType: 'impulse',
+                    contentId: impulse.contentId,
+                    title: HtmlUtils.stripHtml(displayTitle),
+                    intro: context.tr('share_intro_impulse'),
+                  );
+              if (ImpulseShareService.canShareImage(impulse)) {
+                _showShareOptions(context, impulse, shareLink);
+              } else {
+                shareLink();
+              }
             },
           ),
           Padding(

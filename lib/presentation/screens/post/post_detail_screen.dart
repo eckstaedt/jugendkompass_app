@@ -12,6 +12,7 @@ import 'package:jugendkompass_app/domain/providers/collection_provider.dart';
 import 'package:jugendkompass_app/domain/providers/read_history_provider.dart';
 import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/reading_progress_bar.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/services/content_share_service.dart';
@@ -34,6 +35,14 @@ class PostDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -70,6 +79,13 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
         ),
         elevation: 0,
         backgroundColor: Colors.transparent,
+        // Appears once the (square) cover has scrolled out of view.
+        bottom: ReadingProgressBar(
+          controller: _scrollController,
+          revealAfter: post.imageUrl != null
+              ? MediaQuery.sizeOf(context).width - DesignTokens.paddingHorizontal
+              : 24,
+        ),
         actions: [
           IconButton(
             tooltip: context.tr('share'),
@@ -109,6 +125,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
         ],
       ),
       body: SingleChildScrollView(
+        controller: _scrollController,
         padding: EdgeInsets.all(DesignTokens.paddingHorizontal),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

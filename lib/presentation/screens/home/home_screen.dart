@@ -16,6 +16,7 @@ import 'package:jugendkompass_app/presentation/screens/impulse/impulse_detail_sc
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/media/video_player_screen.dart';
 import 'package:jugendkompass_app/presentation/screens/message/message_detail_screen.dart';
+import 'package:jugendkompass_app/presentation/screens/search/search_screen.dart';
 import 'package:jugendkompass_app/presentation/navigation/mini_player_overlay.dart'
     show kVideoPlayerRouteName;
 import 'package:jugendkompass_app/presentation/navigation/fade_page_route.dart';
@@ -134,16 +135,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         DesignTokens.paddingHorizontal,
                         DesignTokens.spacingMedium,
                       ),
-                      child: Text(
-                        '${translate('Shalom')}, ${userName ?? translate('Benutzer')}',
-                        style: AppFonts.uiStyle(
-                          textStyle: theme.textTheme.displaySmall?.copyWith(
-                                fontSize: 30,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.5,
-                              ) ??
-                              const TextStyle(fontWeight: FontWeight.w800),
-                        ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${translate('Shalom')}, ${userName ?? translate('Benutzer')}',
+                              style: AppFonts.uiStyle(
+                                textStyle: theme.textTheme.displaySmall?.copyWith(
+                                      fontSize: 30,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -0.5,
+                                    ) ??
+                                    const TextStyle(fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                          ),
+                          // Search – vertically centred on the greeting.
+                          IconButton(
+                            tooltip: translate('Suche'),
+                            icon: Icon(
+                              Icons.search_rounded,
+                              size: 28,
+                              color: DesignTokens.getTextPrimary(theme.brightness),
+                            ),
+                            onPressed: () => Navigator.push(
+                              context,
+                              FadePageRoute(builder: (_) => const SearchScreen()),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

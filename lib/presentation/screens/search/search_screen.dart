@@ -10,6 +10,7 @@ import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/core/utils/search_utils.dart';
 import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 import 'package:jugendkompass_app/data/models/verse_model.dart';
+import 'package:jugendkompass_app/data/services/search_history_service.dart';
 import 'package:jugendkompass_app/domain/providers/audio_player_provider.dart';
 import 'package:jugendkompass_app/domain/providers/category_provider.dart';
 import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
@@ -184,6 +185,29 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   SearchQuery _query = SearchQuery.parse('');
   _Type? _filter; // null = all
   _Sort _sort = _Sort.relevance;
+  List<String> _history = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    SearchHistoryService.load().then((h) {
+      if (mounted) setState(() => _history = h);
+    });
+  }
+
+  Future<void> _remember([String? text]) async {
+    final q = (text ?? _searchController.text).trim();
+    if (q.isEmpty) return;
+    final h = await SearchHistoryService.add(q);
+    if (mounted) setState(() => _history = h);
+  }
+
+  void _searchFor(String q) {
+    _searchController.text = q;
+    _searchController.selection = TextSelection.collapsed(offset: q.length);
+    setState(() => _query = SearchQuery.parse(q));
+    _remember(q);
+  }
 
   @override
   void dispose() {
@@ -226,6 +250,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       controller: _searchController,
                       autofocus: true,
                       showClear: _searchController.text.isNotEmpty,
+                      onSubmitted: (value) {
+                        setState(() => _query = SearchQuery.parse(value));
+                        _remember(value);
+                      },
                       onChanged: (value) {
                         _onChanged(value);
                         setState(() {}); // update clear button
@@ -360,7 +388,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           separatorBuilder: (_, i) => SizedBox(height: i == 0 ? 8 : 12),
           itemBuilder: (context, i) {
             if (i == 0) {
-              return Text(
+              final count = Text(
                 context.tr('search_results', {'count': '${hits.length}'}),
                 style: TextStyle(
                   fontSize: 13,
@@ -368,16 +396,86 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   color: DesignTokens.getTextSecondary(brightness),
                 ),
               );
+              if (!_query.isEmpty || _history.isEmpty) return count;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [_buildHistory(), const SizedBox(height: 16), count],
+              );
             }
             return _ResultTile(
               hit: hits[i - 1],
               query: _query,
               typeLabel: _typeLabel(hits[i - 1].entry.type),
-              onTap: () => _open(hits[i - 1].entry),
+              onTap: () {
+                _remember();
+                _open(hits[i - 1].entry);
+              },
             );
           },
         );
       },
+    );
+  }
+
+  /// Recent searches, shown while the search field is empty.
+  Widget _buildHistory() {
+    final brightness = Theme.of(context).brightness;
+    final textPrimary = DesignTokens.getTextPrimary(brightness);
+    final textSecondary = DesignTokens.getTextSecondary(brightness);
+    return RoundedCard(
+      padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+      withShadow: false,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  context.tr('search_recent'),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: textPrimary),
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+                  await SearchHistoryService.clear();
+                  if (mounted) setState(() => _history = const []);
+                },
+                style: TextButton.styleFrom(foregroundColor: textSecondary),
+                child: Text(context.tr('search_clear_history')),
+              ),
+            ],
+          ),
+          for (final q in _history)
+            InkWell(
+              borderRadius: BorderRadius.circular(DesignTokens.radiusSmall),
+              onTap: () => _searchFor(q),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    Icon(Icons.history_rounded, size: 20, color: textSecondary),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(q,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 15, color: textPrimary)),
+                    ),
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      icon: Icon(Icons.close_rounded, size: 18, color: textSecondary),
+                      onPressed: () async {
+                        final h = await SearchHistoryService.remove(q);
+                        if (mounted) setState(() => _history = h);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
