@@ -116,3 +116,18 @@ where content_id = '<uuid>' and language = 'en' and field_name = 'title';
 `test/localization_test.dart` prüft bei jedem `flutter test`, dass jeder in `lib/` verwendete Key in **jeder** Sprache existiert, jedes `translate('…')`-Literal gemappt ist und Platzhalter wie `{day}` in allen Sprachen identisch sind.
 
 Neue UI-Texte: Key in `supplement_translations.dart` mit allen 7 Sprachen anlegen und `context.tr('key')` verwenden – keine zusammengesetzten Satzfragmente, sondern Platzhalter.
+
+## Vorgemerkt: Text auf Titelbildern übersetzen
+
+Idee (noch nicht umgesetzt): Titelbilder mit Text (Artikel, Impulse,
+Kurznachrichten) pro Sprache als Kopie erzeugen, bei der nur der Text in die
+Zielsprache übersetzt ist – Bild, Layout und Gestaltung bleiben gleich.
+
+- Weg: Bild-KI mit Bearbeitung (z. B. Gemini-Bildbearbeitung) bekommt
+  Original + „ersetze nur den Text durch die Übersetzung“; Ergebnis je
+  Sprache im Storage, die App zeigt es über die Übersetzungen an.
+- Grenzen: sehr nah am Original, aber Schrift/Abstände nicht pixelgenau;
+  einzelne Bilder müssen ggf. neu erzeugt werden.
+- Umfang: ca. 500 Bilder × 6 Sprachen ≈ 3.000 Bilder, grob 100–150 €
+  einmalig, danach wenige Cent pro neuem Bild.
+- Vor dem Start: Test mit 3 Bildern auf Englisch.
