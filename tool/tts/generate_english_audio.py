@@ -111,6 +111,8 @@ def clean_text(value: str) -> str:
     s = re.sub(r"(?i)</(p|div|h[1-6]|li|blockquote)>", "\n\n", s)
     s = re.sub(r"<[^>]+>", " ", s)
     s = html.unescape(s).replace(" ", " ")
+    # invisible characters (zero-width space/joiner, BOM, soft hyphen)
+    s = re.sub("[\u200b-\u200f\u2060\ufeff\u00ad]", "", s)
     s = re.sub(r"https?://\S+", "", s)
     s = re.sub(r"[ \t]+", " ", s)
     s = re.sub(r"\n\s*\n+", "\n\n", s)
@@ -254,6 +256,9 @@ def synthesize(kokoro, voice: str, parts: list[str]):
     audio = []
     for i, part in enumerate(parts):
         for chunk in split_long(part):
+            # skip pieces without anything speakable (only symbols etc.)
+            if not re.search(r"\w", chunk):
+                continue
             samples, sr = kokoro.create(chunk, voice=voice, speed=1.0, lang="en-us")
             audio.append(samples.astype(np.float32))
         audio.append(pause if i else np.zeros(int(sr * 0.8), dtype=np.float32))  # longer after title
