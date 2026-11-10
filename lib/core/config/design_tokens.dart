@@ -159,6 +159,14 @@ class DesignTokens {
     return brightness == Brightness.dark ? darkTextPrimary : textPrimary;
   }
 
+  /// Body text for long reading (darker than secondary text).
+  static const Color textBody = Color(0xFF2E3236);
+  static const Color darkTextBody = Color(0xFFDADADA);
+
+  static Color getTextBody(Brightness brightness) {
+    return brightness == Brightness.dark ? darkTextBody : textBody;
+  }
+
   static Color getTextSecondary(Brightness brightness) {
     return brightness == Brightness.dark ? darkTextSecondary : textSecondary;
   }

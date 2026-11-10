@@ -22,6 +22,7 @@ import 'package:jugendkompass_app/domain/providers/language_provider.dart';
 import 'package:jugendkompass_app/domain/providers/post_view_count_provider.dart';
 import 'package:jugendkompass_app/domain/providers/string_translator_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/magazine_cover.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/like_button.dart';
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 
@@ -142,21 +143,16 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
     final brightness = theme.brightness;
     final textPrimary = DesignTokens.getTextPrimary(brightness);
     final textSecondary = DesignTokens.getTextSecondary(brightness);
+    // Long intro text: dark grey for comfortable reading (not light grey).
+    final textBody = DesignTokens.getTextBody(brightness);
     return ListView(
       padding: EdgeInsets.fromLTRB(DesignTokens.paddingHorizontal, 0, DesignTokens.paddingHorizontal, 24),
       children: [
-        // Cover image
+        // Cover shown as a printed magazine (centered, own size).
         if (edition.coverImageUrl != null) ...[
-          ClipRRect(
-            borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
-            child: CorsNetworkImage(
-              imageUrl: edition.coverImageUrl!,
-              width: double.infinity,
-              height: 220,
-              fit: BoxFit.cover,
-            ),
-          ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
+          MagazineCover(imageUrl: edition.coverImageUrl!),
+          const SizedBox(height: 32),
         ],
         Text(edition.name.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(fontSize: 12, letterSpacing: 1.5, color: DesignTokens.primaryRed, fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
@@ -181,8 +177,8 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
         ],
         if (edition.description != null && edition.description!.isNotEmpty) ...[
           Html(data: edition.description!, style: {
-            "body": Style(margin: Margins.zero, padding: HtmlPaddings.zero, fontSize: FontSize(16), color: textSecondary),
-            "p": Style(margin: Margins.only(bottom: 12), fontSize: FontSize(16), lineHeight: const LineHeight(1.6), color: textSecondary),
+            "body": Style(margin: Margins.zero, padding: HtmlPaddings.zero, fontSize: FontSize(16), color: textBody),
+            "p": Style(margin: Margins.only(bottom: 12), fontSize: FontSize(16), lineHeight: const LineHeight(1.6), color: textBody),
             "h1": Style(fontSize: FontSize(24), fontWeight: FontWeight.bold, color: textPrimary, margin: Margins.only(bottom: 8, top: 16)),
             "h2": Style(fontSize: FontSize(20), fontWeight: FontWeight.bold, color: textPrimary, margin: Margins.only(bottom: 8, top: 16)),
             "h3": Style(fontSize: FontSize(18), fontWeight: FontWeight.bold, color: textPrimary, margin: Margins.only(bottom: 8, top: 12)),
