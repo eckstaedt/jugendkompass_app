@@ -58,11 +58,15 @@ const MessageForm = ({ initialTitle = '', initialMessage = '', initialImageUrl, 
 
       <div className="space-y-2">
         <Label>Nachricht</Label>
-        <RichTextEditor content={message} onChange={setMessage} />
+        <RichTextEditor content={message} onChange={setMessage} imageUploadBucket="messages" />
+        <p className="text-xs text-muted-foreground">
+          Bilder im Text: Cursor an die gewünschte Stelle setzen und auf das Bild-Symbol klicken
+          (oder ein Bild einfügen bzw. hineinziehen).
+        </p>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="image">Bild (optional)</Label>
+        <Label htmlFor="image">Titelbild (optional)</Label>
         <Input
           id="image"
           type="file"
