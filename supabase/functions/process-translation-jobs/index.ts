@@ -10,7 +10,8 @@
 //       `Authorization: Bearer <SERVICE_ROLE_KEY>`.
 //
 // Secrets (supabase secrets set ...):
-//   ANTHROPIC_API_KEY            required
+//   ANTHROPIC_API_KEY            required; falls back to the Vault secret
+//                                `translation_anthropic_api_key`
 //   TRANSLATION_WORKER_SECRET    optional override; by default the secret is
 //                                read from Vault (created by the migration)
 //   TRANSLATION_MODEL            optional, default claude-haiku-5-5
@@ -165,7 +166,10 @@ Deno.serve(async (req: Request) => {
       queued = Number(data ?? 0);
     }
 
-    const anthropicKey = requireEnv("ANTHROPIC_API_KEY");
+    const anthropicKey = await anthropicApiKey(supabase);
+    if (!anthropicKey) {
+      throw new Error("Missing ANTHROPIC_API_KEY (function secret or Vault 'translation_anthropic_api_key')");
+    }
     const anthropic = new Anthropic({ apiKey: anthropicKey, maxRetries: 4, timeout: 120_000 });
     const languages = await loadActiveLanguages(supabase);
     const workerId = `edge-${crypto.randomUUID().slice(0, 8)}`;
@@ -747,6 +751,18 @@ async function workerSecret(supabase: SupabaseClient): Promise<string | null> {
   }
   cachedWorkerSecret = typeof data === "string" && data.length > 0 ? data : null;
   return cachedWorkerSecret;
+}
+
+/** Anthropic key: function secret first, Vault (`translation_anthropic_api_key`) as fallback. */
+async function anthropicApiKey(supabase: SupabaseClient): Promise<string | null> {
+  const fromEnv = Deno.env.get("ANTHROPIC_API_KEY");
+  if (fromEnv) return fromEnv;
+  const { data, error } = await supabase.rpc("get_translation_anthropic_key");
+  if (error) {
+    console.warn("[translation] cannot read Anthropic key from Vault:", error.message);
+    return null;
+  }
+  return typeof data === "string" && data.length > 0 ? data : null;
 }
 
 async function isAuthorized(req: Request, serviceRole: string, supabase: SupabaseClient): Promise<boolean> {
