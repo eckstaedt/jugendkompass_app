@@ -12,6 +12,8 @@
 //
 // Usage:
 //   SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... node generate.mjs [--days 45] [--from 2026-11-04]
+//   ... node generate.mjs --backgrounds-only [--days 400]
+//     (only stores the plain nature photo URL for existing automatic images)
 //   node generate.mjs --preview out/ --input verses.json [--from 2026-11-04] [--days 14]
 //     (renders local JPEGs from a JSON list [{date, verse, reference}], no upload)
 
@@ -159,8 +161,9 @@ function supabase() {
 // ---------------------------------------------------------------- main
 async function main() {
   const to = addDays(FROM, DAYS - 1);
-  const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 400, height: 400 } });
+  // No browser needed when only background URLs are stored.
+  const browser = args['backgrounds-only'] ? null : await chromium.launch();
+  const page = browser ? await browser.newPage({ viewport: { width: 400, height: 400 } }) : null;
   let done = 0;
   let failed = 0;
 
@@ -185,7 +188,8 @@ async function main() {
       const hash = sourceHash(row.verse, row.reference);
       const hasImage = !!row.image_url;
       const isAuto = !!row.image_source_hash;
-      if (hasImage && (!isAuto || row.image_source_hash === hash)) {
+      if (args['backgrounds-only'] && !(hasImage && isAuto)) continue;
+      if (hasImage && (!isAuto || row.image_source_hash === hash || args['backgrounds-only'])) {
         // Image is current – only make sure the plain nature photo (used by
         // the home-screen widgets) is stored for automatic images.
         if (isAuto) {
@@ -221,7 +225,7 @@ async function main() {
       }
     }
   } finally {
-    await browser.close();
+    await browser?.close();
   }
   console.log(`Done: ${done} image(s) rendered, ${failed} failed.`);
   if (failed) process.exitCode = 1;
