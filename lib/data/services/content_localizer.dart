@@ -77,6 +77,43 @@ class ContentLocalizer {
     return rows;
   }
 
+  /// Replaces `url` of `audios` rows with the dubbed audio for [language]
+  /// (uploaded in the translation panel → `audio_translations`). Rows without
+  /// a dubbed version keep the German original.
+  Future<List<Map<String, dynamic>>> localizeAudioUrls(
+    List<Map<String, dynamic>> rows,
+    String language, {
+    String idKey = 'id',
+    String urlKey = 'url',
+  }) async {
+    if (!needsTranslation(language) || rows.isEmpty) return rows;
+    final ids = rows.map((row) => row[idKey]?.toString()).whereType<String>().where((id) => id.isNotEmpty).toSet().toList();
+    if (ids.isEmpty) return rows;
+
+    try {
+      final urls = <String, String>{};
+      for (var i = 0; i < ids.length; i += _chunkSize) {
+        final chunk = ids.sublist(i, i + _chunkSize > ids.length ? ids.length : i + _chunkSize);
+        final response = await _supabase
+            .from('audio_translations')
+            .select('audio_id, url')
+            .eq('language', language)
+            .inFilter('audio_id', chunk);
+        for (final raw in response as List) {
+          final url = raw['url']?.toString();
+          if (url != null && url.isNotEmpty) urls[raw['audio_id'].toString()] = url;
+        }
+      }
+      for (final row in rows) {
+        final translated = urls[row[idKey]?.toString()];
+        if (translated != null) row[urlKey] = translated;
+      }
+    } catch (e) {
+      developer.log('audio translations unavailable: $e', name: 'ContentLocalizer');
+    }
+    return rows;
+  }
+
   Future<Map<String, dynamic>?> localizeContentRow(
     Map<String, dynamic>? row,
     String language, {

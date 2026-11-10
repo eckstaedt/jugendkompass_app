@@ -257,6 +257,7 @@ class EditionRepository {
         }
       }
       await _localizer.localizeContentRows(joinedPosts, language, fields: _postFields);
+      await _localizer.localizeAudioUrls(rows, language);
       return rows;
     } catch (e) {
       throw Exception('Failed to fetch edition audios: $e');
