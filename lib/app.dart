@@ -22,6 +22,7 @@ import 'package:jugendkompass_app/core/services/fcm_service.dart'
     if (dart.library.html) 'package:jugendkompass_app/stubs/fcm_service_stub.dart';
 import 'package:jugendkompass_app/core/services/deep_link_service.dart';
 import 'package:jugendkompass_app/core/services/url_parser_service.dart';
+import 'package:jugendkompass_app/presentation/widgets/announcement/announcement_overlay.dart';
 
 class App extends ConsumerStatefulWidget {
   const App({super.key});
@@ -189,10 +190,12 @@ class _AppState extends ConsumerState<App> {
       builder: (context, child) {
         return Directionality(
           textDirection: language.isRtl ? TextDirection.rtl : TextDirection.ltr,
-          child: _MiniPlayerScaffold(
-            routeObserver: _routeObserver,
-            navigatorKey: _navigatorKey,
-            child: child ?? const SizedBox.shrink(),
+          child: AnnouncementOverlay(
+            child: _MiniPlayerScaffold(
+              routeObserver: _routeObserver,
+              navigatorKey: _navigatorKey,
+              child: child ?? const SizedBox.shrink(),
+            ),
           ),
         );
       },
@@ -387,15 +390,29 @@ class _PersistentNavBar extends ConsumerWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(DesignTokens.radiusNavBar),
         child: BackdropFilter(
+          // Slightly stronger blur than the default glass so the content
+          // behind the bar reads as frosted glass, not as a solid panel.
           filter: ImageFilter.blur(
-            sigmaX: DesignTokens.glassBlurSigma,
-            sigmaY: DesignTokens.glassBlurSigma,
+            sigmaX: DesignTokens.glassBlurSigma * 1.4,
+            sigmaY: DesignTokens.glassBlurSigma * 1.4,
           ),
           child: Container(
             decoration: BoxDecoration(
-              color: brightness == Brightness.dark
-                  ? DesignTokens.getGlassBackground(brightness, 0.14)
-                  : Colors.white.withValues(alpha: 0.82),
+              // Translucent glass with a soft top highlight ("liquid glass"
+              // sheen); lighter than before so the background shows through.
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: brightness == Brightness.dark
+                    ? [
+                        Colors.white.withValues(alpha: 0.10),
+                        Colors.white.withValues(alpha: 0.02),
+                      ]
+                    : [
+                        Colors.white.withValues(alpha: 0.78),
+                        Colors.white.withValues(alpha: 0.52),
+                      ],
+              ),
               borderRadius: BorderRadius.circular(DesignTokens.radiusNavBar),
               border: Border.all(
                 color: brightness == Brightness.dark

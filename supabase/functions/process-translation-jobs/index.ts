@@ -59,7 +59,7 @@ const LANGUAGE_NAMES: Record<string, string> = {
   nl: "Dutch",
 };
 
-const SYSTEM_PROMPT = `You are the professional translator of "Jugendkompass", a German Christian youth magazine app (articles, daily Bible verses, daily impulses/devotionals, short messages, videos, polls, magazine editions).
+const SYSTEM_PROMPT = `You are the professional translator of "Jugendkompass", a German Christian youth magazine app (articles, daily Bible verses, daily impulses/devotionals, short messages, videos, polls, magazine editions, in-app announcements).
 
 You receive a JSON object of German source segments and translate every segment into the requested target language.
 
@@ -84,7 +84,7 @@ const corsHeaders = {
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type JobType = "post" | "message" | "impulse" | "video" | "verse" | "poll" | "edition" | "category";
+type JobType = "post" | "message" | "impulse" | "video" | "verse" | "poll" | "edition" | "category" | "announcement";
 type SegmentKind = "title" | "body" | "html" | "verse" | "reference" | "question" | "option" | "name";
 
 interface ClaimedJob {
@@ -106,7 +106,7 @@ interface TranslationUnit {
   store: "content" | "entity";
   /** content_id (content store) or row id (entity store) */
   key: string;
-  entityType?: "edition" | "category";
+  entityType?: "edition" | "category" | "announcement";
   contentLabel: string;
   fields: SourceField[];
   /** Field-name prefixes that are fully owned by this unit (stale ones get deleted). */
@@ -399,6 +399,20 @@ async function loadUnit(supabase: SupabaseClient, job: ClaimedJob): Promise<Tran
         key: String(row.id),
         contentLabel: "article category / tag (one or two words)",
         fields: compact([field("name", row.name, "name")]),
+      };
+    }
+    case "announcement": {
+      const row = await single(supabase.from("app_announcements").select("id, title, message").eq("id", id));
+      if (!row) return null;
+      return {
+        store: "entity",
+        entityType: "announcement",
+        key: String(row.id),
+        contentLabel: "full-screen in-app announcement (short title and message)",
+        fields: compact([
+          field("title", row.title, "title"),
+          field("message", row.message, "body"),
+        ]),
       };
     }
     default:

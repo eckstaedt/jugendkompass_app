@@ -5,6 +5,16 @@
 /// `test/localization_test.dart` enforces that every key used in the app is
 /// available in every [AppLanguage].
 const Map<String, Map<String, String>> supplementTranslations = {
+  // ── In-app popups ────────────────────────────────────────────────────────
+  'announcement_ok': {
+    'de': 'Verstanden',
+    'en': 'Got it',
+    'ru': 'Понятно',
+    'es': 'Entendido',
+    'pl': 'Rozumiem',
+    'tr': 'Anladım',
+    'he': 'הבנתי',
+  },
   // ── Previously missing in ru / pl / es / tr ─────────────────────────────
   'gallery_permission_denied': {
     'de': 'Zugriff auf Galerie verweigert',

@@ -130,8 +130,12 @@ class CollectionScreen extends ConsumerWidget {
   ) {
     final brightness = theme.brightness;
     final typeLabel = _getTypeLabel(item.type, translate);
+    // Title in the current language (falls back to the stored title).
+    final localizedTitle = ref
+        .watch(localizedCollectionTitleProvider((item.type, item.id)))
+        .valueOrNull;
     // Strip HTML tags from title for clean display
-    final cleanTitle = HtmlUtils.stripHtml(item.title);
+    final cleanTitle = HtmlUtils.stripHtml(localizedTitle ?? item.title);
 
     return Dismissible(
       key: Key('${item.id}_${item.type}'),
