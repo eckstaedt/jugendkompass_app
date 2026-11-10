@@ -37,7 +37,9 @@ const state = {
   events: { event: "", type: "", rows: [] },
   runs: [],
   audios: { rows: null, q: "", filter: "all", uploading: {} },
+  content: { type: "", q: "", offset: 0, limit: 50, rows: [], total: 0, loaded: false },
   drawer: null,
+  editor: null,
   busy: false,
 };
 let pollTimer = null;
@@ -202,6 +204,7 @@ async function refreshAll(silent = false) {
   if (state.tab === "logs") await loadLogs();
   if (state.tab === "credits") renderCredits();
   if (state.tab === "audio" && state.audios.rows === null) await loadAudios();
+  if (state.tab === "edit" && !state.content.loaded) await loadContent();
   if (state.drawer) await refreshDrawer();
 }
 
@@ -229,6 +232,7 @@ function switchTab(tab, initial = false) {
   if (tab === "jobs") renderJobsShell();
   if (tab === "logs") renderLogsShell();
   if (tab === "audio") renderAudioShell();
+  if (tab === "edit") { state.content.loaded = false; renderContentShell(); }
   if (tab === "credits") main.innerHTML = `<div id="cr"></div>`;
   renderHeader();
   if (!initial) refreshAll(true);
@@ -258,6 +262,7 @@ function renderHeader() {
   const tabs = [
     ["overview", "Übersicht"],
     ["jobs", "Jobs", t.failed],
+    ["edit", "✏️ Bearbeiten"],
     ["logs", "Logs"],
     ["audio", "Audios"],
     ["credits", "Claude-Guthaben", state.overview?.credit_error ? "!" : 0],
@@ -510,7 +515,11 @@ async function refreshDrawer() {
   renderDrawer();
 }
 function closeDrawer() { state.drawer = null; $("#drawer")?.remove(); }
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDrawer(); });
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (state.editor) return closeEditor();
+  closeDrawer();
+});
 
 function renderDrawer() {
   const d = state.drawer;
@@ -533,7 +542,8 @@ function renderDrawer() {
     <h2>${esc(j.title)}</h2>
     <div style="margin-top:6px">${statusChip(j.status)}</div>
     <div class="btn-row" style="margin-top:14px">
-      <button class="btn primary" id="dr-rerun">↻ Neu übersetzen (nur Geändertes)</button>
+      <button class="btn primary" id="dr-edit">✏️ Übersetzungen bearbeiten</button>
+      <button class="btn" id="dr-rerun">↻ Neu übersetzen (nur Geändertes)</button>
       <button class="btn danger" id="dr-force">Komplett neu übersetzen</button>
     </div>
     <dl class="kv">
@@ -555,12 +565,307 @@ function renderDrawer() {
   </div>`;
   el.querySelector(".drawer").scrollTop = prevScroll;
   $("#dr-close").onclick = closeDrawer;
+  $("#dr-edit").onclick = () => openEditor(j.content_type, j.record_id, j.title);
   $("#dr-rerun").onclick = () => action("", async () => { await rpc("tp_rerun_record", { p_content_type: j.content_type, p_record_id: j.record_id, p_force: false }); await refreshDrawer(); return "Neu eingereiht"; });
   $("#dr-force").onclick = () => {
     if (!confirm("Alle automatischen Übersetzungen dieses Eintrags neu erzeugen?")) return;
     action("", async () => { await rpc("tp_rerun_record", { p_content_type: j.content_type, p_record_id: j.record_id, p_force: true }); await refreshDrawer(); return "Wird komplett neu übersetzt"; });
   };
 }
+
+// ─── Content list (manual editing entry point) ─────────────────────────────
+function renderContentShell() {
+  const c = state.content;
+  $("#main").innerHTML = `
+    <div class="banner ok" style="background:var(--accent-soft);border-color:transparent">
+      <div class="icon">✏️</div>
+      <div class="txt"><strong>Übersetzungen manuell eintragen</strong>Beitrag wählen, Sprache wählen, Text eintragen und speichern.
+      Manuell gespeicherte Felder werden von der automatischen Übersetzung <b>nie überschrieben</b> – über „Automatisch“ lässt sich das jederzeit wieder aufheben.</div>
+    </div>
+    <div class="toolbar">
+      <select class="input" id="c-type">
+        <option value="">Alle Kategorien</option>
+        ${Object.keys(TYPES).map((t) => `<option value="${t}" ${c.type === t ? "selected" : ""}>${typeLabel(t)}</option>`).join("")}
+      </select>
+      <input class="input" id="c-q" placeholder="Titel oder ID suchen" value="${esc(c.q)}" style="flex:1;min-width:200px">
+    </div>
+    <div class="card"><div class="table-wrap" id="content-table"><div class="empty">Lade …</div></div></div>
+    <p class="muted small" style="margin-top:12px">Legende: <span class="lp full">EN</span> vollständig ·
+      <span class="lp part">EN</span> teilweise · <span class="lp none">EN</span> fehlt · <span class="lp full">EN ✎</span> enthält manuelle Übersetzung</p>`;
+  $("#c-type").onchange = (e) => { c.type = e.target.value; c.offset = 0; loadContent(); };
+  let deb;
+  $("#c-q").oninput = (e) => { clearTimeout(deb); deb = setTimeout(() => { c.q = e.target.value.trim(); c.offset = 0; loadContent(); }, 300); };
+}
+
+async function loadContent() {
+  const c = state.content;
+  try {
+    const rows = await rpc("tp_content_list", { p_content_type: c.type || null, p_search: c.q || null, p_limit: c.limit, p_offset: c.offset });
+    c.rows = rows || [];
+    c.total = c.rows[0]?.total_count ?? 0;
+    c.loaded = true;
+  } catch (e) {
+    const el = $("#content-table");
+    if (el) el.innerHTML = `<div class="empty">Fehler: ${esc(e.message)}${/tp_content_list/.test(e.message) ? "<br><span class='small'>Migration <span class='mono'>20261110120000_translation_manual_edit.sql</span> ist noch nicht eingespielt.</span>" : ""}</div>`;
+    return;
+  }
+  renderContentTable();
+}
+
+function renderContentTable() {
+  const el = $("#content-table");
+  if (!el) return;
+  const c = state.content;
+  const langs = activeLangs();
+  if (!c.rows.length) { el.innerHTML = `<div class="empty">Keine Einträge gefunden.</div>`; return; }
+  el.innerHTML = `<table>
+    <thead><tr><th>Kategorie</th><th>Inhalt</th><th>Sprachen</th><th></th></tr></thead>
+    <tbody>${c.rows.map((r, i) => `
+      <tr class="click" data-i="${i}">
+        <td class="small" style="white-space:nowrap">${typeLabel(r.content_type)}</td>
+        <td><div class="title">${esc(r.title)}</div><div class="small muted">${esc(r.created_at ? fmtTime(r.created_at) : "")}</div></td>
+        <td><div class="lps">${langs.map((l) => {
+          const x = r.langs?.[l] || { n: 0, manual: 0 };
+          const cls = x.n >= r.field_count && r.field_count > 0 ? "full" : x.n > 0 ? "part" : "none";
+          return `<span class="lp ${cls}" title="${esc(langName(l))}: ${x.n}/${r.field_count} Felder${x.manual ? `, ${x.manual} manuell` : ""}">${esc(l.toUpperCase())}${x.manual ? " ✎" : ""}</span>`;
+        }).join("")}</div></td>
+        <td><button class="btn sm">✏️ Bearbeiten</button></td>
+      </tr>`).join("")}</tbody></table>
+    <div class="pager">
+      <span class="muted small">${fmtN(c.offset + 1)}–${fmtN(Math.min(c.offset + c.limit, c.total))} von ${fmtN(c.total)}</span>
+      <button class="btn sm" id="cp-prev" ${c.offset === 0 ? "disabled" : ""}>←</button>
+      <button class="btn sm" id="cp-next" ${c.offset + c.limit >= c.total ? "disabled" : ""}>→</button>
+    </div>`;
+  el.querySelectorAll("tr[data-i]").forEach((tr) => (tr.onclick = () => {
+    const r = c.rows[Number(tr.dataset.i)];
+    openEditor(r.content_type, r.record_id, r.title);
+  }));
+  $("#cp-prev").onclick = () => { c.offset = Math.max(0, c.offset - c.limit); loadContent(); };
+  $("#cp-next").onclick = () => { c.offset += c.limit; loadContent(); };
+}
+
+// ─── Editor (manual translation per record / language / field) ─────────────
+const RTL = new Set(["he", "ar"]);
+
+async function openEditor(type, recordId, title) {
+  const langs = activeLangs();
+  state.editor = {
+    type, recordId, title, lang: localGet("tp_edit_lang") && langs.includes(localGet("tp_edit_lang")) ? localGet("tp_edit_lang") : langs[0],
+    source: null, translations: {}, drafts: {}, preview: {}, error: null, saving: false,
+  };
+  renderEditor();
+  await loadEditor();
+}
+
+async function loadEditor() {
+  const ed = state.editor;
+  if (!ed) return;
+  try {
+    const data = await rpc("tp_record_editor", { p_content_type: ed.type, p_record_id: ed.recordId });
+    if (state.editor !== ed) return;
+    ed.source = data.source || [];
+    ed.translations = {};
+    for (const t of data.translations || []) ed.translations[`${t.language}|${t.field_name}`] = t;
+    ed.error = null;
+  } catch (e) {
+    ed.error = e.message;
+  }
+  renderEditor();
+}
+
+function editorDirty(ed = state.editor) {
+  return ed ? Object.keys(ed.drafts).filter((k) => ed.drafts[k] !== (ed.translations[k]?.value ?? "")) : [];
+}
+
+function closeEditor(force = false) {
+  const ed = state.editor;
+  if (!ed) return;
+  const dirty = editorDirty(ed);
+  if (!force && dirty.length && !confirm(`${dirty.length} ungespeicherte Änderung(en) verwerfen?`)) return;
+  state.editor = null;
+  $("#editor")?.remove();
+  if (state.tab === "edit") loadContent();
+  if (state.drawer) refreshDrawer();
+}
+
+function renderEditor() {
+  const ed = state.editor;
+  if (!ed) return;
+  let el = $("#editor");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "editor";
+    el.className = "overlay";
+    el.style.zIndex = 45;
+    el.onclick = (e) => { if (e.target === el) closeEditor(); };
+    document.body.appendChild(el);
+  }
+  const prevScroll = el.querySelector(".drawer")?.scrollTop || 0;
+  const langs = activeLangs();
+  const dirty = editorDirty(ed);
+  const langInfo = (l) => {
+    if (!ed.source) return "";
+    const done = ed.source.filter((f) => ed.translations[`${l}|${f.field_name}`]).length;
+    const man = ed.source.filter((f) => ed.translations[`${l}|${f.field_name}`]?.status === "manual").length;
+    const d = dirty.some((k) => k.startsWith(l + "|"));
+    return `<span class="lp ${done >= ed.source.length && ed.source.length ? "full" : done ? "part" : "none"}">${done}/${ed.source.length}${man ? " ✎" : ""}</span>${d ? " ●" : ""}`;
+  };
+
+  let body;
+  if (ed.error) body = `<div class="empty">Fehler: ${esc(ed.error)}${/tp_record_editor/.test(ed.error) ? "<br><span class='small'>Migration <span class='mono'>20261110120000_translation_manual_edit.sql</span> ist noch nicht eingespielt.</span>" : ""}</div>`;
+  else if (!ed.source) body = `<div class="muted">Lade …</div>`;
+  else if (!ed.source.length) body = `<div class="empty">Dieser Eintrag hat keine übersetzbaren Texte.</div>`;
+  else body = ed.source.map((f) => fieldEditor(ed, f)).join("");
+
+  el.innerHTML = `<div class="drawer editor">
+    <button class="btn sm close" data-ed="close">✕</button>
+    <div class="muted small">${typeLabel(ed.type)} · Übersetzungen bearbeiten</div>
+    <h2>${esc(ed.title || ed.recordId)}</h2>
+    <div class="lang-tabs">
+      ${langs.map((l) => `<button class="tab ${ed.lang === l ? "active" : ""}" data-lang="${l}">${esc(LANGS[l] || l)} ${langInfo(l)}</button>`).join("")}
+    </div>
+    <div class="editor-bar">
+      <span class="muted small">Quelle: Deutsch → Ziel: <b>${esc(langName(ed.lang))}</b></span>
+      <div class="spacer"></div>
+      <button class="btn sm" data-ed="reset-lang" title="Alle manuellen Texte dieser Sprache verwerfen und automatisch neu übersetzen">↺ Sprache automatisch</button>
+      <button class="btn sm primary" data-ed="save-lang" ${dirty.some((k) => k.startsWith(ed.lang + "|")) ? "" : "disabled"}>💾 Alle Änderungen (${esc(ed.lang.toUpperCase())}) speichern</button>
+    </div>
+    ${body}
+  </div>`;
+  el.querySelector(".drawer").scrollTop = prevScroll;
+  bindEditor(el);
+}
+
+function fieldEditor(ed, f) {
+  const key = `${ed.lang}|${f.field_name}`;
+  const tr = ed.translations[key];
+  const value = key in ed.drafts ? ed.drafts[key] : tr?.value ?? "";
+  const isDirty = key in ed.drafts && ed.drafts[key] !== (tr?.value ?? "");
+  const stale = tr?.status === "manual" && tr.source_hash && tr.source_hash !== f.hash;
+  const badge = !tr ? `<span class="chip">fehlt</span>`
+    : tr.status === "manual" ? `<span class="chip info">✎ manuell</span>` : `<span class="chip ok">automatisch</span>`;
+  const rows = f.kind === "text" ? Math.min(4, Math.max(1, Math.ceil(f.text.length / 70))) : Math.min(18, Math.max(4, Math.ceil(f.text.length / 80)));
+  const dir = RTL.has(ed.lang) ? "rtl" : "ltr";
+  const preview = f.kind === "html" && ed.preview[key];
+  return `<div class="fe" data-field="${esc(f.field_name)}">
+    <div class="fe-head">
+      <b>${esc(f.label)}</b> ${badge}
+      ${isDirty ? `<span class="chip warn">ungespeichert</span>` : ""}
+      ${tr ? `<span class="muted small">${esc(ago(tr.updated_at))}</span>` : ""}
+    </div>
+    ${stale ? `<div class="fe-warn">⚠️ Der deutsche Originaltext wurde nach dieser manuellen Übersetzung geändert – bitte prüfen.</div>` : ""}
+    <div class="fe-grid">
+      <div>
+        <div class="fe-label">Deutsch (Original)</div>
+        <div class="fe-src ${f.kind === "html" ? "mono" : ""}">${esc(f.text)}</div>
+      </div>
+      <div>
+        <div class="fe-label">${esc(LANGS[ed.lang] || ed.lang)}${f.kind === "html" ? " <span class='muted'>(HTML – Tags wie im Original beibehalten)</span>" : ""}</div>
+        ${preview
+          ? `<iframe class="fe-preview" sandbox="" srcdoc="${esc(`<html dir="${dir}"><body style="font:14px/1.5 system-ui;margin:10px">${value}</body></html>`)}"></iframe>`
+          : `<textarea class="input fe-ta ${f.kind === "html" ? "mono" : ""}" dir="${dir}" rows="${rows}" data-key="${esc(key)}" placeholder="Übersetzung eingeben …">${esc(value)}</textarea>`}
+      </div>
+    </div>
+    <div class="fe-actions">
+      <button class="btn sm primary" data-save="${esc(f.field_name)}" ${isDirty && value.trim() ? "" : "disabled"}>💾 Speichern</button>
+      ${isDirty ? `<button class="btn sm" data-undo="${esc(f.field_name)}">Änderung verwerfen</button>` : ""}
+      <button class="btn sm" data-copy="${esc(f.field_name)}" title="Deutschen Text als Ausgangspunkt übernehmen">⧉ Original übernehmen</button>
+      ${f.kind === "html" ? `<button class="btn sm" data-preview="${esc(f.field_name)}">${preview ? "✎ Bearbeiten" : "👁 Vorschau"}</button>` : ""}
+      ${tr?.status === "manual" || (tr && !isDirty) ? `<button class="btn sm" data-reset="${esc(f.field_name)}" title="Manuellen Text verwerfen und von Claude neu übersetzen lassen">↺ Automatisch</button>` : ""}
+    </div>
+  </div>`;
+}
+
+function bindEditor(el) {
+  const ed = state.editor;
+  el.querySelector('[data-ed="close"]').onclick = () => closeEditor();
+  el.querySelectorAll("[data-lang]").forEach((b) => (b.onclick = () => {
+    ed.lang = b.dataset.lang;
+    localSet("tp_edit_lang", ed.lang);
+    el.querySelector(".drawer").scrollTop = 0;
+    renderEditor();
+  }));
+  el.querySelectorAll("textarea[data-key]").forEach((ta) => (ta.oninput = () => {
+    const key = ta.dataset.key;
+    const wasDirty = key in ed.drafts && ed.drafts[key] !== (ed.translations[key]?.value ?? "");
+    ed.drafts[key] = ta.value;
+    const isDirty = ta.value !== (ed.translations[key]?.value ?? "");
+    const fe = ta.closest(".fe");
+    fe.querySelector("[data-save]").disabled = !(isDirty && ta.value.trim());
+    if (wasDirty !== isDirty) {
+      // re-render to update chips / buttons, keep the caret
+      const pos = [ta.selectionStart, ta.selectionEnd];
+      renderEditor();
+      const n = $(`#editor textarea[data-key="${CSS.escape(key)}"]`);
+      if (n) { n.focus(); n.setSelectionRange(pos[0], pos[1]); }
+    } else {
+      $('#editor [data-ed="save-lang"]').disabled = !editorDirty().some((k) => k.startsWith(ed.lang + "|"));
+    }
+  }));
+  const fieldOf = (name) => ed.source.find((f) => f.field_name === name);
+  el.querySelectorAll("[data-save]").forEach((b) => (b.onclick = () => saveFields([b.dataset.save])));
+  el.querySelectorAll("[data-undo]").forEach((b) => (b.onclick = () => { delete ed.drafts[`${ed.lang}|${b.dataset.undo}`]; renderEditor(); }));
+  el.querySelectorAll("[data-copy]").forEach((b) => (b.onclick = () => {
+    const key = `${ed.lang}|${b.dataset.copy}`;
+    const cur = key in ed.drafts ? ed.drafts[key] : ed.translations[key]?.value ?? "";
+    if (cur.trim() && !confirm("Aktuellen Text durch das deutsche Original ersetzen?")) return;
+    ed.drafts[key] = fieldOf(b.dataset.copy).text;
+    renderEditor();
+  }));
+  el.querySelectorAll("[data-preview]").forEach((b) => (b.onclick = () => {
+    const key = `${ed.lang}|${b.dataset.preview}`;
+    ed.preview[key] = !ed.preview[key];
+    renderEditor();
+  }));
+  el.querySelectorAll("[data-reset]").forEach((b) => (b.onclick = () => resetFields(b.dataset.reset)));
+  el.querySelector('[data-ed="save-lang"]').onclick = () =>
+    saveFields(editorDirty().filter((k) => k.startsWith(ed.lang + "|")).map((k) => k.split("|").slice(1).join("|")));
+  el.querySelector('[data-ed="reset-lang"]').onclick = () => resetFields(null);
+}
+
+async function saveFields(fieldNames) {
+  const ed = state.editor;
+  if (!ed || ed.saving || !fieldNames.length) return;
+  const lang = ed.lang;
+  const todo = fieldNames.map((f) => ({ f, key: `${lang}|${f}` })).filter((x) => (ed.drafts[x.key] ?? "").trim());
+  if (!todo.length) return toast("Leere Übersetzung kann nicht gespeichert werden – „Automatisch“ verwenden.", true);
+  ed.saving = true;
+  document.body.style.cursor = "progress";
+  let ok = 0;
+  try {
+    for (const x of todo) {
+      await rpc("tp_save_translation", { p_content_type: ed.type, p_record_id: ed.recordId, p_language: lang, p_field_name: x.f, p_value: ed.drafts[x.key] });
+      ok++;
+    }
+    for (const x of todo) delete ed.drafts[x.key];
+    toast(`${ok} Feld${ok === 1 ? "" : "er"} (${lang.toUpperCase()}) gespeichert – in der App sofort aktiv.`);
+  } catch (e) {
+    toast(`Fehler${ok ? ` nach ${ok} gespeicherten Feldern` : ""}: ${e.message}`, true);
+  } finally {
+    ed.saving = false;
+    document.body.style.cursor = "";
+  }
+  await loadEditor();
+}
+
+async function resetFields(fieldName) {
+  const ed = state.editor;
+  if (!ed) return;
+  const lang = ed.lang;
+  const what = fieldName ? `das Feld „${ed.source.find((f) => f.field_name === fieldName)?.label || fieldName}“` : `alle Felder`;
+  if (!confirm(`${what} in ${LANGS[lang] || lang} wieder automatisch übersetzen lassen?\n\nManuell eingetragener Text wird dabei durch eine neue Claude-Übersetzung ersetzt (bis dahin bleibt der aktuelle Text sichtbar).`)) return;
+  try {
+    await rpc("tp_reset_translation", { p_content_type: ed.type, p_record_id: ed.recordId, p_language: lang, p_field_name: fieldName });
+    for (const k of Object.keys(ed.drafts)) if (k.startsWith(lang + "|") && (!fieldName || k === `${lang}|${fieldName}`)) delete ed.drafts[k];
+    toast("Automatische Übersetzung eingereiht.");
+  } catch (e) {
+    toast("Fehler: " + e.message, true);
+  }
+  await loadEditor();
+  refreshAll(true);
+}
+
+window.addEventListener("beforeunload", (e) => { if (editorDirty().length) { e.preventDefault(); e.returnValue = ""; } });
 
 // ─── Logs ───────────────────────────────────────────────────────────────────
 function renderLogsShell() {
