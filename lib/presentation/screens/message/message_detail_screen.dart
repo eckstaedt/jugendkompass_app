@@ -13,6 +13,7 @@ import 'package:jugendkompass_app/core/services/content_share_service.dart';
 import 'package:jugendkompass_app/core/utils/html_utils.dart';
 import 'package:jugendkompass_app/domain/providers/post_view_count_provider.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/html_inline_image.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/like_button.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -169,9 +170,11 @@ class _MessageDetailScreenState extends ConsumerState<MessageDetailScreen> {
             const SizedBox(height: 8),
             LikeButton(contentId: message.id, contentType: 'message'),
             const SizedBox(height: 16),
-            // Message body rendered as HTML
+            // Message body rendered as HTML (images in the text are shown
+            // in their original aspect ratio)
             Html(
               data: message.message,
+              extensions: [htmlInlineImageExtension()],
               style: {
                 "body": Style(
                   margin: Margins.zero,
@@ -194,9 +197,6 @@ class _MessageDetailScreenState extends ConsumerState<MessageDetailScreen> {
                 "a": Style(
                   color: DesignTokens.primaryRed,
                   textDecoration: TextDecoration.underline,
-                ),
-                "img": Style(
-                  display: Display.none,
                 ),
                 "*": Style(
                   color: textColor,
