@@ -27,6 +27,9 @@ const STATUS_LABEL = {
 
 // ─── Icons (Lucide, ISC license – https://lucide.dev) ──────────────────────
 const ICONS = {
+  "file-plus": '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" /> <path d="M14 2v4a2 2 0 0 0 2 2h4" /> <path d="M9 15h6" /> <path d="M12 18v-6" />',
+  "sparkles": '<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" /> <path d="M20 3v4" /> <path d="M22 5h-4" /> <path d="M4 17v2" /> <path d="M5 18H3" />',
+  "plus": '<path d="M5 12h14" /> <path d="M12 5v14" />',
   "globe": '<circle cx="12" cy="12" r="10" /> <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /> <path d="M2 12h20" />',
   "newspaper": '<path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" /> <path d="M18 14h-8" /> <path d="M15 18h-5" /> <path d="M10 6h8v4h-8V6Z" />',
   "message-square": '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />',
@@ -594,7 +597,7 @@ function renderDrawer() {
     </dl>
     ${j.last_error ? `<h3>Letzter Fehler</h3><pre class="log">${esc(j.last_error)}</pre>` : ""}
     <h3 style="margin-top:20px">Übersetzungen</h3>
-    ${d.translations === null ? `<div class="muted">Lade …</div>` : Object.keys(byLang).length === 0 ? `<div class="muted">Noch keine Übersetzungen vorhanden.</div>` :
+    ${d.translations === null ? `<div class="muted">Lade …</div>` : Object.keys(byLang).length === 0 ? `<div class="empty-create"><div class="muted">Für diesen Eintrag gibt es noch keine Übersetzung.</div><button class="btn primary sm" id="dr-create">${ic("plus")}Übersetzung erstellen</button></div>` :
       Object.entries(byLang).map(([lang, fields]) => `<div class="tr-block"><header><span>${esc(langName(lang))}</span><span class="muted small">${esc(ago(fields[0].updated_at))}</span></header>
         ${fields.map((f) => `<div class="f"><b>${esc(f.field_name)} ${f.status === "manual" ? "· manuell" : ""}</b><div>${esc(f.value)}</div></div>`).join("")}</div>`).join("")}
     <h3 style="margin-top:20px">Verlauf</h3>
@@ -604,6 +607,8 @@ function renderDrawer() {
   el.querySelector(".drawer").scrollTop = prevScroll;
   $("#dr-close").onclick = closeDrawer;
   $("#dr-edit").onclick = () => openEditor(j.content_type, j.record_id, j.title);
+  const cr = $("#dr-create");
+  if (cr) cr.onclick = () => openEditor(j.content_type, j.record_id, j.title);
   $("#dr-rerun").onclick = () => action("", async () => { await rpc("tp_rerun_record", { p_content_type: j.content_type, p_record_id: j.record_id, p_force: false }); await refreshDrawer(); return "Neu eingereiht"; });
   $("#dr-force").onclick = () => {
     if (!confirm("Alle automatischen Übersetzungen dieses Eintrags neu erzeugen?")) return;
@@ -667,7 +672,7 @@ function renderContentTable() {
           const cls = x.n >= r.field_count && r.field_count > 0 ? "full" : x.n > 0 ? "part" : "none";
           return `<span class="lp ${cls}" title="${esc(langName(l))}: ${x.n}/${r.field_count} Felder${x.manual ? `, ${x.manual} manuell` : ""}">${esc(l.toUpperCase())}${x.manual ? ic("pencil", "xs") : ""}</span>`;
         }).join("")}</div></td>
-        <td><button class="btn sm">${ic("square-pen")}Bearbeiten</button></td>
+        <td>${Object.keys(r.langs || {}).length ? `<button class="btn sm">${ic("square-pen")}Bearbeiten</button>` : `<button class="btn sm primary">${ic("plus")}Erstellen</button>`}</td>
       </tr>`).join("")}</tbody></table>
     <div class="pager">
       <span class="muted small">${fmtN(c.offset + 1)}–${fmtN(Math.min(c.offset + c.limit, c.total))} von ${fmtN(c.total)}</span>
@@ -753,7 +758,7 @@ function renderEditor() {
   if (ed.error) body = `<div class="empty">Fehler: ${esc(ed.error)}${/tp_record_editor/.test(ed.error) ? "<br><span class='small'>Migration <span class='mono'>20261110120000_translation_manual_edit.sql</span> ist noch nicht eingespielt.</span>" : ""}</div>`;
   else if (!ed.source) body = `<div class="muted">Lade …</div>`;
   else if (!ed.source.length) body = `<div class="empty">Dieser Eintrag hat keine übersetzbaren Texte.</div>`;
-  else body = ed.source.map((f) => fieldEditor(ed, f)).join("");
+  else body = (ed.source.some((f) => ed.translations[`${ed.lang}|${f.field_name}`]) ? "" : createPanel(ed)) + ed.source.map((f) => fieldEditor(ed, f)).join("");
 
   el.innerHTML = `<div class="drawer editor">
     <button class="btn sm icon-only close" data-ed="close" aria-label="Schließen">${ic("x")}</button>
@@ -765,7 +770,7 @@ function renderEditor() {
     <div class="editor-bar">
       <span class="muted small">Quelle: Deutsch → Ziel: <b>${esc(langName(ed.lang))}</b></span>
       <div class="spacer"></div>
-      <button class="btn sm" data-ed="reset-lang" title="Alle manuellen Texte dieser Sprache verwerfen und automatisch neu übersetzen">${ic("rotate-ccw")}Sprache automatisch</button>
+${ed.source?.some((f) => ed.translations[`${ed.lang}|${f.field_name}`]) ? `<button class="btn sm" data-ed="reset-lang" title="Alle manuellen Texte dieser Sprache verwerfen und automatisch neu übersetzen">${ic("rotate-ccw")}Sprache automatisch</button>` : ""}
       <button class="btn sm primary" data-ed="save-lang" ${dirty.some((k) => k.startsWith(ed.lang + "|")) ? "" : "disabled"}>${ic("save")}Alle Änderungen (${esc(ed.lang.toUpperCase())}) speichern</button>
     </div>
     ${body}
@@ -774,13 +779,28 @@ function renderEditor() {
   bindEditor(el);
 }
 
+function createPanel(ed) {
+  const name = LANGS[ed.lang] || ed.lang;
+  const started = ed.source.some((f) => (ed.drafts[`${ed.lang}|${f.field_name}`] ?? "").trim());
+  return `<div class="create-panel">
+    <div class="cp-icon">${ic("file-plus")}</div>
+    <div class="cp-txt"><strong>Neue Übersetzung auf ${esc(name)}</strong>
+      Für diesen Eintrag gibt es noch keine ${esc(name.toLowerCase())}e Fassung. Text unten selbst eintragen, mit dem deutschen Original als Vorlage beginnen oder Claude übersetzen lassen.</div>
+    <div class="btn-row">
+      <button class="btn sm primary" data-ed="create-empty">${ic("plus")}Selbst eintragen</button>
+      <button class="btn sm" data-ed="create-copy" ${started ? "disabled" : ""}>${ic("copy")}Original als Vorlage</button>
+      <button class="btn sm" data-ed="create-auto">${ic("sparkles")}Automatisch übersetzen</button>
+    </div>
+  </div>`;
+}
+
 function fieldEditor(ed, f) {
   const key = `${ed.lang}|${f.field_name}`;
   const tr = ed.translations[key];
   const value = key in ed.drafts ? ed.drafts[key] : tr?.value ?? "";
   const isDirty = key in ed.drafts && ed.drafts[key] !== (tr?.value ?? "");
   const stale = tr?.status === "manual" && tr.source_hash && tr.source_hash !== f.hash;
-  const badge = !tr ? `<span class="chip">fehlt</span>`
+  const badge = !tr ? `<span class="chip">noch nicht übersetzt</span>`
     : tr.status === "manual" ? `<span class="chip info">${ic("pencil", "xs")}manuell</span>` : `<span class="chip ok">automatisch</span>`;
   const rows = f.kind === "text" ? Math.min(4, Math.max(1, Math.ceil(f.text.length / 70))) : Math.min(18, Math.max(4, Math.ceil(f.text.length / 80)));
   const dir = RTL.has(ed.lang) ? "rtl" : "ltr";
@@ -805,7 +825,7 @@ function fieldEditor(ed, f) {
       </div>
     </div>
     <div class="fe-actions">
-      <button class="btn sm primary" data-save="${esc(f.field_name)}" ${isDirty && value.trim() ? "" : "disabled"}>${ic("save")}Speichern</button>
+      <button class="btn sm primary" data-save="${esc(f.field_name)}" ${isDirty && value.trim() ? "" : "disabled"}>${tr ? `${ic("save")}Speichern` : `${ic("plus")}Erstellen`}</button>
       ${isDirty ? `<button class="btn sm" data-undo="${esc(f.field_name)}">Änderung verwerfen</button>` : ""}
       <button class="btn sm" data-copy="${esc(f.field_name)}" title="Deutschen Text als Ausgangspunkt übernehmen">${ic("copy")}Original übernehmen</button>
       ${f.kind === "html" ? `<button class="btn sm" data-preview="${esc(f.field_name)}">${preview ? `${ic("pencil")}Bearbeiten` : `${ic("eye")}Vorschau`}</button>` : ""}
@@ -858,7 +878,24 @@ function bindEditor(el) {
   el.querySelectorAll("[data-reset]").forEach((b) => (b.onclick = () => resetFields(b.dataset.reset)));
   el.querySelector('[data-ed="save-lang"]').onclick = () =>
     saveFields(editorDirty().filter((k) => k.startsWith(ed.lang + "|")).map((k) => k.split("|").slice(1).join("|")));
-  el.querySelector('[data-ed="reset-lang"]').onclick = () => resetFields(null);
+  const rl = el.querySelector('[data-ed="reset-lang"]');
+  if (rl) rl.onclick = () => resetFields(null);
+  const ce = el.querySelector('[data-ed="create-empty"]');
+  if (ce) ce.onclick = () => el.querySelector("textarea[data-key]")?.focus();
+  const cc = el.querySelector('[data-ed="create-copy"]');
+  if (cc) cc.onclick = () => {
+    for (const f of ed.source) ed.drafts[`${ed.lang}|${f.field_name}`] = f.text;
+    renderEditor();
+    el.querySelector("textarea[data-key]")?.focus();
+  };
+  const ca = el.querySelector('[data-ed="create-auto"]');
+  if (ca) ca.onclick = async () => {
+    try {
+      await rpc("tp_rerun_record", { p_content_type: ed.type, p_record_id: ed.recordId, p_force: false });
+      toast("Wird automatisch übersetzt – erscheint in der Regel nach wenigen Sekunden.");
+      setTimeout(() => { if (state.editor === ed && !editorDirty(ed).length) loadEditor(); }, 15000);
+    } catch (e) { toast("Fehler: " + e.message, true); }
+  };
 }
 
 async function saveFields(fieldNames) {
