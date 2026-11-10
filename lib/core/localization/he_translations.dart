@@ -112,7 +112,7 @@ const Map<String, String> heTranslations = {
   'skip_next': 'דלג על הבא',
   'skip_previous': 'דלג על הקודם',
   'reading_time': 'זמן קריאה',
-  'min': 'מינימום',
+  'min': 'דק׳',
   'search_in_app': 'חפש בכל האפליקציה...',
   'settings_header': 'הגדרות',
   'verses_section': 'פסוק היום',

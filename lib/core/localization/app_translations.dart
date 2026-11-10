@@ -996,6 +996,7 @@ class Translations {
       'no_data': 'Sin datos disponibles',
       'read_more': 'Leer más',
       'share': 'Compartir',
+      'min': 'min',
       'add_to_favorites': 'Añadir a Favoritos',
       'remove_from_favorites': 'Eliminar de Favoritos',
       'listen': 'Escuchar',
