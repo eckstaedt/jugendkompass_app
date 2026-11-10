@@ -7,14 +7,14 @@ const sb = createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 const TYPES = {
-  post: { label: "Artikel", icon: "📰" },
-  message: { label: "Nachrichten", icon: "💬" },
-  impulse: { label: "Impulse", icon: "💡" },
-  video: { label: "Videos", icon: "🎬" },
-  verse: { label: "Tagesverse", icon: "📖" },
-  poll: { label: "Umfragen", icon: "📊" },
-  edition: { label: "Ausgaben", icon: "📚" },
-  category: { label: "Kategorien", icon: "🏷️" },
+  post: { label: "Artikel", icon: "newspaper" },
+  message: { label: "Nachrichten", icon: "message-square" },
+  impulse: { label: "Impulse", icon: "lightbulb" },
+  video: { label: "Videos", icon: "clapperboard" },
+  verse: { label: "Tagesverse", icon: "book-open" },
+  poll: { label: "Umfragen", icon: "chart-column" },
+  edition: { label: "Ausgaben", icon: "library" },
+  category: { label: "Kategorien", icon: "tag" },
 };
 const LANGS = {
   en: "Englisch", ru: "Russisch", es: "Spanisch", pl: "Polnisch", tr: "Türkisch", he: "Hebräisch",
@@ -24,6 +24,43 @@ const STATUS_LABEL = {
   pending: "wartend", processing: "in Arbeit", completed: "fertig", failed: "fehlgeschlagen",
   queued: "eingereiht", retry: "Retry", requeued: "erneut eingereiht", admin: "Admin",
 };
+
+// ─── Icons (Lucide, ISC license – https://lucide.dev) ──────────────────────
+const ICONS = {
+  "globe": '<circle cx="12" cy="12" r="10" /> <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" /> <path d="M2 12h20" />',
+  "newspaper": '<path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" /> <path d="M18 14h-8" /> <path d="M15 18h-5" /> <path d="M10 6h8v4h-8V6Z" />',
+  "message-square": '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />',
+  "lightbulb": '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" /> <path d="M9 18h6" /> <path d="M10 22h4" />',
+  "clapperboard": '<path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z" /> <path d="m6.2 5.3 3.1 3.9" /> <path d="m12.4 3.4 3.1 4" /> <path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />',
+  "book-open": '<path d="M12 7v14" /> <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />',
+  "chart-column": '<path d="M3 3v16a2 2 0 0 0 2 2h16" /> <path d="M18 17V9" /> <path d="M13 17V5" /> <path d="M8 17v-3" />',
+  "library": '<path d="m16 6 4 14" /> <path d="M12 6v14" /> <path d="M8 8v12" /> <path d="M4 4v16" />',
+  "tag": '<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" /> <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />',
+  "headphones": '<path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3" />',
+  "rotate-cw": '<path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" /> <path d="M21 3v5h-5" />',
+  "rotate-ccw": '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" />',
+  "external-link": '<path d="M15 3h6v6" /> <path d="M10 14 21 3" /> <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />',
+  "arrow-right": '<path d="M5 12h14" /> <path d="m12 5 7 7-7 7" />',
+  "arrow-left": '<path d="m12 19-7-7 7-7" /> <path d="M19 12H5" />',
+  "pencil": '<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /> <path d="m15 5 4 4" />',
+  "square-pen": '<path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /> <path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84a.5.5 0 0 1-.62-.62l.84-2.873a2 2 0 0 1 .506-.852z" />',
+  "play": '<polygon points="6 3 20 12 6 21 6 3" />',
+  "x": '<path d="M18 6 6 18" /> <path d="m6 6 12 12" />',
+  "credit-card": '<rect width="20" height="14" x="2" y="5" rx="2" /> <line x1="2" x2="22" y1="10" y2="10" />',
+  "triangle-alert": '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" /> <path d="M12 9v4" /> <path d="M12 17h.01" />',
+  "save": '<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" /> <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7" /> <path d="M7 3v4a1 1 0 0 0 1 1h7" />',
+  "key-round": '<path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z" /> <circle cx="16.5" cy="7.5" r=".5" fill="currentColor" />',
+  "circle-check": '<circle cx="12" cy="12" r="10" /> <path d="m9 12 2 2 4-4" />',
+  "copy": '<rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />',
+  "eye": '<path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" /> <circle cx="12" cy="12" r="3" />',
+  "check": '<path d="M20 6 9 17l-5-5" />',
+  "upload": '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /> <polyline points="17 8 12 3 7 8" /> <line x1="12" x2="12" y1="3" y2="15" />',
+  "refresh-cw": '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /> <path d="M21 3v5h-5" /> <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /> <path d="M8 16H3v5" />',
+  "log-out": '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /> <polyline points="16 17 21 12 16 7" /> <line x1="21" x2="9" y1="12" y2="12" />',
+};
+function ic(name, cls = "") {
+  return `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICONS[name] || ""}</svg>`;
+}
 
 // ─── State ──────────────────────────────────────────────────────────────────
 const state = {
@@ -69,7 +106,8 @@ function dur(s) {
   return Math.round(s / 86400) + " Tagen";
 }
 function langName(c) { return LANGS[c] ? `${LANGS[c]} (${c})` : c; }
-function typeLabel(t) { return TYPES[t] ? `${TYPES[t].icon} ${TYPES[t].label}` : t; }
+function typeLabel(t) { return TYPES[t] ? `<span class="with-ic">${ic(TYPES[t].icon)}${TYPES[t].label}</span>` : esc(t); }
+function typeText(t) { return TYPES[t]?.label || t; }
 function statusChip(s) { return `<span class="status ${esc(s)}">${esc(STATUS_LABEL[s] || s)}</span>`; }
 function shortError(e) {
   if (!e) return "";
@@ -135,7 +173,7 @@ async function start() {
 function renderLogin(error = "") {
   $("#app").innerHTML = `
     <div class="card login">
-      <h1>🌍 Übersetzung</h1>
+      <h1 class="with-ic"><span class="app-mark">${ic("globe")}</span>Übersetzung</h1>
       <p class="muted">Jugendkompass · Admin-Panel für automatische Übersetzungen</p>
       <form id="login">
         <label>E-Mail</label>
@@ -212,11 +250,11 @@ async function refreshAll(silent = false) {
 function renderShell() {
   $("#app").innerHTML = `
     <header class="topbar"><div class="topbar-inner">
-      <div class="brand">🌍 Übersetzung <small>Jugendkompass</small></div>
+      <div class="brand"><span class="app-mark">${ic("globe")}</span>Übersetzung <small>Jugendkompass</small></div>
       <nav class="tabs" id="tabs"></nav>
       <div class="spacer"></div>
       <span class="live" id="live"><span class="dot off"></span> verbinde …</span>
-      <div class="user">${esc(state.session.user.email)} <button class="btn sm" id="logout">Abmelden</button></div>
+      <div class="user"><span class="email" title="${esc(state.session.user.email)}">${esc(state.session.user.email)}</span><button class="btn sm icon-only" id="logout" aria-label="Abmelden" title="Abmelden">${ic("log-out")}</button></div>
     </div></header>
     <main id="main"></main>`;
   $("#logout").onclick = () => sb.auth.signOut();
@@ -262,7 +300,7 @@ function renderHeader() {
   const tabs = [
     ["overview", "Übersicht"],
     ["jobs", "Jobs", t.failed],
-    ["edit", "✏️ Bearbeiten"],
+    ["edit", "Bearbeiten"],
     ["logs", "Logs"],
     ["audio", "Audios"],
     ["credits", "Claude-Guthaben", state.overview?.credit_error ? "!" : 0],
@@ -285,29 +323,29 @@ function creditBanner() {
   const t = totals();
   if (o.credit_error) {
     return `<div class="banner bad">
-      <div class="icon">💳</div>
+      <div class="icon">${ic("credit-card")}</div>
       <div class="txt"><strong>Claude-Guthaben ist aufgebraucht</strong>
         Die Anthropic-API lehnt Anfragen ab („credit balance is too low“). ${fmtN(t.failed)} Jobs sind deshalb fehlgeschlagen.
         Guthaben aufladen und danach alle fehlgeschlagenen Übersetzungen neu starten.</div>
       <div class="btn-row">
-        <a class="btn solid-danger" href="${CFG.billingUrl}" target="_blank" rel="noopener">Guthaben aufladen ↗</a>
-        <button class="btn" data-act="retry-all">↻ Alle fehlgeschlagenen neu starten</button>
+        <a class="btn solid-danger" href="${CFG.billingUrl}" target="_blank" rel="noopener">Guthaben aufladen${ic("external-link","trail")}</a>
+        <button class="btn" data-act="retry-all">${ic("rotate-cw")}Alle fehlgeschlagenen neu starten</button>
       </div></div>`;
   }
   if (o.auth_error) {
-    return `<div class="banner bad"><div class="icon">🔑</div>
+    return `<div class="banner bad"><div class="icon">${ic("key-round")}</div>
       <div class="txt"><strong>API-Key ungültig oder fehlt</strong>Den Secret <span class="mono">ANTHROPIC_API_KEY</span> der Edge Function <span class="mono">process-translation-jobs</span> im Supabase-Dashboard prüfen.</div>
-      <div class="btn-row"><a class="btn" target="_blank" rel="noopener" href="https://supabase.com/dashboard/project/vdcdibvclaulqxfjyzpq/functions/secrets">Supabase Secrets ↗</a>
-      <button class="btn" data-act="retry-all">↻ Fehlgeschlagene neu starten</button></div></div>`;
+      <div class="btn-row"><a class="btn" target="_blank" rel="noopener" href="https://supabase.com/dashboard/project/vdcdibvclaulqxfjyzpq/functions/secrets">Supabase Secrets${ic("external-link","trail")}</a>
+      <button class="btn" data-act="retry-all">${ic("rotate-cw")}Fehlgeschlagene neu starten</button></div></div>`;
   }
   if (t.failed > 0) {
-    return `<div class="banner warn"><div class="icon">⚠️</div>
+    return `<div class="banner warn"><div class="icon">${ic("triangle-alert")}</div>
       <div class="txt"><strong>${fmtN(t.failed)} Übersetzungen fehlgeschlagen</strong>Details im Tab „Jobs“ (Filter: fehlgeschlagen).</div>
-      <div class="btn-row"><button class="btn" data-act="retry-all">↻ Alle neu starten</button>
+      <div class="btn-row"><button class="btn" data-act="retry-all">${ic("rotate-cw")}Alle neu starten</button>
       <button class="btn" data-act="goto-failed">Ansehen</button></div></div>`;
   }
   if (t.pending + t.processing === 0 && t.all > 0) {
-    return `<div class="banner ok"><div class="icon">✅</div><div class="txt"><strong>Alles übersetzt</strong>Neue oder geänderte Inhalte werden automatisch übersetzt.</div></div>`;
+    return `<div class="banner ok"><div class="icon">${ic("circle-check")}</div><div class="txt"><strong>Alles übersetzt</strong>Neue oder geänderte Inhalte werden automatisch übersetzt.</div></div>`;
   }
   return "";
 }
@@ -321,11 +359,11 @@ function bindCommonActions(root) {
       if (a === "retry-type") return action("", async () => `${fmtN(await rpc("tp_retry_failed", { p_content_type: type }))} Jobs neu gestartet`);
       if (a === "run-now") return action("", async () => { await rpc("tp_run_now"); return "Worker angestoßen"; });
       if (a === "rerun-type") {
-        return action("", async () => `${typeLabel(type)}: ${fmtN(await rpc("tp_rerun_type", { p_content_type: type, p_force: false }))} Jobs eingereiht`);
+        return action("", async () => `${typeText(type)}: ${fmtN(await rpc("tp_rerun_type", { p_content_type: type, p_force: false }))} Jobs eingereiht`);
       }
       if (a === "force-type") {
-        if (!confirm(`${typeLabel(type)} komplett neu übersetzen?\n\nAlle automatischen Übersetzungen dieser Kategorie werden neu erzeugt (verbraucht Claude-Guthaben). Manuelle Korrekturen bleiben erhalten. Bis zur neuen Übersetzung bleiben die alten sichtbar.`)) return;
-        return action("", async () => `${typeLabel(type)}: ${fmtN(await rpc("tp_rerun_type", { p_content_type: type, p_force: true }))} Jobs neu übersetzen`);
+        if (!confirm(`${typeText(type)} komplett neu übersetzen?\n\nAlle automatischen Übersetzungen dieser Kategorie werden neu erzeugt (verbraucht Claude-Guthaben). Manuelle Korrekturen bleiben erhalten. Bis zur neuen Übersetzung bleiben die alten sichtbar.`)) return;
+        return action("", async () => `${typeText(type)}: ${fmtN(await rpc("tp_rerun_type", { p_content_type: type, p_force: true }))} Jobs neu übersetzen`);
       }
       if (a === "goto-failed") { state.jobs.status = "failed"; state.jobs.type = type || ""; state.jobs.offset = 0; return switchTab("jobs"); }
       if (a === "goto-type") { state.jobs.status = ""; state.jobs.type = type; state.jobs.offset = 0; return switchTab("jobs"); }
@@ -357,8 +395,8 @@ function renderOverview() {
       <div><h2>Inhaltskategorien</h2><p>Abdeckung je Sprache · zuletzt fertig: ${esc(ago(o.last_completed_at))} · letzte Aktivität: ${esc(ago(o.last_activity_at))}</p></div>
       <div class="spacer"></div>
       <div class="btn-row">
-        <button class="btn" data-act="run-now">▶ Worker jetzt starten</button>
-        <button class="btn primary" data-act="retry-all" ${t.failed ? "" : "disabled"}>↻ Alle Fehlgeschlagenen neu</button>
+        <button class="btn" data-act="run-now">${ic("play")}Worker jetzt starten</button>
+        <button class="btn primary" data-act="retry-all" ${t.failed ? "" : "disabled"}>${ic("rotate-cw")}Alle Fehlgeschlagenen neu</button>
       </div>
     </div>
     <div class="grid types">
@@ -392,10 +430,10 @@ function typeCard(c, q, langs) {
     ${rows}
     ${q.failed && q.last_error ? `<div class="small" style="color:var(--bad);margin-top:8px">${esc(shortError(q.last_error))}</div>` : ""}
     <div class="type-actions">
-      <button class="btn sm" data-act="retry-type" data-type="${type}" ${q.failed ? "" : "disabled"}>↻ Fehlgeschlagene</button>
+      <button class="btn sm" data-act="retry-type" data-type="${type}" ${q.failed ? "" : "disabled"}>${ic("rotate-cw")}Fehlgeschlagene</button>
       <button class="btn sm" data-act="rerun-type" data-type="${type}">Neu prüfen</button>
       <button class="btn sm danger" data-act="force-type" data-type="${type}">Komplett neu</button>
-      <button class="btn sm" data-act="goto-type" data-type="${type}">Jobs →</button>
+      <button class="btn sm" data-act="goto-type" data-type="${type}">Jobs${ic("arrow-right","trail")}</button>
     </div>
   </div>`;
 }
@@ -404,14 +442,14 @@ function audioCard(a, langs) {
   if (!a) return "";
   const total = Number(a.total || 0);
   return `<div class="card card-pad">
-    <div class="type-head"><div class="name">🎧 Audios (vertont)</div><span class="muted small">${fmtN(total)} Audios</span></div>
+    <div class="type-head"><div class="name">${ic("headphones")}Audios (vertont)</div><span class="muted small">${fmtN(total)} Audios</span></div>
     <div class="chips"><span class="chip">manuell hochgeladen</span></div>
     ${langs.map((l) => {
       const n = Number(a.languages?.[l] || 0);
       const pct = total ? Math.min(100, Math.round((n / total) * 100)) : 0;
       return `<div class="lang-row"><span class="code">${esc(l)}</span><div class="bar"><span class="${pct >= 100 ? "full" : ""}" style="width:${pct}%"></span></div><span class="pct">${fmtN(n)}/${fmtN(total)}</span></div>`;
     }).join("")}
-    <div class="type-actions"><button class="btn sm" onclick="document.querySelector('[data-tab=audio]').click()">Audios verwalten →</button></div>
+    <div class="type-actions"><button class="btn sm" onclick="document.querySelector('[data-tab=audio]').click()">Audios verwalten${ic("arrow-right","trail")}</button></div>
   </div>`;
 }
 
@@ -427,10 +465,10 @@ function renderJobsShell() {
       </select>
       <select class="input" id="f-type">
         <option value="">Alle Kategorien</option>
-        ${Object.keys(TYPES).map((t) => `<option value="${t}" ${j.type === t ? "selected" : ""}>${typeLabel(t)}</option>`).join("")}
+        ${Object.keys(TYPES).map((t) => `<option value="${t}" ${j.type === t ? "selected" : ""}>${esc(typeText(t))}</option>`).join("")}
       </select>
       <input class="input" id="f-q" placeholder="Suche: Titel, ID oder Fehlertext" value="${esc(j.q)}" style="flex:1;min-width:200px">
-      <button class="btn" id="f-retry">↻ Gefilterte Fehlgeschlagene neu</button>
+      <button class="btn" id="f-retry">${ic("rotate-cw")}Gefilterte Fehlgeschlagene neu</button>
     </div>
     <div class="card"><div class="table-wrap" id="jobs-table"><div class="empty">Lade …</div></div></div>`;
   $("#f-status").onchange = (e) => { j.status = e.target.value; j.offset = 0; loadJobs(); };
@@ -474,12 +512,12 @@ function renderJobsTable() {
           ${r.status === "pending" && r.next_retry_at && new Date(r.next_retry_at) > new Date() ? `<div class="small muted">nächster Versuch ${esc(ago(r.next_retry_at))}</div>` : ""}</td>
         <td class="small">${r.attempts}</td>
         <td class="small muted" title="${esc(fmtTime(r.updated_at))}">${esc(ago(r.updated_at))}</td>
-        <td><button class="btn sm" data-rerun="${i}">↻</button></td>
+        <td><button class="btn sm" data-rerun="${i}" aria-label="Neu übersetzen" title="Neu übersetzen">${ic("rotate-cw")}</button></td>
       </tr>`).join("")}</tbody></table>
     <div class="pager">
       <span class="muted small">${fmtN(j.offset + 1)}–${fmtN(Math.min(j.offset + j.limit, j.total))} von ${fmtN(j.total)}</span>
-      <button class="btn sm" id="pg-prev" ${j.offset === 0 ? "disabled" : ""}>←</button>
-      <button class="btn sm" id="pg-next" ${j.offset + j.limit >= j.total ? "disabled" : ""}>→</button>
+      <button class="btn sm" id="pg-prev" aria-label="Vorherige Seite" ${j.offset === 0 ? "disabled" : ""}>${ic("arrow-left")}</button>
+      <button class="btn sm" id="pg-next" aria-label="Nächste Seite" ${j.offset + j.limit >= j.total ? "disabled" : ""}>${ic("arrow-right")}</button>
     </div>`;
   el.querySelectorAll("tr[data-i]").forEach((tr) => (tr.onclick = (e) => {
     if (e.target.closest("[data-rerun]")) return;
@@ -537,13 +575,13 @@ function renderDrawer() {
   const byLang = {};
   for (const t of d.translations || []) (byLang[t.language] ||= []).push(t);
   el.innerHTML = `<div class="drawer">
-    <button class="btn sm close" id="dr-close">✕</button>
+    <button class="btn sm icon-only close" id="dr-close" aria-label="Schließen">${ic("x")}</button>
     <div class="muted small">${typeLabel(j.content_type)} · Job #${j.id}</div>
     <h2>${esc(j.title)}</h2>
     <div style="margin-top:6px">${statusChip(j.status)}</div>
     <div class="btn-row" style="margin-top:14px">
-      <button class="btn primary" id="dr-edit">✏️ Übersetzungen bearbeiten</button>
-      <button class="btn" id="dr-rerun">↻ Neu übersetzen (nur Geändertes)</button>
+      <button class="btn primary" id="dr-edit">${ic("square-pen")}Übersetzungen bearbeiten</button>
+      <button class="btn" id="dr-rerun">${ic("rotate-cw")}Neu übersetzen (nur Geändertes)</button>
       <button class="btn danger" id="dr-force">Komplett neu übersetzen</button>
     </div>
     <dl class="kv">
@@ -577,21 +615,21 @@ function renderDrawer() {
 function renderContentShell() {
   const c = state.content;
   $("#main").innerHTML = `
-    <div class="banner ok" style="background:var(--accent-soft);border-color:transparent">
-      <div class="icon">✏️</div>
+    <div class="banner info">
+      <div class="icon">${ic("square-pen")}</div>
       <div class="txt"><strong>Übersetzungen manuell eintragen</strong>Beitrag wählen, Sprache wählen, Text eintragen und speichern.
       Manuell gespeicherte Felder werden von der automatischen Übersetzung <b>nie überschrieben</b> – über „Automatisch“ lässt sich das jederzeit wieder aufheben.</div>
     </div>
     <div class="toolbar">
       <select class="input" id="c-type">
         <option value="">Alle Kategorien</option>
-        ${Object.keys(TYPES).map((t) => `<option value="${t}" ${c.type === t ? "selected" : ""}>${typeLabel(t)}</option>`).join("")}
+        ${Object.keys(TYPES).map((t) => `<option value="${t}" ${c.type === t ? "selected" : ""}>${esc(typeText(t))}</option>`).join("")}
       </select>
       <input class="input" id="c-q" placeholder="Titel oder ID suchen" value="${esc(c.q)}" style="flex:1;min-width:200px">
     </div>
     <div class="card"><div class="table-wrap" id="content-table"><div class="empty">Lade …</div></div></div>
     <p class="muted small" style="margin-top:12px">Legende: <span class="lp full">EN</span> vollständig ·
-      <span class="lp part">EN</span> teilweise · <span class="lp none">EN</span> fehlt · <span class="lp full">EN ✎</span> enthält manuelle Übersetzung</p>`;
+      <span class="lp part">EN</span> teilweise · <span class="lp none">EN</span> fehlt · <span class="lp full">EN${ic("pencil","xs")}</span> enthält manuelle Übersetzung</p>`;
   $("#c-type").onchange = (e) => { c.type = e.target.value; c.offset = 0; loadContent(); };
   let deb;
   $("#c-q").oninput = (e) => { clearTimeout(deb); deb = setTimeout(() => { c.q = e.target.value.trim(); c.offset = 0; loadContent(); }, 300); };
@@ -627,14 +665,14 @@ function renderContentTable() {
         <td><div class="lps">${langs.map((l) => {
           const x = r.langs?.[l] || { n: 0, manual: 0 };
           const cls = x.n >= r.field_count && r.field_count > 0 ? "full" : x.n > 0 ? "part" : "none";
-          return `<span class="lp ${cls}" title="${esc(langName(l))}: ${x.n}/${r.field_count} Felder${x.manual ? `, ${x.manual} manuell` : ""}">${esc(l.toUpperCase())}${x.manual ? " ✎" : ""}</span>`;
+          return `<span class="lp ${cls}" title="${esc(langName(l))}: ${x.n}/${r.field_count} Felder${x.manual ? `, ${x.manual} manuell` : ""}">${esc(l.toUpperCase())}${x.manual ? ic("pencil", "xs") : ""}</span>`;
         }).join("")}</div></td>
-        <td><button class="btn sm">✏️ Bearbeiten</button></td>
+        <td><button class="btn sm">${ic("square-pen")}Bearbeiten</button></td>
       </tr>`).join("")}</tbody></table>
     <div class="pager">
       <span class="muted small">${fmtN(c.offset + 1)}–${fmtN(Math.min(c.offset + c.limit, c.total))} von ${fmtN(c.total)}</span>
-      <button class="btn sm" id="cp-prev" ${c.offset === 0 ? "disabled" : ""}>←</button>
-      <button class="btn sm" id="cp-next" ${c.offset + c.limit >= c.total ? "disabled" : ""}>→</button>
+      <button class="btn sm" id="cp-prev" aria-label="Vorherige Seite" ${c.offset === 0 ? "disabled" : ""}>${ic("arrow-left")}</button>
+      <button class="btn sm" id="cp-next" aria-label="Nächste Seite" ${c.offset + c.limit >= c.total ? "disabled" : ""}>${ic("arrow-right")}</button>
     </div>`;
   el.querySelectorAll("tr[data-i]").forEach((tr) => (tr.onclick = () => {
     const r = c.rows[Number(tr.dataset.i)];
@@ -708,7 +746,7 @@ function renderEditor() {
     const done = ed.source.filter((f) => ed.translations[`${l}|${f.field_name}`]).length;
     const man = ed.source.filter((f) => ed.translations[`${l}|${f.field_name}`]?.status === "manual").length;
     const d = dirty.some((k) => k.startsWith(l + "|"));
-    return `<span class="lp ${done >= ed.source.length && ed.source.length ? "full" : done ? "part" : "none"}">${done}/${ed.source.length}${man ? " ✎" : ""}</span>${d ? " ●" : ""}`;
+    return `<span class="lp ${done >= ed.source.length && ed.source.length ? "full" : done ? "part" : "none"}">${done}/${ed.source.length}${man ? ic("pencil", "xs") : ""}</span>${d ? `<span class="dirty-dot" title="Ungespeicherte Änderungen"></span>` : ""}`;
   };
 
   let body;
@@ -718,7 +756,7 @@ function renderEditor() {
   else body = ed.source.map((f) => fieldEditor(ed, f)).join("");
 
   el.innerHTML = `<div class="drawer editor">
-    <button class="btn sm close" data-ed="close">✕</button>
+    <button class="btn sm icon-only close" data-ed="close" aria-label="Schließen">${ic("x")}</button>
     <div class="muted small">${typeLabel(ed.type)} · Übersetzungen bearbeiten</div>
     <h2>${esc(ed.title || ed.recordId)}</h2>
     <div class="lang-tabs">
@@ -727,8 +765,8 @@ function renderEditor() {
     <div class="editor-bar">
       <span class="muted small">Quelle: Deutsch → Ziel: <b>${esc(langName(ed.lang))}</b></span>
       <div class="spacer"></div>
-      <button class="btn sm" data-ed="reset-lang" title="Alle manuellen Texte dieser Sprache verwerfen und automatisch neu übersetzen">↺ Sprache automatisch</button>
-      <button class="btn sm primary" data-ed="save-lang" ${dirty.some((k) => k.startsWith(ed.lang + "|")) ? "" : "disabled"}>💾 Alle Änderungen (${esc(ed.lang.toUpperCase())}) speichern</button>
+      <button class="btn sm" data-ed="reset-lang" title="Alle manuellen Texte dieser Sprache verwerfen und automatisch neu übersetzen">${ic("rotate-ccw")}Sprache automatisch</button>
+      <button class="btn sm primary" data-ed="save-lang" ${dirty.some((k) => k.startsWith(ed.lang + "|")) ? "" : "disabled"}>${ic("save")}Alle Änderungen (${esc(ed.lang.toUpperCase())}) speichern</button>
     </div>
     ${body}
   </div>`;
@@ -743,7 +781,7 @@ function fieldEditor(ed, f) {
   const isDirty = key in ed.drafts && ed.drafts[key] !== (tr?.value ?? "");
   const stale = tr?.status === "manual" && tr.source_hash && tr.source_hash !== f.hash;
   const badge = !tr ? `<span class="chip">fehlt</span>`
-    : tr.status === "manual" ? `<span class="chip info">✎ manuell</span>` : `<span class="chip ok">automatisch</span>`;
+    : tr.status === "manual" ? `<span class="chip info">${ic("pencil", "xs")}manuell</span>` : `<span class="chip ok">automatisch</span>`;
   const rows = f.kind === "text" ? Math.min(4, Math.max(1, Math.ceil(f.text.length / 70))) : Math.min(18, Math.max(4, Math.ceil(f.text.length / 80)));
   const dir = RTL.has(ed.lang) ? "rtl" : "ltr";
   const preview = f.kind === "html" && ed.preview[key];
@@ -753,7 +791,7 @@ function fieldEditor(ed, f) {
       ${isDirty ? `<span class="chip warn">ungespeichert</span>` : ""}
       ${tr ? `<span class="muted small">${esc(ago(tr.updated_at))}</span>` : ""}
     </div>
-    ${stale ? `<div class="fe-warn">⚠️ Der deutsche Originaltext wurde nach dieser manuellen Übersetzung geändert – bitte prüfen.</div>` : ""}
+    ${stale ? `<div class="fe-warn">${ic("triangle-alert")}Der deutsche Originaltext wurde nach dieser manuellen Übersetzung geändert – bitte prüfen.</div>` : ""}
     <div class="fe-grid">
       <div>
         <div class="fe-label">Deutsch (Original)</div>
@@ -767,11 +805,11 @@ function fieldEditor(ed, f) {
       </div>
     </div>
     <div class="fe-actions">
-      <button class="btn sm primary" data-save="${esc(f.field_name)}" ${isDirty && value.trim() ? "" : "disabled"}>💾 Speichern</button>
+      <button class="btn sm primary" data-save="${esc(f.field_name)}" ${isDirty && value.trim() ? "" : "disabled"}>${ic("save")}Speichern</button>
       ${isDirty ? `<button class="btn sm" data-undo="${esc(f.field_name)}">Änderung verwerfen</button>` : ""}
-      <button class="btn sm" data-copy="${esc(f.field_name)}" title="Deutschen Text als Ausgangspunkt übernehmen">⧉ Original übernehmen</button>
-      ${f.kind === "html" ? `<button class="btn sm" data-preview="${esc(f.field_name)}">${preview ? "✎ Bearbeiten" : "👁 Vorschau"}</button>` : ""}
-      ${tr?.status === "manual" || (tr && !isDirty) ? `<button class="btn sm" data-reset="${esc(f.field_name)}" title="Manuellen Text verwerfen und von Claude neu übersetzen lassen">↺ Automatisch</button>` : ""}
+      <button class="btn sm" data-copy="${esc(f.field_name)}" title="Deutschen Text als Ausgangspunkt übernehmen">${ic("copy")}Original übernehmen</button>
+      ${f.kind === "html" ? `<button class="btn sm" data-preview="${esc(f.field_name)}">${preview ? `${ic("pencil")}Bearbeiten` : `${ic("eye")}Vorschau`}</button>` : ""}
+      ${tr?.status === "manual" || (tr && !isDirty) ? `<button class="btn sm" data-reset="${esc(f.field_name)}" title="Manuellen Text verwerfen und von Claude neu übersetzen lassen">${ic("rotate-ccw")}Automatisch</button>` : ""}
     </div>
   </div>`;
 }
@@ -878,7 +916,7 @@ function renderLogsShell() {
       </select>
       <select class="input" id="l-type">
         <option value="">Alle Kategorien</option>
-        ${Object.keys(TYPES).map((t) => `<option value="${t}" ${ev.type === t ? "selected" : ""}>${typeLabel(t)}</option>`).join("")}
+        ${Object.keys(TYPES).map((t) => `<option value="${t}" ${ev.type === t ? "selected" : ""}>${esc(typeText(t))}</option>`).join("")}
       </select>
       <span class="muted small">Live-Protokoll aller Statuswechsel der Übersetzungs-Jobs (21 Tage).</span>
     </div>
@@ -937,8 +975,8 @@ function activeLangs() {
 function renderAudioShell() {
   const a = state.audios;
   $("#main").innerHTML = `
-    <div class="banner ok" style="background:var(--info-soft);border-color:transparent">
-      <div class="icon">🎧</div>
+    <div class="banner info">
+      <div class="icon">${ic("headphones")}</div>
       <div class="txt"><strong>Vertonte Audios</strong>Lade zu jedem deutschen Audio eine übersetzte Version hoch und wähle die Sprache.
       Stellt jemand die App z. B. auf Englisch, hört er automatisch die englische Datei. Ohne Übersetzung wird das deutsche Original abgespielt.</div>
     </div>
@@ -949,7 +987,7 @@ function renderAudioShell() {
         <option value="missing" ${a.filter === "missing" ? "selected" : ""}>Mit fehlenden Sprachen</option>
         <option value="has" ${a.filter === "has" ? "selected" : ""}>Mit Übersetzungen</option>
       </select>
-      <button class="btn" id="a-reload">⟳ Aktualisieren</button>
+      <button class="btn" id="a-reload">${ic("refresh-cw")}Aktualisieren</button>
     </div>
     <div class="card" id="audio-list"><div class="empty">Lade …</div></div>`;
   let deb;
@@ -988,12 +1026,12 @@ function renderAudioList() {
       ${r.image_url ? `<img class="thumb" src="${esc(r.image_url)}" alt="" loading="lazy">` : `<div class="thumb"></div>`}
       <div>
         <div class="audio-title">${esc(r.title)}</div>
-        <div class="muted small">${r.edition ? esc(r.edition) + " · " : ""}<a href="${esc(r.url)}" target="_blank" rel="noopener">Original (Deutsch) ↗</a></div>
+        <div class="muted small">${r.edition ? esc(r.edition) + " · " : ""}<a href="${esc(r.url)}" target="_blank" rel="noopener">Original (Deutsch)${ic("external-link","trail")}</a></div>
         <div class="audio-langs">
           ${langs.map((l) => tr[l]
-            ? `<span class="lang-pill has" title="${esc(tr[l].file_name || "")}">✓ ${esc(l.toUpperCase())}
-                <button title="Anhören" data-play="${esc(tr[l].url)}">▶</button>
-                <button title="Entfernen" data-del="${esc(tr[l].id)}" data-path="${esc(tr[l].storage_path || "")}" data-lang="${esc(l)}">✕</button></span>`
+            ? `<span class="lang-pill has" title="${esc(tr[l].file_name || "")}">${ic("check","xs")}${esc(l.toUpperCase())}
+                <button title="Anhören" aria-label="Anhören" data-play="${esc(tr[l].url)}">${ic("play","xs")}</button>
+                <button title="Entfernen" aria-label="Entfernen" data-del="${esc(tr[l].id)}" data-path="${esc(tr[l].storage_path || "")}" data-lang="${esc(l)}">${ic("x","xs")}</button></span>`
             : `<span class="lang-pill missing">${esc(l.toUpperCase())} fehlt</span>`).join("")}
         </div>
         <div class="upload-row">
@@ -1001,7 +1039,7 @@ function renderAudioList() {
             ${langs.map((l) => `<option value="${l}" ${missing[0] === l ? "selected" : ""}>${esc(langName(l))}${tr[l] ? " – ersetzen" : ""}</option>`).join("")}
           </select>
           <input type="file" accept="audio/*,.mp3,.m4a,.aac,.wav,.ogg" data-file>
-          <button class="btn primary sm" data-upload>⬆ Hochladen</button>
+          <button class="btn primary sm" data-upload>${ic("upload")}Hochladen</button>
           <div class="progress" hidden><span></span></div>
         </div>
         <div data-player></div>
@@ -1095,7 +1133,7 @@ function renderCredits() {
   const o = state.overview;
   const t = totals();
   root.innerHTML = `
-    ${o?.credit_error ? creditBanner() : `<div class="banner ok"><div class="icon">💳</div><div class="txt"><strong>Guthaben aktuell kein Problem</strong>In den letzten 3 Tagen kein „credit balance too low“-Fehler.</div></div>`}
+    ${o?.credit_error ? creditBanner() : `<div class="banner ok"><div class="icon">${ic("credit-card")}</div><div class="txt"><strong>Guthaben aktuell kein Problem</strong>In den letzten 3 Tagen kein „credit balance too low“-Fehler.</div></div>`}
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
       <div class="card card-pad">
         <h2>1 · Guthaben aufladen</h2>
@@ -1106,8 +1144,8 @@ function renderCredits() {
           <li>Optional <b>Auto-Reload</b> aktivieren, damit das Guthaben nie wieder leer läuft.</li>
         </ol>
         <div class="btn-row" style="margin-top:14px">
-          <a class="btn primary" href="${CFG.billingUrl}" target="_blank" rel="noopener">Guthaben aufladen ↗</a>
-          <a class="btn" href="${CFG.usageUrl}" target="_blank" rel="noopener">Verbrauch ansehen ↗</a>
+          <a class="btn primary" href="${CFG.billingUrl}" target="_blank" rel="noopener">Guthaben aufladen${ic("external-link","trail")}</a>
+          <a class="btn" href="${CFG.usageUrl}" target="_blank" rel="noopener">Verbrauch ansehen${ic("external-link","trail")}</a>
         </div>
       </div>
       <div class="card card-pad">
@@ -1116,16 +1154,16 @@ function renderCredits() {
         <div class="kv"><dt>Fehlgeschlagen</dt><dd><b style="color:var(--bad)">${fmtN(t.failed)}</b></dd>
           <dt>Wartend</dt><dd>${fmtN(t.pending)}</dd><dt>In Arbeit</dt><dd>${fmtN(t.processing)}</dd></div>
         <div class="btn-row">
-          <button class="btn primary" data-act="retry-all" ${t.failed ? "" : "disabled"}>↻ Alle fehlgeschlagenen neu starten</button>
-          <button class="btn" data-act="run-now">▶ Worker jetzt starten</button>
+          <button class="btn primary" data-act="retry-all" ${t.failed ? "" : "disabled"}>${ic("rotate-cw")}Alle fehlgeschlagenen neu starten</button>
+          <button class="btn" data-act="run-now">${ic("play")}Worker jetzt starten</button>
         </div>
       </div>
       <div class="card card-pad">
         <h2>API-Key wechseln</h2>
         <p class="muted">Falls ein anderer Anthropic-Account genutzt werden soll: neuen Key in der Console erstellen und in Supabase als Secret <span class="mono">ANTHROPIC_API_KEY</span> hinterlegen. Danach hier „Alle fehlgeschlagenen neu starten“.</p>
         <div class="btn-row">
-          <a class="btn" href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">API-Keys ↗</a>
-          <a class="btn" href="https://supabase.com/dashboard/project/vdcdibvclaulqxfjyzpq/functions/secrets" target="_blank" rel="noopener">Supabase Secrets ↗</a>
+          <a class="btn" href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">API-Keys${ic("external-link","trail")}</a>
+          <a class="btn" href="https://supabase.com/dashboard/project/vdcdibvclaulqxfjyzpq/functions/secrets" target="_blank" rel="noopener">Supabase Secrets${ic("external-link","trail")}</a>
         </div>
       </div>
     </div>`;
