@@ -15,6 +15,9 @@ class AudioModel {
   final String? artist;
   final String? categoryId;
 
+  /// Upload date of the audio (falls back to the linked post's date).
+  final DateTime? uploadedAt;
+
   AudioModel({
     required this.id,
     required this.url,
@@ -25,6 +28,7 @@ class AudioModel {
     this.durationSeconds,
     this.artist,
     this.categoryId,
+    this.uploadedAt,
   });
 
   factory AudioModel.fromJson(Map<String, dynamic> json) {
@@ -51,6 +55,7 @@ class AudioModel {
       durationSeconds: json['duration'] as int? ?? json['duration_seconds'] as int?,
       artist: json['artist'] as String?,
       categoryId: post?.categoryId ?? json['category_id']?.toString(),
+      uploadedAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
     );
   }
 
@@ -74,7 +79,8 @@ class AudioModel {
   String? get imageUrl => post?.imageUrl ?? thumbnailUrl;
 
   // Helper für UI
-  DateTime get createdAt => DateTime.now(); // Fallback
+  /// Date for sorting/display: the audio's upload date, else the post date.
+  DateTime get createdAt => uploadedAt ?? post?.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
 
   Duration? get duration {
     if (durationSeconds == null) return null;

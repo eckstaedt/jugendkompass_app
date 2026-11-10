@@ -31,7 +31,7 @@ class AudioRepository {
         postData['audio_id'] = json['id'];
         posts.add(postData);
       }
-      mapped.add({'id': json['id'], 'url': json['url'], 'post': postData});
+      mapped.add({'id': json['id'], 'url': json['url'], 'created_at': json['created_at'], 'post': postData});
     }
 
     await _localizer.localizeContentRows(posts, language, fields: const {'title': 'title', 'body': 'body'});
@@ -44,7 +44,7 @@ class AudioRepository {
   /// Get audio list with localized metadata from posts table
   Future<List<AudioModel>> getAudioListLocalized(String language, {
     String? categoryId,
-    int limit = 50,
+    int limit = 1000,
     int offset = 0,
   }) {
     return getAudioList(categoryId: categoryId, limit: limit, offset: offset, language: language);
@@ -54,7 +54,7 @@ class AudioRepository {
   /// Joins audios with posts where posts.audio_id = audios.id
   Future<List<AudioModel>> getAudioList({
     String? categoryId,
-    int limit = 50,
+    int limit = 1000,
     int offset = 0,
     String? language,
   }) async {
@@ -65,9 +65,11 @@ class AudioRepository {
           .select('''
             id,
             url,
+            created_at,
             posts!audio_id(
               id,
               title,
+              created_at,
               body,
               image_url,
               category_id,
@@ -79,6 +81,7 @@ class AudioRepository {
               )
             )
           ''')
+          .order('created_at', ascending: false)
           .range(offset, offset + limit - 1);
 
       final response = await query;

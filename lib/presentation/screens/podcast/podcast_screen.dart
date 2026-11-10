@@ -1,5 +1,8 @@
 import 'package:jugendkompass_app/presentation/widgets/common/page_header.dart';
 import 'package:flutter/material.dart';
+import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
+import 'package:jugendkompass_app/core/utils/html_utils.dart';
+import 'package:jugendkompass_app/core/utils/search_utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
@@ -29,6 +32,11 @@ class PodcastScreen extends ConsumerWidget {
     ref.watch(languageProvider);
     final translate = ref.watch(stringTranslatorProvider);
     final audioListAsync = ref.watch(audioListProvider);
+    // Publication date per edition → real chronological order of the audios.
+    final editionDates = {
+      for (final e in ref.watch(editionsListProvider).valueOrNull ?? const [])
+        e.id: e.publishedDate,
+    };
     final categoriesAsync = ref.watch(categoriesProvider);
     final selectedCategory = ref.watch(selectedPodcastCategoryProvider);
     final searchQuery = ref.watch(podcastSearchQueryProvider);
@@ -53,11 +61,15 @@ class PodcastScreen extends ConsumerWidget {
               }
 
               // Filter audio list based on selected category and search query
+              // Audios without a linked article have no title – hide them.
+              final visible = audioList
+                  .where((a) => (a.title ?? a.post?.title ?? '').trim().isNotEmpty)
+                  .toList();
               List<AudioModel> filteredList;
               if (selectedCategory == null) {
-                filteredList = List<AudioModel>.from(audioList);
+                filteredList = List<AudioModel>.from(visible);
               } else {
-                filteredList = audioList.where((audio) {
+                filteredList = visible.where((audio) {
                   // Get list of category names from post (support multi tags)
                   final post = audio.post;
                   if (post == null) return false;
@@ -79,21 +91,31 @@ class PodcastScreen extends ConsumerWidget {
                 }).toList();
               }
 
-              // Apply search filter
-              if (searchQuery.isNotEmpty) {
-                final lowerQuery = searchQuery.toLowerCase();
+              // Search: every word in any order, umlaut/accent-insensitive,
+              // in title, text and categories; best hits first.
+              final query = SearchQuery.parse(searchQuery);
+              final scores = <String, double>{};
+              if (!query.isEmpty) {
                 filteredList = filteredList.where((audio) {
-                  final title = (audio.title ?? audio.post?.title ?? '').toLowerCase();
-                  final description = (audio.description ?? '').toLowerCase();
-                  return title.contains(lowerQuery) || description.contains(lowerQuery);
+                  final match = SearchMatcher.match(query, _searchTextFor(audio));
+                  if (match == null) return false;
+                  scores[audio.id] = match.score;
+                  return true;
                 }).toList();
               }
 
-              // Sort by creation date (newest first), then by title alphabetically
+              // Newest first (by relevance while searching), then by title.
               filteredList.sort((a, b) {
+                if (!query.isEmpty) {
+                  final byScore = (scores[b.id] ?? 0).compareTo(scores[a.id] ?? 0);
+                  if (byScore != 0) return byScore;
+                }
+                DateTime when(AudioModel x) =>
+                    editionDates[x.post?.editionId] ?? x.createdAt;
+                final byEdition = when(b).compareTo(when(a));
+                if (byEdition != 0) return byEdition;
                 final dateCompare = b.createdAt.compareTo(a.createdAt);
                 if (dateCompare != 0) return dateCompare;
-                // Secondary sort by title if same date
                 final titleA = (a.title ?? a.post?.title ?? '').toLowerCase();
                 final titleB = (b.title ?? b.post?.title ?? '').toLowerCase();
                 return titleA.compareTo(titleB);
@@ -564,4 +586,23 @@ class _PodcastListItem extends ConsumerWidget {
       topPosition: false,
     );
   }
+}
+
+
+/// Normalised search text per audio (computed once, not per keystroke).
+final Map<String, SearchText> _searchTextCache = {};
+
+SearchText _searchTextFor(AudioModel audio) {
+  final title = audio.title ?? audio.post?.title ?? '';
+  final key = '${audio.id}|${title.hashCode}';
+  return _searchTextCache.putIfAbsent(key, () {
+    final post = audio.post;
+    final categories = post?.categoryNames ??
+        (post?.categoryName != null ? [post!.categoryName!] : const <String>[]);
+    return SearchText(
+      title: HtmlUtils.stripHtml(title),
+      body: HtmlUtils.stripHtml(audio.description ?? post?.body ?? ''),
+      extra: categories.join(' '),
+    );
+  });
 }
