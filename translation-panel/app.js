@@ -76,7 +76,7 @@ const state = {
   jobs: { status: "", type: "", q: "", offset: 0, limit: 50, rows: [], total: 0 },
   events: { event: "", type: "", rows: [] },
   runs: [],
-  audios: { rows: null, q: "", filter: "all", uploading: {} },
+  audios: { rows: null, q: "", filter: "all", uploading: {}, jobs: {}, jobsError: null },
   content: { type: "", q: "", offset: 0, limit: 50, rows: [], total: 0, loaded: false },
   drawer: null,
   editor: null,
@@ -244,7 +244,10 @@ async function refreshAll(silent = false) {
   if (state.tab === "jobs") await loadJobs();
   if (state.tab === "logs") await loadLogs();
   if (state.tab === "credits") renderCredits();
-  if (state.tab === "audio" && state.audios.rows === null) await loadAudios();
+  if (state.tab === "audio") {
+    if (state.audios.rows === null) await loadAudios();
+    else if (!state._audioTick || Date.now() - state._audioTick > 10000) { state._audioTick = Date.now(); await refreshAudioJobs(); }
+  }
   if (state.tab === "edit" && !state.content.loaded) await loadContent();
   if (state.drawer) await refreshDrawer();
 }
@@ -1005,8 +1008,42 @@ async function loadLogs() {
 }
 
 // ─── Audio ──────────────────────────────────────────────────────────────────
+// All audios with their language versions and the status of the AI voice
+// jobs (table audio_tts_jobs, written by tool/tts/generate_english_audio.py,
+// GitHub workflow every 15 min). KI-Stimme: Englisch; andere Sprachen per Upload.
+const TTS_LANGS = ["en"];
+const AUDIO_FILTERS = [
+  ["all", "Alle"],
+  ["missing", "Ohne Englisch"],
+  ["pending", "Wartend"],
+  ["processing", "In Arbeit"],
+  ["failed", "Fehlgeschlagen"],
+  ["skipped", "Übersprungen"],
+  ["done", "Fertig"],
+];
+const JOB_LABEL = { pending: "wartet", processing: "wird erzeugt", completed: "fertig", failed: "fehlgeschlagen", skipped: "übersprungen" };
+
 function activeLangs() {
   return (state.overview?.languages || []).filter((l) => l.active).map((l) => l.code);
+}
+
+// Same search rules as in the app: case/umlaut/accent-insensitive, all words.
+function normSearch(s) {
+  return String(s || "").toLowerCase()
+    .replace(/ä/g, "ae").replace(/ö/g, "oe").replace(/ü/g, "ue").replace(/ß/g, "ss")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
+}
+
+function jobOf(audioId, lang) { return state.audios.jobs?.[`${audioId}|${lang}`]; }
+
+function audioStatus(r, lang) {
+  const tr = r.translations.find((t) => t.language === lang);
+  const job = jobOf(r.audio_id, lang);
+  if (job && (job.status === "processing" || job.status === "failed" || job.status === "skipped")) return job.status;
+  if (job && job.status === "pending" && (!tr || job.force)) return "pending";
+  if (tr) return "done";
+  return "missing";
 }
 
 function renderAudioShell() {
@@ -1014,29 +1051,37 @@ function renderAudioShell() {
   $("#main").innerHTML = `
     <div class="banner info">
       <div class="icon">${ic("headphones")}</div>
-      <div class="txt"><strong>Vertonte Audios</strong>Lade zu jedem deutschen Audio eine übersetzte Version hoch und wähle die Sprache.
-      Stellt jemand die App z. B. auf Englisch, hört er automatisch die englische Datei. Ohne Übersetzung wird das deutsche Original abgespielt.</div>
+      <div class="txt"><strong>Audios in allen Sprachen</strong>Zu jedem deutschen Audio gibt es Sprachversionen. <b>Englisch erzeugt die KI-Stimme automatisch</b>
+      (freies Modell Kokoro, liest die englische Übersetzung des Artikels). Weitere Sprachen oder eigene Aufnahmen lädst du hier hoch – eigene Uploads werden nie von der KI überschrieben.
+      Neustarts werden spätestens nach ~15 Minuten bearbeitet.</div>
     </div>
+    <div id="audio-kpis"></div>
+    <div id="audio-running"></div>
     <div class="toolbar">
-      <input class="input" id="a-q" placeholder="Audio / Artikel suchen" value="${esc(a.q)}" style="flex:1;min-width:200px">
-      <select class="input" id="a-filter">
-        <option value="all" ${a.filter === "all" ? "selected" : ""}>Alle Audios</option>
-        <option value="missing" ${a.filter === "missing" ? "selected" : ""}>Mit fehlenden Sprachen</option>
-        <option value="has" ${a.filter === "has" ? "selected" : ""}>Mit Übersetzungen</option>
-      </select>
+      <input class="input" id="a-q" placeholder="Suchen – Titel, Ausgabe, mehrere Wörter …" value="${esc(a.q)}" style="flex:1;min-width:220px">
+      <button class="btn" id="a-retry-failed">${ic("rotate-cw")}Fehlgeschlagene neu starten</button>
       <button class="btn" id="a-reload">${ic("refresh-cw")}Aktualisieren</button>
     </div>
+    <div class="chips" id="a-filters"></div>
     <div class="card" id="audio-list"><div class="empty">Lade …</div></div>`;
   let deb;
-  $("#a-q").oninput = (e) => { clearTimeout(deb); deb = setTimeout(() => { a.q = e.target.value.trim().toLowerCase(); renderAudioList(); }, 200); };
-  $("#a-filter").onchange = (e) => { a.filter = e.target.value; renderAudioList(); };
+  $("#a-q").oninput = (e) => { clearTimeout(deb); deb = setTimeout(() => { a.q = e.target.value; renderAudioList(); }, 150); };
   $("#a-reload").onclick = () => loadAudios();
+  $("#a-retry-failed").onclick = () => retryFailedAudios();
   if (a.rows) renderAudioList();
+}
+
+async function loadAudioJobs() {
+  const { data, error } = await sb.from("audio_tts_jobs").select("*");
+  if (error) { state.audios.jobsError = error.message; return; }
+  state.audios.jobsError = null;
+  state.audios.jobs = Object.fromEntries((data || []).map((j) => [`${j.audio_id}|${j.language}`, j]));
 }
 
 async function loadAudios() {
   try {
-    state.audios.rows = await rpc("tp_audios");
+    const [rows] = await Promise.all([rpc("tp_audios"), loadAudioJobs()]);
+    state.audios.rows = rows;
   } catch (e) {
     const el = $("#audio-list");
     if (el) el.innerHTML = `<div class="empty">Fehler: ${esc(e.message)}</div>`;
@@ -1045,33 +1090,119 @@ async function loadAudios() {
   renderAudioList();
 }
 
+async function refreshAudioJobs() {
+  await loadAudioJobs();
+  renderAudioList();
+}
+
+async function requestTts(audioIds, lang = "en") {
+  const rows = audioIds.map((id) => ({
+    audio_id: id, language: lang, status: "pending", force: true, error: null,
+    requested_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+  }));
+  for (let i = 0; i < rows.length; i += 200) {
+    const { error } = await sb.from("audio_tts_jobs").upsert(rows.slice(i, i + 200), { onConflict: "audio_id,language" });
+    if (error) throw error;
+  }
+}
+
+async function retryFailedAudios() {
+  const failed = Object.values(state.audios.jobs || {}).filter((j) => j.status === "failed");
+  if (!failed.length) return toast("Keine fehlgeschlagenen Audio-Jobs.");
+  try {
+    await requestTts(failed.map((j) => j.audio_id));
+    toast(`${failed.length} Audio(s) neu eingereiht – Start spätestens in ~15 Minuten.`);
+    await refreshAudioJobs();
+  } catch (e) { toast("Fehler: " + e.message, true); }
+}
+
+function renderAudioKpis() {
+  const rows = state.audios.rows || [];
+  const langs = activeLangs();
+  const count = { missing: 0, pending: 0, processing: 0, failed: 0, skipped: 0, done: 0 };
+  let ai = 0, manual = 0;
+  for (const r of rows) {
+    count[audioStatus(r, "en")]++;
+    const en = r.translations.find((t) => t.language === "en");
+    if (en) (String(en.storage_path || "").startsWith("tts/") ? ai++ : manual++);
+  }
+  const k = $("#audio-kpis");
+  if (k) k.innerHTML = `<div class="grid kpis" style="margin-bottom:14px">
+      <div class="card kpi"><div class="label">Audios</div><div class="value">${fmtN(rows.length)}</div></div>
+      <div class="card kpi ok"><div class="label">Englisch fertig</div><div class="value">${fmtN(ai + manual)}</div><div class="muted small">${fmtN(ai)} KI · ${fmtN(manual)} eigene</div></div>
+      <div class="card kpi info"><div class="label">In Arbeit</div><div class="value">${fmtN(count.processing)}</div></div>
+      <div class="card kpi"><div class="label">Wartend</div><div class="value">${fmtN(count.pending)}</div></div>
+      <div class="card kpi bad"><div class="label">Fehlgeschlagen</div><div class="value">${fmtN(count.failed)}</div></div>
+      <div class="card kpi warn"><div class="label">Übersprungen</div><div class="value">${fmtN(count.skipped)}</div><div class="muted small">Übersetzung fehlt</div></div>
+    </div>
+    ${state.audios.jobsError ? `<div class="banner warn"><div class="icon">${ic("triangle-alert")}</div><div class="txt"><strong>Job-Status nicht verfügbar</strong>${esc(state.audios.jobsError)}</div></div>` : ""}`;
+
+  const running = Object.values(state.audios.jobs || {}).filter((j) => j.status === "processing");
+  const byId = Object.fromEntries(rows.map((r) => [r.audio_id, r]));
+  const el = $("#audio-running");
+  if (el) el.innerHTML = running.length ? `<div class="card card-pad" style="margin-bottom:14px">
+      <h2 style="margin-top:0">Laufende Jobs (${running.length})</h2>
+      ${running.map((j) => `<div class="muted small" style="padding:4px 0">${ic("rotate-cw","xs")} <b>${esc(byId[j.audio_id]?.title || j.audio_id)}</b> · ${esc(j.language.toUpperCase())} · gestartet ${ago(j.started_at)} · Versuch ${j.attempts}</div>`).join("")}
+    </div>` : "";
+
+  const f = $("#a-filters");
+  if (f) {
+    f.innerHTML = AUDIO_FILTERS.map(([v, label]) => {
+      const n = v === "all" ? rows.length : rows.filter((r) => audioStatus(r, "en") === v).length;
+      return `<button class="chip ${state.audios.filter === v ? "info" : ""}" data-f="${v}" style="cursor:pointer;font-size:12px;padding:4px 10px">${esc(label)} · ${fmtN(n)}</button>`;
+    }).join("");
+    f.querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { state.audios.filter = b.dataset.f; renderAudioList(); }));
+  }
+}
+
+function langPill(r, l) {
+  const tr = r.translations.find((t) => t.language === l);
+  const job = jobOf(r.audio_id, l);
+  const st = audioStatus(r, l);
+  const isAi = tr && String(tr.storage_path || "").startsWith("tts/");
+  const play = tr ? `<button title="Anhören" aria-label="Anhören" data-play="${esc(tr.url)}">${ic("play","xs")}</button>` : "";
+  const del = tr ? `<button title="Entfernen" aria-label="Entfernen" data-del="${esc(tr.id)}" data-path="${esc(tr.storage_path || "")}" data-lang="${esc(l)}">${ic("x","xs")}</button>` : "";
+  const tip = job?.error ? ` title="${esc(job.error)}"` : (tr ? ` title="${esc(tr.file_name || "")}"` : "");
+  if (st === "done") return `<span class="lang-pill has"${tip}>${ic("check","xs")}${esc(l.toUpperCase())}${isAi ? " · KI" : ""}${play}${del}</span>`;
+  if (st === "processing") return `<span class="lang-pill" style="background:var(--info-soft);color:var(--info);border-color:transparent;padding-right:10px"${tip}>${ic("rotate-cw","xs")}${esc(l.toUpperCase())} wird erzeugt</span>`;
+  if (st === "pending") return `<span class="lang-pill" style="padding-right:${tr ? 4 : 10}px"${tip}>${esc(l.toUpperCase())} wartet${play}</span>`;
+  if (st === "failed") return `<span class="lang-pill" style="background:var(--bad-soft);color:var(--bad);border-color:transparent;padding-right:${tr ? 4 : 10}px"${tip}>${ic("triangle-alert","xs")}${esc(l.toUpperCase())} fehlgeschlagen${play}</span>`;
+  if (st === "skipped") return `<span class="lang-pill" style="background:var(--warn-soft);color:var(--warn);border-color:transparent;padding-right:10px"${tip}>${esc(l.toUpperCase())} – Übersetzung fehlt</span>`;
+  return `<span class="lang-pill missing">${esc(l.toUpperCase())} fehlt</span>`;
+}
+
 function renderAudioList() {
+  renderAudioKpis();
   const el = $("#audio-list");
   if (!el || !state.audios.rows) return;
   const langs = activeLangs();
   const a = state.audios;
   let rows = state.audios.rows;
-  if (a.q) rows = rows.filter((r) => `${r.title} ${r.edition || ""} ${r.url}`.toLowerCase().includes(a.q));
-  if (a.filter === "missing") rows = rows.filter((r) => langs.some((l) => !r.translations.find((t) => t.language === l)));
-  if (a.filter === "has") rows = rows.filter((r) => r.translations.length > 0);
+  const words = normSearch(a.q).split(" ").filter(Boolean);
+  if (words.length) {
+    rows = rows.filter((r) => {
+      const hay = normSearch(`${r.title} ${r.edition || ""} ${r.translations.map((t) => t.file_name || "").join(" ")}`);
+      return words.every((w) => hay.includes(w));
+    });
+  }
+  // Filters follow the English (AI) version; other languages are uploads.
+  if (a.filter !== "all") rows = rows.filter((r) => audioStatus(r, "en") === a.filter);
   if (!rows.length) { el.innerHTML = `<div class="empty">Keine Audios gefunden.</div>`; return; }
-  const shown = rows.slice(0, 150);
+  const shown = rows.slice(0, 200);
   el.innerHTML = shown.map((r) => {
     const tr = Object.fromEntries(r.translations.map((t) => [t.language, t]));
     const missing = langs.filter((l) => !tr[l]);
+    const job = jobOf(r.audio_id, "en");
     return `<div class="audio-item" data-audio="${r.audio_id}">
       ${r.image_url ? `<img class="thumb" src="${esc(r.image_url)}" alt="" loading="lazy">` : `<div class="thumb"></div>`}
       <div>
         <div class="audio-title">${esc(r.title)}</div>
-        <div class="muted small">${r.edition ? esc(r.edition) + " · " : ""}<a href="${esc(r.url)}" target="_blank" rel="noopener">Original (Deutsch)${ic("external-link","trail")}</a></div>
-        <div class="audio-langs">
-          ${langs.map((l) => tr[l]
-            ? `<span class="lang-pill has" title="${esc(tr[l].file_name || "")}">${ic("check","xs")}${esc(l.toUpperCase())}
-                <button title="Anhören" aria-label="Anhören" data-play="${esc(tr[l].url)}">${ic("play","xs")}</button>
-                <button title="Entfernen" aria-label="Entfernen" data-del="${esc(tr[l].id)}" data-path="${esc(tr[l].storage_path || "")}" data-lang="${esc(l)}">${ic("x","xs")}</button></span>`
-            : `<span class="lang-pill missing">${esc(l.toUpperCase())} fehlt</span>`).join("")}
-        </div>
+        <div class="muted small">${r.edition ? esc(r.edition) + " · " : ""}${r.created_at ? new Date(r.created_at).toLocaleDateString("de-DE") + " · " : ""}
+          <button class="btn sm" data-play="${esc(r.url)}" style="padding:2px 8px">${ic("play","xs")}Original (DE)</button>
+          ${job?.status === "failed" && job.error ? `<span style="color:var(--bad)"> · ${esc(job.error.slice(0, 140))}</span>` : ""}</div>
+        <div class="audio-langs">${langs.map((l) => langPill(r, l)).join("")}</div>
         <div class="upload-row">
+          ${TTS_LANGS.map((l) => `<button class="btn sm" data-tts="${l}" title="Englische KI-Version neu erzeugen (ersetzt auch eigene Uploads)">${ic("sparkles")}KI-Stimme ${l.toUpperCase()} ${tr[l] ? "neu erzeugen" : "erzeugen"}</button>`).join("")}
           <select class="input" data-lang-select>
             ${langs.map((l) => `<option value="${l}" ${missing[0] === l ? "selected" : ""}>${esc(langName(l))}${tr[l] ? " – ersetzen" : ""}</option>`).join("")}
           </select>
@@ -1082,14 +1213,22 @@ function renderAudioList() {
         <div data-player></div>
       </div>
     </div>`;
-  }).join("") + (rows.length > shown.length ? `<div class="empty small">${fmtN(rows.length - shown.length)} weitere – bitte Suche verwenden.</div>` : "");
+  }).join("") + (rows.length > shown.length ? `<div class="empty small">${fmtN(rows.length - shown.length)} weitere – bitte Suche oder Filter verwenden.</div>` : "");
 
   el.querySelectorAll("[data-play]").forEach((b) => (b.onclick = () => {
     const host = b.closest(".audio-item").querySelector("[data-player]");
     host.innerHTML = `<audio controls autoplay src="${esc(b.dataset.play)}" style="margin-top:10px;width:100%"></audio>`;
   }));
+  el.querySelectorAll("[data-tts]").forEach((b) => (b.onclick = async () => {
+    const item = b.closest(".audio-item");
+    try {
+      await requestTts([item.dataset.audio], b.dataset.tts);
+      toast("Eingereiht – die KI-Stimme startet spätestens in ~15 Minuten.");
+      await refreshAudioJobs();
+    } catch (e) { toast("Fehler: " + e.message, true); }
+  }));
   el.querySelectorAll("[data-del]").forEach((b) => (b.onclick = async () => {
-    if (!confirm(`Übersetzte Audio (${b.dataset.lang.toUpperCase()}) entfernen? Die App spielt dann wieder das deutsche Original.`)) return;
+    if (!confirm(`Audio (${b.dataset.lang.toUpperCase()}) entfernen? Die App spielt dann wieder das deutsche Original.`)) return;
     try {
       const { error } = await sb.from("audio_translations").delete().eq("id", b.dataset.del);
       if (error) throw error;
@@ -1128,6 +1267,9 @@ async function uploadAudio(item) {
     if (existing?.storage_path && existing.storage_path !== path) {
       await sb.storage.from(CFG.audioBucket).remove([existing.storage_path]).catch(() => {});
     }
+    // An own upload ends a waiting AI job for this language.
+    await sb.from("audio_tts_jobs").update({ status: "completed", force: false, error: null })
+      .eq("audio_id", audioId).eq("language", lang).then(() => {}, () => {});
     toast(`${langName(lang)} gespeichert – in der App sofort aktiv.`);
     await loadAudios();
     refreshAll(true);
