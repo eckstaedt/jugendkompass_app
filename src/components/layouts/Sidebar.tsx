@@ -16,7 +16,8 @@ import {
   Sun,
   Globe,
   BellIcon,
-  MailIcon
+  MailIcon,
+  MegaphoneIcon
 } from 'lucide-react';
 import { useTheme } from '@/hooks/use-theme';
 import { useEffect } from 'react';
@@ -93,6 +94,11 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
       label: 'Kurznachrichten',
       path: '/dashboard/messages',
       icon: FileTextIcon,
+    },
+    {
+      label: 'Popups',
+      path: '/dashboard/announcements',
+      icon: MegaphoneIcon,
     },
     {
       label: 'Benutzer',

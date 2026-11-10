@@ -26,6 +26,7 @@ const PollDetailPage = React.lazy(() => import('./pages/dashboard/polls/[id]'));
 const ImpulsesPage = React.lazy(() => import('./pages/dashboard/impulses'));
 
 const MessagesPage = React.lazy(() => import('./pages/dashboard/messages'));
+const AnnouncementsPage = React.lazy(() => import('./pages/dashboard/announcements'));
 
 // Loading fallback
 const PageLoading = () => (
@@ -75,6 +76,7 @@ const App = () => (
               <Route path="/dashboard/impulses" element={<ImpulsesPage />} />
               
               <Route path="/dashboard/messages" element={<MessagesPage />} />
+              <Route path="/dashboard/announcements" element={<AnnouncementsPage />} />
               <Route path="/dashboard/reports" element={<ReportsPage />} />
               <Route path="/dashboard/test-push" element={<TestPushPage />} />
               <Route path="/dashboard/subscriptions" element={<SubscriptionsPage />} />
