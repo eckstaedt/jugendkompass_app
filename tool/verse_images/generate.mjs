@@ -120,7 +120,7 @@ function supabase() {
       // PostgREST returns at most 1000 rows per request -> page through.
       const all = [];
       for (let offset = 0; ; offset += 1000) {
-        const q = `${url}/rest/v1/verse_of_the_day?select=id,date,verse,reference,image_url,image_source_hash` +
+        const q = `${url}/rest/v1/verse_of_the_day?select=id,date,verse,reference,image_url,image_source_hash,background_image_url` +
           `&date=gte.${from}&date=lte.${to}&order=date.asc&limit=1000&offset=${offset}`;
         const res = await fetchRetry(q, { headers });
         if (!res.ok) throw new Error(`select failed: ${res.status} ${await res.text()}`);
@@ -185,12 +185,32 @@ async function main() {
       const hash = sourceHash(row.verse, row.reference);
       const hasImage = !!row.image_url;
       const isAuto = !!row.image_source_hash;
-      if (hasImage && (!isAuto || row.image_source_hash === hash)) continue;
+      if (hasImage && (!isAuto || row.image_source_hash === hash)) {
+        // Image is current – only make sure the plain nature photo (used by
+        // the home-screen widgets) is stored for automatic images.
+        if (isAuto) {
+          const bg = pickDesign(row.date, row.verse.length).imageUrl;
+          if (row.background_image_url !== bg) {
+            try {
+              await db.update(row.id, { background_image_url: bg });
+              console.log(`• ${row.date}  background ${bg}`);
+            } catch (e) {
+              failed++;
+              console.error(`✗ ${row.date} background: ${e.message}`);
+            }
+          }
+        }
+        continue;
+      }
       try {
         const { design, jpeg } = await render(page, row);
         const path = `auto/${row.date}-${hash.slice(0, 10)}.jpg`;
         const publicUrl = await db.upload(path, jpeg);
-        await db.update(row.id, { image_url: publicUrl, image_source_hash: hash });
+        await db.update(row.id, {
+          image_url: publicUrl,
+          image_source_hash: hash,
+          background_image_url: design.imageUrl,
+        });
         const old = row.image_url?.split('/verse-images/')[1];
         if (isAuto && old && old.startsWith('auto/') && old !== path) await db.remove(old);
         console.log(`✓ ${row.date}  ${design.layout} / ${design.familyVerse} / photo ${design.imageId}`);

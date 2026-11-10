@@ -3,6 +3,7 @@ import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/data/services/user_preferences_service.dart';
 import 'package:jugendkompass_app/core/services/device_registration_service.dart';
 import 'package:jugendkompass_app/data/services/content_localizer.dart';
+import 'package:jugendkompass_app/core/services/home_widget_service.dart';
 
 /// Language provider
 final languageProvider = StateNotifierProvider<LanguageNotifier, AppLanguage>(
@@ -43,6 +44,9 @@ class LanguageNotifier extends StateNotifier<AppLanguage> {
 
     // Fresh content translations for the new language
     ContentLocalizer.clearSharedCache();
+
+    // Home-screen widget follows the app language.
+    await HomeWidgetService.setLanguage(language.locale.languageCode);
 
   }
 }
