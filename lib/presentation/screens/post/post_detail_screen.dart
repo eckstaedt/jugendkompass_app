@@ -230,7 +230,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.secondaryContainer,
+                            color: DesignTokens.getMediaTagBackground(theme.brightness),
                             borderRadius: BorderRadius.circular(DesignTokens.radiusBadges),
                           ),
                           child: Row(
@@ -239,7 +239,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                               Icon(
                                 Icons.headphones,
                                 size: 16,
-                                color: theme.colorScheme.onSecondaryContainer,
+                                color: DesignTokens.getMediaTagText(theme.brightness),
                               ),
                               const SizedBox(width: 6),
                               Text(
@@ -247,7 +247,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: theme.colorScheme.onSecondaryContainer,
+                                  color: DesignTokens.getMediaTagText(theme.brightness),
                                 ),
                               ),
                             ],

@@ -229,6 +229,9 @@ class _RoundedCardState extends State<RoundedCard> {
   }
 }
 
+/// Colour family of a [BadgeWidget].
+enum BadgeTone { neutral, reading, media }
+
 /// Badge / Pill Widget
 class BadgeWidget extends StatelessWidget {
   final String label;
@@ -240,6 +243,9 @@ class BadgeWidget extends StatelessWidget {
   /// badges are neutral tags.
   final bool accent;
 
+  /// Pastel red for reading content, pastel green for audio/video.
+  final BadgeTone tone;
+
   const BadgeWidget({
     super.key,
     required this.label,
@@ -247,6 +253,7 @@ class BadgeWidget extends StatelessWidget {
     this.textColor,
     this.icon,
     this.accent = false,
+    this.tone = BadgeTone.neutral,
   });
 
   @override
@@ -256,10 +263,20 @@ class BadgeWidget extends StatelessWidget {
 
     // Neutral by default – red is reserved for primary actions / active state.
     final badgeBgColor = backgroundColor ??
+        (tone == BadgeTone.reading
+            ? DesignTokens.getReadingTagBackground(brightness)
+            : tone == BadgeTone.media
+                ? DesignTokens.getMediaTagBackground(brightness)
+                : null) ??
         (accent
             ? (isDark ? DesignTokens.primaryRed : DesignTokens.getRedBackground(brightness))
             : DesignTokens.getChipBackground(brightness));
     final badgeTextColor = textColor ??
+        (tone == BadgeTone.reading
+            ? DesignTokens.getReadingTagText(brightness)
+            : tone == BadgeTone.media
+                ? DesignTokens.getMediaTagText(brightness)
+                : null) ??
         (accent
             ? (isDark ? Colors.white : DesignTokens.primaryRed)
             : (isDark ? DesignTokens.darkTextSecondary : DesignTokens.textSecondary));

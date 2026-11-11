@@ -220,6 +220,11 @@ class CollectionScreen extends ConsumerWidget {
                           const SizedBox(height: 8),
                           BadgeWidget(
                             label: typeLabel.toUpperCase(),
+                            tone: item.type == CollectionItemType.video
+                                ? BadgeTone.media
+                                : item.type == CollectionItemType.edition
+                                    ? BadgeTone.neutral
+                                    : BadgeTone.reading,
                           ),
                         ],
                       ),

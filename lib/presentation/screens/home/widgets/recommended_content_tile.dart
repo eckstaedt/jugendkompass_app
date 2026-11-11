@@ -241,6 +241,7 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
                                           accent: true,
                                         ),
                                       BadgeWidget(
+                                        tone: item.isVideo ? BadgeTone.media : BadgeTone.reading,
                                         label: item.isVideo
                                           ? context.tr('video_badge')
                                           : item.isKurznachricht
@@ -250,8 +251,7 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
                                       if (item.hasAudio)
                                         BadgeWidget(
                                           label: context.tr('audio_badge'),
-                                          backgroundColor: DesignTokens.successGreen.withOpacity(0.12),
-                                          textColor: DesignTokens.successGreen,
+                                          tone: BadgeTone.media,
                                           icon: Icons.headphones,
                                         ),
                                     ],

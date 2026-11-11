@@ -406,6 +406,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               hit: hits[i - 1],
               query: _query,
               typeLabel: _typeLabel(hits[i - 1].entry.type),
+              typeTone: _typeTone(hits[i - 1].entry.type),
               onTap: () {
                 _remember();
                 _open(hits[i - 1].entry);
@@ -477,6 +478,21 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ],
       ),
     );
+  }
+
+  BadgeTone _typeTone(_Type type) {
+    switch (type) {
+      case _Type.audio:
+      case _Type.video:
+        return BadgeTone.media;
+      case _Type.article:
+      case _Type.impulse:
+      case _Type.message:
+        return BadgeTone.reading;
+      case _Type.edition:
+      case _Type.verse:
+        return BadgeTone.neutral;
+    }
   }
 
   String _typeLabel(_Type type) {
@@ -603,12 +619,14 @@ class _ResultTile extends StatelessWidget {
     required this.hit,
     required this.query,
     required this.typeLabel,
+    this.typeTone = BadgeTone.neutral,
     required this.onTap,
   });
 
   final _Hit hit;
   final SearchQuery query;
   final String typeLabel;
+  final BadgeTone typeTone;
   final VoidCallback onTap;
 
   static IconData _icon(_Type type) {
@@ -686,7 +704,7 @@ class _ResultTile extends StatelessWidget {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    BadgeWidget(label: typeLabel),
+                    BadgeWidget(label: typeLabel, tone: typeTone),
                     const SizedBox(width: 8),
                     Text(
                       DateFormat('dd.MM.yyyy').format(entry.date),

@@ -126,6 +126,17 @@ class DesignTokens {
   // Success / Positive color (used in search results etc.)
   static const Color successGreen = Color(0xFF2E7D32);
 
+  // Content type tags: pastel red for reading content (article, short
+  // message, impulse …), pastel green for media (audio, video).
+  static Color getReadingTagBackground(Brightness b) =>
+      b == Brightness.dark ? const Color(0x40E57373) : const Color(0xFFFCE4E4);
+  static Color getReadingTagText(Brightness b) =>
+      b == Brightness.dark ? const Color(0xFFF5B5B5) : const Color(0xFFB03A3A);
+  static Color getMediaTagBackground(Brightness b) =>
+      b == Brightness.dark ? const Color(0x4066BB6A) : const Color(0xFFDDF3E3);
+  static Color getMediaTagText(Brightness b) =>
+      b == Brightness.dark ? const Color(0xFFA8DDB4) : const Color(0xFF2E7D4F);
+
   // Glass effect background used for translucent containers (liquid glass - iOS 26 style)
   // Dynamic based on brightness
   static Color glassBackground([double opacity = 0.18]) =>
