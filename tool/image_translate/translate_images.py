@@ -61,8 +61,9 @@ LANG_NAMES = {
     "tr": "Turkish",
     "he": "Hebrew (right-to-left)",
 }
-# Processing order of the language passes (English first).
-LANG_ORDER = ["en", "es", "ru", "pl", "tr", "he"]
+# Languages that get translated images (cost!). Only English for now; other
+# languages keep the original. Override with LANGUAGES=en,es,…
+LANG_ORDER = [l.strip() for l in os.environ.get("LANGUAGES", "en").split(",") if l.strip()]
 # Aspect ratios Gemini can produce.
 RATIOS = {"1:1": 1.0, "2:3": 2 / 3, "3:2": 1.5, "3:4": 0.75, "4:3": 4 / 3,
           "4:5": 0.8, "5:4": 1.25, "9:16": 9 / 16, "16:9": 16 / 9, "21:9": 21 / 9}
@@ -479,7 +480,7 @@ def main():
     # all English covers are done. Then the other languages in this order.
     order = ["en"] + [l for l in LANG_ORDER if l != "en"]
     try:
-        for lang in order + sorted({r["language"] for r in rows} - set(order)):
+        for lang in order:
             if STOP.is_set():
                 break
             jobs = {u: [r for r in rs if r["language"] == lang] for u, rs in by_url.items()}
