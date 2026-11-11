@@ -18,7 +18,9 @@ enum AppLanguage {
   const AppLanguage(this.locale, this.displayName, [this.isRtl = false]);
 
   /// Returns only the languages that should be shown in the language selector
-  static List<AppLanguage> get availableLanguages => [de, en, ru, es, pl, tr, he];
+  /// Languages users can pick in the app. The others (ru, es, pl, tr, he)
+  /// stay fully supported in code and backend, they are only hidden for now.
+  static List<AppLanguage> get availableLanguages => [de, en];
 }
 
 class Translations {

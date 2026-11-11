@@ -24,6 +24,12 @@ class LanguageNotifier extends StateNotifier<AppLanguage> {
         (lang) => lang.locale.languageCode == languageCode,
         orElse: () => AppLanguage.de,
       );
+      // A hidden language (picked earlier) falls back to German, incl. push
+      // notifications and the widget.
+      if (!AppLanguage.availableLanguages.contains(newLanguage)) {
+        await setLanguage(AppLanguage.de);
+        return;
+      }
       state = newLanguage;
       AppTranslations.setLanguage(newLanguage);
       ImageLocalizer.instance.load(newLanguage.locale.languageCode);
