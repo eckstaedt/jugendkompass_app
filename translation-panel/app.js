@@ -77,6 +77,7 @@ const state = {
   events: { event: "", type: "", rows: [] },
   runs: [],
   audios: { rows: null, q: "", filter: "all", uploading: {}, jobs: {}, jobsError: null },
+  images: { groups: null, q: "", filter: "all", worker: null, error: null },
   content: { type: "", q: "", offset: 0, limit: 50, rows: [], total: 0, loaded: false },
   drawer: null,
   editor: null,
@@ -248,6 +249,7 @@ async function refreshAll(silent = false) {
     if (state.audios.rows === null) await loadAudios();
     else if (!state._audioTick || Date.now() - state._audioTick > 10000) { state._audioTick = Date.now(); await refreshAudioJobs(); }
   }
+  if (state.tab === "images" && (!state._imgTick || Date.now() - state._imgTick > 20000) && !$("#cmp-bg")) { state._imgTick = Date.now(); await loadImages(); }
   if (state.tab === "edit" && !state.content.loaded) await loadContent();
   if (state.drawer) await refreshDrawer();
 }
@@ -276,6 +278,7 @@ function switchTab(tab, initial = false) {
   if (tab === "jobs") renderJobsShell();
   if (tab === "logs") renderLogsShell();
   if (tab === "audio") renderAudioShell();
+  if (tab === "images") renderImageShell();
   if (tab === "edit") { state.content.loaded = false; renderContentShell(); }
   if (tab === "credits") main.innerHTML = `<div id="cr"></div>`;
   renderHeader();
@@ -309,6 +312,7 @@ function renderHeader() {
     ["edit", "Bearbeiten"],
     ["logs", "Logs"],
     ["audio", "Audios"],
+    ["images", "Bilder"],
     ["credits", "Claude-Guthaben", state.overview?.credit_error ? "!" : 0],
   ];
   const nav = $("#tabs");
@@ -1350,3 +1354,225 @@ function renderCredits() {
 }
 
 boot();
+
+// ─── Bilder (KI-Übersetzung der Schrift auf Titelbildern, Gemini) ───────────
+const IMG_LANGS = ["en", "ru", "es", "pl", "tr", "he"];
+const IMG_PRICE_USD = 0.039; // Gemini 2.5 Flash Image, pro bearbeitetem Bild
+const IMG_TYPES = { posts: "Artikel", impulses: "Impuls", editions: "Ausgabe", messages: "Kurznachricht" };
+const IMG_FILTERS = [
+  ["all", "Alle"], ["done", "Übersetzt"], ["open", "Wartend"], ["failed", "Fehlgeschlagen"],
+  ["no_text", "Ohne Text"], ["rejected", "Abgelehnt"],
+];
+
+async function loadImages() {
+  const im = state.images;
+  try {
+    const rows = [];
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await sb.from("image_translations").select("*").order("requested_at", { ascending: false }).range(from, from + 999);
+      if (error) throw error;
+      rows.push(...data);
+      if (data.length < 1000) break;
+    }
+    const { data: ws } = await sb.from("worker_status").select("*").eq("name", "image-translation").maybeSingle();
+    const groups = new Map();
+    for (const r of rows) {
+      if (!groups.has(r.source_url)) groups.set(r.source_url, { source_url: r.source_url, title: r.title, entity_type: r.entity_type, requested_at: r.requested_at, langs: {} });
+      groups.get(r.source_url).langs[r.language] = r;
+    }
+    im.groups = [...groups.values()];
+    im.worker = ws || null;
+    im.error = null;
+  } catch (e) {
+    im.error = e.message;
+  }
+  renderImageList();
+}
+
+function imgGroupStatus(g) {
+  const s = Object.values(g.langs).map((r) => r.status);
+  if (s.includes("processing")) return "open";
+  if (s.includes("failed")) return "failed";
+  if (s.includes("pending")) return "open";
+  if (s.includes("completed")) return "done";
+  if (s.includes("rejected")) return "rejected";
+  return "no_text";
+}
+
+function renderImageShell() {
+  const im = state.images;
+  $("#main").innerHTML = `
+    <div class="banner info">
+      <div class="icon">${ic("sparkles")}</div>
+      <div class="txt"><strong>Schrift auf Titelbildern übersetzen</strong>Gemini prüft jedes Bild einmal auf Text. Bilder mit Text werden pro Sprache neu erzeugt –
+      nur die Schrift wird ersetzt, Foto und Layout bleiben. Die App zeigt dann in jeder Sprache das passende Bild. <b>Neue Bilder laufen automatisch</b>;
+      alte Bilder reihst du mit dem Button unten ein. Gefällt dir ein Ergebnis nicht: ablehnen (App zeigt wieder das Original) oder neu erzeugen.</div>
+    </div>
+    <div id="img-worker"></div>
+    <div id="img-kpis"></div>
+    <div class="toolbar">
+      <input class="input" id="i-q" placeholder="Suchen – Titel …" value="${esc(im.q)}" style="flex:1;min-width:220px">
+      <button class="btn primary" id="i-backfill">${ic("plus")}Alle bestehenden Bilder einreihen</button>
+      <button class="btn" id="i-retry">${ic("rotate-cw")}Fehlgeschlagene neu starten</button>
+      <button class="btn" id="i-reload">${ic("refresh-cw")}Aktualisieren</button>
+    </div>
+    <div class="chips" id="i-filters"></div>
+    <div class="card" id="img-list"><div class="empty">Lade …</div></div>
+    <div id="img-compare"></div>`;
+  let deb;
+  $("#i-q").oninput = (e) => { clearTimeout(deb); deb = setTimeout(() => { im.q = e.target.value; renderImageList(); }, 150); };
+  $("#i-reload").onclick = () => loadImages();
+  $("#i-retry").onclick = async () => {
+    const failed = (im.groups || []).flatMap((g) => Object.values(g.langs)).filter((r) => r.status === "failed");
+    if (!failed.length) return toast("Keine fehlgeschlagenen Bilder.");
+    try { await requeueImages(failed); toast(`${failed.length} neu eingereiht – Start spätestens in ~30 Minuten.`); } catch (e) { toast("Fehler: " + e.message, true); }
+  };
+  $("#i-backfill").onclick = async () => {
+    if (!confirm("Alle bestehenden Titelbilder (Artikel, Impulse, Ausgaben, Kurznachrichten) für die KI-Übersetzung einreihen?\n\n" +
+      "Kosten: nur Bilder MIT Text werden bearbeitet (ca. 0,04 $ pro Bild und Sprache). Ohne Gemini-Guthaben passiert nichts.")) return;
+    try {
+      const { data, error } = await sb.rpc("enqueue_all_image_translations");
+      if (error) throw error;
+      toast(`${fmtN(data || 0)} Bild-Übersetzungen eingereiht.`);
+      await loadImages();
+    } catch (e) { toast("Fehler: " + e.message, true); }
+  };
+  if (im.groups) renderImageList(); else loadImages();
+}
+
+async function requeueImages(rows) {
+  for (const r of rows) {
+    const { error } = await sb.from("image_translations")
+      .update({ status: "pending", force: true, error: null, attempts: 0, requested_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .eq("id", r.id);
+    if (error) throw error;
+  }
+  await loadImages();
+}
+
+function renderImageWorker() {
+  const el = $("#img-worker");
+  if (!el) return;
+  const w = state.images.worker;
+  const open = (state.images.groups || []).flatMap((g) => Object.values(g.langs)).filter((r) => r.status === "pending" || r.status === "processing").length;
+  if (state.images.error) {
+    el.innerHTML = `<div class="banner warn"><div class="icon">${ic("triangle-alert")}</div><div class="txt"><strong>Noch nicht eingerichtet</strong>${esc(state.images.error)}</div></div>`;
+  } else if (w?.state === "no_key" || !w) {
+    el.innerHTML = `<div class="banner warn"><div class="icon">${ic("key-round")}</div><div class="txt"><strong>Gemini-Key fehlt</strong>
+      In <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> einen API-Key erstellen und auf GitHub unter
+      Settings → Secrets and variables → Actions als <code>GEMINI_API_KEY</code> speichern. Danach Guthaben aufladen – der Rest läuft automatisch (alle 30 Minuten).</div></div>`;
+  } else if (w.state === "no_credit") {
+    el.innerHTML = `<div class="banner bad"><div class="icon">${ic("credit-card")}</div><div class="txt"><strong>Gemini-Guthaben aufgebraucht</strong>
+      ${fmtN(open)} Übersetzungen warten. In <a href="https://aistudio.google.com/billing" target="_blank" rel="noopener">AI Studio → Billing</a> Guthaben aufladen – der nächste Lauf macht automatisch weiter.
+      <div class="muted small">Stand ${fmtTime(w.updated_at)}</div></div></div>`;
+  } else if (w.state === "bad_key") {
+    el.innerHTML = `<div class="banner bad"><div class="icon">${ic("key-round")}</div><div class="txt"><strong>Gemini-Key ungültig</strong>Bitte das GitHub-Secret <code>GEMINI_API_KEY</code> erneuern.</div></div>`;
+  } else {
+    el.innerHTML = `<div class="banner ok"><div class="icon">${ic("circle-check")}</div><div class="txt"><strong>${w.state === "running" ? "Läuft" : "Bereit"}</strong>${esc(w.message || "")} · ${ago(w.updated_at)}</div></div>`;
+  }
+}
+
+function renderImageKpis() {
+  const groups = state.images.groups || [];
+  const all = groups.flatMap((g) => Object.values(g.langs));
+  const c = (s) => all.filter((r) => r.status === s).length;
+  const open = c("pending") + c("processing");
+  const withText = groups.filter((g) => Object.values(g.langs).some((r) => ["completed", "rejected"].includes(r.status))).length;
+  const el = $("#img-kpis");
+  if (el) el.innerHTML = `<div class="grid kpis" style="margin-bottom:14px">
+    <div class="card kpi"><div class="label">Bilder</div><div class="value">${fmtN(groups.length)}</div><div class="muted small">${fmtN(withText)} mit Text</div></div>
+    <div class="card kpi ok"><div class="label">Übersetzt</div><div class="value">${fmtN(c("completed"))}</div><div class="muted small">Bild × Sprache</div></div>
+    <div class="card kpi info"><div class="label">Wartend</div><div class="value">${fmtN(open)}</div><div class="muted small">max. ~${(open * IMG_PRICE_USD).toFixed(2)} $</div></div>
+    <div class="card kpi bad"><div class="label">Fehlgeschlagen</div><div class="value">${fmtN(c("failed"))}</div></div>
+    <div class="card kpi"><div class="label">Ohne Text</div><div class="value">${fmtN(groups.filter((g) => imgGroupStatus(g) === "no_text").length)}</div><div class="muted small">bleiben Original</div></div>
+  </div>`;
+  const f = $("#i-filters");
+  if (f) {
+    f.innerHTML = IMG_FILTERS.map(([v, label]) => {
+      const n = v === "all" ? groups.length : groups.filter((g) => imgGroupStatus(g) === v).length;
+      return `<button class="chip ${state.images.filter === v ? "info" : ""}" data-f="${v}" style="cursor:pointer;font-size:12px;padding:4px 10px">${esc(label)} · ${fmtN(n)}</button>`;
+    }).join("");
+    f.querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { state.images.filter = b.dataset.f; renderImageList(); }));
+  }
+}
+
+function imgPill(g, l) {
+  const r = g.langs[l];
+  const L = esc(l.toUpperCase());
+  if (!r) return `<span class="lang-pill missing">${L} –</span>`;
+  const tip = r.error ? ` title="${esc(r.error)}"` : "";
+  const btn = `data-cmp="${esc(r.id)}"`;
+  switch (r.status) {
+    case "completed": return `<span class="lang-pill has" style="cursor:pointer;padding-right:10px" ${btn}>${ic("check","xs")}${L} ansehen</span>`;
+    case "processing": return `<span class="lang-pill" style="background:var(--info-soft);color:var(--info);border-color:transparent;padding-right:10px">${ic("rotate-cw","xs")}${L} läuft</span>`;
+    case "pending": return `<span class="lang-pill" style="padding-right:10px">${L} wartet</span>`;
+    case "failed": return `<span class="lang-pill" style="background:var(--bad-soft);color:var(--bad);border-color:transparent;padding-right:10px"${tip}>${ic("triangle-alert","xs")}${L} Fehler</span>`;
+    case "rejected": return `<span class="lang-pill" style="background:var(--warn-soft);color:var(--warn);border-color:transparent;cursor:pointer;padding-right:10px" ${btn}>${L} abgelehnt</span>`;
+    default: return `<span class="lang-pill missing">${L} kein Text</span>`;
+  }
+}
+
+function renderImageList() {
+  renderImageWorker();
+  renderImageKpis();
+  const el = $("#img-list");
+  if (!el) return;
+  const im = state.images;
+  if (im.error) { el.innerHTML = `<div class="empty">Die Datenbank-Tabelle fehlt noch.</div>`; return; }
+  if (!im.groups) return;
+  let groups = im.groups;
+  const words = normSearch(im.q).split(" ").filter(Boolean);
+  if (words.length) groups = groups.filter((g) => { const h = normSearch(g.title); return words.every((w) => h.includes(w)); });
+  if (im.filter !== "all") groups = groups.filter((g) => imgGroupStatus(g) === im.filter);
+  if (!groups.length) {
+    el.innerHTML = `<div class="empty">${im.groups.length ? "Keine Bilder gefunden." : "Noch keine Bilder eingereiht – neue Bilder kommen automatisch, alte über „Alle bestehenden Bilder einreihen“."}</div>`;
+    return;
+  }
+  const shown = groups.slice(0, 150);
+  el.innerHTML = shown.map((g, i) => `<div class="audio-item" data-g="${i}">
+      <img class="thumb" src="${esc(g.source_url)}" alt="" loading="lazy">
+      <div>
+        <div class="audio-title">${esc(g.title || g.source_url.split("/").pop())}</div>
+        <div class="muted small">${esc(IMG_TYPES[g.entity_type] || g.entity_type || "")}${imgGroupStatus(g) === "no_text" ? ` · <button class="btn sm" data-force style="padding:2px 8px">${ic("sparkles")}Trotzdem übersetzen</button>` : ""}</div>
+        <div class="audio-langs">${IMG_LANGS.map((l) => imgPill(g, l)).join("")}</div>
+      </div>
+    </div>`).join("") + (groups.length > shown.length ? `<div class="empty small">${fmtN(groups.length - shown.length)} weitere – bitte Suche oder Filter verwenden.</div>` : "");
+  el.querySelectorAll("[data-cmp]").forEach((b) => (b.onclick = () => {
+    const g = shown[b.closest("[data-g]").dataset.g];
+    openCompare(g, Object.values(g.langs).find((r) => r.id === b.dataset.cmp));
+  }));
+  el.querySelectorAll("[data-force]").forEach((b) => (b.onclick = async () => {
+    const g = shown[b.closest("[data-g]").dataset.g];
+    try { await requeueImages(Object.values(g.langs)); toast("Eingereiht – Start spätestens in ~30 Minuten."); } catch (e) { toast("Fehler: " + e.message, true); }
+  }));
+}
+
+function openCompare(g, r) {
+  const host = $("#img-compare");
+  host.innerHTML = `<div class="drawer-backdrop" id="cmp-bg" style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:50;display:grid;place-items:center;padding:16px">
+    <div class="card card-pad" style="max-width:980px;width:100%;max-height:92vh;overflow:auto">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+        <strong style="flex:1">${esc(g.title || "")} · ${esc(langName(r.language))}</strong>
+        ${r.status === "completed" ? `<button class="btn" id="cmp-reject">${ic("x")}Ablehnen (Original zeigen)</button>` : `<button class="btn" id="cmp-accept">${ic("check")}Doch verwenden</button>`}
+        <button class="btn" id="cmp-redo">${ic("sparkles")}Neu erzeugen</button>
+        <button class="btn icon-only" id="cmp-close" aria-label="Schließen">${ic("x")}</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+        <figure style="margin:0"><img src="${esc(g.source_url)}" style="width:100%;border-radius:10px"><figcaption class="muted small">Original (DE)</figcaption></figure>
+        <figure style="margin:0"><img src="${esc(r.url || "")}" style="width:100%;border-radius:10px"><figcaption class="muted small">${esc(langName(r.language))}</figcaption></figure>
+      </div>
+    </div></div>`;
+  const close = () => (host.innerHTML = "");
+  $("#cmp-close").onclick = close;
+  $("#cmp-bg").onclick = (e) => { if (e.target.id === "cmp-bg") close(); };
+  const set = async (fields, msg) => {
+    try {
+      const { error } = await sb.from("image_translations").update({ ...fields, updated_at: new Date().toISOString() }).eq("id", r.id);
+      if (error) throw error;
+      toast(msg); close(); await loadImages();
+    } catch (e) { toast("Fehler: " + e.message, true); }
+  };
+  $("#cmp-reject") && ($("#cmp-reject").onclick = () => set({ status: "rejected" }, "Abgelehnt – die App zeigt das Original."));
+  $("#cmp-accept") && ($("#cmp-accept").onclick = () => set({ status: "completed" }, "Wird wieder verwendet."));
+  $("#cmp-redo").onclick = () => set({ status: "pending", force: true, error: null, attempts: 0, requested_at: new Date().toISOString() }, "Eingereiht – Start spätestens in ~30 Minuten.");
+}
