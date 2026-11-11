@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/data/services/image_localizer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -59,7 +60,7 @@ class AudioPlayerScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(16),
                         child: currentAudio.imageUrl != null
                             ? CachedNetworkImage(
-                                imageUrl: currentAudio.imageUrl!,
+                                imageUrl: ImageLocalizer.url(currentAudio.imageUrl!),
                                 width: 200,
                                 height: 200,
                                 fit: BoxFit.cover,
@@ -231,7 +232,7 @@ class AudioPlayerScreen extends ConsumerWidget {
                             ? ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
                                 child: CachedNetworkImage(
-                                  imageUrl: audio.imageUrl!,
+                                  imageUrl: ImageLocalizer.url(audio.imageUrl!),
                                   width: 56,
                                   height: 56,
                                   fit: BoxFit.cover,

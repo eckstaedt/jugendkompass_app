@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/data/services/image_localizer.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/page_header.dart';
 import 'package:flutter/material.dart';
 import 'package:jugendkompass_app/domain/providers/edition_provider.dart';
@@ -371,7 +372,7 @@ class _PodcastListItem extends ConsumerWidget {
                       children: [
                         if (audio.imageUrl != null)
                           CachedNetworkImage(
-                            imageUrl: audio.imageUrl!,
+                            imageUrl: ImageLocalizer.url(audio.imageUrl!),
                             width: 60,
                             height: 60,
                             fit: BoxFit.cover,

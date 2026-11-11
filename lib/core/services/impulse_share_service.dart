@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/data/services/image_localizer.dart';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -22,7 +23,7 @@ class ImpulseShareService {
       impulse.imageUrl != null && impulse.imageUrl!.isNotEmpty;
 
   static Future<Uint8List> _render(ImpulseModel impulse) async {
-    final response = await http.get(Uri.parse(impulse.imageUrl!));
+    final response = await http.get(Uri.parse(ImageLocalizer.url(impulse.imageUrl!)));
     if (response.statusCode != 200) {
       throw Exception('Bild konnte nicht geladen werden (${response.statusCode})');
     }

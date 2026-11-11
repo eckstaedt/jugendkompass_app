@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/data/services/image_localizer.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -163,7 +164,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
               child: ImageFiltered(
                 imageFilter: ImageFilter.blur(sigmaX: 48, sigmaY: 48),
                 child: CachedNetworkImage(
-                  imageUrl: currentAudio.imageUrl!,
+                  imageUrl: ImageLocalizer.url(currentAudio.imageUrl!),
                   fit: BoxFit.cover,
                   errorWidget: (_, _, _) => Container(
                     color: brightness == Brightness.dark
@@ -332,7 +333,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                   DesignTokens.radiusLargeCards),
                               child: currentAudio.imageUrl != null
                                   ? CachedNetworkImage(
-                                      imageUrl: currentAudio.imageUrl!,
+                                      imageUrl: ImageLocalizer.url(currentAudio.imageUrl!),
                                       fit: BoxFit.cover,
                                       placeholder: (_, _) => Container(
                                         color: theme.colorScheme
@@ -639,7 +640,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                             BorderRadius.circular(8),
                                         child: audio.imageUrl != null
                                             ? CachedNetworkImage(
-                                                imageUrl: audio.imageUrl!,
+                                                imageUrl: ImageLocalizer.url(audio.imageUrl!),
                                                 width: 44,
                                                 height: 44,
                                                 fit: BoxFit.cover,
@@ -794,8 +795,8 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                                       ),
                                                       child: audio.imageUrl != null
                                                           ? CachedNetworkImage(
-                                                              imageUrl:
-                                                                  audio.imageUrl!,
+                                                              imageUrl: ImageLocalizer.url(
+                                                                  audio.imageUrl!),
                                                               width: 130,
                                                               height: 72,
                                                               fit: BoxFit.cover,

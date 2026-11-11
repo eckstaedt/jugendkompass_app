@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/data/services/image_localizer.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -137,7 +138,7 @@ class MiniPlayerBar extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(10),
                             child: audio.imageUrl != null
                                 ? CachedNetworkImage(
-                                    imageUrl: audio.imageUrl!,
+                                    imageUrl: ImageLocalizer.url(audio.imageUrl!),
                                     width: 46,
                                     height: 46,
                                     fit: BoxFit.cover,

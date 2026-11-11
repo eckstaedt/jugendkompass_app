@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:jugendkompass_app/data/services/image_localizer.dart';
 
 /// A network image widget that works across all platforms
 /// Uses CachedNetworkImage for mobile and Image.network for web
@@ -24,6 +25,14 @@ class CorsNetworkImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Cover images with AI-translated text replace the original per language.
+    return ValueListenableBuilder<Map<String, String>>(
+      valueListenable: ImageLocalizer.instance.map,
+      builder: (context, map, _) => _build(context, map[imageUrl] ?? imageUrl),
+    );
+  }
+
+  Widget _build(BuildContext context, String imageUrl) {
     // For web, use Image.network
     if (kIsWeb) {
       return Image.network(

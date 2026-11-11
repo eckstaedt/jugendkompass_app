@@ -1,0 +1,50 @@
+name: Image text translation (Gemini)
+
+# Translates the text on cover images (posts, impulses, editions, short
+# messages) into all app languages with Gemini image editing.
+# Queue + results: table image_translations (tab "Bilder" in the translation
+# panel). New images are queued automatically; old ones via the panel button.
+#
+# Secrets (Settings → Secrets and variables → Actions):
+#   GEMINI_API_KEY              Google AI Studio key (prepaid credit)
+#   SUPABASE_SERVICE_ROLE_KEY   (or SUPABASE_ACCESS_TOKEN)
+# Without GEMINI_API_KEY the run ends immediately and costs nothing.
+
+on:
+  schedule:
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Max image edits in this run"
+        default: "300"
+
+concurrency:
+  group: image-translation
+  cancel-in-progress: false
+
+env:
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pending?
+        id: plan
+        env:
+          PLAN_ONLY: "1"
+        run: python3 tool/image_translate/translate_images.py
+      - name: Install Pillow
+        if: steps.plan.outputs.pending != '0'
+        run: pip install --quiet pillow
+      - name: Translate images
+        if: steps.plan.outputs.pending != '0'
+        env:
+          LIMIT: ${{ inputs.limit || '300' }}
+          TIME_BUDGET_MIN: "300"
+        run: python3 tool/image_translate/translate_images.py
