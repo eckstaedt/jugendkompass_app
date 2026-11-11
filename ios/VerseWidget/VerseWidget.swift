@@ -187,23 +187,29 @@ struct VerseLoader {
     private func cacheURL(for date: String) -> URL? {
         FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: VerseLoader.appGroupId)?
-            .appendingPathComponent("widget_bg_\(date).jpg")
+            .appendingPathComponent("widget_bg2_\(date).jpg")
     }
 
+    static let maxImageSide: CGFloat = 480
+
     private func cachedImage(for date: String) -> UIImage? {
-        guard let url = cacheURL(for: date), let data = try? Data(contentsOf: url) else { return nil }
-        return UIImage(data: data)
+        guard let url = cacheURL(for: date), let data = try? Data(contentsOf: url),
+              let image = UIImage(data: data) else { return nil }
+        return Self.downscale(image, maxSide: Self.maxImageSide)
     }
 
     private func downloadImage(_ url: URL, date: String) async -> UIImage? {
         guard let (data, _) = try? await Self.session.data(from: url),
               let image = UIImage(data: data) else { return nil }
-        let scaled = Self.downscale(image, maxSide: 900)
+        // WidgetKit silently refuses to render a widget whose image has more
+        // pixels than the widget itself – it then keeps the old (yesterday's)
+        // content. 480 px fits even the small widget.
+        let scaled = Self.downscale(image, maxSide: Self.maxImageSide)
         if let target = cacheURL(for: date), let jpeg = scaled.jpegData(compressionQuality: 0.85) {
             // Keep only today's photo.
             if let dir = cacheURL(for: date)?.deletingLastPathComponent(),
                let files = try? FileManager.default.contentsOfDirectory(atPath: dir.path) {
-                for f in files where f.hasPrefix("widget_bg_") {
+                for f in files where f.hasPrefix("widget_bg") {
                     try? FileManager.default.removeItem(at: dir.appendingPathComponent(f))
                 }
             }

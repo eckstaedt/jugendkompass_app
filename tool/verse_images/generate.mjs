@@ -144,13 +144,14 @@ function supabase() {
     // storage (third-party image hosts can be slow or blocked – the widget
     // then never finishes and keeps showing yesterday's verse).
     async background(design) {
-      const path = `backgrounds/${design.imageId}.jpg`;
+      // 480 px: WidgetKit refuses to render images larger than the widget.
+      const path = `backgrounds/w480/${design.imageId}.jpg`;
       const publicUrl = `${url}/storage/v1/object/public/verse-images/${path}`;
       this._bg ??= new Set();
       if (this._bg.has(path)) return publicUrl;
       const head = await fetch(publicUrl, { method: 'HEAD' }).catch(() => null);
       if (!head?.ok) {
-        const img = await fetchRetry(design.imageUrl, { headers: { 'User-Agent': UA } });
+        const img = await fetchRetry(`https://picsum.photos/id/${design.imageId}/480/480`, { headers: { 'User-Agent': UA } });
         if (!img.ok) throw new Error(`photo ${design.imageId}: ${img.status}`);
         await this.upload(path, Buffer.from(await img.arrayBuffer()));
       }
