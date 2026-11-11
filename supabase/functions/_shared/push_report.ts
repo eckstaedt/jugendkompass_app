@@ -38,7 +38,7 @@ export interface PushReport { id: string | null }
 /** Creates (or, with a key, reuses) the report row. Never throws. */
 export async function beginPushReport(
   supabase: any,
-  opts: { category: string; title: string; key?: string },
+  opts: { category: string; title: string; key?: string; postAfter?: Date },
 ): Promise<PushReport> {
   try {
     if (opts.key) {
@@ -46,7 +46,10 @@ export async function beginPushReport(
       if (existing) return { id: existing.id };
     }
     const { data, error } = await supabase.from("push_reports")
-      .insert({ category: opts.category, title: opts.title, report_key: opts.key ?? null })
+      .insert({
+        category: opts.category, title: opts.title, report_key: opts.key ?? null,
+        post_after: opts.postAfter?.toISOString() ?? null,
+      })
       .select("id").single();
     if (error) {
       // created concurrently by another run
@@ -105,6 +108,7 @@ export function reportText(r: any): string {
     r.title ? `„${esc(String(r.title).slice(0, 200))}“` : "",
     "",
     `📬 Gesendet: <b>${fmt(r.sent)}</b>${r.failed ? `  ·  ⚠️ fehlgeschlagen: ${fmt(r.failed)}` : ""}`,
+    r.scheduled_later ? `⏰ Bekommen ihn später (eigene Uhrzeit): <b>${fmt(r.scheduled_later)}</b>` : "",
     opens,
     "",
     `🕐 ${when} Uhr`,
@@ -130,6 +134,8 @@ export async function syncTelegram(supabase: any, pushId: string) {
   if (!BOT_TOKEN) return;
   const { data: r } = await supabase.from("push_reports").select("*").eq("id", pushId).maybeSingle();
   if (!r) return;
+  // e.g. verse of the day: the message goes out at 07:00, not with the 5 am group
+  if (r.post_after && Date.now() < new Date(r.post_after).getTime()) return;
   const text = reportText(r);
   const { data: subs } = await supabase.from("telegram_subscribers").select("chat_id");
   const { data: msgs } = await supabase.from("telegram_push_messages").select("*").eq("push_id", pushId);

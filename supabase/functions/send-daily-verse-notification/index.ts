@@ -211,9 +211,21 @@ serve(async (_req) => {
     let failureCount = 0
     const deadTokens: string[] = []
     // One Telegram report per day – the hourly runs add up.
+    // Telegram message at 07:00 German time (earlier groups are added up).
+    const berlinHour = localHourInTimezone(now, 'Europe/Berlin')
+    const offsetHours = ((berlinHour - now.getUTCHours()) % 24 + 24) % 24
+    const [yy, mm, dd] = today.split('-').map(Number)
+    const sevenBerlin = new Date(Date.UTC(yy, mm - 1, dd, 7 - offsetHours, 0, 0))
     const pushReport = await beginPushReport(supabase, {
       category: 'Vers des Tages', title: verseData.reference, key: `verse:${today}`,
+      postAfter: sevenBerlin,
     })
+    // Devices that get the verse later today at their own (later) hour
+    const scheduledLater = devices.filter(d =>
+      localHourInTimezone(now, d.timezone || 'Europe/Berlin') < d.notification_hour).length
+    if (pushReport.id) {
+      await supabase.from('push_reports').update({ scheduled_later: scheduledLater }).eq('id', pushReport.id)
+    }
 
     // Cache localized verses
     const verseCache: Record<string, { verse: string; reference: string }> = {

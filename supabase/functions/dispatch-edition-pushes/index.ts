@@ -132,7 +132,21 @@ Deno.serve(async (req) => {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (bearer !== SERVICE_ROLE) {
+    // The cron job sends the (legacy) service-role JWT, which no longer equals
+    // the SUPABASE_SERVICE_ROLE_KEY env value. Accept it if Supabase confirms
+    // it as service role (an admin-only call succeeds).
+    let isServiceRole = bearer === SERVICE_ROLE;
+    if (!isServiceRole && bearer.split(".").length === 3) {
+      try {
+        const payload = JSON.parse(atob(bearer.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+        if (payload?.role === "service_role") {
+          const probe = createClient(SUPABASE_URL, bearer, { auth: { persistSession: false } });
+          const { error } = await probe.auth.admin.listUsers({ page: 1, perPage: 1 });
+          isServiceRole = !error;
+        }
+      } catch (_) { /* not a JWT */ }
+    }
+    if (!isServiceRole) {
       const userClient = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!, {
         global: { headers: { Authorization: `Bearer ${bearer}` } },
       });
