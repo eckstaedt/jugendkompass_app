@@ -60,6 +60,8 @@ LANG_NAMES = {
     "tr": "Turkish",
     "he": "Hebrew (right-to-left)",
 }
+# Processing order of the language passes (English first).
+LANG_ORDER = ["en", "es", "ru", "pl", "tr", "he"]
 # Aspect ratios Gemini can produce.
 RATIOS = {"1:1": 1.0, "2:3": 2 / 3, "3:2": 1.5, "3:4": 0.75, "4:3": 4 / 3,
           "4:5": 0.8, "5:4": 1.25, "9:16": 9 / 16, "16:9": 16 / 9, "21:9": 21 / 9}
@@ -289,8 +291,13 @@ def title_hints(rows: list[dict]) -> dict:
 
 
 def pending_rows() -> list[dict]:
-    rows = rest("GET", "/rest/v1/image_translations?select=*&status=in.(pending,processing,failed)"
-                       "&order=requested_at.desc&limit=5000")
+    rows = []
+    for offset in range(0, 100000, 1000):  # PostgREST returns max. 1000 rows
+        page = rest("GET", "/rest/v1/image_translations?select=*&status=in.(pending,processing,failed)"
+                           f"&order=requested_at.desc,id&limit=1000&offset={offset}")
+        rows.extend(page)
+        if len(page) < 1000:
+            break
     out = []
     now = time.time()
     for r in rows:
@@ -328,6 +335,7 @@ def process_image(source_url: str, rows: list[dict], scans: dict, hints: dict) -
              body={"source_url": source_url, "has_text": has_text, "detected_text": text},
              headers={"Prefer": "resolution=merge-duplicates,return=minimal"})
         sc = {"has_text": has_text, "detected_text": text}
+        scans[source_url] = sc  # later language passes reuse the scan
     forced = {r["language"] for r in rows if r.get("force")}
     if not sc["has_text"] and not forced:
         update_rows(source_url, {"status": "no_text", "error": None, "finished_at": now_iso(), "force": False})
@@ -409,27 +417,37 @@ def main():
 
     edits = 0
     lock = threading.Lock()
-    urls = list(by_url)
 
-    def run(url):
+    def run(url, lang_rows):
         nonlocal edits
         with lock:
             if edits >= limit or time.time() > deadline:
                 return
-        n = process_image(url, by_url[url], scans, hints)
+        n = process_image(url, lang_rows, scans, hints)
         with lock:
             edits += n
 
+    # One pass per language, English first: if the credit runs out, at least
+    # all English covers are done. Then the other languages in this order.
+    order = ["en"] + [l for l in LANG_ORDER if l != "en"]
     try:
-        with cf.ThreadPoolExecutor(int(os.environ.get("WORKERS", "4"))) as pool:
-            for f in cf.as_completed([pool.submit(run, u) for u in urls]):
-                try:
-                    f.result()
-                except (OutOfCredit, BadKey) as e:
-                    STOP_REASON.append(("no_credit" if isinstance(e, OutOfCredit) else "bad_key", str(e)[:200]))
-                    STOP.set()
-                except Exception as e:  # noqa: BLE001
-                    log(f"(error: {str(e)[:200]})")
+        for lang in order + sorted({r["language"] for r in rows} - set(order)):
+            if STOP.is_set():
+                break
+            jobs = {u: [r for r in rs if r["language"] == lang] for u, rs in by_url.items()}
+            jobs = {u: rs for u, rs in jobs.items() if rs}
+            if not jobs:
+                continue
+            log(f"── {lang}: {len(jobs)} images")
+            with cf.ThreadPoolExecutor(int(os.environ.get("WORKERS", "4"))) as pool:
+                for f in cf.as_completed([pool.submit(run, u, rs) for u, rs in jobs.items()]):
+                    try:
+                        f.result()
+                    except (OutOfCredit, BadKey) as e:
+                        STOP_REASON.append(("no_credit" if isinstance(e, OutOfCredit) else "bad_key", str(e)[:200]))
+                        STOP.set()
+                    except Exception as e:  # noqa: BLE001
+                        log(f"(error: {str(e)[:200]})")
     finally:
         if STOP_REASON:
             state, msg = STOP_REASON[0]
