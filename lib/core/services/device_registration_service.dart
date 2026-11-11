@@ -78,10 +78,30 @@ class DeviceRegistrationService {
         data,
         onConflict: 'device_id',
       );
+      // For an existing row the upsert only refreshes token/language – write
+      // the chosen settings explicitly.
+      await _saveSettings({
+        'verse_notifications': verseNotifications,
+        'content_notifications': contentNotifications,
+        'notification_hour': notificationHour,
+        'notification_minute': notificationMinute,
+        if (language != null) 'language': language,
+        if (timezone != null) 'timezone': timezone,
+      });
       debugPrint('[DeviceRegistration] registered: $deviceId');
     } catch (e) {
       debugPrint('[DeviceRegistration] register error: $e');
     }
+  }
+
+  /// Writes settings of THIS device via a database function (the app may not
+  /// update the table directly – see migration 20261111214000).
+  Future<void> _saveSettings(Map<String, dynamic> settings) async {
+    if (settings.isEmpty) return;
+    await Supabase.instance.client.rpc('update_device_settings', params: {
+      'p_device_id': deviceId,
+      'p_settings': settings,
+    });
   }
 
   /// Update the notification preferences for this device on the server.
@@ -94,7 +114,6 @@ class DeviceRegistrationService {
     String? timezone,
   }) async {
     try {
-      final supabase = Supabase.instance.client;
       final updates = <String, dynamic>{};
       if (verseNotifications != null) {
         updates['verse_notifications'] = verseNotifications;
@@ -114,12 +133,7 @@ class DeviceRegistrationService {
       if (timezone != null) {
         updates['timezone'] = timezone;
       }
-      if (updates.isEmpty) return;
-
-      await supabase
-          .from(_table)
-          .update(updates)
-          .eq('device_id', deviceId);
+      await _saveSettings(updates);
       debugPrint('[DeviceRegistration] updated prefs: $updates');
     } catch (e) {
       debugPrint('[DeviceRegistration] updatePreferences error: $e');
@@ -129,11 +143,7 @@ class DeviceRegistrationService {
   /// Update the language preference for this device.
   Future<void> updateLanguage(String language) async {
     try {
-      final supabase = Supabase.instance.client;
-      await supabase
-          .from(_table)
-          .update({'language': language})
-          .eq('device_id', deviceId);
+      await _saveSettings({'language': language});
       debugPrint('[DeviceRegistration] updated language: $language');
     } catch (e) {
       debugPrint('[DeviceRegistration] updateLanguage error: $e');
@@ -144,11 +154,7 @@ class DeviceRegistrationService {
   /// notifications, e.g. the Bible reading plan reminders).
   Future<void> updateUserName(String userName) async {
     try {
-      final supabase = Supabase.instance.client;
-      await supabase
-          .from(_table)
-          .update({'user_name': userName})
-          .eq('device_id', deviceId);
+      await _saveSettings({'user_name': userName});
       debugPrint('[DeviceRegistration] updated user_name: $userName');
     } catch (e) {
       debugPrint('[DeviceRegistration] updateUserName error: $e');
@@ -160,11 +166,7 @@ class DeviceRegistrationService {
   /// the daily reminder push (also gated by `bible_plan_notifications_enabled`).
   Future<void> updateBiblePlanStarted(bool started) async {
     try {
-      final supabase = Supabase.instance.client;
-      await supabase
-          .from(_table)
-          .update({'bible_plan_started': started})
-          .eq('device_id', deviceId);
+      await _saveSettings({'bible_plan_started': started});
       debugPrint('[DeviceRegistration] updated bible_plan_started: $started');
     } catch (e) {
       debugPrint('[DeviceRegistration] updateBiblePlanStarted error: $e');
@@ -178,7 +180,6 @@ class DeviceRegistrationService {
     int? hour,
   }) async {
     try {
-      final supabase = Supabase.instance.client;
       final updates = <String, dynamic>{};
       if (enabled != null) {
         updates['bible_plan_notifications_enabled'] = enabled;
@@ -186,12 +187,7 @@ class DeviceRegistrationService {
       if (hour != null) {
         updates['bible_plan_notification_hour'] = hour;
       }
-      if (updates.isEmpty) return;
-
-      await supabase
-          .from(_table)
-          .update(updates)
-          .eq('device_id', deviceId);
+      await _saveSettings(updates);
       debugPrint('[DeviceRegistration] updated bible plan notifications: $updates');
     } catch (e) {
       debugPrint('[DeviceRegistration] updateBiblePlanNotifications error: $e');
@@ -202,7 +198,7 @@ class DeviceRegistrationService {
   Future<void> unregister() async {
     try {
       final supabase = Supabase.instance.client;
-      await supabase.from(_table).delete().eq('device_id', deviceId);
+      await supabase.rpc('unregister_device', params: {'p_device_id': deviceId});
       debugPrint('[DeviceRegistration] unregistered: $deviceId');
     } catch (e) {
       debugPrint('[DeviceRegistration] unregister error: $e');

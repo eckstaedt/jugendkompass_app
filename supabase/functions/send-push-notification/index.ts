@@ -203,9 +203,13 @@ function getNotificationContent(
     }
     case "verse_of_the_day": {
       const translation = NOTIFICATION_TRANSLATIONS.verse[lang];
+      // Same look as the daily verse push: title with 📖, verse, then the
+      // reference on its own line.
+      const verseText = ((record.verse as string) || "").replace(/<[^>]+>/g, "").trim();
+      const reference = (record.reference as string) || "";
       return {
-        title: translation.title,
-        body: (record.reference as string) || translation.fallback,
+        title: `${translation.title} 📖`,
+        body: verseText ? (reference ? `${verseText}\n${reference}` : verseText) : (reference || translation.fallback),
         imageUrl: (record.image_url as string) || null,
         data: { contentType: "verse", contentId },
       };
@@ -223,7 +227,7 @@ const NOTIFICATION_FIELDS: Record<string, string[]> = {
   videos: ["title"],
   impulses: ["title"],
   messages: ["title", "message"],
-  verse_of_the_day: ["reference"],
+  verse_of_the_day: ["verse", "reference"],
   editions: ["title", "name"],
 };
 

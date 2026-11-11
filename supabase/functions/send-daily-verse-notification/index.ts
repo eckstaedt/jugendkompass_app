@@ -222,7 +222,8 @@ serve(async (_req) => {
       }
 
       const { verse, reference } = verseCache[language] ?? verseCache['de']
-      const body = `${verse} — ${reference}`
+      // Verse first, reference on its own line below.
+      const body = `${verse}\n${reference}`
 
       console.log(`[verse] Sending ${language}: "${title}" to ${tokens.length} devices`)
 
