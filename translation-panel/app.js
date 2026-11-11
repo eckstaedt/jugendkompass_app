@@ -1356,7 +1356,7 @@ function renderCredits() {
 boot();
 
 // ─── Bilder (KI-Übersetzung der Schrift auf Titelbildern, Gemini) ───────────
-const IMG_LANGS = ["en", "ru", "es", "pl", "tr", "he"];
+const IMG_LANGS = ["en"]; // nur Englisch (Kosten) – andere Sprachen zeigen das Original
 const IMG_PRICE_USD = 0.039; // Gemini 2.5 Flash Image, pro bearbeitetem Bild
 const IMG_TYPES = { posts: "Artikel", impulses: "Impuls", editions: "Ausgabe", messages: "Kurznachricht" };
 const IMG_FILTERS = [
@@ -1404,8 +1404,8 @@ function renderImageShell() {
   $("#main").innerHTML = `
     <div class="banner info">
       <div class="icon">${ic("sparkles")}</div>
-      <div class="txt"><strong>Schrift auf Titelbildern übersetzen</strong>Gemini prüft jedes Bild einmal auf Text. Bilder mit Text werden pro Sprache neu erzeugt –
-      nur die Schrift wird ersetzt, Foto und Layout bleiben. Die App zeigt dann in jeder Sprache das passende Bild. <b>Neue Bilder laufen automatisch</b>;
+      <div class="txt"><strong>Schrift auf Titelbildern übersetzen</strong>Gemini prüft jedes Bild einmal auf Text. Bilder mit Text bekommen eine <b>englische</b> Version (andere Sprachen zeigen das Original) –
+      nur die Schrift wird ersetzt, Foto und Layout bleiben. Die App zeigt auf Englisch dann das übersetzte Bild. <b>Neue Bilder laufen automatisch</b>;
       alte Bilder reihst du mit dem Button unten ein. Gefällt dir ein Ergebnis nicht: ablehnen (App zeigt wieder das Original) oder neu erzeugen.</div>
     </div>
     <div id="img-worker"></div>
@@ -1429,7 +1429,7 @@ function renderImageShell() {
   };
   $("#i-backfill").onclick = async () => {
     if (!confirm("Alle bestehenden Titelbilder (Artikel, Impulse, Ausgaben, Kurznachrichten) für die KI-Übersetzung einreihen?\n\n" +
-      "Kosten: nur Bilder MIT Text werden bearbeitet (ca. 0,04 $ pro Bild und Sprache). Ohne Gemini-Guthaben passiert nichts.")) return;
+      "Kosten: nur Bilder MIT Text werden bearbeitet (ca. 0,05–0,07 $ pro Bild, nur Englisch). Ohne Gemini-Guthaben passiert nichts.")) return;
     try {
       const { data, error } = await sb.rpc("enqueue_all_image_translations");
       if (error) throw error;
