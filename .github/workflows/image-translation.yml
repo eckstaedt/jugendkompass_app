@@ -17,7 +17,7 @@ on:
     inputs:
       limit:
         description: "Max image edits in this run"
-        default: "300"
+        default: "800"
 
 concurrency:
   group: image-translation
@@ -45,6 +45,6 @@ jobs:
       - name: Translate images
         if: steps.plan.outputs.pending != '0'
         env:
-          LIMIT: ${{ inputs.limit || '300' }}
+          LIMIT: ${{ inputs.limit || '800' }}
           TIME_BUDGET_MIN: "300"
         run: python3 tool/image_translate/translate_images.py

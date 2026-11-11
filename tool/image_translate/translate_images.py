@@ -155,7 +155,33 @@ class RateLimited(Exception):
     """Google's per-minute/day limit – stop this run, keep the rows pending."""
 
 
+# Gentle pacing so Google's per-minute limit is never hit: at most one
+# image edit every IMAGE_INTERVAL seconds (default 10 s = 6 per minute) and
+# one text scan every TEXT_INTERVAL seconds, shared by all threads. After a
+# 429 the interval grows by 50 % for the rest of the run.
+_PACE = {"image": float(os.environ.get("IMAGE_INTERVAL", "10")),
+         "text": float(os.environ.get("TEXT_INTERVAL", "3"))}
+_NEXT = {"image": 0.0, "text": 0.0}
+_PACE_LOCK = threading.Lock()
+
+
+def _wait_turn(kind: str):
+    with _PACE_LOCK:
+        now = time.time()
+        start = max(now, _NEXT[kind])
+        _NEXT[kind] = start + _PACE[kind]
+    if start > now:
+        time.sleep(start - now)
+
+
+def _slow_down(kind: str):
+    with _PACE_LOCK:
+        _PACE[kind] = min(_PACE[kind] * 1.5, 60)
+        log(f"(rate limit – {kind} interval now {_PACE[kind]:.0f}s)")
+
+
 def gemini(model: str, body: dict) -> dict:
+    kind = "image" if model == IMAGE_MODEL else "text"
     key = os.environ["GEMINI_API_KEY"].strip()
     req = urllib.request.Request(
         f"{GEMINI}/{model}:generateContent",
@@ -164,6 +190,7 @@ def gemini(model: str, body: dict) -> dict:
         headers={"Content-Type": "application/json", "x-goog-api-key": key},
     )
     for attempt in range(8):
+        _wait_turn(kind)
         try:
             with urllib.request.urlopen(req, timeout=180) as r:
                 return json.load(r)
@@ -180,12 +207,15 @@ def gemini(model: str, body: dict) -> dict:
             if e.code == 429 or e.code >= 500:
                 if "limit: 0" in low:  # model not available on this tier
                     raise OutOfCredit(msg[:300]) from None
-                # Respect Google's retryDelay ("34s") when given.
+                if e.code == 429:
+                    _slow_down(kind)
+                # Respect Google's retryDelay ("34s") when given; otherwise
+                # wait longer each time (up to 5 minutes) instead of giving up.
                 m = re.search(r'"retryDelay":\s*"(\d+)', msg)
-                wait = int(m.group(1)) + 2 if m else min(90, 10 * 2 ** attempt)
+                wait = int(m.group(1)) + 5 if m else min(300, 15 * 2 ** attempt)
                 if attempt == 7:
                     raise RateLimited(msg[:300]) from None
-                time.sleep(min(wait, 120))
+                time.sleep(min(wait, 300))
                 continue
             raise RuntimeError(f"Gemini {e.code}: {msg[:300]}") from None
         except urllib.error.URLError:
