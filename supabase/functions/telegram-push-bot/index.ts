@@ -1,8 +1,8 @@
 // Telegram bot "Push-Statistik".
 //  * Telegram webhook: /start subscribes the chat, /stop unsubscribes,
 //    /letzte shows the last 5 pushes.
-//  * {"action":"refresh"} (cron every 5 min): updates the messages of recent
-//    pushes with the current number of taps.
+//  * {"action":"refresh"} (cron every 5 min): keeps the messages up to date
+//    and, 12 h after a push, posts the open rate as a reply.
 // Every push sender calls endPushReport() (../_shared/push_report.ts), which
 // posts the message to all subscribers.
 // deno-lint-ignore-file no-explicit-any
@@ -36,8 +36,8 @@ async function handleUpdate(update: any) {
     await supabase.from("telegram_subscribers").upsert({ chat_id: chatId, name });
     await reply(chatId,
       "✅ <b>Angemeldet.</b>\nDu bekommst ab jetzt zu jeder Push-Nachricht der Jugendkompass-App " +
-      "eine Nachricht: Kategorie, Titel, wie viele sie empfangen und wie viele sie geöffnet haben " +
-      "(die Zahlen werden laufend aktualisiert).\n\n/letzte – die letzten 5 Pushes\n/stop – abmelden");
+      "eine Nachricht: Kategorie, Titel und wie viele sie bekommen haben. 12 Stunden später " +
+      "folgt, wie viele sie geöffnet haben (in %).\n\n/letzte – die letzten 5 Pushes\n/stop – abmelden");
   } else if (cmd === "/stop") {
     await supabase.from("telegram_subscribers").delete().eq("chat_id", chatId);
     await reply(chatId, "👋 Abgemeldet. Mit /start kannst du dich wieder anmelden.");
@@ -50,8 +50,10 @@ async function handleUpdate(update: any) {
 }
 
 async function refresh() {
+  // Recent pushes, plus older ones whose 12 h result is still outstanding.
   const since = new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString();
-  const { data } = await supabase.from("push_reports").select("id").gte("created_at", since);
+  const { data } = await supabase.from("push_reports").select("id")
+    .or(`created_at.gte.${since},opens_reported_at.is.null`).order("created_at").limit(200);
   for (const r of data ?? []) await syncTelegram(supabase, r.id);
   return (data ?? []).length;
 }

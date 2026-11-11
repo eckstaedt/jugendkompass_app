@@ -82,20 +82,38 @@ function esc(s: string) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+export const OPENS_AFTER_HOURS = 12;
+
+/** Opens are only shown once the push is 12 h old (final result). */
+export function opensDue(r: any): boolean {
+  return Date.now() - new Date(r.created_at).getTime() >= OPENS_AFTER_HOURS * 3600 * 1000;
+}
+
+function rateText(r: any): string {
+  return r.sent > 0 ? ` (${((r.opens / r.sent) * 100).toLocaleString("de-DE", { maximumFractionDigits: 1 })} %)` : "";
+}
+
 export function reportText(r: any): string {
   const when = new Intl.DateTimeFormat("de-DE", {
     timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
   }).format(new Date(r.created_at));
-  const rate = r.sent > 0 ? ` (${((r.opens / r.sent) * 100).toLocaleString("de-DE", { maximumFractionDigits: 1 })} %)` : "";
+  const opens = opensDue(r)
+    ? `👆 Geöffnet nach ${OPENS_AFTER_HOURS} Std.: <b>${fmt(r.opens)}</b>${rateText(r)}`
+    : `👆 Geöffnet: Auswertung ${OPENS_AFTER_HOURS} Std. nach dem Senden`;
   return [
     `📣 <b>${esc(r.category)}</b>`,
     r.title ? `„${esc(String(r.title).slice(0, 200))}“` : "",
     "",
-    `📬 Empfangen: <b>${fmt(r.sent)}</b>${r.failed ? `  ·  ⚠️ fehlgeschlagen: ${fmt(r.failed)}` : ""}`,
-    `👆 Geöffnet: <b>${fmt(r.opens)}</b>${rate}`,
+    `📬 Gesendet: <b>${fmt(r.sent)}</b>${r.failed ? `  ·  ⚠️ fehlgeschlagen: ${fmt(r.failed)}` : ""}`,
+    opens,
     "",
     `🕐 ${when} Uhr`,
   ].filter((l, i, a) => !(l === "" && a[i - 1] === "")).join("\n");
+}
+
+/** Short follow-up (as reply, so it notifies) once the 12 h result is in. */
+export function opensResultText(r: any): string {
+  return `📊 <b>${esc(r.category)}</b> – nach ${OPENS_AFTER_HOURS} Std. geöffnet: <b>${fmt(r.opens)}</b> von ${fmt(r.sent)}${rateText(r)}`;
 }
 
 async function tg(method: string, body: unknown) {
@@ -133,6 +151,20 @@ export async function syncTelegram(supabase: any, pushId: string) {
         await supabase.from("telegram_push_messages").update({ last_text: text })
           .eq("push_id", pushId).eq("chat_id", s.chat_id);
       }
+    }
+  }
+  // 12 h after sending: one follow-up with the open rate (reply → notifies).
+  if (opensDue(r) && !r.opens_reported_at) {
+    const { data: claimed } = await supabase.from("push_reports")
+      .update({ opens_reported_at: new Date().toISOString() })
+      .eq("id", pushId).is("opens_reported_at", null).select("id").maybeSingle();
+    if (!claimed) return;
+    const { data: all } = await supabase.from("telegram_push_messages").select("*").eq("push_id", pushId);
+    for (const m of all ?? []) {
+      await tg("sendMessage", {
+        chat_id: m.chat_id, text: opensResultText(r), parse_mode: "HTML",
+        reply_parameters: { message_id: m.message_id, allow_sending_without_reply: true },
+      });
     }
   }
 }
