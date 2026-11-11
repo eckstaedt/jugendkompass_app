@@ -18,8 +18,8 @@ stops without touching the queue and writes the reason to `worker_status`
 
 Environment:
   GEMINI_API_KEY               Google AI Studio key (required to do work)
-  GEMINI_IMAGE_MODEL           default gemini-2.5-flash-image
-  GEMINI_TEXT_MODEL            default gemini-2.5-flash
+  GEMINI_IMAGE_MODEL           default gemini-3.1-flash-image
+  GEMINI_TEXT_MODEL            default gemini-flash-latest
   SUPABASE_SERVICE_ROLE_KEY    or SUPABASE_ACCESS_TOKEN (key is fetched)
   LIMIT                        max image edits per run (default 300)
   TIME_BUDGET_MIN              stop starting new items after this (default 300)
@@ -46,8 +46,8 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL", f"https://{PROJECT_REF}.supabase.c
 BUCKET = "posts"
 PREFIX = "image-translations"
 WORKER = "image-translation"
-IMAGE_MODEL = os.environ.get("GEMINI_IMAGE_MODEL", "gemini-2.5-flash-image")
-TEXT_MODEL = os.environ.get("GEMINI_TEXT_MODEL", "gemini-2.5-flash")
+IMAGE_MODEL = os.environ.get("GEMINI_IMAGE_MODEL", "gemini-3.1-flash-image")
+TEXT_MODEL = os.environ.get("GEMINI_TEXT_MODEL", "gemini-flash-latest")
 GEMINI = "https://generativelanguage.googleapis.com/v1beta/models"
 STALE_AFTER_S = 2 * 3600
 MAX_ATTEMPTS = 3

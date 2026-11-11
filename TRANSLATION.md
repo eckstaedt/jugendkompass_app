@@ -140,5 +140,5 @@ Covers of posts, impulses, editions and short messages are translated by AI imag
 * Queue/results: table `image_translations` (one row per image URL × language), scans in `image_text_scans`, worker state in `worker_status`.
 * New or changed images are queued by a trigger; old ones via "Alle bestehenden Bilder einreihen" (tab **Bilder** in the translation panel).
 * Worker: `tool/image_translate/translate_images.py`, run by `.github/workflows/image-translation.yml` every 30 minutes. Needs the GitHub secret `GEMINI_API_KEY` (Google AI Studio, prepaid credit). Without a key or credit it stops and shows the reason in the panel.
-* Each image is scanned once (gemini-2.5-flash). Only images with text are edited (gemini-2.5-flash-image, about $0.04 per image and language).
+* Each image is scanned once (gemini-flash-latest). Only images with text are edited (gemini-3.1-flash-image, about $0.04–0.07 per image and language).
 * App: `ImageLocalizer` swaps the URL by language in `CorsNetworkImage` and the podcast artwork. Rejected results fall back to the original.
