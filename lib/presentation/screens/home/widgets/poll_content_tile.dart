@@ -510,12 +510,7 @@ class _PollContentTileState extends ConsumerState<PollContentTile> with SingleTi
                     width: double.infinity,
                     child: Container(
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [
-                            DesignTokens.primaryRed,
-                            Color(0xFFD32F2F),
-                          ],
-                        ),
+                        color: DesignTokens.primaryRed,
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(

@@ -575,11 +575,14 @@ class ProfileScreen extends ConsumerWidget {
         ),
         actionsAlignment: MainAxisAlignment.spaceEvenly,
         actions: [
-          TextButton(
+          // Yes/No always side by side (AlertDialog stacks them when narrow)
+          Row(children: [
+            Expanded(child: TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(translate('Abbrechen')),
-          ),
-          FilledButton(
+          )),
+            const SizedBox(width: 12),
+            Expanded(child: FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: DesignTokens.primaryRed,
             ),
@@ -590,7 +593,8 @@ class ProfileScreen extends ConsumerWidget {
               }
             },
             child: Text(translate('Speichern')),
-          ),
+          )),
+          ]),
         ],
       ),
     );
@@ -614,15 +618,19 @@ class ProfileScreen extends ConsumerWidget {
           translate('Möchtest du wirklich alle deine Daten löschen? Diese Aktion kann nicht rückgängig gemacht werden.\n\nFolgende Daten werden gelöscht:\n• Dein Name und Einstellungen\n• Alle Favoriten\n• Bibelleseplan-Fortschritt\n• Dark Mode Einstellung'),
         ),
         actions: [
-          TextButton(
+          // Yes/No always side by side (AlertDialog stacks them when narrow)
+          Row(children: [
+            Expanded(child: TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(translate('Abbrechen')),
-          ),
-          TextButton(
+          )),
+            const SizedBox(width: 12),
+            Expanded(child: TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: Text(translate('Löschen')),
-          ),
+          )),
+          ]),
         ],
       ),
     );
@@ -783,20 +791,24 @@ class _HourPickerDialogState extends State<_HourPickerDialog> {
         ),
       ),
       actions: [
-        TextButton(
+        // Yes/No always side by side (AlertDialog stacks them when narrow)
+        Row(children: [
+          Expanded(child: TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: Text(
             widget.cancelText,
             style: TextStyle(color: DesignTokens.getTextSecondary(brightness)),
           ),
-        ),
-        FilledButton(
+        )),
+          const SizedBox(width: 12),
+          Expanded(child: FilledButton(
           onPressed: () => Navigator.of(context).pop(_selectedHour),
           style: FilledButton.styleFrom(
             backgroundColor: DesignTokens.primaryRed,
           ),
           child: Text(widget.confirmText),
-        ),
+        )),
+        ]),
       ],
     );
   }

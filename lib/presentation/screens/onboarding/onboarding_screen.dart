@@ -112,14 +112,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           ),
         ),
         actions: [
-          TextButton(
+          // Yes/No always side by side (AlertDialog stacks them when narrow)
+          Row(children: [
+            Expanded(child: TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
               translate('Überspringen'),
               style: TextStyle(color: DesignTokens.getTextSecondary(brightness)),
             ),
-          ),
-          FilledButton(
+          )),
+            const SizedBox(width: 12),
+            Expanded(child: FilledButton(
             onPressed: () async {
               Navigator.of(context).pop();
               await _requestNotificationPermission();
@@ -128,7 +131,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               backgroundColor: DesignTokens.primaryRed,
             ),
             child: Text(translate('Erlauben')),
-          ),
+          )),
+          ]),
         ],
       ),
     );
@@ -307,13 +311,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       ),
                       SizedBox(height: DesignTokens.spacingMedium),
 
-                      // Submit Button with shadow
-                      Container(
+                      // Submit Button
+                      SizedBox(
                         width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(DesignTokens.radiusButtons),
-                          boxShadow: [DesignTokens.shadowButton],
-                        ),
+                        // no red glow behind the button
                         child: FilledButton(
                           onPressed: _isValid ? _onSubmit : null,
                           style: FilledButton.styleFrom(

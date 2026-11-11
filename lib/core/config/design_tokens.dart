@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 /// Zentrale Design Tokens für konsistentes UI-Design
 class DesignTokens {
   // ⸻ FARBPALETTE - LIGHT MODE
-  static const Color primaryRed = Color(0xFF8B0000);
-  static const Color primaryRedActive = Color(0xFF7A0000);
+  // Juicy, friendly red – the same red everywhere in the app.
+  static const Color primaryRed = Color(0xFFE23B44);
+  static const Color primaryRedActive = Color(0xFFC92F38);
   /// Readable red for text/links on dark backgrounds.
-  static const Color primaryRedOnDark = Color(0xFFFF6B6B);
-  static const Color redBackground = Color(0xFFF2DCDC);
+  static const Color primaryRedOnDark = Color(0xFFFF7D84);
+  static const Color redBackground = Color(0xFFFFE3E5);
   
   static const Color appBackground = Color(0xFFF0F0F3);
   static const Color cardBackground = Color(0xFFFFFFFF);
@@ -40,7 +41,7 @@ class DesignTokens {
   static const Color darkSuccessColor = Color(0xFF34D399); // Lighter green for dark mode
 
   // Dark mode red background (more visible for dark theme)
-  static const Color darkRedBackground = Color(0xFF4A1818);
+  static const Color darkRedBackground = Color(0xFF552026);
 
   // ⸻ BORDER RADIUS SYSTEM
   // Three steps only – small (12), medium (16), large (24) – so shapes feel
@@ -129,9 +130,9 @@ class DesignTokens {
   // Content type tags: pastel red for reading content (article, short
   // message, impulse …), pastel green for media (audio, video).
   static Color getReadingTagBackground(Brightness b) =>
-      b == Brightness.dark ? const Color(0x40E57373) : const Color(0xFFFCE4E4);
+      b == Brightness.dark ? const Color(0x47E23B44) : redBackground;
   static Color getReadingTagText(Brightness b) =>
-      b == Brightness.dark ? const Color(0xFFF5B5B5) : const Color(0xFFB03A3A);
+      b == Brightness.dark ? primaryRedOnDark : primaryRed;
   static Color getMediaTagBackground(Brightness b) =>
       b == Brightness.dark ? const Color(0x4066BB6A) : const Color(0xFFDDF3E3);
   static Color getMediaTagText(Brightness b) =>

@@ -166,7 +166,7 @@ class _VerseArchiveCardState extends State<VerseArchiveCard> {
           // Header: date badge + share icon
           Row(
             children: [
-              BadgeWidget(label: dateLabel.toUpperCase()),
+              BadgeWidget(label: dateLabel.toUpperCase(), tone: BadgeTone.reading),
               const Spacer(),
               Tooltip(
                 message: _canShare
