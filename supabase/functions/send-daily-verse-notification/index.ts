@@ -3,6 +3,7 @@
 // Filters devices whose notification_hour matches the current local hour
 // in the device's stored timezone. Sends the localized verse via FCM.
 
+import { beginPushReport, endPushReport } from "../_shared/push_report.ts";
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -209,6 +210,10 @@ serve(async (_req) => {
     let successCount = 0
     let failureCount = 0
     const deadTokens: string[] = []
+    // One Telegram report per day – the hourly runs add up.
+    const pushReport = await beginPushReport(supabase, {
+      category: 'Vers des Tages', title: verseData.reference, key: `verse:${today}`,
+    })
 
     // Cache localized verses
     const verseCache: Record<string, { verse: string; reference: string }> = {
@@ -255,6 +260,7 @@ serve(async (_req) => {
               data: {
                 contentType: 'verse',
                 contentId: verseData.id,
+                pushId: pushReport.id ?? '',
               },
               android: {
                 notification: {
@@ -306,6 +312,8 @@ serve(async (_req) => {
         await Promise.all(tokens.slice(i, i + 50).map(sendOne))
       }
     }
+
+    await endPushReport(supabase, pushReport, successCount, failureCount)
 
     if (deadTokens.length) {
       for (let i = 0; i < deadTokens.length; i += 200) {

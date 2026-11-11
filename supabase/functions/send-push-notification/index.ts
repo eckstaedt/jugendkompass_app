@@ -32,6 +32,7 @@
 //   - SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (auto-set)
 // Firebase config is hardcoded below (private project).
 
+import { beginPushReport, endPushReport } from "../_shared/push_report.ts";
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -466,6 +467,11 @@ serve(async (req) => {
 
     // ── Send localized notifications per language group ──
     const allResults: PromiseSettledResult<unknown>[] = [];
+    const deTexts = getNotificationContent(table, record, "de");
+    const pushReport = await beginPushReport(supabase, {
+      category: deTexts?.title ?? table,
+      title: String(record.title ?? record.name ?? record.reference ?? deTexts?.body ?? ""),
+    });
 
     for (const [language, tokens] of Object.entries(devicesByLanguage)) {
       const notification = getNotificationContent(
@@ -494,6 +500,7 @@ serve(async (req) => {
               data: {
                 contentType: notification.data.contentType,
                 contentId: notification.data.contentId,
+                pushId: pushReport.id ?? "",
               },
               // iOS-specific: show image in notification
               apns: {
@@ -534,6 +541,7 @@ serve(async (req) => {
           const result = await res.json();
           if (!res.ok) {
             console.error(`[send-push] FCM error for token ${token.substring(0, 15)}...:`, result);
+            throw new Error("FCM " + res.status); // counts as failed
           }
           return result;
         })
@@ -546,6 +554,7 @@ serve(async (req) => {
     const failed = allResults.filter((r) => r.status === "rejected").length;
 
     console.log(`[send-push] Done: ${succeeded} succeeded, ${failed} failed`);
+    await endPushReport(supabase, pushReport, succeeded, failed);
 
     return new Response(
       JSON.stringify({

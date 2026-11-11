@@ -165,8 +165,22 @@ class FCMService {
     });
   }
 
+  /// Counts the tap for the push statistics (Telegram bot); once per device.
+  void _logOpen(Object? pushId) {
+    final id = pushId?.toString() ?? '';
+    if (id.isEmpty) return;
+    Supabase.instance.client.rpc('log_push_open', params: {
+      'p_push_id': id,
+      'p_device_id': DeviceRegistrationService.instance.deviceId,
+    }).catchError((Object e) {
+      debugPrint('[FCM] log_push_open failed: $e');
+      return null;
+    });
+  }
+
   /// Handle notification tap from background or terminated state.
   void _handleBackgroundNotificationTap(RemoteMessage message) {
+    _logOpen(message.data['pushId']);
     debugPrint('[FCM] Notification tapped: ${message.messageId}');
     debugPrint('[FCM] Notification data: ${message.data}');
     final data = message.data;
@@ -191,6 +205,7 @@ class FCMService {
           data['contentType'] = parts[0];
           data['contentId'] = parts[1];
         }
+        if (parts.length >= 3) _logOpen(parts[2]);
         debugPrint('[FCM] Parsed local notification data: $data');
         _onNotificationTap!(data);
       } catch (e) {
@@ -314,7 +329,7 @@ class FCMService {
     // Create payload string for tap handling
     final data = message.data;
     final payload = data.containsKey('contentType') && data.containsKey('contentId')
-        ? '${data['contentType']}|${data['contentId']}'
+        ? '${data['contentType']}|${data['contentId']}|${data['pushId'] ?? ''}'
         : null;
 
     // Image of the push (if any) – shown big on Android, attached on iOS.

@@ -16,6 +16,7 @@
 // computed from its stored IANA `timezone` (defaults to Europe/Berlin), and
 // only devices whose local hour is 6 receive the push (cron runs at :30).
 
+import { beginPushReport, endPushReport } from "../_shared/push_report.ts";
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -347,6 +348,10 @@ serve(async (_req) => {
     // ── 4. Send a personalized push per device ───────────────────────────────
     let successCount = 0;
     let failureCount = 0;
+    const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(new Date());
+    const pushReport = await beginPushReport(supabase, {
+      category: "Bibelleseplan", title: "Tägliche Erinnerung", key: `bibleplan:${today}`,
+    });
 
     await Promise.allSettled(
       devicesToNotify.map(async (device: Record<string, unknown>) => {
@@ -363,6 +368,7 @@ serve(async (_req) => {
             },
             data: {
               contentType: "bible_plan",
+              pushId: pushReport.id ?? "",
             },
             apns: {
               payload: {
@@ -401,6 +407,8 @@ serve(async (_req) => {
         }
       }),
     );
+
+    await endPushReport(supabase, pushReport, successCount, failureCount);
 
     return new Response(
       JSON.stringify({
