@@ -25,6 +25,12 @@ import 'package:google_fonts/google_fonts.dart';
 /// Service for handling deep links from push notifications.
 ///
 /// Maps content types and IDs to appropriate screen navigation.
+
+/// The Bible reading plan is hidden for now. Code and backend stay; set to
+/// true (and re-activate the cron job send-bible-plan-notifications) to bring
+/// it back.
+const bool kBiblePlanEnabled = false;
+
 class DeepLinkService {
   static final DeepLinkService instance = DeepLinkService._internal();
   DeepLinkService._internal();
@@ -68,6 +74,9 @@ class DeepLinkService {
     // The Bible reading plan reminder has no associated content_id — it
     // simply opens the plan screen at the current day.
     if (contentType.toLowerCase() == 'bible_plan') {
+      // The Bible reading plan is hidden for now (like the extra languages):
+      // a tap on an old reminder just opens the app.
+      if (!kBiblePlanEnabled) return;
       _navigateToBibleReadingPlan(context);
       return;
     }
