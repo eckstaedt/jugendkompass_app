@@ -34,6 +34,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import sys
 import threading
 import time
@@ -150,6 +151,10 @@ class BadKey(Exception):
     pass
 
 
+class RateLimited(Exception):
+    """Google's per-minute/day limit – stop this run, keep the rows pending."""
+
+
 def gemini(model: str, body: dict) -> dict:
     key = os.environ["GEMINI_API_KEY"].strip()
     req = urllib.request.Request(
@@ -158,26 +163,34 @@ def gemini(model: str, body: dict) -> dict:
         method="POST",
         headers={"Content-Type": "application/json", "x-goog-api-key": key},
     )
-    for attempt in range(6):
+    for attempt in range(8):
         try:
             with urllib.request.urlopen(req, timeout=180) as r:
                 return json.load(r)
         except urllib.error.HTTPError as e:
             msg = e.read().decode(errors="replace")
             low = msg.lower()
-            if e.code == 402 or any(w in low for w in ("prepay", "credit", "billing", "insufficient")):
+            # Only a real "balance is empty" stops everything. Note: normal
+            # rate-limit (429) messages also mention "plan and billing".
+            if e.code == 402 or any(w in low for w in (
+                    "prepay", "prepayment", "credits are depleted", "insufficient balance", "no available credits")):
                 raise OutOfCredit(msg[:300]) from None
             if e.code in (401, 403) or "api key not valid" in low or "api_key_invalid" in low:
                 raise BadKey(msg[:300]) from None
             if e.code == 429 or e.code >= 500:
-                if "limit: 0" in low:  # free tier has no image quota
+                if "limit: 0" in low:  # model not available on this tier
                     raise OutOfCredit(msg[:300]) from None
-                time.sleep(min(60, 5 * 2 ** attempt))
+                # Respect Google's retryDelay ("34s") when given.
+                m = re.search(r'"retryDelay":\s*"(\d+)', msg)
+                wait = int(m.group(1)) + 2 if m else min(90, 10 * 2 ** attempt)
+                if attempt == 7:
+                    raise RateLimited(msg[:300]) from None
+                time.sleep(min(wait, 120))
                 continue
             raise RuntimeError(f"Gemini {e.code}: {msg[:300]}") from None
         except urllib.error.URLError:
             time.sleep(2 ** attempt)
-    raise RuntimeError("Gemini: too many retries")
+    raise RateLimited("Gemini: too many retries")
 
 
 def image_part(data: bytes, mime: str) -> dict:
@@ -251,7 +264,8 @@ def fit_to(original_size: tuple[int, int], data: bytes) -> bytes:
 def download(url: str) -> tuple[bytes, str, tuple[int, int]]:
     from PIL import Image
 
-    with urllib.request.urlopen(url, timeout=60) as r:
+    safe = urllib.parse.quote(url, safe=":/?&=%#+,;@")  # umlauts/quotes in file names
+    with urllib.request.urlopen(safe, timeout=60) as r:
         data = r.read()
     img = Image.open(io.BytesIO(data))
     size = img.size
@@ -379,6 +393,10 @@ def process_image(source_url: str, rows: list[dict], scans: dict, hints: dict) -
             update_rows(source_url, {"status": "pending", "started_at": None}, lang)
             STOP_REASON.append(("bad_key", str(e)[:200]))
             STOP.set()
+        except RateLimited as e:
+            update_rows(source_url, {"status": "pending", "started_at": None}, lang)
+            STOP_REASON.append(("rate_limited", str(e)[:200]))
+            STOP.set()
         except Exception as e:  # noqa: BLE001
             update_rows(source_url, {"status": "failed", "error": str(e)[:300], "force": False,
                                      "attempts": (r.get("attempts") or 0) + 1}, lang)
@@ -439,20 +457,23 @@ def main():
             if not jobs:
                 continue
             log(f"── {lang}: {len(jobs)} images")
-            with cf.ThreadPoolExecutor(int(os.environ.get("WORKERS", "4"))) as pool:
+            with cf.ThreadPoolExecutor(int(os.environ.get("WORKERS", "2"))) as pool:
                 for f in cf.as_completed([pool.submit(run, u, rs) for u, rs in jobs.items()]):
                     try:
                         f.result()
-                    except (OutOfCredit, BadKey) as e:
-                        STOP_REASON.append(("no_credit" if isinstance(e, OutOfCredit) else "bad_key", str(e)[:200]))
+                    except (OutOfCredit, BadKey, RateLimited) as e:
+                        kind = {OutOfCredit: "no_credit", BadKey: "bad_key"}.get(type(e), "rate_limited")
+                        STOP_REASON.append((kind, str(e)[:200]))
                         STOP.set()
                     except Exception as e:  # noqa: BLE001
                         log(f"(error: {str(e)[:200]})")
     finally:
         if STOP_REASON:
             state, msg = STOP_REASON[0]
-            set_status(state, "Gemini-Guthaben aufgebraucht – bitte aufladen" if state == "no_credit"
-                       else "GEMINI_API_KEY ungültig")
+            set_status(state, {
+                "no_credit": "Gemini-Guthaben aufgebraucht – bitte aufladen",
+                "bad_key": "GEMINI_API_KEY ungültig",
+            }.get(state, "Google-Tempolimit erreicht – der nächste Lauf macht automatisch weiter"))
             log(f"Stopped: {state}: {msg}")
         else:
             left = len(pending_rows())
