@@ -133,7 +133,9 @@ serve(async (_req) => {
     console.log(`[verse] Running at UTC ${now.toISOString()}`)
 
     // ── 1. Fetch today's German base verse ──────────────────────────────────
-    const today = now.toISOString().split('T')[0]
+    // Verse dates are German calendar days (not UTC – else 00–02 h local
+    // would still get yesterday's verse).
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(now)
     const { data: verseData, error: verseError } = await supabase
       .from('verse_of_the_day')
       .select('*')
@@ -151,11 +153,21 @@ serve(async (_req) => {
     }
 
     // ── 2. Fetch all devices with verse notifications enabled ───────────────
-    const { data: devices, error: devicesError } = await supabase
-      .from('device_tokens')
-      .select('fcm_token, language, notification_hour, timezone')
-      .eq('verse_notifications', true)
-      .not('fcm_token', 'is', null)
+    // Page through all devices – a single request returns at most 1000 rows.
+    const devices: { fcm_token: string; language: string; notification_hour: number; timezone: string }[] = []
+    let devicesError: unknown = null
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await supabase
+        .from('device_tokens')
+        .select('fcm_token, language, notification_hour, timezone')
+        .eq('verse_notifications', true)
+        .not('fcm_token', 'is', null)
+        .order('id')
+        .range(from, from + 999)
+      if (error) { devicesError = error; break }
+      devices.push(...(data ?? []))
+      if (!data || data.length < 1000) break
+    }
 
     if (devicesError) {
       console.error('[verse] Error fetching devices:', devicesError)
@@ -196,6 +208,7 @@ serve(async (_req) => {
     // ── 6. Send per language group with localized verse ─────────────────────
     let successCount = 0
     let failureCount = 0
+    const deadTokens: string[] = []
 
     // Cache localized verses
     const verseCache: Record<string, { verse: string; reference: string }> = {
@@ -230,8 +243,9 @@ serve(async (_req) => {
       // The verse always has an image (auto-generated or uploaded).
       const imageUrl: string | null = (verseData.image_url as string) || null
 
-      // Send to each token
-      for (const token of tokens) {
+      // Send in parallel batches (sequential sends to 800+ devices could hit
+      // the function time limit and leave the last devices without a push).
+      const sendOne = async (token: string) => {
         try {
           const message = {
             message: {
@@ -276,13 +290,28 @@ serve(async (_req) => {
           } else {
             failureCount++
             const errorText = await res.text()
-            console.error(`[verse] FCM send failed for token: ${errorText}`)
+            // App deleted / token expired: remove the device for good.
+            if (res.status === 404 || errorText.includes('UNREGISTERED')) {
+              deadTokens.push(token)
+            } else {
+              console.error(`[verse] FCM send failed for token: ${errorText}`)
+            }
           }
         } catch (error) {
           failureCount++
           console.error(`[verse] Error sending to token:`, error)
         }
       }
+      for (let i = 0; i < tokens.length; i += 50) {
+        await Promise.all(tokens.slice(i, i + 50).map(sendOne))
+      }
+    }
+
+    if (deadTokens.length) {
+      for (let i = 0; i < deadTokens.length; i += 200) {
+        await supabase.from('device_tokens').delete().in('fcm_token', deadTokens.slice(i, i + 200))
+      }
+      console.log(`[verse] Removed ${deadTokens.length} expired device tokens`)
     }
 
     return new Response(
@@ -290,6 +319,7 @@ serve(async (_req) => {
         message: 'Verse notifications sent',
         verse: verseData.reference,
         devicesMatched: devicesToNotify.length,
+        removedExpired: deadTokens.length,
         success: successCount,
         failure: failureCount,
       }),

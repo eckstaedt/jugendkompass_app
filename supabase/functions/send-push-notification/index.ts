@@ -418,11 +418,21 @@ serve(async (req) => {
 
     // ── Get all FCM tokens from Supabase with language preference ──
 
-    const { data: devices, error } = await supabase
-      .from("device_tokens")
-      .select("fcm_token, language")
+    // Page through all devices – a single request returns at most 1000 rows.
+    const devices: any[] = [];
+    let error: any = null;
+    for (let from = 0; ; from += 1000) {
+      const { data: page, error: pageError } = await supabase
+        .from("device_tokens")
+        .select("fcm_token, language")
       .eq("content_notifications", true)
-      .not("fcm_token", "is", null);
+      .not("fcm_token", "is", null)
+        .order("id")
+        .range(from, from + 999);
+      if (pageError) { error = pageError; break; }
+      devices.push(...(page ?? []));
+      if (!page || page.length < 1000) break;
+    }
 
     if (error) {
       console.error("[send-push] Error fetching devices:", error);

@@ -297,12 +297,22 @@ serve(async (_req) => {
     console.log(`[bible-plan] Running at UTC ${now.toISOString()}`);
 
     // ── 1. Fetch devices that started the plan, opted in, and have a push token
-    const { data: devices, error: devicesError } = await supabase
-      .from("device_tokens")
-      .select("fcm_token, user_name, language, timezone, bible_plan_notification_hour")
+    // Page through all devices – a single request returns at most 1000 rows.
+    const devices: any[] = [];
+    let devicesError: any = null;
+    for (let from = 0; ; from += 1000) {
+      const { data: page, error: pageError } = await supabase
+        .from("device_tokens")
+        .select("fcm_token, user_name, language, timezone, bible_plan_notification_hour")
       .eq("bible_plan_started", true)
       .eq("bible_plan_notifications_enabled", true)
-      .not("fcm_token", "is", null);
+      .not("fcm_token", "is", null)
+        .order("id")
+        .range(from, from + 999);
+      if (pageError) { devicesError = pageError; break; }
+      devices.push(...(page ?? []));
+      if (!page || page.length < 1000) break;
+    }
 
     if (devicesError) {
       console.error("[bible-plan] Error fetching devices:", devicesError);
