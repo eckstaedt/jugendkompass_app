@@ -123,6 +123,16 @@ struct VerseLoader {
 
     // MARK: Network
 
+    /// Short timeouts: iOS kills a widget that takes too long, and then keeps
+    /// showing the old (yesterday's) verse. Better to render without photo.
+    private static let session: URLSession = {
+        let c = URLSessionConfiguration.ephemeral
+        c.timeoutIntervalForRequest = 6
+        c.timeoutIntervalForResource = 8
+        c.waitsForConnectivity = false
+        return URLSession(configuration: c)
+    }()
+
     private struct Fetched {
         let verse: String
         let reference: String
@@ -133,10 +143,10 @@ struct VerseLoader {
         guard let base = defaults?.string(forKey: "supabase_url"), !base.isEmpty,
               let key = defaults?.string(forKey: "supabase_anon_key"), !key.isEmpty,
               let url = URL(string: base + path) else { return nil }
-        var request = URLRequest(url: url, timeoutInterval: 15)
+        var request = URLRequest(url: url, timeoutInterval: 6)
         request.setValue(key, forHTTPHeaderField: "apikey")
         request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
-        guard let (data, response) = try? await URLSession.shared.data(for: request),
+        guard let (data, response) = try? await Self.session.data(for: request),
               (response as? HTTPURLResponse)?.statusCode == 200 else { return nil }
         return try? JSONSerialization.jsonObject(with: data)
     }
@@ -186,7 +196,7 @@ struct VerseLoader {
     }
 
     private func downloadImage(_ url: URL, date: String) async -> UIImage? {
-        guard let (data, _) = try? await URLSession.shared.data(from: url),
+        guard let (data, _) = try? await Self.session.data(from: url),
               let image = UIImage(data: data) else { return nil }
         let scaled = Self.downscale(image, maxSide: 900)
         if let target = cacheURL(for: date), let jpeg = scaled.jpegData(compressionQuality: 0.85) {

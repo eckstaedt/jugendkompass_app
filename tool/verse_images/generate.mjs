@@ -140,6 +140,23 @@ function supabase() {
       if (!res.ok) throw new Error(`upload failed: ${res.status} ${await res.text()}`);
       return `${url}/storage/v1/object/public/verse-images/${path}`;
     },
+    // Plain nature photo for the home-screen widgets, mirrored to our own
+    // storage (third-party image hosts can be slow or blocked – the widget
+    // then never finishes and keeps showing yesterday's verse).
+    async background(design) {
+      const path = `backgrounds/${design.imageId}.jpg`;
+      const publicUrl = `${url}/storage/v1/object/public/verse-images/${path}`;
+      this._bg ??= new Set();
+      if (this._bg.has(path)) return publicUrl;
+      const head = await fetch(publicUrl, { method: 'HEAD' }).catch(() => null);
+      if (!head?.ok) {
+        const img = await fetchRetry(design.imageUrl, { headers: { 'User-Agent': UA } });
+        if (!img.ok) throw new Error(`photo ${design.imageId}: ${img.status}`);
+        await this.upload(path, Buffer.from(await img.arrayBuffer()));
+      }
+      this._bg.add(path);
+      return publicUrl;
+    },
     async remove(path) {
       await fetchRetry(`${url}/storage/v1/object/verse-images`, {
         method: 'DELETE',
@@ -193,7 +210,14 @@ async function main() {
         // Image is current – only make sure the plain nature photo (used by
         // the home-screen widgets) is stored for automatic images.
         if (isAuto) {
-          const bg = pickDesign(row.date, row.verse.length).imageUrl;
+          let bg;
+          try {
+            bg = await db.background(pickDesign(row.date, row.verse.length));
+          } catch (e) {
+            failed++;
+            console.error(`✗ ${row.date} background: ${e.message}`);
+            continue;
+          }
           if (row.background_image_url !== bg) {
             try {
               await db.update(row.id, { background_image_url: bg });
@@ -213,7 +237,7 @@ async function main() {
         await db.update(row.id, {
           image_url: publicUrl,
           image_source_hash: hash,
-          background_image_url: design.imageUrl,
+          background_image_url: await db.background(design),
         });
         const old = row.image_url?.split('/verse-images/')[1];
         if (isAuto && old && old.startsWith('auto/') && old !== path) await db.remove(old);
