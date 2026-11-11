@@ -69,7 +69,7 @@ class VideoRepository {
     try {
       final video = await getVideoById(id);
       if (video == null) return null;
-      return localizeVideo(video, language);
+      return await localizeVideo(video, language);
     } catch (e) {
       developer.log('Error fetching localized video: $e', name: 'VideoRepository', error: e);
       return null;
@@ -122,7 +122,7 @@ class VideoRepository {
       for (final candidate in candidates) {
         video = await getVideoByIdLocalized(candidate, language);
         video ??= await _safe(() => getVideoByContentId(candidate));
-        if (video != null) return localizeVideo(video, language);
+        if (video != null) return await localizeVideo(video, language);
       }
 
       final normalizedCandidateSet = candidates.map(_normalizeLoose).toSet();
@@ -140,12 +140,12 @@ class VideoRepository {
       // Try fast exact URL matching before expensive list scans.
       for (final candidate in candidates) {
         final fromExactUrl = await _getVideoByExactUrl(candidate);
-        if (fromExactUrl != null) return localizeVideo(fromExactUrl, language);
+        if (fromExactUrl != null) return await localizeVideo(fromExactUrl, language);
       }
 
       if (youtubeIdCandidate != null) {
         final fromYoutubeScan = await _getVideoByYoutubeIdScan(youtubeIdCandidate);
-        if (fromYoutubeScan != null) return localizeVideo(fromYoutubeScan, language);
+        if (fromYoutubeScan != null) return await localizeVideo(fromYoutubeScan, language);
       }
 
       final allLocalized = await getVideoListLocalized(language, limit: 500);
@@ -178,7 +178,7 @@ class VideoRepository {
         }
 
         if (itemKeys.any(normalizedCandidateSet.contains)) {
-          return localizeVideo(item, language);
+          return await localizeVideo(item, language);
         }
       }
 

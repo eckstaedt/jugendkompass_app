@@ -199,7 +199,7 @@ class ImpulseRepository {
   /// Get a localized impulse by content_id.
   Future<ImpulseModel?> getImpulseByContentIdLocalized(String contentId, String language) async {
     try {
-      return _localizeOne(await getImpulseByContentId(contentId), language);
+      return await _localizeOne(await getImpulseByContentId(contentId), language);
     } catch (e) {
       throw Exception('Fehler beim Laden des lokalisierten Impulses: $e');
     }
@@ -245,7 +245,7 @@ class ImpulseRepository {
           })
           .toList();
 
-      return localizeImpulses(impulses, language);
+      return await localizeImpulses(impulses, language);
     } catch (e) {
       throw Exception('Fehler beim Laden der lokalisierten Impulse: $e');
     }
@@ -254,7 +254,7 @@ class ImpulseRepository {
   /// Get a single localized impulse by ID.
   Future<ImpulseModel?> getImpulseByIdLocalized(String id, String language) async {
     try {
-      return _localizeOne(await getImpulseById(id), language);
+      return await _localizeOne(await getImpulseById(id), language);
     } catch (e) {
       throw Exception('Fehler beim Laden des lokalisierten Impulses: $e');
     }

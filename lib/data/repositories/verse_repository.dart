@@ -146,7 +146,7 @@ class VerseRepository {
       final verses = (response as List)
           .map((json) => VerseModel.fromJson(json as Map<String, dynamic>))
           .toList();
-      return localizeVerses(verses, language);
+      return await localizeVerses(verses, language);
     } catch (e) {
       throw Exception('Fehler beim Laden des Vers-Archivs: $e');
     }

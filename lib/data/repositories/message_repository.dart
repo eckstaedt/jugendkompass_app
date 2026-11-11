@@ -50,7 +50,7 @@ class MessageRepository {
           .select()
           .order('created_at', ascending: false)
           .range(offset, offset + limit - 1);
-      return _toLocalizedModels(response, language);
+      return await _toLocalizedModels(response, language);
     } catch (e) {
       throw Exception('Fehler beim Laden der lokalisierten Kurznachrichten: $e');
     }

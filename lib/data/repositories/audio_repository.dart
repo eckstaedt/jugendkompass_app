@@ -86,7 +86,7 @@ class AudioRepository {
 
       final response = await query;
 
-      return _toAudioModels(response as List, language ?? _currentLanguage);
+      return await _toAudioModels(response as List, language ?? _currentLanguage);
     } catch (e) {
       throw Exception('Fehler beim Laden der Audios: $e');
     }
