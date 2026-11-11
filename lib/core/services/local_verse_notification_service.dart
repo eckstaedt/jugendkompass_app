@@ -30,6 +30,28 @@ class LocalVerseNotificationService {
       const InitializationSettings(android: android, iOS: ios),
     );
     _initialized = true;
+    await _clearLegacySchedules();
+  }
+
+  /// Older app versions scheduled the verse as a repeating LOCAL notification
+  /// (with a fixed verse, e.g. from April, and a "Dein täglicher Bibelvers
+  /// wartet auf dich" reminder). iOS/Android keep those across updates, so
+  /// users got the verse up to three times a day. The current app schedules
+  /// nothing locally – every pending request is a leftover and is removed.
+  Future<void> _clearLegacySchedules() async {
+    try {
+      final pending = await _plugin.pendingNotificationRequests();
+      if (pending.isEmpty) return;
+      for (final p in pending) {
+        await _plugin.cancel(p.id);
+      }
+      if ((await _plugin.pendingNotificationRequests()).isNotEmpty) {
+        await _plugin.cancelAll();
+      }
+      debugPrint('[LocalNotifications] removed ${pending.length} legacy schedules');
+    } catch (e) {
+      debugPrint('[LocalNotifications] legacy cleanup failed: $e');
+    }
   }
 
   /// Request notification permission on Android 13+ (API 33+).
