@@ -9,11 +9,10 @@ name: Supabase Deploy
 #   ANTHROPIC_API_KEY      https://console.anthropic.com/settings/keys
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "supabase/**"
-      - ".github/workflows/supabase-deploy.yml"
+  # No automatic run on push anymore: it would deploy every changed function
+  # WITHOUT JWT check (e.g. the daily verse push could then be triggered by
+  # anyone), overwrite ANTHROPIC_API_KEY and re-run migrations. Functions are
+  # deployed individually with their correct settings. Manual start only.
   workflow_dispatch:
     inputs:
       migration:
