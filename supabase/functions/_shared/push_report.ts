@@ -99,7 +99,7 @@ function rateText(r: any): string {
 export function reportText(r: any): string {
   const when = new Intl.DateTimeFormat("de-DE", {
     timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
-  }).format(new Date(r.created_at));
+  }).format(new Date(r.post_after ?? r.created_at)); // verse: 07:00, not the first (night) group
   const opens = opensDue(r)
     ? `👆 Geöffnet nach ${OPENS_AFTER_HOURS} Std.: <b>${fmt(r.opens)}</b>${rateText(r)}`
     : `👆 Geöffnet: Auswertung ${OPENS_AFTER_HOURS} Std. nach dem Senden`;

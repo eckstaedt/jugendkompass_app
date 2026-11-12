@@ -274,7 +274,12 @@ serve(async (_req) => {
                 contentId: verseData.id,
                 pushId: pushReport.id ?? '',
               },
+              // Deliver even if the phone is off / offline / in Doze: high
+              // priority and kept by Google/Apple for 24 h until the phone is
+              // reachable again.
               android: {
+                priority: "HIGH",
+                ttl: "86400s",
                 notification: {
                   sound: "default",
                   channel_id: "verse_of_day",
@@ -282,6 +287,11 @@ serve(async (_req) => {
                 },
               },
               apns: {
+                headers: {
+                  "apns-priority": "10",
+                  "apns-push-type": "alert",
+                  "apns-expiration": String(Math.floor(Date.now() / 1000) + 86400),
+                },
                 payload: {
                   aps: {
                     sound: "default",
