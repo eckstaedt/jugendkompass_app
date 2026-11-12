@@ -89,7 +89,8 @@ export const OPENS_AFTER_HOURS = 12;
 
 /** Opens are only shown once the push is 12 h old (final result). */
 export function opensDue(r: any): boolean {
-  return Date.now() - new Date(r.created_at).getTime() >= OPENS_AFTER_HOURS * 3600 * 1000;
+  // counted from the Telegram post (verse: 07:00), not the first night group
+  return Date.now() - new Date(r.post_after ?? r.created_at).getTime() >= OPENS_AFTER_HOURS * 3600 * 1000;
 }
 
 function rateText(r: any): string {
