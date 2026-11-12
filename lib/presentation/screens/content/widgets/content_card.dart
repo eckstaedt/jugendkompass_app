@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/data/services/image_localizer.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -39,7 +40,7 @@ class ContentCard extends StatelessWidget {
                   fit: StackFit.expand,
                   children: [
                     CachedNetworkImage(
-                      imageUrl: content.thumbnailUrl!,
+                      imageUrl: ImageLocalizer.url(content.thumbnailUrl!),
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
                         color: colorScheme.surfaceContainerHighest,
