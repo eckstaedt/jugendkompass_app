@@ -170,7 +170,7 @@ class StringTranslator {
     'Es sind noch keine Audio-Inhalte vorhanden.': 'no_audio_content',
     'Lade Audios...': 'loading_audios',
     'Der Jugendkompass': 'app_title',
-    'Los geht\'s 🚀': 'lets_go',
+    'Los geht\'s': 'lets_go',
     'Aktuell gibt es keine Impulse zum Anzeigen.': 'no_impulses_message',
     'Lade Impulse...': 'loading_impulses',
     'Fehler beim Laden der Impulse': 'error_loading_impulses',

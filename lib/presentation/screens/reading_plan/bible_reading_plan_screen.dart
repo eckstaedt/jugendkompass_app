@@ -14,7 +14,7 @@ import 'package:jugendkompass_app/domain/providers/string_translator_provider.da
 /// "Bibel in 365 Tagen" — a full year Bible reading plan.
 ///
 /// On first open, shows an intro screen ("Die ganze Bibel in einem Jahr")
-/// with a "Bibelleseplan starten 🚀" button. Only after starting does the
+/// with a "Bibelleseplan starten" button. Only after starting does the
 /// actual chapter overview appear, showing the current day by default (with
 /// its calendar date), letting the user skip forward/back to any day. Every
 /// chapter is listed individually and can be checked off; once every

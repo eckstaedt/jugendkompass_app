@@ -6,20 +6,26 @@
 /// available in every [AppLanguage].
 const Map<String, Map<String, String>> supplementTranslations = {
   'holiday_easter': {
-    'de': '🌅 Frohe Ostern – Er ist auferstanden', 'en': '🌅 Happy Easter – He is risen', 'ru': '🌅 Христос воскрес',
-    'es': '🌅 Feliz Pascua – ¡Ha resucitado!', 'pl': '🌅 Wesołych Świąt – Zmartwychwstał', 'tr': '🌅 Mutlu Paskalyalar – O dirildi', 'he': '🌅 פסחא שמח – הוא קם',
+    'de': 'Frohe Ostern – Er ist wahrhaftig auferstanden', 'en': 'Happy Easter – He is risen indeed',
+    'ru': 'Христос воскресе – воистину воскресе', 'es': 'Feliz Pascua – Verdaderamente ha resucitado',
+    'pl': 'Wesołych Świąt – Prawdziwie zmartwychwstał', 'tr': 'Mutlu Paskalyalar – O gerçekten dirildi', 'he': 'פסחא שמח – הוא באמת קם',
   },
   'holiday_good_friday': {
-    'de': '✝️ Karfreitag', 'en': '✝️ Good Friday', 'ru': '✝️ Страстная пятница', 'es': '✝️ Viernes Santo',
-    'pl': '✝️ Wielki Piątek', 'tr': '✝️ Kutsal Cuma', 'he': '✝️ יום שישי הטוב',
+    'de': 'Karfreitag', 'en': 'Good Friday', 'ru': 'Страстная пятница', 'es': 'Viernes Santo',
+    'pl': 'Wielki Piątek', 'tr': 'Kutsal Cuma', 'he': 'יום שישי הטוב',
   },
   'holiday_pentecost': {
-    'de': '🕊️ Frohe Pfingsten', 'en': '🕊️ Happy Pentecost', 'ru': '🕊️ С Троицей', 'es': '🕊️ Feliz Pentecostés',
-    'pl': '🕊️ Radosnych Zielonych Świąt', 'tr': '🕊️ Mutlu Pentekost', 'he': '🕊️ חג שבועות שמח',
+    'de': 'Frohe Pfingsten', 'en': 'Happy Pentecost', 'ru': 'С Троицей', 'es': 'Feliz Pentecostés',
+    'pl': 'Radosnych Zielonych Świąt', 'tr': 'Mutlu Pentekost', 'he': 'חג שבועות שמח',
   },
   'holiday_christmas': {
-    'de': '🌟 Frohe Weihnachten', 'en': '🌟 Merry Christmas', 'ru': '🌟 С Рождеством', 'es': '🌟 Feliz Navidad',
-    'pl': '🌟 Wesołych Świąt', 'tr': '🌟 Mutlu Noeller', 'he': '🌟 חג מולד שמח',
+    'de': 'Gesegnete Weihnachten', 'en': 'Blessed Christmas', 'ru': 'Благословенного Рождества', 'es': 'Bendecida Navidad',
+    'pl': 'Błogosławionych Świąt', 'tr': 'Kutsanmış Noeller', 'he': 'חג מולד מבורך',
+  },
+  'offline_god_reachable': {
+    'de': 'Gott ist auch offline erreichbar.', 'en': 'God can be reached offline, too.',
+    'ru': 'Бог доступен и без интернета.', 'es': 'Dios también está disponible sin conexión.',
+    'pl': 'Bóg jest dostępny także offline.', 'tr': 'Tanrı çevrimdışı da ulaşılabilir.', 'he': 'אלוהים זמין גם ללא חיבור.',
   },
   'no_connection': {
     'de': 'Keine Verbindung', 'en': 'No connection', 'ru': 'Нет соединения', 'es': 'Sin conexión',

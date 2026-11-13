@@ -231,6 +231,7 @@ class _VerseCardState extends State<VerseCard>
               BadgeWidget(
                 // Easter / Pentecost / Christmas: festive label instead
                 label: context.tr(holidayKey(widget.verse.date) ?? 'verse_of_day_badge'),
+                icon: holidayIcon(holidayKey(widget.verse.date)),
                 accent: true,
               ),
               const Spacer(),
@@ -314,3 +315,12 @@ String? holidayKey(DateTime d) {
   if (d.month == 12 && d.day >= 24 && d.day <= 26) return 'holiday_christmas';
   return null;
 }
+
+/// Icon for the holiday label (same rounded Material style as the rest).
+IconData? holidayIcon(String? key) => switch (key) {
+      'holiday_good_friday' => Icons.church_outlined,
+      'holiday_easter' => Icons.wb_twilight_rounded,
+      'holiday_pentecost' => Icons.local_fire_department_rounded,
+      'holiday_christmas' => Icons.star_rounded,
+      _ => null,
+    };

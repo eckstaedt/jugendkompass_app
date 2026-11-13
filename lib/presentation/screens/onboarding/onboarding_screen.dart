@@ -328,7 +328,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             disabledForegroundColor: Colors.white.withValues(alpha: 0.7),
                           ),
                           child: Text(
-                            translate('Los geht\'s 🚀'),
+                            translate('Los geht\'s'),
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
