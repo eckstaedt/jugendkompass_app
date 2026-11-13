@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -44,7 +45,7 @@ class HtmlInlineImage extends StatelessWidget {
         color: DesignTokens.getCardBackground(brightness),
         borderRadius: BorderRadius.circular(_radius),
       ),
-      child: const CircularProgressIndicator(),
+      child: const AreaSkeleton(),
     );
     final error = Container(
       height: 120,

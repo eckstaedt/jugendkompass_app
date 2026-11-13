@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/data/services/image_localizer.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
@@ -81,7 +82,10 @@ class AudioService {
       id: audio.audioUrl,
       title: audio.title ?? audio.post?.title ?? 'Audio',
       artist: audio.artist ?? 'Jugendkompass',
-      artUri: audio.imageUrl != null ? Uri.tryParse(audio.imageUrl!) : null,
+      // Cover of the audio, else of its article (English cover on English).
+      artUri: (audio.imageUrl ?? audio.post?.imageUrl) != null
+          ? Uri.tryParse(ImageLocalizer.url((audio.imageUrl ?? audio.post?.imageUrl)!))
+          : null,
       duration: audio.duration,
     );
   }

@@ -83,7 +83,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
         bottom: ReadingProgressBar(
           controller: _scrollController,
           revealAfter: post.imageUrl != null
-              ? MediaQuery.sizeOf(context).width - DesignTokens.paddingHorizontal
+              ? (MediaQuery.sizeOf(context).width - 2 * DesignTokens.paddingHorizontal) * 0.8
               : 24,
         ),
         actions: [
@@ -135,14 +135,18 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
                 // Square (1:1) cover, like the cards in the lists.
-                child: AspectRatio(
+                child: Align(
+                  // 1:1 cover a bit smaller, so the text starts higher
+                  child: FractionallySizedBox(
+                  widthFactor: 0.8,
+                  child: AspectRatio(
                   aspectRatio: 1,
                   child: CorsNetworkImage(
                     imageUrl: post.imageUrl!,
                     width: double.infinity,
                     fit: BoxFit.cover,
                   ),
-                ),
+                ))),
               ),
               const SizedBox(height: 20),
             ],

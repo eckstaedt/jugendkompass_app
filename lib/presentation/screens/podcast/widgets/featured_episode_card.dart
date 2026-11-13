@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:jugendkompass_app/data/models/audio_model.dart';
@@ -43,7 +44,7 @@ class FeaturedEpisodeCard extends StatelessWidget {
                   fit: BoxFit.cover,
                   placeholder: Container(
                     color: theme.colorScheme.surfaceContainerHighest,
-                    child: const Center(child: CircularProgressIndicator()),
+                    child: const AreaSkeleton(),
                   ),
                   errorWidget: Container(
                     color: theme.colorScheme.surfaceContainerHighest,

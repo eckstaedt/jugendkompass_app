@@ -76,7 +76,7 @@ class VerseArchiveScreen extends ConsumerWidget {
             if (index >= state.verses.length) {
               return const Padding(
                 padding: EdgeInsets.symmetric(vertical: 24),
-                child: Center(child: CircularProgressIndicator()),
+                child: const MoreSkeleton(),
               );
             }
             return VerseArchiveCard(verse: state.verses[index]);

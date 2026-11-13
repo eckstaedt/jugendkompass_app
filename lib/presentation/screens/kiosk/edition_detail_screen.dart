@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'package:jugendkompass_app/core/localization/localization_extension.dart';
 import 'package:flutter/material.dart';
@@ -124,13 +125,13 @@ class _EditionDetailScreenState extends ConsumerState<EditionDetailScreen> {
       body: audiosAsync.when(
         data: (audios) => postsAsync.when(
           data: (posts) => _buildContent(context, posts, audios, translate),
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const ContentListSkeleton(),
           error: (e, s) => Center(child: Text('${context.tr('error')}: $e')),
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const ContentListSkeleton(),
         error: (e, s) => postsAsync.when(
           data: (posts) => _buildContent(context, posts, [], translate),
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const ContentListSkeleton(),
           error: (e, s) => Center(child: Text('${context.tr('error')}: $e')),
         ),
       ),

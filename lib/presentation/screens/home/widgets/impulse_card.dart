@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jugendkompass_app/data/models/impulse_model.dart';
@@ -97,11 +98,7 @@ class _ImpulseCardState extends ConsumerState<ImpulseCard>
                         fit: BoxFit.cover,
                         placeholder: Container(
                           color: DesignTokens.getAppBackground(Theme.of(context).brightness),
-                          child: const Center(
-                            child: CircularProgressIndicator(
-                              color: DesignTokens.primaryRed,
-                            ),
-                          ),
+                          child: const AreaSkeleton(),
                         ),
                         errorWidget: Container(
                           color: DesignTokens.getAppBackground(Theme.of(context).brightness),

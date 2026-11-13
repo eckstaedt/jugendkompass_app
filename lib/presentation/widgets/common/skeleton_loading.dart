@@ -306,3 +306,30 @@ class ImpulseListSkeleton extends StatelessWidget {
     );
   }
 }
+
+// ─── Image / area placeholder ────────────────────────────────────────────────
+
+/// Shimmering fill for an image or area that is still loading (replaces the
+/// Material spinner everywhere).
+class AreaSkeleton extends StatelessWidget {
+  const AreaSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, c) {
+      final w = c.hasBoundedWidth ? c.maxWidth : 120.0;
+      final h = c.hasBoundedHeight ? c.maxHeight : 120.0;
+      return SkeletonShimmer(child: SkeletonBox(width: w, height: h, radius: 0));
+    });
+  }
+}
+
+/// Short list skeleton for "loading more" at the end of a list.
+class MoreSkeleton extends StatelessWidget {
+  const MoreSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(height: 96, child: ContentListSkeleton());
+  }
+}

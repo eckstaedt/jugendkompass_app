@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -43,14 +44,7 @@ class CorsNetworkImage extends StatelessWidget {
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) return child;
           return placeholder ??
-              Center(
-                child: CircularProgressIndicator(
-                  value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded /
-                          loadingProgress.expectedTotalBytes!
-                      : null,
-                ),
-              );
+              const AreaSkeleton();
         },
         errorBuilder: (context, error, stackTrace) {
           return errorWidget ??
@@ -72,9 +66,7 @@ class CorsNetworkImage extends StatelessWidget {
       fit: fit ?? BoxFit.cover,
       placeholder: (context, url) =>
           placeholder ??
-          const Center(
-            child: CircularProgressIndicator(),
-          ),
+          const AreaSkeleton(),
       errorWidget: (context, url, error) {
         return errorWidget ??
             Container(

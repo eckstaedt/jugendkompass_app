@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'package:jugendkompass_app/data/services/image_localizer.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -44,9 +45,7 @@ class ContentCard extends StatelessWidget {
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
                         color: colorScheme.surfaceContainerHighest,
-                        child: const Center(
-                          child: CircularProgressIndicator(),
-                        ),
+                        child: const AreaSkeleton(),
                       ),
                       errorWidget: (context, url, error) => Container(
                         color: colorScheme.surfaceContainerHighest,

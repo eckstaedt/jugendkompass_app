@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'package:jugendkompass_app/core/localization/localization_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -103,7 +104,7 @@ class FavoritesScreen extends ConsumerWidget {
                       child: Card(
                         child: SizedBox(
                           height: 200,
-                          child: Center(child: CircularProgressIndicator()),
+                          child: const ContentListSkeleton(),
                         ),
                       ),
                     ),

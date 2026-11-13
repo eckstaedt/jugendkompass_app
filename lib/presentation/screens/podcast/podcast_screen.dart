@@ -380,9 +380,7 @@ class _PodcastListItem extends ConsumerWidget {
                               width: 60,
                               height: 60,
                               color: theme.colorScheme.surfaceContainerHighest,
-                              child: const Center(
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
+                              child: const AreaSkeleton(),
                             ),
                             errorWidget: (context, url, error) => Container(
                               width: 60,

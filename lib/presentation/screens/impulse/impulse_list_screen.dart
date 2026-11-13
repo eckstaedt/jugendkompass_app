@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/localization/localization_extension.dart';
 import 'package:flutter/material.dart';
@@ -106,9 +107,7 @@ class _ImpulseListItem extends ConsumerWidget {
                       fit: BoxFit.cover,
                       placeholder: Container(
                         color: colorScheme.surfaceContainerHighest,
-                        child: const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
+                        child: const AreaSkeleton(),
                       ),
                       errorWidget: Container(
                         color: colorScheme.surfaceContainerHighest,

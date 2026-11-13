@@ -209,7 +209,7 @@ class _AppState extends ConsumerState<App> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
+                body: SizedBox.shrink(), // short start-up moment: no spinner
               );
             }
             final hasCompletedOnboarding = snapshot.data ?? false;

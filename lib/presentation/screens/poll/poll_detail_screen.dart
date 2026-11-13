@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -412,11 +413,7 @@ class _PollDetailScreenState extends ConsumerState<PollDetailScreen> {
             ),
           );
         },
-        loading: () => Center(
-          child: CircularProgressIndicator(
-            color: DesignTokens.primaryRed,
-          ),
-        ),
+        loading: () => const ContentListSkeleton(),
         error: (error, stack) => Center(
           child: Text(
             context.tr('poll_error'),

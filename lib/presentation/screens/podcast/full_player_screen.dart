@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'package:jugendkompass_app/data/services/image_localizer.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -338,8 +339,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                                       placeholder: (_, _) => Container(
                                         color: theme.colorScheme
                                             .surfaceContainerHighest,
-                                        child: const Center(
-                                            child: CircularProgressIndicator()),
+                                        child: const AreaSkeleton(),
                                       ),
                                       errorWidget: (_, _, _) => Container(
                                         color: theme.colorScheme

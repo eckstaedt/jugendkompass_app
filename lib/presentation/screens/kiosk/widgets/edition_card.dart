@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:jugendkompass_app/data/models/edition_model.dart';
@@ -60,11 +61,7 @@ class EditionCard extends StatelessWidget {
                             width: double.infinity,
                             placeholder: Container(
                               color: bgColor,
-                              child: const Center(
-                                child: CircularProgressIndicator(
-                                  color: DesignTokens.primaryRed,
-                                ),
-                              ),
+                              child: const AreaSkeleton(),
                             ),
                             errorWidget: Container(
                               color: bgColor,
