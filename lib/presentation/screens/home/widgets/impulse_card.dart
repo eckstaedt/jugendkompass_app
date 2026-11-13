@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/presentation/widgets/common/content_preview.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -72,6 +73,11 @@ class _ImpulseCardState extends ConsumerState<ImpulseCard>
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
+      onLongPress: () {
+        _animationController.reverse();
+        showContentPreview(context, title: impulse.title, imageUrl: impulse.imageUrl,
+            text: impulse.impulseText, onOpen: widget.onTap);
+      },
       child: Opacity(
         opacity: 1.0,
         child: ScaleTransition(

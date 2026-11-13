@@ -1,3 +1,5 @@
+import 'package:jugendkompass_app/domain/providers/impulse_provider.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/swipe_pager.dart';
 import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
@@ -111,6 +113,10 @@ class _ImpulseDetailScreenState extends ConsumerState<ImpulseDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Neighbours for swiping (list is newest first: left = older impulse)
+    final siblings = ref.watch(dailyImpulsesProvider).valueOrNull ?? const <ImpulseModel>[];
+    final pos = siblings.indexWhere((x) => x.id == widget.impulse.id);
+
     final impulse = widget.impulse;
     final theme = Theme.of(context);
     final dateFormat = DateFormat('dd. MMMM yyyy', 'de_DE');
@@ -173,7 +179,15 @@ class _ImpulseDetailScreenState extends ConsumerState<ImpulseDetailScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SwipePager(
+        hintKey: 'impulse',
+        onNext: pos >= 0 && pos + 1 < siblings.length
+            ? () => replaceWithSlide(context, ImpulseDetailScreen(impulse: siblings[pos + 1]), fromRight: true)
+            : null,
+        onPrevious: pos > 0
+            ? () => replaceWithSlide(context, ImpulseDetailScreen(impulse: siblings[pos - 1]), fromRight: false)
+            : null,
+        child: SingleChildScrollView(
         padding: EdgeInsets.all(DesignTokens.paddingHorizontal),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,7 +335,7 @@ class _ImpulseDetailScreenState extends ConsumerState<ImpulseDetailScreen> {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 }

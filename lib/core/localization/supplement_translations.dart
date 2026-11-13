@@ -5,6 +5,9 @@
 /// `test/localization_test.dart` enforces that every key used in the app is
 /// available in every [AppLanguage].
 const Map<String, Map<String, String>> supplementTranslations = {
+  'open_preview': {
+    'de': 'Öffnen', 'en': 'Open', 'ru': 'Открыть', 'es': 'Abrir', 'pl': 'Otwórz', 'tr': 'Aç', 'he': 'פתח',
+  },
   // ── Search: nothing found ───────────────────────────────────────────────
   'search_empty_verse': {
     'de': '„Bittet, so wird euch gegeben; sucht, so werdet ihr finden; klopft an, so wird euch aufgetan.“',

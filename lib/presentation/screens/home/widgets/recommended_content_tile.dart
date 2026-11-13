@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/presentation/widgets/common/content_preview.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -147,6 +148,14 @@ class _RecommendedContentTileState extends ConsumerState<RecommendedContentTile>
       onTapDown: _onTapDown,
       onTapUp: _onTapUp,
       onTapCancel: _onTapCancel,
+      onLongPress: () {
+        _animationController.reverse();
+        String? text;
+        try {
+          text = item.post?.body ?? item.video?.description ?? (item.message as dynamic)?.message as String?;
+        } catch (_) {}
+        showContentPreview(context, title: item.title, imageUrl: item.imageUrl, text: text, onOpen: widget.onTap);
+      },
       child: Opacity(
         opacity: 1.0,
         child: ScaleTransition(

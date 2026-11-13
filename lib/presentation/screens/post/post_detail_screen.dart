@@ -1,3 +1,5 @@
+import 'package:jugendkompass_app/domain/providers/post_provider.dart';
+import 'package:jugendkompass_app/presentation/widgets/common/swipe_pager.dart';
 import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -59,6 +61,13 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Articles of the same edition, for swiping to the next/previous one
+    final editionId = widget.post.editionId;
+    final siblings = editionId == null
+        ? const <PostModel>[]
+        : (ref.watch(postsByEditionProvider(editionId)).valueOrNull ?? const <PostModel>[]);
+    final pos = siblings.indexWhere((x) => x.id == widget.post.id);
+
     final post = widget.post;
     final theme = Theme.of(context);
     final hasAudio = post.audioId != null;
@@ -124,7 +133,15 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SwipePager(
+        hintKey: 'edition_article',
+        onNext: pos >= 0 && pos + 1 < siblings.length
+            ? () => replaceWithSlide(context, PostDetailScreen(post: siblings[pos + 1]), fromRight: true)
+            : null,
+        onPrevious: pos > 0
+            ? () => replaceWithSlide(context, PostDetailScreen(post: siblings[pos - 1]), fromRight: false)
+            : null,
+        child: SingleChildScrollView(
         controller: _scrollController,
         padding: EdgeInsets.all(DesignTokens.paddingHorizontal),
         child: Column(
@@ -464,7 +481,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 

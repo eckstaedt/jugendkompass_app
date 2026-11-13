@@ -129,6 +129,27 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
     );
   }
 
+  bool _onPlayerScroll(ScrollNotification n) {
+    if (n is OverscrollNotification && n.dragDetails != null && n.overscroll < 0) {
+      setState(() => _dragOffset += -n.overscroll);
+    } else if (n is ScrollUpdateNotification && n.dragDetails != null && _dragOffset > 0) {
+      // finger moves back up while the player is pulled down
+      final delta = n.scrollDelta ?? 0;
+      if (delta > 0) {
+        setState(() => _dragOffset = (_dragOffset - delta).clamp(0.0, double.infinity));
+        _scrollController.jumpTo(0);
+      }
+    } else if (n is ScrollEndNotification && _dragOffset > 0) {
+      final v = n.dragDetails?.primaryVelocity ?? 0;
+      if (_dragOffset > 120 || v > 800) {
+        Navigator.pop(context);
+      } else {
+        setState(() => _dragOffset = 0);
+      }
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentAudio = ref.watch(currentAudioProvider);
@@ -305,9 +326,13 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
 
                 // Scrollable content
                 Expanded(
-                  child: SingleChildScrollView(
+                  child: NotificationListener<ScrollNotification>(
+                    // Pulling down at the top moves the whole player (instead
+                    // of two gestures fighting over the same drag).
+                    onNotification: _onPlayerScroll,
+                    child: SingleChildScrollView(
                     controller: _scrollController,
-                    physics: const ClampingScrollPhysics(),
+                    physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()),
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
                       children: [
@@ -856,7 +881,7 @@ class _FullPlayerScreenState extends ConsumerState<FullPlayerScreen> {
                         const SizedBox(height: 36),
                       ],
                     ),
-                  ),
+                  )),
                 ),
               ],
             ),
