@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -31,7 +32,6 @@ import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.d
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/loading_indicator.dart';
 
 enum _Type { article, audio, video, impulse, message, edition, verse }
 
@@ -68,8 +68,26 @@ final _searchVersesProvider = FutureProvider<List<VerseModel>>((ref) {
   return ref.watch(verseRepositoryProvider).getVerseArchive(language, limit: 2000);
 });
 
+/// True while some content type is still loading (results are partial).
+final _searchStillLoadingProvider = Provider<bool>((ref) {
+  return [
+    ref.watch(postsListProvider(PostFilter(limit: 2000))),
+    ref.watch(videosListProvider),
+    ref.watch(dailyImpulsesProvider),
+    ref.watch(messagesListProvider),
+    ref.watch(editionsListProvider),
+    ref.watch(_searchVersesProvider),
+  ].any((s) => s.isLoading && !s.hasValue);
+});
+
+/// Starts loading the search data in the background (called from the home
+/// screen), so the search opens instantly.
+void prefetchSearch(WidgetRef ref) {
+  ref.read(_searchIndexProvider);
+}
+
 /// Everything the search can find, normalised once per data change (not per
-/// keystroke). Null while loading.
+/// keystroke). Null while nothing has loaded yet.
 final _searchIndexProvider = Provider<List<_Entry>?>((ref) {
   final posts = ref.watch(postsListProvider(PostFilter(limit: 2000)));
   final videos = ref.watch(videosListProvider);
@@ -79,8 +97,10 @@ final _searchIndexProvider = Provider<List<_Entry>?>((ref) {
   final verses = ref.watch(_searchVersesProvider);
   final categories = ref.watch(categoriesProvider);
 
-  final sources = [posts, videos, impulses, messages, editions];
-  if (sources.any((s) => s.isLoading && !s.hasValue)) return null;
+  final sources = [posts, videos, impulses, messages, editions, verses];
+  // Show results as soon as the first source is there (posts with 2000 bodies
+  // take longest); the rest is added when it arrives.
+  if (sources.every((s) => s.isLoading && !s.hasValue)) return null;
 
   final entries = <_Entry>[];
   final categoryNames = {
@@ -342,9 +362,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   Widget _buildResults() {
     final index = ref.watch(_searchIndexProvider);
-    if (index == null) {
-      return LoadingIndicator(message: AppTranslations.t('loading_content'));
-    }
+    final stillLoading = ref.watch(_searchStillLoadingProvider);
+    if (index == null) return const _SearchSkeleton();
 
     final hits = <_Hit>[];
     for (final entry in index) {
@@ -364,6 +383,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           : b.entry.date.compareTo(a.entry.date);
     });
 
+    if (hits.isEmpty && stillLoading) return const _SearchSkeleton();
     if (hits.isEmpty) {
       return EmptyState(
         icon: Icons.search_off_rounded,
@@ -614,6 +634,52 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 }
 
 /// Result row: thumbnail, highlighted title, type + date, text excerpt.
+/// Shimmering placeholders shaped like result rows (instead of a spinner).
+class _SearchSkeleton extends StatelessWidget {
+  const _SearchSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 7,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (context, i) => Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: DesignTokens.getCardBackground(brightness),
+          borderRadius: BorderRadius.circular(DesignTokens.radiusMiddleContainers),
+        ),
+        child: SkeletonShimmer(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(width: 60, height: 60, radius: DesignTokens.radiusSmall),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonBox(width: i.isEven ? 200 : 150, height: 14, radius: 6),
+                    const SizedBox(height: 8),
+                    const SkeletonBox(width: 70, height: 18, radius: 8),
+                    const SizedBox(height: 8),
+                    const SkeletonBox(width: double.infinity, height: 10, radius: 5),
+                    const SizedBox(height: 6),
+                    SkeletonBox(width: i.isEven ? 160 : 220, height: 10, radius: 5),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ResultTile extends StatelessWidget {
   const _ResultTile({
     required this.hit,

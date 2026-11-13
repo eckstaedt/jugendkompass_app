@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/presentation/screens/search/search_screen.dart' show prefetchSearch;
 import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
@@ -43,6 +44,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadContent();
+    });
+    // Warm up the search in the background so it opens instantly.
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) prefetchSearch(ref);
     });
   }
 
