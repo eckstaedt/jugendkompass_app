@@ -5,6 +5,29 @@
 /// `test/localization_test.dart` enforces that every key used in the app is
 /// available in every [AppLanguage].
 const Map<String, Map<String, String>> supplementTranslations = {
+  // ── Search: nothing found ───────────────────────────────────────────────
+  'search_empty_verse': {
+    'de': '„Bittet, so wird euch gegeben; sucht, so werdet ihr finden; klopft an, so wird euch aufgetan.“',
+    'en': '“Ask, and it will be given to you; seek, and you will find; knock, and it will be opened to you.”',
+    'ru': '«Просите, и дано будет вам; ищите, и найдёте; стучите, и отворят вам.»',
+    'es': '«Pedid, y se os dará; buscad, y hallaréis; llamad, y se os abrirá.»',
+    'pl': '„Proście, a będzie wam dane; szukajcie, a znajdziecie; kołaczcie, a otworzą wam.”',
+    'tr': '“Dileyin, size verilecek; arayın, bulacaksınız; kapıyı çalın, size açılacak.”',
+    'he': '״בקשו ויינתן לכם, דרשו ותמצאו, דפקו ויפתח לכם.״',
+  },
+  'search_empty_reference': {
+    'de': 'MATTHÄUS 7,7', 'en': 'MATTHEW 7:7', 'ru': 'МАТФЕЯ 7:7', 'es': 'MATEO 7:7',
+    'pl': 'MATEUSZA 7,7', 'tr': 'MATTA 7:7', 'he': 'מתי ז׳ 7',
+  },
+  'search_empty_text': {
+    'de': 'Hier haben wir leider nichts gefunden – aber wer bei Gott sucht, geht nie leer aus. Versuch es mit einem anderen Wort oder einer Bibelstelle.',
+    'en': 'We couldn’t find anything here – but whoever seeks God never leaves empty-handed. Try another word or a Bible reference.',
+    'ru': 'Здесь ничего не нашлось – но тот, кто ищет Бога, никогда не уходит с пустыми руками. Попробуйте другое слово или ссылку на Библию.',
+    'es': 'Aquí no encontramos nada, pero quien busca a Dios nunca se va con las manos vacías. Prueba con otra palabra o una cita bíblica.',
+    'pl': 'Niczego tu nie znaleźliśmy – ale kto szuka Boga, nigdy nie odchodzi z pustymi rękami. Spróbuj innego słowa lub fragmentu Biblii.',
+    'tr': 'Burada bir şey bulamadık – ama Tanrı’yı arayan asla eli boş dönmez. Başka bir kelime veya ayet dene.',
+    'he': 'לא מצאנו כאן דבר – אבל מי שמחפש את אלוהים לעולם אינו יוצא בידיים ריקות. נסו מילה אחרת או פסוק.',
+  },
   // ── Verse wallpaper ──────────────────────────────────────────────────────
   'set_as_wallpaper': {
     'de': 'Als Hintergrundbild', 'en': 'As wallpaper', 'ru': 'Как обои',

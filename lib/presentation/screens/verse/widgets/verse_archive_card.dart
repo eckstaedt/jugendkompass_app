@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:jugendkompass_app/core/services/verse_share_service.dart';
+import 'package:jugendkompass_app/core/services/verse_wallpaper_service.dart';
 import 'package:jugendkompass_app/core/utils/snackbar_utils.dart';
 import 'package:jugendkompass_app/data/models/verse_model.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
@@ -43,6 +44,18 @@ class _VerseArchiveCardState extends State<VerseArchiveCard> {
       }
     }
     if (mounted) setState(() => _isSharing = false);
+  }
+
+  Future<void> _setAsWallpaper() async {
+    setState(() => _isSharing = true);
+    try {
+      await VerseWallpaperService.setAsWallpaper(context, widget.verse);
+    } catch (e) {
+      debugPrint('[VerseArchiveCard] wallpaper failed: $e');
+      if (mounted) SnackBarUtils.show(context, context.tr('wallpaper_failed'));
+    } finally {
+      if (mounted) setState(() => _isSharing = false);
+    }
   }
 
   Future<void> _saveToGallery() async {
@@ -140,6 +153,15 @@ class _VerseArchiveCardState extends State<VerseArchiveCard> {
                       Navigator.pop(context);
                       _saveToGallery();
                     },
+            ),
+            ListTile(
+              leading: const Icon(Icons.wallpaper_outlined),
+              title: Text(context.tr('set_as_wallpaper')),
+              subtitle: Text(context.tr('set_as_wallpaper_hint')),
+              onTap: () {
+                Navigator.pop(context);
+                _setAsWallpaper();
+              },
             ),
           ],
         ),

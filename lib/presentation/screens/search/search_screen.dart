@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'dart:async';
 
@@ -31,7 +32,6 @@ import 'package:jugendkompass_app/presentation/screens/message/message_detail_sc
 import 'package:jugendkompass_app/presentation/screens/post/post_detail_screen.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/cors_network_image.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/design_system_widgets.dart';
-import 'package:jugendkompass_app/presentation/widgets/common/empty_state.dart';
 
 enum _Type { article, audio, video, impulse, message, edition, verse }
 
@@ -360,6 +360,23 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
+  /// Pull down to reload all content (new articles etc. without restarting).
+  Widget _refreshable(Widget child) {
+    return RefreshIndicator(
+      color: DesignTokens.primaryRed,
+      onRefresh: () async {
+        ref.invalidate(postsListProvider(PostFilter(limit: 2000)));
+        ref.invalidate(videosListProvider);
+        ref.invalidate(dailyImpulsesProvider);
+        ref.invalidate(messagesListProvider);
+        ref.invalidate(editionsListProvider);
+        ref.invalidate(_searchVersesProvider);
+        await ref.read(postsListProvider(PostFilter(limit: 2000)).future).then((_) {}, onError: (_) {});
+      },
+      child: child,
+    );
+  }
+
   Widget _buildResults() {
     final index = ref.watch(_searchIndexProvider);
     final stillLoading = ref.watch(_searchStillLoadingProvider);
@@ -384,19 +401,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     });
 
     if (hits.isEmpty && stillLoading) return const _SearchSkeleton();
-    if (hits.isEmpty) {
-      return EmptyState(
-        icon: Icons.search_off_rounded,
-        title: AppTranslations.t('no_content_found'),
-        message: context.tr('search_tip'),
-      );
-    }
+    if (hits.isEmpty) return _refreshable(const _NoResults());
 
     final brightness = Theme.of(context).brightness;
     return Consumer(
       builder: (context, ref, _) {
         final hasAudio = ref.watch(currentAudioProvider) != null;
-        return ListView.separated(
+        return _refreshable(ListView.separated(
+          physics: const AlwaysScrollableScrollPhysics(),
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: EdgeInsets.fromLTRB(
             DesignTokens.paddingHorizontal,
@@ -433,7 +445,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               },
             );
           },
-        );
+        ));
       },
     );
   }
@@ -634,6 +646,43 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 }
 
 /// Result row: thumbnail, highlighted title, type + date, text excerpt.
+/// Nothing found: an encouraging verse instead of a bare "no results".
+class _NoResults extends StatelessWidget {
+  const _NoResults();
+
+  @override
+  Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
+    final accent = brightness == Brightness.dark ? DesignTokens.primaryRedOnDark : DesignTokens.primaryRed;
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(32, 48, 32, 140),
+      children: [
+        Icon(Icons.travel_explore_rounded, size: 44, color: accent),
+        const SizedBox(height: 18),
+        Text(
+          context.tr('search_empty_verse'),
+          textAlign: TextAlign.center,
+          style: AppFonts.uiStyle(fontSize: 19, height: 1.45, fontWeight: FontWeight.w600,
+              color: DesignTokens.getTextPrimary(brightness)),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          context.tr('search_empty_reference'),
+          textAlign: TextAlign.center,
+          style: AppFonts.uiStyle(fontSize: 12, letterSpacing: 1.6, fontWeight: FontWeight.w700, color: accent),
+        ),
+        const SizedBox(height: 22),
+        Text(
+          context.tr('search_empty_text'),
+          textAlign: TextAlign.center,
+          style: AppFonts.uiStyle(fontSize: 14, height: 1.5, color: DesignTokens.getTextSecondary(brightness)),
+        ),
+      ],
+    );
+  }
+}
+
 /// Shimmering placeholders shaped like result rows (instead of a spinner).
 class _SearchSkeleton extends StatelessWidget {
   const _SearchSkeleton();
