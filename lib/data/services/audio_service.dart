@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jugendkompass_app/data/services/image_localizer.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
@@ -27,6 +28,7 @@ class AudioService {
 
   AudioService._() {
     _player = AudioPlayer();
+    _player.positionStream.listen(_savePosition);
     _setupPlayerStateListener();
     _setupCurrentIndexListener();
   }
@@ -37,6 +39,40 @@ class AudioService {
   }
 
   AudioPlayer get player => _player;
+
+  // ── Resume: remember the position per audio (MediaItem id) ──
+  static const _resumePrefix = 'audio_pos_';
+  DateTime _lastSave = DateTime.fromMillisecondsSinceEpoch(0);
+
+  String? get _currentId {
+    final tag = _player.sequenceState?.currentSource?.tag;
+    return tag is MediaItem ? tag.id : null;
+  }
+
+  void _savePosition(Duration pos) {
+    final id = _currentId;
+    final dur = _player.duration;
+    if (id == null || dur == null) return;
+    if (DateTime.now().difference(_lastSave).inSeconds < 5) return;
+    _lastSave = DateTime.now();
+    SharedPreferences.getInstance().then((p) {
+      // near the end (or very start): nothing to resume
+      if (pos.inSeconds < 10 || pos > dur - const Duration(seconds: 15)) {
+        p.remove('$_resumePrefix$id');
+      } else {
+        p.setInt('$_resumePrefix$id', pos.inSeconds);
+      }
+    });
+  }
+
+  /// Jumps to the saved position of the current audio (if any).
+  Future<void> _resume() async {
+    final id = _currentId;
+    if (id == null) return;
+    final p = await SharedPreferences.getInstance();
+    final sec = p.getInt('$_resumePrefix$id');
+    if (sec != null && sec > 0) await _player.seek(Duration(seconds: sec));
+  }
 
   // Queue getters
   List<AudioModel> get queue => List.unmodifiable(_queue);
@@ -100,6 +136,7 @@ class AudioService {
       await _player.setAudioSource(
         AudioSource.uri(Uri.parse(url), tag: tag),
       );
+      await _resume();
       await _player.play();
     } catch (e) {
       throw Exception('Fehler beim Abspielen: $e');
@@ -127,6 +164,7 @@ class AudioService {
 
     try {
       await _player.setAudioSource(_playlist!, initialIndex: startIndex);
+      await _resume();
       await _player.play();
       debugPrint('[AudioService] Queue loaded and playing');
     } catch (e) {

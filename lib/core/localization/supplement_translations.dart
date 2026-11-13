@@ -5,6 +5,39 @@
 /// `test/localization_test.dart` enforces that every key used in the app is
 /// available in every [AppLanguage].
 const Map<String, Map<String, String>> supplementTranslations = {
+  'holiday_easter': {
+    'de': '🌅 Frohe Ostern – Er ist auferstanden', 'en': '🌅 Happy Easter – He is risen', 'ru': '🌅 Христос воскрес',
+    'es': '🌅 Feliz Pascua – ¡Ha resucitado!', 'pl': '🌅 Wesołych Świąt – Zmartwychwstał', 'tr': '🌅 Mutlu Paskalyalar – O dirildi', 'he': '🌅 פסחא שמח – הוא קם',
+  },
+  'holiday_good_friday': {
+    'de': '✝️ Karfreitag', 'en': '✝️ Good Friday', 'ru': '✝️ Страстная пятница', 'es': '✝️ Viernes Santo',
+    'pl': '✝️ Wielki Piątek', 'tr': '✝️ Kutsal Cuma', 'he': '✝️ יום שישי הטוב',
+  },
+  'holiday_pentecost': {
+    'de': '🕊️ Frohe Pfingsten', 'en': '🕊️ Happy Pentecost', 'ru': '🕊️ С Троицей', 'es': '🕊️ Feliz Pentecostés',
+    'pl': '🕊️ Radosnych Zielonych Świąt', 'tr': '🕊️ Mutlu Pentekost', 'he': '🕊️ חג שבועות שמח',
+  },
+  'holiday_christmas': {
+    'de': '🌟 Frohe Weihnachten', 'en': '🌟 Merry Christmas', 'ru': '🌟 С Рождеством', 'es': '🌟 Feliz Navidad',
+    'pl': '🌟 Wesołych Świąt', 'tr': '🌟 Mutlu Noeller', 'he': '🌟 חג מולד שמח',
+  },
+  'no_connection': {
+    'de': 'Keine Verbindung', 'en': 'No connection', 'ru': 'Нет соединения', 'es': 'Sin conexión',
+    'pl': 'Brak połączenia', 'tr': 'Bağlantı yok', 'he': 'אין חיבור',
+  },
+  'offline_verse': {
+    'de': '„Rufe mich an in der Not, so will ich dich erretten, und du sollst mich preisen.“',
+    'en': '“Call upon me in the day of trouble; I will deliver you, and you shall glorify me.”',
+    'ru': '«Призови Меня в день скорби; Я избавлю тебя, и ты прославишь Меня.»',
+    'es': '«Invócame en el día de la angustia; te libraré, y tú me honrarás.»',
+    'pl': '„Wzywaj mnie w dniu niedoli, a wybawię cię, a ty mnie uwielbisz.”',
+    'tr': '“Sıkıntılı günde beni çağır; seni kurtarayım, sen de beni yücelt.”',
+    'he': '״וקראני ביום צרה, אחלצך ותכבדני.״',
+  },
+  'offline_verse_ref': {
+    'de': 'PSALM 50,15', 'en': 'PSALM 50:15', 'ru': 'ПСАЛОМ 49:15', 'es': 'SALMO 50:15',
+    'pl': 'PSALM 50,15', 'tr': 'MEZMUR 50:15', 'he': 'תהלים נ׳ 15',
+  },
   'open_preview': {
     'de': 'Öffnen', 'en': 'Open', 'ru': 'Открыть', 'es': 'Abrir', 'pl': 'Otwórz', 'tr': 'Aç', 'he': 'פתח',
   },

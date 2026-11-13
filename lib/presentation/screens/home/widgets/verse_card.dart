@@ -229,7 +229,8 @@ class _VerseCardState extends State<VerseCard>
           Row(
             children: [
               BadgeWidget(
-                label: context.tr('verse_of_day_badge'),
+                // Easter / Pentecost / Christmas: festive label instead
+                label: context.tr(holidayKey(widget.verse.date) ?? 'verse_of_day_badge'),
                 accent: true,
               ),
               const Spacer(),
@@ -294,4 +295,22 @@ class _VerseCardState extends State<VerseCard>
       ),
     );
   }
+}
+
+/// Translation key of the church holiday on [d] (Easter, Pentecost,
+/// Christmas), or null.
+String? holidayKey(DateTime d) {
+  // Easter Sunday (Gregorian computus)
+  final y = d.year, a = y % 19, b = y ~/ 100, c = y % 100, dd = b ~/ 4, e = b % 4;
+  final f = (b + 8) ~/ 25, g = (b - f + 1) ~/ 3, h = (19 * a + b - dd - g + 15) % 30;
+  final i = c ~/ 4, k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = (a + 11 * h + 22 * l) ~/ 451;
+  final month = (h + l - 7 * m + 114) ~/ 31, day = ((h + l - 7 * m + 114) % 31) + 1;
+  final easter = DateTime(y, month, day);
+  final date = DateTime(d.year, d.month, d.day);
+  final diff = date.difference(easter).inDays;
+  if (diff == -2) return 'holiday_good_friday';
+  if (diff == 0 || diff == 1) return 'holiday_easter';
+  if (diff == 49 || diff == 50) return 'holiday_pentecost';
+  if (d.month == 12 && d.day >= 24 && d.day <= 26) return 'holiday_christmas';
+  return null;
 }
