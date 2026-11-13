@@ -5,6 +5,21 @@
 /// `test/localization_test.dart` enforces that every key used in the app is
 /// available in every [AppLanguage].
 const Map<String, Map<String, String>> supplementTranslations = {
+  // ── Verse wallpaper ──────────────────────────────────────────────────────
+  'set_as_wallpaper': {
+    'de': 'Als Hintergrundbild', 'en': 'As wallpaper', 'ru': 'Как обои',
+    'es': 'Como fondo de pantalla', 'pl': 'Jako tapeta', 'tr': 'Duvar kağıdı olarak', 'he': 'כטפט',
+  },
+  'set_as_wallpaper_hint': {
+    'de': 'Vers für deinen Sperr- oder Startbildschirm', 'en': 'Verse for your lock or home screen',
+    'ru': 'Стих для экрана блокировки или главного экрана', 'es': 'Versículo para tu pantalla de bloqueo o de inicio',
+    'pl': 'Werset na ekran blokady lub główny', 'tr': 'Kilit veya ana ekranın için ayet', 'he': 'פסוק למסך הנעילה או הבית',
+  },
+  'wallpaper_failed': {
+    'de': 'Hintergrundbild konnte nicht erstellt werden', 'en': 'Could not create the wallpaper',
+    'ru': 'Не удалось создать обои', 'es': 'No se pudo crear el fondo de pantalla',
+    'pl': 'Nie udało się utworzyć tapety', 'tr': 'Duvar kağıdı oluşturulamadı', 'he': 'לא ניתן היה ליצור את הטפט',
+  },
   // ── Search ───────────────────────────────────────────────────────────────
   'search_hint': {
     'de': 'Titel, Text, Thema oder Bibelstelle',

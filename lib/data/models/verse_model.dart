@@ -5,6 +5,8 @@ class VerseModel {
   final DateTime date;
   final String? contentId;
   final String? imageUrl;
+  /// Plain nature photo (no text) – used for the wallpaper.
+  final String? backgroundImageUrl;
 
   VerseModel({
     required this.id,
@@ -13,6 +15,7 @@ class VerseModel {
     required this.date,
     this.contentId,
     this.imageUrl,
+    this.backgroundImageUrl,
   });
 
   factory VerseModel.fromJson(Map<String, dynamic> json) {
@@ -25,6 +28,7 @@ class VerseModel {
           : DateTime.now(),
       contentId: json['content_id']?.toString(),
       imageUrl: json['image_url'] as String?,
+      backgroundImageUrl: json['background_image_url'] as String?,
     );
   }
 
@@ -54,6 +58,7 @@ class VerseModel {
       date: date ?? this.date,
       contentId: contentId ?? this.contentId,
       imageUrl: imageUrl ?? this.imageUrl,
+      backgroundImageUrl: backgroundImageUrl,
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/services/verse_wallpaper_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:jugendkompass_app/data/models/verse_model.dart';
@@ -74,6 +75,18 @@ class _VerseCardState extends State<VerseCard>
     }
   }
 
+  Future<void> _setAsWallpaper() async {
+    setState(() => _isSharing = true);
+    try {
+      await VerseWallpaperService.setAsWallpaper(context, widget.verse);
+    } catch (e) {
+      debugPrint('[VerseCard] wallpaper failed: $e');
+      if (mounted) SnackBarUtils.show(context, context.tr('wallpaper_failed'));
+    } finally {
+      if (mounted) setState(() => _isSharing = false);
+    }
+  }
+
   void _showShareOptions() {
     // On web, just share directly (no gallery save option)
     if (kIsWeb) {
@@ -129,6 +142,15 @@ class _VerseCardState extends State<VerseCard>
                       Navigator.pop(context);
                       _saveToGallery();
                     },
+            ),
+            ListTile(
+              leading: const Icon(Icons.wallpaper_outlined),
+              title: Text(context.tr('set_as_wallpaper')),
+              subtitle: Text(context.tr('set_as_wallpaper_hint')),
+              onTap: () {
+                Navigator.pop(context);
+                _setAsWallpaper();
+              },
             ),
           ],
         ),

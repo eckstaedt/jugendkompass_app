@@ -1,3 +1,4 @@
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/page_header.dart';
 import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'dart:async';
@@ -444,11 +445,14 @@ class ProfileScreen extends ConsumerWidget {
 
           // App Version (optional)
           Center(
-            child: Text(
-              'Version 2.3.1',
+            child: FutureBuilder<PackageInfo>(
+              future: PackageInfo.fromPlatform(),
+              builder: (context, snap) => Text(
+              snap.hasData ? 'Version ${snap.data!.version} (${snap.data!.buildNumber})' : '',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
+            ),
             ),
           ),
           SizedBox(
