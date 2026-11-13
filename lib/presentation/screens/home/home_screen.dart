@@ -143,8 +143,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       child: Row(
                         children: [
                           Expanded(
-                            child: Text(
-                              '${translate('Shalom')}, ${userName ?? translate('Benutzer')}',
+                            // Greeting by time of day; too long -> smaller, never "…"
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: AlignmentDirectional.centerStart,
+                              child: Text(
+                              '${context.tr(greetingKey(DateTime.now()))}, ${userName ?? translate('Benutzer')}',
+                              maxLines: 1,
+                              softWrap: false,
                               style: AppFonts.uiStyle(
                                 textStyle: theme.textTheme.displaySmall?.copyWith(
                                       fontSize: 30,
@@ -153,6 +159,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     ) ??
                                     const TextStyle(fontWeight: FontWeight.w800),
                               ),
+                            ),
                             ),
                           ),
                           // Search – vertically centred on the greeting.
@@ -458,3 +465,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
+/// Greeting by time of day; on Sundays always "Shalom".
+String greetingKey(DateTime now) {
+  if (now.weekday == DateTime.sunday) return 'greeting_shalom';
+  final h = now.hour;
+  if (h >= 5 && h < 11) return 'greeting_morning';
+  if (h >= 11 && h < 14) return 'greeting_midday';
+  if (h >= 14 && h < 18) return 'greeting_afternoon';
+  if (h >= 18 && h < 22) return 'greeting_evening';
+  return 'greeting_night';
+}

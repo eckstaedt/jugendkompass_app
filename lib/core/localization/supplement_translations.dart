@@ -5,6 +5,12 @@
 /// `test/localization_test.dart` enforces that every key used in the app is
 /// available in every [AppLanguage].
 const Map<String, Map<String, String>> supplementTranslations = {
+  'greeting_shalom': {'de': 'Shalom', 'en': 'Shalom', 'ru': 'Шалом', 'es': 'Shalom', 'pl': 'Szalom', 'tr': 'Şalom', 'he': 'שלום'},
+  'greeting_morning': {'de': 'Guten Morgen', 'en': 'Good morning', 'ru': 'Доброе утро', 'es': 'Buenos días', 'pl': 'Dzień dobry', 'tr': 'Günaydın', 'he': 'בוקר טוב'},
+  'greeting_midday': {'de': 'Guten Mittag', 'en': 'Good day', 'ru': 'Добрый день', 'es': 'Buen mediodía', 'pl': 'Dzień dobry', 'tr': 'İyi günler', 'he': 'צהריים טובים'},
+  'greeting_afternoon': {'de': 'Schönen Nachmittag', 'en': 'Good afternoon', 'ru': 'Добрый день', 'es': 'Buenas tardes', 'pl': 'Miłego popołudnia', 'tr': 'Tünaydın', 'he': 'אחר צהריים טובים'},
+  'greeting_evening': {'de': 'Guten Abend', 'en': 'Good evening', 'ru': 'Добрый вечер', 'es': 'Buenas tardes', 'pl': 'Dobry wieczór', 'tr': 'İyi akşamlar', 'he': 'ערב טוב'},
+  'greeting_night': {'de': 'Gute Nacht', 'en': 'Good night', 'ru': 'Доброй ночи', 'es': 'Buenas noches', 'pl': 'Dobranoc', 'tr': 'İyi geceler', 'he': 'לילה טוב'},
   'holiday_easter': {
     'de': 'Frohe Ostern – Er ist wahrhaftig auferstanden', 'en': 'Happy Easter – He is risen indeed',
     'ru': 'Христос воскресе – воистину воскресе', 'es': 'Feliz Pascua – Verdaderamente ha resucitado',
