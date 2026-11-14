@@ -232,7 +232,7 @@ class _VerseCardState extends State<VerseCard>
                 // Easter / Pentecost / Christmas: festive label instead
                 label: context.tr(holidayKey(widget.verse.date) ?? 'verse_of_day_badge'),
                 icon: holidayIcon(holidayKey(widget.verse.date)),
-                accent: true,
+                tone: BadgeTone.reading,
               ),
               const Spacer(),
               IconButton(
@@ -251,7 +251,7 @@ class _VerseCardState extends State<VerseCard>
               ),
             ],
           ),
-          const SizedBox(height: DesignTokens.spacingMedium),
+          const SizedBox(height: 8),
           // Verse text itself uses Merriweather (serif) per design request.
           Text(
             verse.verse,
