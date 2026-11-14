@@ -45,16 +45,20 @@ print(f"{len(todo)} videos to subtitle in this shard", flush=True)
 if os.environ.get("PLAN_ONLY"):
     sys.exit(0)
 
+import numpy as np  # noqa: E402
 from faster_whisper import WhisperModel  # noqa: E402
 
 model = WhisperModel(os.environ.get("WHISPER_MODEL", "small"), device="cpu", compute_type="int8")
 for v in todo:
     try:
         with tempfile.TemporaryDirectory() as d:
-            mp4, wav = f"{d}/v.mp4", f"{d}/a.wav"
+            mp4 = f"{d}/v.mp4"
             urllib.request.urlretrieve(urllib.parse.quote(v["url"], safe=":/?&=%"), mp4)
-            subprocess.run(["ffmpeg", "-loglevel", "error", "-i", mp4, "-ac", "1", "-ar", "16000", wav], check=True)
-            segs, _ = model.transcribe(wav, language="de", task="translate", vad_filter=True)
+            # Raw 16 kHz mono PCM straight from ffmpeg (avoids PyAV version issues)
+            pcm = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", mp4, "-ac", "1", "-ar", "16000",
+                                  "-f", "f32le", "pipe:1"], check=True, capture_output=True).stdout
+            audio = np.frombuffer(pcm, dtype=np.float32)
+            segs, _ = model.transcribe(audio, language="de", task="translate", vad_filter=True)
             out = [{"s": round(s.start, 2), "e": round(s.end, 2), "t": s.text.strip()} for s in segs if s.text.strip()]
         path = f"subtitles/en/{hashlib.sha1(v['url'].encode()).hexdigest()[:16]}.json"
         rest("POST", f"/storage/v1/object/videos/{path}", raw=json.dumps(out, ensure_ascii=False).encode(),
