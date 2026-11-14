@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3, 4, 5]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
     steps:
       - uses: actions/checkout@v4
       - name: Install
@@ -32,6 +32,6 @@ jobs:
       - name: Subtitles
         env:
           SHARD: ${{ matrix.shard }}
-          SHARDS: "6"
-          WHISPER_MODEL: small
+          SHARDS: "8"
+          WHISPER_MODEL: large-v3
         run: python3 tool/subtitles/make_subtitles.py
