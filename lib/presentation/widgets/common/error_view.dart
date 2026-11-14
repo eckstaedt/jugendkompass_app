@@ -11,7 +11,7 @@ class ErrorView extends StatelessWidget {
     this.onRetry,
   });
 
-  /// Network problems get a calm "no connection" view with Psalm 50,15.
+  /// Network problems show a plain "no connection" state.
   static bool isOffline(String m) {
     final t = m.toLowerCase();
     return t.contains('socketexception') || t.contains('failed host lookup') ||
@@ -35,19 +35,8 @@ class ErrorView extends StatelessWidget {
               const SizedBox(height: 14),
               Text(AppTranslations.t('no_connection'),
                   style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
-              const SizedBox(height: 6),
-              Text(AppTranslations.t('offline_god_reachable'),
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(color: colorScheme.onSurfaceVariant)),
-              const SizedBox(height: 22),
-              Text(AppTranslations.t('offline_verse'),
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.titleMedium?.copyWith(height: 1.45, fontStyle: FontStyle.italic)),
-              const SizedBox(height: 8),
-              Text(AppTranslations.t('offline_verse_ref'),
-                  style: theme.textTheme.labelMedium?.copyWith(letterSpacing: 1.4, fontWeight: FontWeight.w700, color: colorScheme.primary)),
               if (onRetry != null) ...[
-                const SizedBox(height: 26),
+                const SizedBox(height: 20),
                 FilledButton.icon(
                   onPressed: onRetry,
                   icon: const Icon(Icons.refresh),

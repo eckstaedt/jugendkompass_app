@@ -1,4 +1,3 @@
-import 'dart:isolate';
 import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'dart:async';
@@ -89,7 +88,7 @@ void prefetchSearch(WidgetRef ref) {
 
 /// Everything the search can find, normalised once per data change (not per
 /// keystroke). Null while nothing has loaded yet.
-final _searchIndexProvider = FutureProvider<List<_Entry>?>((ref) async {
+final _searchIndexProvider = Provider<List<_Entry>?>((ref) {
   final posts = ref.watch(postsListProvider(PostFilter(limit: 2000)));
   final videos = ref.watch(videosListProvider);
   final impulses = ref.watch(dailyImpulsesProvider);
@@ -103,22 +102,15 @@ final _searchIndexProvider = FutureProvider<List<_Entry>?>((ref) async {
   // take longest); the rest is added when it arrives.
   if (sources.every((s) => s.isLoading && !s.hasValue)) return null;
 
-  final postsV = posts.valueOrNull, videosV = videos.valueOrNull,
-      impulsesV = impulses.valueOrNull, messagesV = messages.valueOrNull,
-      editionsV = editions.valueOrNull, versesV = verses.valueOrNull,
-      categoriesV = categories.valueOrNull;
-  // Normalising ~2000 texts takes a moment: do it in a background isolate,
-  // so taps (search icon, search field) are never blocked.
-  return Isolate.run(() {
   final entries = <_Entry>[];
   final categoryNames = {
-    for (final c in categoriesV ?? const []) c.id: c.name,
+    for (final c in categories.valueOrNull ?? const []) c.id: c.name,
   };
   final editionTitles = {
-    for (final e in editionsV ?? const []) e.id: e.displayTitle,
+    for (final e in editions.valueOrNull ?? const []) e.id: e.displayTitle,
   };
 
-  for (final post in postsV ?? const []) {
+  for (final post in posts.valueOrNull ?? const []) {
     final title = HtmlUtils.stripHtml(post.title);
     entries.add(_Entry(
       type: post.audioId != null ? _Type.audio : _Type.article,
@@ -138,7 +130,7 @@ final _searchIndexProvider = FutureProvider<List<_Entry>?>((ref) async {
       ),
     ));
   }
-  for (final video in videosV ?? const []) {
+  for (final video in videos.valueOrNull ?? const []) {
     final title = HtmlUtils.stripHtml(video.displayTitle);
     entries.add(_Entry(
       type: _Type.video,
@@ -149,7 +141,7 @@ final _searchIndexProvider = FutureProvider<List<_Entry>?>((ref) async {
       text: SearchText(title: title, body: HtmlUtils.stripHtml(video.description ?? '')),
     ));
   }
-  for (final impulse in impulsesV ?? const []) {
+  for (final impulse in impulses.valueOrNull ?? const []) {
     final title = HtmlUtils.stripHtml(impulse.displayTitle);
     entries.add(_Entry(
       type: _Type.impulse,
@@ -160,7 +152,7 @@ final _searchIndexProvider = FutureProvider<List<_Entry>?>((ref) async {
       text: SearchText(title: title, body: HtmlUtils.stripHtml(impulse.impulseText)),
     ));
   }
-  for (final message in messagesV ?? const []) {
+  for (final message in messages.valueOrNull ?? const []) {
     final title = HtmlUtils.stripHtml(message.displayTitle);
     entries.add(_Entry(
       type: _Type.message,
@@ -171,7 +163,7 @@ final _searchIndexProvider = FutureProvider<List<_Entry>?>((ref) async {
       text: SearchText(title: title, body: HtmlUtils.stripHtml(message.message)),
     ));
   }
-  for (final edition in editionsV ?? const []) {
+  for (final edition in editions.valueOrNull ?? const []) {
     final title = HtmlUtils.stripHtml(edition.displayTitle);
     entries.add(_Entry(
       type: _Type.edition,
@@ -186,7 +178,7 @@ final _searchIndexProvider = FutureProvider<List<_Entry>?>((ref) async {
       ),
     ));
   }
-  for (final verse in versesV ?? const <VerseModel>[]) {
+  for (final verse in verses.valueOrNull ?? const <VerseModel>[]) {
     final reference = HtmlUtils.stripHtml(verse.reference);
     entries.add(_Entry(
       type: _Type.verse,
@@ -198,7 +190,6 @@ final _searchIndexProvider = FutureProvider<List<_Entry>?>((ref) async {
     ));
   }
   return entries;
-  });
 });
 
 class SearchScreen extends ConsumerStatefulWidget {
@@ -387,7 +378,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildResults() {
-    final index = ref.watch(_searchIndexProvider).valueOrNull;
+    final index = ref.watch(_searchIndexProvider);
     final stillLoading = ref.watch(_searchStillLoadingProvider);
     if (index == null) return const _SearchSkeleton();
 
@@ -655,7 +646,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 }
 
 /// Result row: thumbnail, highlighted title, type + date, text excerpt.
-/// Nothing found: an encouraging verse instead of a bare "no results".
+/// Nothing found: plain no-results state.
 class _NoResults extends StatelessWidget {
   const _NoResults();
 
@@ -670,20 +661,14 @@ class _NoResults extends StatelessWidget {
         Icon(Icons.travel_explore_rounded, size: 44, color: accent),
         const SizedBox(height: 18),
         Text(
-          context.tr('search_empty_verse'),
+          context.tr('no_results'),
           textAlign: TextAlign.center,
           style: AppFonts.uiStyle(fontSize: 19, height: 1.45, fontWeight: FontWeight.w600,
               color: DesignTokens.getTextPrimary(brightness)),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         Text(
-          context.tr('search_empty_reference'),
-          textAlign: TextAlign.center,
-          style: AppFonts.uiStyle(fontSize: 12, letterSpacing: 1.6, fontWeight: FontWeight.w700, color: accent),
-        ),
-        const SizedBox(height: 22),
-        Text(
-          context.tr('search_empty_text'),
+          context.tr('try_different_search'),
           textAlign: TextAlign.center,
           style: AppFonts.uiStyle(fontSize: 14, height: 1.5, color: DesignTokens.getTextSecondary(brightness)),
         ),
