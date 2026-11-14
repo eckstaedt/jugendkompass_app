@@ -1,0 +1,37 @@
+name: Video subtitles (English, Whisper)
+
+# English subtitles for the German videos (free Whisper model, CPU).
+# Daily + manual: only videos without subtitles are processed.
+on:
+  schedule:
+    - cron: "40 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: video-subtitles
+  cancel-in-progress: false
+
+env:
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+jobs:
+  subtitles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
+          pip install --quiet faster-whisper
+      - name: Subtitles
+        env:
+          SHARD: ${{ matrix.shard }}
+          SHARDS: "6"
+          WHISPER_MODEL: small
+        run: python3 tool/subtitles/make_subtitles.py

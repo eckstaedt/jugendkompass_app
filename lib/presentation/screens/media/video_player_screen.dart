@@ -1,3 +1,6 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -181,7 +184,19 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       // Listen for codec/playback errors after initialization
       _videoPlayerController!.addListener(_onVideoPlayerError);
 
+      final subtitles = await _loadEnglishSubtitles();
+      if (!mounted) return;
+
       _chewieController = ChewieController(
+        // English app: synchronous English subtitles (German video)
+        subtitle: subtitles,
+        showSubtitles: subtitles != null,
+        subtitleBuilder: (context, sub) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.6), borderRadius: BorderRadius.circular(6)),
+          child: Text(sub.toString(), textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontSize: 16, height: 1.3)),
+        ),
         videoPlayerController: _videoPlayerController!,
         autoPlay: true,
         looping: false,
@@ -290,6 +305,32 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       if (mounted) {
         await launchUrl(uri);
       }
+    }
+  }
+
+  /// English subtitles (only when the app is English), else null.
+  Future<Subtitles?> _loadEnglishSubtitles() async {
+    if (AppTranslations.currentLanguage != AppLanguage.en) return null;
+    try {
+      final row = await Supabase.instance.client.from('video_subtitles')
+          .select('url').eq('video_url', widget.videoUrl).eq('language', 'en').maybeSingle();
+      if (row == null) return null;
+      final res = await http.get(Uri.parse(row['url'] as String)).timeout(const Duration(seconds: 10));
+      if (res.statusCode != 200) return null;
+      final list = jsonDecode(utf8.decode(res.bodyBytes)) as List;
+      var i = 0;
+      return Subtitles([
+        for (final x in list)
+          Subtitle(
+            index: i++,
+            start: Duration(milliseconds: ((x['s'] as num) * 1000).round()),
+            end: Duration(milliseconds: ((x['e'] as num) * 1000).round()),
+            text: x['t'] as String,
+          ),
+      ]);
+    } catch (e) {
+      debugPrint('[VideoPlayer] subtitles: $e');
+      return null;
     }
   }
 
