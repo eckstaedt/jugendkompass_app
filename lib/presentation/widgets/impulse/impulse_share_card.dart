@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'package:jugendkompass_app/core/config/design_tokens.dart';
 
-/// Image that is shared for an impulse (Instagram portrait 4:5):
+/// Image that is shared for an impulse (portrait 4:5):
 /// the impulse image as a square on top, title and branding below.
 class ImpulseShareCard extends StatelessWidget {
   const ImpulseShareCard({

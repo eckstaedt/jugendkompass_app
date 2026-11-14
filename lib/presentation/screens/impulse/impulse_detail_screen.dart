@@ -55,7 +55,7 @@ class _ImpulseDetailScreenState extends ConsumerState<ImpulseDetailScreen> {
     return '$count Aufrufe';
   }
 
-  /// Share sheet: as image (Instagram etc.), save to photos, or link.
+  /// Share sheet: as image , save to photos, or link.
   void _showShareOptions(BuildContext context, ImpulseModel impulse, VoidCallback shareLink) {
     final brightness = Theme.of(context).brightness;
     showModalBottomSheet<void>(

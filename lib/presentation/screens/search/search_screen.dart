@@ -1,3 +1,4 @@
+import 'dart:isolate';
 import 'package:jugendkompass_app/core/config/app_fonts.dart';
 import 'package:jugendkompass_app/presentation/widgets/common/skeleton_loading.dart';
 import 'dart:async';
@@ -88,7 +89,7 @@ void prefetchSearch(WidgetRef ref) {
 
 /// Everything the search can find, normalised once per data change (not per
 /// keystroke). Null while nothing has loaded yet.
-final _searchIndexProvider = Provider<List<_Entry>?>((ref) {
+final _searchIndexProvider = FutureProvider<List<_Entry>?>((ref) async {
   final posts = ref.watch(postsListProvider(PostFilter(limit: 2000)));
   final videos = ref.watch(videosListProvider);
   final impulses = ref.watch(dailyImpulsesProvider);
@@ -102,15 +103,22 @@ final _searchIndexProvider = Provider<List<_Entry>?>((ref) {
   // take longest); the rest is added when it arrives.
   if (sources.every((s) => s.isLoading && !s.hasValue)) return null;
 
+  final postsV = posts.valueOrNull, videosV = videos.valueOrNull,
+      impulsesV = impulses.valueOrNull, messagesV = messages.valueOrNull,
+      editionsV = editions.valueOrNull, versesV = verses.valueOrNull,
+      categoriesV = categories.valueOrNull;
+  // Normalising ~2000 texts takes a moment: do it in a background isolate,
+  // so taps (search icon, search field) are never blocked.
+  return Isolate.run(() {
   final entries = <_Entry>[];
   final categoryNames = {
-    for (final c in categories.valueOrNull ?? const []) c.id: c.name,
+    for (final c in categoriesV ?? const []) c.id: c.name,
   };
   final editionTitles = {
-    for (final e in editions.valueOrNull ?? const []) e.id: e.displayTitle,
+    for (final e in editionsV ?? const []) e.id: e.displayTitle,
   };
 
-  for (final post in posts.valueOrNull ?? const []) {
+  for (final post in postsV ?? const []) {
     final title = HtmlUtils.stripHtml(post.title);
     entries.add(_Entry(
       type: post.audioId != null ? _Type.audio : _Type.article,
@@ -130,7 +138,7 @@ final _searchIndexProvider = Provider<List<_Entry>?>((ref) {
       ),
     ));
   }
-  for (final video in videos.valueOrNull ?? const []) {
+  for (final video in videosV ?? const []) {
     final title = HtmlUtils.stripHtml(video.displayTitle);
     entries.add(_Entry(
       type: _Type.video,
@@ -141,7 +149,7 @@ final _searchIndexProvider = Provider<List<_Entry>?>((ref) {
       text: SearchText(title: title, body: HtmlUtils.stripHtml(video.description ?? '')),
     ));
   }
-  for (final impulse in impulses.valueOrNull ?? const []) {
+  for (final impulse in impulsesV ?? const []) {
     final title = HtmlUtils.stripHtml(impulse.displayTitle);
     entries.add(_Entry(
       type: _Type.impulse,
@@ -152,7 +160,7 @@ final _searchIndexProvider = Provider<List<_Entry>?>((ref) {
       text: SearchText(title: title, body: HtmlUtils.stripHtml(impulse.impulseText)),
     ));
   }
-  for (final message in messages.valueOrNull ?? const []) {
+  for (final message in messagesV ?? const []) {
     final title = HtmlUtils.stripHtml(message.displayTitle);
     entries.add(_Entry(
       type: _Type.message,
@@ -163,7 +171,7 @@ final _searchIndexProvider = Provider<List<_Entry>?>((ref) {
       text: SearchText(title: title, body: HtmlUtils.stripHtml(message.message)),
     ));
   }
-  for (final edition in editions.valueOrNull ?? const []) {
+  for (final edition in editionsV ?? const []) {
     final title = HtmlUtils.stripHtml(edition.displayTitle);
     entries.add(_Entry(
       type: _Type.edition,
@@ -178,7 +186,7 @@ final _searchIndexProvider = Provider<List<_Entry>?>((ref) {
       ),
     ));
   }
-  for (final verse in verses.valueOrNull ?? const <VerseModel>[]) {
+  for (final verse in versesV ?? const <VerseModel>[]) {
     final reference = HtmlUtils.stripHtml(verse.reference);
     entries.add(_Entry(
       type: _Type.verse,
@@ -190,6 +198,7 @@ final _searchIndexProvider = Provider<List<_Entry>?>((ref) {
     ));
   }
   return entries;
+  });
 });
 
 class SearchScreen extends ConsumerStatefulWidget {
@@ -378,7 +387,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildResults() {
-    final index = ref.watch(_searchIndexProvider);
+    final index = ref.watch(_searchIndexProvider).valueOrNull;
     final stillLoading = ref.watch(_searchStillLoadingProvider);
     if (index == null) return const _SearchSkeleton();
 

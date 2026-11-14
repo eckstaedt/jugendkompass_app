@@ -130,12 +130,12 @@ const Map<String, Map<String, String>> supplementTranslations = {
     'he': 'שיתוף כתמונה',
   },
   'share_as_image_subtitle': {
-    'de': 'Bild mit Titel, z. B. für Instagram',
-    'en': 'Picture with title, e.g. for Instagram',
-    'ru': 'Картинка с названием, например для Instagram',
-    'es': 'Imagen con título, p. ej. para Instagram',
-    'pl': 'Obraz z tytułem, np. na Instagram',
-    'tr': 'Başlıklı görsel, örn. Instagram için',
+    'de': 'Bild mit Titel zum Teilen',
+    'en': 'Picture with title for sharing',
+    'ru': 'Картинка с названием для отправки',
+    'es': 'Imagen con título para compartir',
+    'pl': 'Obraz z tytułem do udostępnienia',
+    'tr': 'Paylaşmak için başlıklı görsel',
     'he': 'תמונה עם כותרת, למשל לאינסטגרם',
   },
   'share_link': {
