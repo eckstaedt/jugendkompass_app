@@ -24,6 +24,8 @@ BEGIN
     WHERE c.table_schema = 'public'
       AND t.table_type = 'BASE TABLE'
       AND c.data_type IN ('text', 'character varying', 'json', 'jsonb')
+      AND c.is_generated = 'NEVER'      -- berechnete Spalten lassen sich nicht ändern
+      AND c.is_updatable = 'YES'
   LOOP
     EXECUTE format(
       'UPDATE %I.%I SET %I = replace(%I::text, $1, $2)::%s WHERE %I::text LIKE ''%%'' || $1 || ''%%''',
