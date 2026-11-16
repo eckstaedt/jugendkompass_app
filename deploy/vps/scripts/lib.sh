@@ -9,7 +9,6 @@ WORK_DIR="$JK_ROOT/migration"
 DB_CONTAINER="jk-db"
 # Offizieller Self-Hosting-Stand, getestet für diesen Umzug.
 SUPABASE_SELFHOST_TAG="self-hosted/v0.8.4"
-RCLONE_IMAGE="rclone/rclone:1.75.2"
 
 log()  { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m!!\033[0m %s\n' "$*" >&2; }
