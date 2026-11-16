@@ -47,4 +47,5 @@ jobs:
         env:
           LIMIT: ${{ inputs.limit || '800' }}
           TIME_BUDGET_MIN: "300"
+          LANGUAGES: "en,ru"
         run: python3 tool/image_translate/translate_images.py
