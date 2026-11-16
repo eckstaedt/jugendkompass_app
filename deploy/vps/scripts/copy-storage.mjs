@@ -46,7 +46,13 @@ async function copyOne(o) {
   const file = join(tmp, `f${seq++}`);
   try {
     const src = await fetch(`${CLOUD_URL}/storage/v1/object/public/${encodeURIComponent(o.b)}/${encPath(o.n)}`);
-    if (!src.ok) throw new Error(`Download HTTP ${src.status}`);
+    if (!src.ok) {
+      await src.body?.cancel();
+      const err = new Error(`Download HTTP ${src.status}`);
+      if (src.status === 429) err.retryAfter = Number(src.headers.get('retry-after')) || 0;
+      err.rateLimited = src.status === 429;
+      throw err;
+    }
     await pipeline(Readable.fromWeb(src.body), createWriteStream(file));
     const got = (await stat(file)).size;
     if (got !== size) throw new Error(`Größe ${got} statt ${size}`);
@@ -69,11 +75,23 @@ async function copyOne(o) {
   }
 }
 
+// Die Cloud drosselt viele kleine Downloads (HTTP 429): dann alle Worker kurz
+// anhalten und mit wachsender Pause erneut versuchen.
+let pauseUntil = 0;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function withRetry(o) {
   for (let attempt = 1; ; attempt++) {
+    const wait = pauseUntil - Date.now();
+    if (wait > 0) await sleep(wait);
     try { return await copyOne(o); } catch (e) {
-      if (attempt >= 3) throw e;
-      await new Promise((r) => setTimeout(r, 2000 * attempt));
+      const max = e.rateLimited ? 10 : 3;
+      if (attempt >= max) throw e;
+      if (e.rateLimited) {
+        const ms = Math.max(e.retryAfter * 1000, Math.min(5000 * attempt, 30000));
+        pauseUntil = Math.max(pauseUntil, Date.now() + ms);
+      } else {
+        await sleep(2000 * attempt);
+      }
     }
   }
 }
