@@ -6,7 +6,7 @@ set -euo pipefail
 JK_ROOT="${JK_ROOT:-/docker/jugendkompass}"
 SUPABASE_DIR="$JK_ROOT/supabase"
 WORK_DIR="$JK_ROOT/migration"
-DB_CONTAINER="supabase-db"
+DB_CONTAINER="jk-db"
 # Offizieller Self-Hosting-Stand, getestet für diesen Umzug.
 SUPABASE_SELFHOST_TAG="self-hosted/v0.8.4"
 RCLONE_IMAGE="rclone/rclone:1.75.2"

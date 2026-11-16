@@ -3,13 +3,33 @@
 # in COMPOSE_FILE ein. Variablen kommen aus supabase/.env (von setup.sh erzeugt).
 #
 # Änderungen gegenüber dem Original:
-#   - API-Gateway nur über Traefik erreichbar (kein offener Port 8000)
+#   - eigene Container-Namen (jk-…), damit es neben anderen Supabase-Stacks läuft
+#   - API-Gateway nur über Traefik erreichbar (kein offener Port 8000), HTTP → HTTPS
 #   - Postgres/Pooler-Ports nur auf 127.0.0.1
 #   - Upload-Limit 2 GB wie in der Cloud
 #   - Function-Secrets aus ../functions.env, JWT-Prüfung pro Function
 
 services:
+  studio:
+    container_name: jk-studio
+  rest:
+    container_name: jk-rest
+  imgproxy:
+    container_name: jk-imgproxy
+  meta:
+    container_name: jk-meta
+  db:
+    container_name: jk-db
+  realtime:
+    container_name: jk-realtime
+    networks:
+      default:
+        # Envoy erreicht Realtime unter diesem Namen (Tenant "realtime-dev")
+        aliases:
+          - realtime-dev.supabase-realtime
+
   api-gw:
+    container_name: jk-api-gw
     ports: !reset []
     networks:
       default:
@@ -24,23 +44,33 @@ services:
       traefik.http.routers.jk-api.entrypoints: ${TRAEFIK_ENTRYPOINT}
       traefik.http.routers.jk-api.tls.certresolver: ${TRAEFIK_CERTRESOLVER}
       traefik.http.services.jk-api.loadbalancer.server.port: "8000"
+      traefik.http.routers.jk-api-http.rule: Host(`${API_DOMAIN}`)
+      traefik.http.routers.jk-api-http.entrypoints: ${TRAEFIK_HTTP_ENTRYPOINT:-web}
+      traefik.http.routers.jk-api-http.middlewares: jk-https
+      traefik.http.middlewares.jk-https.redirectscheme.scheme: https
+      traefik.http.middlewares.jk-https.redirectscheme.permanent: "true"
 
   supavisor:
+    container_name: jk-pooler
+    # Nur lokal und auf eigenen Ports, falls 5432/6543 schon belegt sind
     ports: !override
-      - 127.0.0.1:${POSTGRES_PORT}:5432
-      - 127.0.0.1:${POOLER_PROXY_PORT_TRANSACTION}:6543
+      - 127.0.0.1:${JK_PG_HOST_PORT:-55432}:5432
+      - 127.0.0.1:${JK_POOLER_HOST_PORT:-56543}:6543
 
   auth:
+    container_name: jk-auth
     environment:
       # Hinter Traefik/Envoy sieht Auth nicht jede Client-IP einzeln; das
       # Standardlimit (30 anonyme Anmeldungen pro Stunde) wäre zu knapp.
       GOTRUE_RATE_LIMIT_ANONYMOUS_USERS: "1000"
 
   storage:
+    container_name: jk-storage
     environment:
       FILE_SIZE_LIMIT: ${FILE_SIZE_LIMIT:-2147483648}
 
   functions:
+    container_name: jk-functions
     env_file:
       - ../functions.env
     environment:

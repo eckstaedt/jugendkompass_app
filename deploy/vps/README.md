@@ -163,6 +163,6 @@ cd /docker/jugendkompass/supabase
 docker compose ps                     # Status
 docker compose logs -f functions      # Function-Logs
 docker compose logs -f auth
-docker exec -it supabase-db psql -U supabase_admin -d postgres
+docker exec -it jk-db psql -U supabase_admin -d postgres
 cd .. && bash scripts/cron.sh status
 ```
