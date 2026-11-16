@@ -1,3 +1,4 @@
+import 'package:jugendkompass_app/core/localization/app_translations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:jugendkompass_app/data/models/verse_model.dart';
@@ -42,7 +43,7 @@ class VerseShareCard extends StatelessWidget {
           Row(
             children: [
               Text(
-                'VERS DES TAGES',
+                AppTranslations.t('verse_of_day_badge').toUpperCase(),
                 style: GoogleFonts.poppins(
                   fontSize: 9,
                   fontWeight: FontWeight.w500,

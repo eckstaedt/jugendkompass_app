@@ -46,7 +46,10 @@ class VerseShareService {
   /// - Admin-uploaded image (imageUrl) if available
   /// - Flutter-rendered card as fallback
   static Future<Uint8List> _getImageBytes(VerseModel verse) async {
-    if (verse.imageUrl != null && verse.imageUrl!.isNotEmpty) {
+    // The stored image has the German verse baked in – for other languages
+    // render the card with the (already translated) verse instead.
+    final german = AppTranslations.currentLanguage == AppLanguage.de;
+    if (german && verse.imageUrl != null && verse.imageUrl!.isNotEmpty) {
       return await _downloadImage(verse.imageUrl!);
     }
     return await _captureVerseCard(verse);
