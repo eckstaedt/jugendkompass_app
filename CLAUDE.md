@@ -214,9 +214,12 @@ ClipRRect(
 - `firebase_options.dart`: Auto-generated Firebase config (do not edit manually)
 - `assets/images/`: App images referenced in `pubspec.yaml`
 
-### Supabase Project
-- Project ID: `vdcdibvclaulqxfjyzpq`
-- URL: `https://vdcdibvclaulqxfjyzpq.supabase.co`
+### Supabase (self-hosted on the VPS)
+- API: `https://api.jugendkompass.com` (REST, Auth, Storage, Realtime, Edge Functions); set in `dotenv`
+- Same anon/service-role keys as the former cloud project (JWT secret was carried over)
+- Server setup, migration and cron scripts: `deploy/vps/` (see `deploy/vps/README.md`)
+- Former cloud project `vdcdibvclaulqxfjyzpq` stays only for old app versions; do not deploy there
+- Background workflows (audio, subtitles, images) target `vars.SUPABASE_URL`; set it to the VPS URL at cutover
 - See `supabase.md` for complete schema
 
 ## Common Pitfalls

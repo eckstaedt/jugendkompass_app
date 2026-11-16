@@ -11,7 +11,8 @@ WHISPER_MODEL (default small), SHARD/SHARDS.
 import hashlib, json, os, subprocess, sys, tempfile, urllib.request, urllib.parse
 
 REF = "vdcdibvclaulqxfjyzpq"
-SB = f"https://{REF}.supabase.co"
+# Ziel-Instanz: im Workflow aus der Repo-Variable SUPABASE_URL (VPS: https://api.jugendkompass.com)
+SB = os.environ.get("SUPABASE_URL", f"https://{REF}.supabase.co").rstrip("/")
 
 
 def key():

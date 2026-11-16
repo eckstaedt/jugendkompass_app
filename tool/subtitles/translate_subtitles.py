@@ -9,7 +9,7 @@ os.environ.setdefault("PLAN_ONLY", "")
 import importlib.util  # noqa: E402
 
 spec = importlib.util.spec_from_file_location("ms", os.path.join(os.path.dirname(__file__), "make_subtitles.py"))
-SB = "https://vdcdibvclaulqxfjyzpq.supabase.co"
+SB = os.environ.get("SUPABASE_URL", "https://vdcdibvclaulqxfjyzpq.supabase.co").rstrip("/")
 src = open(os.path.join(os.path.dirname(__file__), "make_subtitles.py")).read()
 ns = {}
 exec(src.split("videos = rest(")[0], ns)  # key() + rest() only
