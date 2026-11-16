@@ -34,7 +34,7 @@ rclone() {
     -e RCLONE_CONFIG_CLOUD_FORCE_PATH_STYLE=true \
     -e RCLONE_CONFIG_VPS_TYPE=s3 \
     -e RCLONE_CONFIG_VPS_PROVIDER=Other \
-    -e RCLONE_CONFIG_VPS_ENDPOINT="http://storage:5000/s3" \
+    -e RCLONE_CONFIG_VPS_ENDPOINT="http://kong:8000/storage/v1/s3" \
     -e RCLONE_CONFIG_VPS_REGION="$VPS_REGION" \
     -e RCLONE_CONFIG_VPS_ACCESS_KEY_ID="$VPS_KEY_ID" \
     -e RCLONE_CONFIG_VPS_SECRET_ACCESS_KEY="$VPS_KEY_SECRET" \
@@ -42,12 +42,16 @@ rclone() {
     "$RCLONE_IMAGE" "$@"
 }
 
+log "Teste Zugriff auf beide Seiten"
+rclone lsd cloud: >/dev/null || die "Kein Zugriff auf den Cloud-Storage (CLOUD_S3_* prüfen)."
+rclone lsd vps: >/dev/null || die "Kein Zugriff auf den VPS-Storage."
+
 for b in $buckets; do
   log "Bucket $b"
   rclone sync "cloud:$b" "vps:$b" \
     --size-only --fast-list --s3-no-check-bucket \
     --transfers 8 --checkers 16 \
-    --s3-upload-cutoff 64M --s3-chunk-size 64M \
+    --s3-upload-cutoff 16M --s3-chunk-size 16M \
     --stats 30s --stats-one-line
 done
 
