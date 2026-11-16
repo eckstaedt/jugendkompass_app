@@ -50,6 +50,10 @@ const Map<String, Map<String, String>> supplementTranslations = {
     'de': 'PSALM 50,15', 'en': 'PSALM 50:15', 'ru': 'ПСАЛОМ 49:15', 'es': 'SALMO 50:15',
     'pl': 'PSALM 50,15', 'tr': 'MEZMUR 50:15', 'he': 'תהלים נ׳ 15',
   },
+  'no_results': {
+    'de': 'Keine Ergebnisse gefunden', 'en': 'No results found', 'ru': 'Ничего не найдено', 'es': 'Sin resultados',
+    'pl': 'Brak wyników', 'tr': 'Sonuç yok', 'he': 'אין תוצאות',
+  },
   'open_preview': {
     'de': 'Öffnen', 'en': 'Open', 'ru': 'Открыть', 'es': 'Abrir', 'pl': 'Otwórz', 'tr': 'Aç', 'he': 'פתח',
   },
