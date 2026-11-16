@@ -22,6 +22,7 @@ import {
 import { useTheme } from '@/hooks/use-theme';
 import { useEffect } from 'react';
 import { usePreviewLocale, PREVIEW_LANGS, PreviewLang } from '@/contexts/PreviewLocaleContext';
+import { VpsBadge } from '@/components/VpsBadge';
 
 interface SidebarProps {
   collapsed?: boolean;
@@ -155,14 +156,18 @@ export const Sidebar = ({ collapsed = false }: SidebarProps) => {
               style={{ borderRadius: '0.25rem', background: 'none' }}
             />
             <h1 className="ml-2 text-xl font-bold">Jugendkompass</h1>
+            <VpsBadge className="ml-2" />
           </div>
         ) : (
-          <img
-            src="/lovable-uploads/df7fceef-ebc5-46a5-aff3-fbe34d02dc9d.png"
-            alt="App Logo"
-            className="h-8 w-8"
-            style={{ borderRadius: '0.25rem', background: 'none' }}
-          />
+          <div className="relative">
+            <img
+              src="/lovable-uploads/df7fceef-ebc5-46a5-aff3-fbe34d02dc9d.png"
+              alt="App Logo"
+              className="h-8 w-8"
+              style={{ borderRadius: '0.25rem', background: 'none' }}
+            />
+            <VpsBadge className="absolute -right-3 -top-2 px-1 text-[8px]" />
+          </div>
         )}
       </div>
       

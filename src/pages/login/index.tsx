@@ -26,6 +26,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { VpsBadge } from '@/components/VpsBadge';
 
 const loginSchema = z.object({
   email: z.string().email('Bitte gib eine gültige E-Mail-Adresse ein.'),
@@ -116,6 +117,7 @@ const LoginPage = () => {
             className="h-10 w-10 rounded bg-none"
           />
           <h1 className="ml-2 text-3xl font-bold text-gray-800">Jugendkompass Admin</h1>
+          <VpsBadge className="ml-2" />
         </div>
         
         <Card className="border-none shadow-lg">
