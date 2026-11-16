@@ -75,7 +75,7 @@ set_env "$envf" API_EXTERNAL_URL "https://$API_DOMAIN/auth/v1"
 set_env "$envf" SITE_URL "https://$WWW_DOMAIN"
 set_env "$envf" ADDITIONAL_REDIRECT_URLS "https://$ADMIN_DOMAIN/**,https://$WWW_DOMAIN/**"
 set_env "$envf" ENABLE_ANONYMOUS_USERS "true"   # App meldet sich anonym an (Umfragen, Likes)
-set_env "$envf" ENABLE_EMAIL_SIGNUP "false"     # Admin-Konten entstehen über create-user
+set_env "$envf" ENABLE_EMAIL_SIGNUP "true"      # E-Mail-Login für Admins (false würde jeden E-Mail-Login sperren)
 set_env "$envf" ENABLE_PHONE_SIGNUP "false"
 set_env "$envf" DISABLE_SIGNUP "false"
 set_env "$envf" FUNCTIONS_VERIFY_JWT "false"
