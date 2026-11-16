@@ -35,3 +35,15 @@ jobs:
           SHARDS: "8"
           WHISPER_MODEL: large-v3
         run: python3 tool/subtitles/make_subtitles.py
+
+  russian:
+    needs: subtitles
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install
+        run: pip install --quiet transformers sentencepiece sacremoses torch --extra-index-url https://download.pytorch.org/whl/cpu
+      - name: Russian subtitles (opus-mt-en-ru)
+        run: python3 tool/subtitles/translate_subtitles.py

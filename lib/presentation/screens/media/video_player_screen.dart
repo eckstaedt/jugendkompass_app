@@ -184,7 +184,7 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
       // Listen for codec/playback errors after initialization
       _videoPlayerController!.addListener(_onVideoPlayerError);
 
-      final subtitles = await _loadEnglishSubtitles();
+      final subtitles = await _loadSubtitles();
       if (!mounted) return;
 
       _chewieController = ChewieController(
@@ -308,12 +308,13 @@ class _VideoPlayerScreenState extends ConsumerState<VideoPlayerScreen> {
     }
   }
 
-  /// English subtitles (only when the app is English), else null.
-  Future<Subtitles?> _loadEnglishSubtitles() async {
-    if (AppTranslations.currentLanguage != AppLanguage.en) return null;
+  /// Subtitles in the app language (English, Russian …); none for German.
+  Future<Subtitles?> _loadSubtitles() async {
+    final lang = AppTranslations.currentLanguage.locale.languageCode;
+    if (lang == 'de') return null; // videos are German
     try {
       final row = await Supabase.instance.client.from('video_subtitles')
-          .select('url').eq('video_url', widget.videoUrl).eq('language', 'en').maybeSingle();
+          .select('url').eq('video_url', widget.videoUrl).eq('language', lang).maybeSingle();
       if (row == null) return null;
       final res = await http.get(Uri.parse(row['url'] as String)).timeout(const Duration(seconds: 10));
       if (res.statusCode != 200) return null;
