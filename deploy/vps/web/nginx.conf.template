@@ -1,0 +1,108 @@
+# nginx-Konfiguration für die Jugendkompass-Webseiten (Template, ${...} setzt
+# das nginx-Image beim Start aus den Umgebungsvariablen ein).
+# TLS macht Traefik davor; hier kommt nur HTTP an.
+
+resolver 127.0.0.11 valid=30s ipv6=off;
+server_tokens off;
+client_max_body_size 1m;
+gzip on;
+gzip_types text/css application/javascript application/json application/wasm image/svg+xml text/plain;
+
+map $uri $jk_cache {
+    default                         "public, max-age=3600";
+    ~*\.(html|json)$                "no-cache";
+    ~*flutter_service_worker\.js$   "no-cache";
+    ~*flutter_bootstrap\.js$        "no-cache";
+    ~*(^|/)sw\.js$                  "no-cache";
+    "~*/assets/.+\.[0-9a-f]{8,}\."  "public, max-age=31536000, immutable";
+}
+
+# --- www: Flutter-Web, Share-Links, Universal/App Links ---------------------------
+server {
+    listen 80;
+    server_name ${WWW_DOMAIN};
+    root /sites/www;
+    index index.html;
+    add_header Cache-Control $jk_cache always;
+
+    location ^~ /.well-known/ {
+        default_type application/json;
+        add_header Cache-Control "public, max-age=3600" always;
+        try_files $uri =404;
+    }
+
+    # Rewrites aus web/vercel.json
+    location ~ ^/(post|artikel|audio|video|verse|vers|message|kurznachricht|impulse|impuls|edition|ausgabe|poll|umfrage|content)/([^/]+)/?$ {
+        proxy_pass http://share:3000/api/share?type=$1&id=$2;
+        proxy_set_header Host $host;
+        add_header X-Content-Type-Options nosniff always;  # stoppt Vererbung des Cache-Headers
+    }
+    location ~ ^/share/([^/]+)/([^/]+)/?$ {
+        proxy_pass http://share:3000/api/share?type=$1&id=$2;
+        proxy_set_header Host $host;
+        add_header X-Content-Type-Options nosniff always;  # stoppt Vererbung des Cache-Headers
+    }
+    location = /open {
+        proxy_pass http://share:3000/api/share$is_args$args;
+        proxy_set_header Host $host;
+        add_header X-Content-Type-Options nosniff always;  # stoppt Vererbung des Cache-Headers
+    }
+    location = /api/share {
+        proxy_pass http://share:3000/api/share$is_args$args;
+        proxy_set_header Host $host;
+        add_header X-Content-Type-Options nosniff always;  # stoppt Vererbung des Cache-Headers
+    }
+    # Quellcode der Function nicht ausliefern
+    location ^~ /api/ { return 404; }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+
+# --- Apex: .well-known selbst ausliefern, sonst auf www umleiten -----------------
+server {
+    listen 80;
+    server_name ${APEX_DOMAIN};
+    root /sites/www;
+
+    location ^~ /.well-known/ {
+        default_type application/json;
+        try_files $uri =404;
+    }
+    location / {
+        return 301 https://${WWW_DOMAIN}$request_uri;
+    }
+}
+
+# --- Admin-PWA ------------------------------------------------------------------
+server {
+    listen 80;
+    server_name ${ADMIN_DOMAIN};
+    root /sites/admin;
+    index index.html;
+    add_header Cache-Control $jk_cache always;
+    add_header X-Frame-Options DENY always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+    add_header X-Content-Type-Options nosniff always;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+
+# --- Übersetzungs-Panel (wie translation-panel/vercel.json) ---------------------
+server {
+    listen 80;
+    server_name ${TRANSLATE_DOMAIN};
+    root /sites/translate;
+    index index.html;
+    add_header Cache-Control "no-cache" always;
+    add_header X-Frame-Options DENY always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+    add_header X-Content-Type-Options nosniff always;
+
+    location / {
+        try_files $uri $uri.html $uri/ =404;
+    }
+}

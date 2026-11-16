@@ -1,0 +1,55 @@
+# Web-Auftritte: Flutter-Web (www + Apex), Admin-PWA, Übersetzungs-Panel und der
+# Share-Link-Dienst (ersetzt die Vercel-Function web/api/share.js).
+#
+#   cd /docker/jugendkompass && docker compose -f docker-compose.web.yml up -d
+#
+# Variablen kommen aus .env (Symlink auf jugendkompass.env, von setup.sh angelegt).
+# Inhalte liegen in ./sites/{www,admin,translate} und werden per CI (rsync) befüllt.
+
+name: jugendkompass-web
+
+services:
+  web:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    environment:
+      WWW_DOMAIN: ${WWW_DOMAIN}
+      APEX_DOMAIN: ${APEX_DOMAIN}
+      ADMIN_DOMAIN: ${ADMIN_DOMAIN}
+      TRANSLATE_DOMAIN: ${TRANSLATE_DOMAIN}
+    volumes:
+      - ./web/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./sites:/sites:ro
+    depends_on:
+      - share
+    networks:
+      - default
+      - traefik
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${TRAEFIK_NETWORK}
+      traefik.http.routers.jk-web.rule: Host(`${WWW_DOMAIN}`) || Host(`${APEX_DOMAIN}`) || Host(`${ADMIN_DOMAIN}`) || Host(`${TRANSLATE_DOMAIN}`)
+      traefik.http.routers.jk-web.entrypoints: ${TRAEFIK_ENTRYPOINT}
+      traefik.http.routers.jk-web.tls.certresolver: ${TRAEFIK_CERTRESOLVER}
+      traefik.http.services.jk-web.loadbalancer.server.port: "80"
+
+  share:
+    image: node:22-alpine
+    restart: unless-stopped
+    working_dir: /app
+    command: ["node", "server.js"]
+    environment:
+      SUPABASE_URL: https://${API_DOMAIN}
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      PORT: "3000"
+    volumes:
+      - ./web/share-server.js:/app/server.js:ro
+      # share.js kommt mit dem Flutter-Web-Build (build/web/api/share.js)
+      - ./sites/www/api:/app/api:ro
+    networks:
+      - default
+
+networks:
+  traefik:
+    name: ${TRAEFIK_NETWORK}
+    external: true
