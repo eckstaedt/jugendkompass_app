@@ -30,7 +30,8 @@ concurrency:
 
 env:
   PROJECT_REF: vdcdibvclaulqxfjyzpq
-  SUPABASE_URL: https://vdcdibvclaulqxfjyzpq.supabase.co
+  # Nach der Umstellung Repo-Variable SUPABASE_URL=https://api.jugendkompass.com setzen.
+  SUPABASE_URL: ${{ vars.SUPABASE_URL || 'https://vdcdibvclaulqxfjyzpq.supabase.co' }}
   SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
 jobs:

@@ -1,0 +1,90 @@
+name: Web → VPS
+
+# Baut die Flutter-Web-App (inkl. Share-Link-Function und .well-known) und das
+# Übersetzungs-Panel und kopiert beides per rsync auf den eigenen VPS nach
+# /docker/jugendkompass/sites/{www,translate}. Ersetzt web-deploy.yml (Vercel).
+#
+# Repository-Secrets (Settings → Secrets and variables → Actions):
+#   VPS_SSH_HOST         Hostname oder IP des Servers
+#   VPS_SSH_USER         Benutzer mit Schreibrecht auf /docker/jugendkompass/sites
+#   VPS_SSH_KEY          privater SSH-Schlüssel (nur für diesen Zweck angelegt)
+#   VPS_SSH_KNOWN_HOSTS  Ausgabe von: ssh-keyscan -p <port> <host>
+# Repository-Variablen (optional):
+#   VPS_SSH_PORT         Standard 22
+#   VPS_API_URL          Standard https://api.jugendkompass.com
+#
+# Bis zur Umstellung nur manuell starten; danach push-Trigger einkommentieren.
+
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - "web/**"
+  #     - "lib/**"
+  #     - "assets/**"
+  #     - "translation-panel/**"
+  #     - "pubspec.yaml"
+  #     - ".github/workflows/web-vps-deploy.yml"
+
+concurrency:
+  group: web-vps-deploy
+  cancel-in-progress: true
+
+env:
+  API_URL: ${{ vars.VPS_API_URL || 'https://api.jugendkompass.com' }}
+  SSH_PORT: ${{ vars.VPS_SSH_PORT || '22' }}
+  TARGET: /docker/jugendkompass/sites
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Point builds to the VPS backend
+        run: |
+          sed -i "s|^SUPABASE_URL=.*|SUPABASE_URL=${API_URL}|" dotenv
+          sed -i "s|https://[a-z0-9]*\.supabase\.co|${API_URL}|g" translation-panel/*.js
+          grep -q "^SUPABASE_URL=${API_URL}$" dotenv
+          grep -q "${API_URL}" translation-panel/config.js
+
+      - name: Build web
+        run: |
+          flutter pub get
+          flutter build web --release
+          test -f build/web/api/share.js
+          test -f build/web/.well-known/apple-app-site-association
+          rm -f build/web/vercel.json
+
+      - name: SSH setup
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.VPS_SSH_KNOWN_HOSTS }}
+        run: |
+          if [ -z "$SSH_KEY" ] || [ -z "$KNOWN_HOSTS" ]; then
+            echo "::error::VPS_SSH_KEY / VPS_SSH_KNOWN_HOSTS fehlen."; exit 1
+          fi
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Upload
+        env:
+          HOST: ${{ secrets.VPS_SSH_HOST }}
+          USER: ${{ secrets.VPS_SSH_USER }}
+        run: |
+          RSH="ssh -i ~/.ssh/id_deploy -p $SSH_PORT"
+          rsync -az --delete-after -e "$RSH" build/web/ "$USER@$HOST:$TARGET/www/"
+          rsync -az --delete-after -e "$RSH" --exclude vercel.json --exclude README.md \
+            translation-panel/ "$USER@$HOST:$TARGET/translate/"
+
+      - name: Clean up
+        if: always()
+        run: rm -f ~/.ssh/id_deploy

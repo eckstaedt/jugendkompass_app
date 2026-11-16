@@ -1,0 +1,52 @@
+# Override für den offiziellen Supabase-Self-Hosting-Stack.
+# setup.sh kopiert diese Datei nach /docker/jugendkompass/supabase/ und trägt sie
+# in COMPOSE_FILE ein. Variablen kommen aus supabase/.env (von setup.sh erzeugt).
+#
+# Änderungen gegenüber dem Original:
+#   - API-Gateway nur über Traefik erreichbar (kein offener Port 8000)
+#   - Postgres/Pooler-Ports nur auf 127.0.0.1
+#   - Upload-Limit 2 GB wie in der Cloud
+#   - Function-Secrets aus ../functions.env, JWT-Prüfung pro Function
+
+services:
+  api-gw:
+    ports: !reset []
+    networks:
+      default:
+        aliases:
+          - envoy
+          - kong
+      traefik: {}
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${TRAEFIK_NETWORK}
+      traefik.http.routers.jk-api.rule: Host(`${API_DOMAIN}`)
+      traefik.http.routers.jk-api.entrypoints: ${TRAEFIK_ENTRYPOINT}
+      traefik.http.routers.jk-api.tls.certresolver: ${TRAEFIK_CERTRESOLVER}
+      traefik.http.services.jk-api.loadbalancer.server.port: "8000"
+
+  supavisor:
+    ports: !override
+      - 127.0.0.1:${POSTGRES_PORT}:5432
+      - 127.0.0.1:${POOLER_PROXY_PORT_TRANSACTION}:6543
+
+  auth:
+    environment:
+      # Hinter Traefik/Envoy sieht Auth nicht jede Client-IP einzeln; das
+      # Standardlimit (30 anonyme Anmeldungen pro Stunde) wäre zu knapp.
+      GOTRUE_RATE_LIMIT_ANONYMOUS_USERS: "1000"
+
+  storage:
+    environment:
+      FILE_SIZE_LIMIT: ${FILE_SIZE_LIMIT:-2147483648}
+
+  functions:
+    env_file:
+      - ../functions.env
+    environment:
+      VERIFY_JWT_FUNCTIONS: ${VERIFY_JWT_FUNCTIONS:-}
+
+networks:
+  traefik:
+    name: ${TRAEFIK_NETWORK}
+    external: true

@@ -10,16 +10,11 @@ name: Web → Vercel
 #                      (personal account: Account Settings → General → "Vercel ID")
 #   VERCEL_PROJECT_ID  vercel.com → Project → Settings → General → "Project ID"
 
+# ABGELÖST durch web-vps-deploy.yml (eigener VPS). Kein automatischer Start mehr,
+# weil dotenv jetzt auf den VPS zeigt. Nur noch manuell, falls bis zur Umstellung
+# ein Notfall-Deploy auf Vercel nötig ist (baut dann gegen die Cloud).
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "web/**"
-      - "lib/**"
-      - "assets/**"
-      - "pubspec.yaml"
-      - ".github/workflows/web-deploy.yml"
 
 concurrency:
   group: web-deploy
@@ -44,6 +39,7 @@ jobs:
 
       - name: Build web
         run: |
+          sed -i "s|^SUPABASE_URL=.*|SUPABASE_URL=https://vdcdibvclaulqxfjyzpq.supabase.co|" dotenv
           flutter pub get
           flutter build web --release
           test -f build/web/vercel.json
