@@ -25,6 +25,45 @@ insert into jk_status.notes (key, value) values
   ('offline_backup', 'USB-Stick "JUKO BACKUP" – 17.11.2026 (6.356 Dateien + Datenbank)')
 on conflict (key) do nothing;
 
+-- Translation coverage for EN and RU (texts, images, audios of posts, video subtitles).
+create or replace function jk_status.translation_coverage() returns jsonb
+language sql stable security definer set search_path = public as $f$
+  with langs as (select unnest(array['en', 'ru', 'pl']) lang),
+  items as (
+    select 'Beiträge' k, 1 o, content_id from posts
+    union all select 'Impulse', 2, content_id from impulses
+    union all select 'Kurznachrichten', 3, content_id from messages
+    union all select 'Vers des Tages', 4, content_id from verse_of_the_day
+    union all select 'Videos (Texte)', 5, content_id from videos
+    union all select 'Ausgaben', 6, content_id from editions
+    union all select 'Umfragen', 7, content_id from polls),
+  texts as (
+    select i.k, i.o, l.lang, count(*) total,
+           count(*) filter (where exists (select 1 from content_translations ct where ct.content_id = i.content_id and ct.language = l.lang)) done
+    from items i cross join langs l where i.content_id is not null group by 1, 2, 3),
+  imgs as (
+    select distinct u from (select image_url u from posts union all select image_url from impulses union all select image_url from messages
+                            union all select image_url from editions union all select image_url from videos) x where u like 'http%'),
+  img as (
+    select l.lang, count(*) total,
+           count(*) filter (where exists (select 1 from image_translations t where t.source_url = i.u and t.language = l.lang and t.status in ('completed', 'no_text'))) done
+    from imgs i cross join langs l group by 1),
+  aud as (
+    select l.lang, count(*) total,
+           count(*) filter (where exists (select 1 from audio_translations t where t.audio_id = a.id and t.language = l.lang)) done
+    from audios a cross join langs l where exists (select 1 from posts p where p.audio_id = a.id) group by 1),
+  subs as (
+    select l.lang, count(*) total,
+           count(*) filter (where exists (select 1 from video_subtitles s where s.video_url = v.url and s.language = l.lang)) done
+    from videos v cross join langs l group by 1),
+  rows_ as (
+    select o, k area, lang, total, done from texts
+    union all select 10, 'Bilder', lang, total, done from img
+    union all select 11, 'Audios', lang, total, done from aud
+    union all select 12, 'Video-Untertitel', lang, total, done from subs)
+  select coalesce(jsonb_agg(jsonb_build_object('area', area, 'lang', lang, 'total', total, 'done', done) order by o, lang), '[]') from rows_
+$f$;
+
 create or replace function public.status_dashboard() returns jsonb
 language plpgsql stable security definer set search_path = public, extensions as $f$
 declare res jsonb;
@@ -138,6 +177,8 @@ begin
     'telegram', jsonb_build_object(
       'subscribers', (select count(*) from telegram_subscribers),
       'messages_7d', (select count(*) from telegram_push_messages tm join push_reports p on p.id = tm.push_id where p.created_at > now() - interval '7 days')),
+
+    'coverage', jk_status.translation_coverage(),
 
     'notes', (select coalesce(jsonb_object_agg(key, value), '{}') from jk_status.notes)
   ) into res;

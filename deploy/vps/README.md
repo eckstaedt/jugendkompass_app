@@ -169,8 +169,9 @@ cd .. && bash scripts/cron.sh status
 
 ## Nach der Umstellung (17.11.2026)
 
-- **Status-Dashboard** `https://status.jugendkompass.com` (Login mit Admin-Konto). Seite: `status/index.html`
-  → `/docker/jugendkompass/sites/status/`. Daten: `public.status_dashboard()` aus `sql/status-dashboard.sql`
+- **Status-Dashboard** `https://status.jugendkompass.com` und `https://jugendkompass-status.vercel.app` (Login mit Admin-Konto).
+  Hülle: `status/index.html` → `/docker/jugendkompass/sites/status/` und Vercel-Projekt `jugendkompass-status`.
+  Programm: `status/app.js` → Storage `misc/status/app.js` (beide Seiten laden es von dort; Änderungen nur dort hochladen). Daten: `public.status_dashboard()` aus `sql/status-dashboard.sql`
   (nur für Admins; misst auch die Festplatte alle 10 Min.). DNS: A-Record `status` auf die VPS-IP.
 - **Alte App weiter versorgen** (bis Supabase abgeschaltet wird):
   - `sql/content-sync-to-cloud.sql`: pg_cron-Job `jk-sync-content-to-cloud` schiebt alle 2 Min. neue/geänderte/gelöschte
