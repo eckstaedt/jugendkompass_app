@@ -15,6 +15,8 @@
 //   TRANSLATION_WORKER_SECRET    optional override; by default the secret is
 //                                read from Vault (created by the migration)
 //   TRANSLATION_MODEL            optional, default claude-haiku-5-5
+//   TRANSLATION_FALLBACK_MODEL   optional, default claude-opus-5-5 – used for the last validation
+//                                attempt when the main model keeps breaking HTML structure
 //   TRANSLATION_EFFORT           optional, low|medium|high, default medium
 //
 // Actions (POST body):
@@ -30,7 +32,9 @@ import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.4
 
 const MODEL = Deno.env.get("TRANSLATION_MODEL") ?? "claude-haiku-5-5";
 // Server-side refusal fallbacks exist for Opus/Fable/Sonnet 5.5, not for Haiku.
-const SUPPORTS_FALLBACKS = !MODEL.startsWith("claude-haiku");
+const FALLBACK_MODEL = Deno.env.get("TRANSLATION_FALLBACK_MODEL") ?? "claude-opus-5-5";
+/** Server-side refusal fallbacks exist for every current model except Haiku. */
+const supportsFallbacks = (model: string) => !model.startsWith("claude-haiku");
 const EFFORT = (Deno.env.get("TRANSLATION_EFFORT") ?? "medium") as "low" | "medium" | "high";
 const MAX_ATTEMPTS = 8;
 const CLAIM_BATCH = 3;
@@ -170,7 +174,7 @@ Deno.serve(async (req: Request) => {
     if (!anthropicKey) {
       throw new Error("Missing ANTHROPIC_API_KEY (function secret or Vault 'translation_anthropic_api_key')");
     }
-    const anthropic = new Anthropic({ apiKey: anthropicKey, maxRetries: 4, timeout: 120_000 });
+    const anthropic = new Anthropic({ apiKey: anthropicKey, maxRetries: 8, timeout: 120_000 });
     const languages = await loadActiveLanguages(supabase);
     const workerId = `edge-${crypto.randomUUID().slice(0, 8)}`;
 
@@ -533,6 +537,15 @@ async function translateFields(
   language: string,
   contentLabel: string,
 ): Promise<Map<string, string>> {
+  // 0) embedded images (src="data:…") are replaced by short placeholders and restored
+  //    afterwards – the model never sees (or pays for) the image bytes
+  const embedded: string[] = [];
+  fields = fields.map((f) => ({
+    ...f,
+    text: f.text.replace(/(\bsrc\s*=\s*["'])(data:[^"']+)(["'])/gi, (_m, open, uri, close) =>
+      `${open}${EMBED_PREFIX}${embedded.push(uri) - 1}${close}`),
+  }));
+
   // 1) split long fields into segments at paragraph / HTML block boundaries
   const segments: Segment[] = [];
   fields.forEach((f, fieldIndex) => {
@@ -567,7 +580,8 @@ async function translateFields(
   const result = new Map<string, string>();
   for (const f of fields) {
     const parts = segments.filter((s) => s.fieldName === f.name).map((s) => translatedSegments.get(s.key) ?? "");
-    result.set(f.name, parts.join(f.kind === "html" ? "" : "\n\n").trim());
+    const text = parts.join(f.kind === "html" ? "" : "\n\n").trim();
+    result.set(f.name, text.replace(EMBED_RE, (_m, i) => embedded[Number(i)] ?? ""));
   }
   return result;
 }
@@ -580,15 +594,18 @@ async function translateSegmentsWithValidation(
 ): Promise<Map<string, string>> {
   let lastError: unknown = null;
   for (let attempt = 1; attempt <= 3; attempt++) {
+    // Long, heavily formatted texts: the small model sometimes drops HTML tags.
+    // The last attempt goes to the stronger model instead of failing the whole job.
+    const model = attempt === 3 && FALLBACK_MODEL !== MODEL ? FALLBACK_MODEL : MODEL;
     try {
-      const output = await callClaude(anthropic, segments, language, contentLabel);
+      const output = await callClaude(anthropic, segments, language, contentLabel, model);
       for (const segment of segments) {
         validateSegment(segment, output.get(segment.key));
       }
       return output;
     } catch (error) {
       lastError = error;
-      console.warn(`[translation] ${language} attempt ${attempt} failed: ${stringifyError(error)}`);
+      console.warn(`[translation] ${language} attempt ${attempt} (${model}) failed: ${stringifyError(error)}`);
       if (error instanceof Anthropic.AuthenticationError || error instanceof Anthropic.PermissionDeniedError) {
         break; // retrying cannot help
       }
@@ -602,6 +619,7 @@ async function callClaude(
   segments: Segment[],
   language: string,
   contentLabel: string,
+  model: string,
 ): Promise<Map<string, string>> {
   const languageName = LANGUAGE_NAMES[language] ?? language;
 
@@ -625,9 +643,9 @@ async function callClaude(
   const maxTokens = Math.min(64000, Math.max(8000, Math.ceil(sourceChars * 1.5) + 4000));
 
   const stream = anthropic.beta.messages.stream({
-    model: MODEL,
+    model,
     max_tokens: maxTokens,
-    ...(SUPPORTS_FALLBACKS
+    ...(supportsFallbacks(model)
       ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const }
       : {}),
     system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
@@ -685,7 +703,15 @@ function validateSegment(segment: Segment, translated: string | undefined): void
     throw new Error(`segment ${segment.key} suspiciously short (${translated.length}/${segment.text.length})`);
   }
 
-  // HTML structure must survive.
+  // Embedded-image placeholders must survive unchanged.
+  const srcEmbeds = (segment.text.match(EMBED_RE) ?? []).sort().join(",");
+  const outEmbeds = (translated.match(EMBED_RE) ?? []).sort().join(",");
+  if (srcEmbeds !== outEmbeds) {
+    throw new Error(`segment ${segment.key} lost embedded images (${srcEmbeds} → ${outEmbeds})`);
+  }
+
+  // HTML structure must survive. Inline formatting (em/strong/span …) is not counted:
+  // models legitimately merge adjacent fragments like "</em> <em>".
   const sourceTags = countTags(segment.text);
   if (sourceTags > 0) {
     const translatedTags = countTags(translated);
@@ -699,8 +725,15 @@ function validateSegment(segment: Segment, translated: string | undefined): void
   }
 }
 
+const INLINE_TAGS = new Set(["em", "strong", "b", "i", "u", "s", "span", "mark", "small", "font"]);
+const EMBED_PREFIX = "jk-embedded-image-";
+const EMBED_RE = /jk-embedded-image-(\d+)/g;
+
+/** Counts structural HTML tags (paragraphs, headings, lists, links, images, breaks …). */
 function countTags(text: string): number {
-  return (text.match(/<\/?[a-zA-Z][^>]*>/g) ?? []).length;
+  return (text.match(/<\/?([a-zA-Z][a-zA-Z0-9]*)[^>]*>/g) ?? [])
+    .filter((tag) => !INLINE_TAGS.has(tag.replace(/^<\/?/, "").match(/^[a-zA-Z0-9]+/)![0].toLowerCase()))
+    .length;
 }
 
 /** Splits text at HTML block ends / blank lines / sentences, never inside a tag. */
