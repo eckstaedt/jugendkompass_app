@@ -166,3 +166,18 @@ docker compose logs -f auth
 docker exec -it jk-db psql -U supabase_admin -d postgres
 cd .. && bash scripts/cron.sh status
 ```
+
+## Nach der Umstellung (17.11.2026)
+
+- **Status-Dashboard** `https://status.jugendkompass.com` (Login mit Admin-Konto). Seite: `status/index.html`
+  → `/docker/jugendkompass/sites/status/`. Daten: `public.status_dashboard()` aus `sql/status-dashboard.sql`
+  (nur für Admins; misst auch die Festplatte alle 10 Min.). DNS: A-Record `status` auf die VPS-IP.
+- **Alte App weiter versorgen** (bis Supabase abgeschaltet wird):
+  - `sql/content-sync-to-cloud.sql`: pg_cron-Job `jk-sync-content-to-cloud` schiebt alle 2 Min. neue/geänderte/gelöschte
+    Inhalte (Beiträge, Impulse, Kurznachrichten, Vers des Tages, Videos, Übersetzungen …) in die alte Datenbank,
+    ohne dort Trigger auszulösen.
+  - `scripts/device-sync-from-cloud.sh`: pg_cron-Job `jk-sync-device-tokens-from-cloud` übernimmt Push-Token und
+    Push-Einstellungen, die die alte App noch in Supabase speichert.
+  - `sql/cloud-storage-refs.sql`: hat die Datei-URLs in der alten Datenbank auf den VPS umgeschrieben.
+    Die Dateien im Supabase-Storage sind gelöscht (Backup auf USB-Stick „JUKO BACKUP“).
+- Pushes kommen nur noch vom VPS (Supabase hat keinen Firebase-Schlüssel mehr).

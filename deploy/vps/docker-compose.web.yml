@@ -18,6 +18,7 @@ services:
       APEX_DOMAIN: ${APEX_DOMAIN}
       ADMIN_DOMAIN: ${ADMIN_DOMAIN}
       TRANSLATE_DOMAIN: ${TRANSLATE_DOMAIN}
+      STATUS_DOMAIN: ${STATUS_DOMAIN}
     volumes:
       - ./web/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
       - ./sites:/sites:ro
@@ -29,8 +30,8 @@ services:
     labels:
       traefik.enable: "true"
       traefik.docker.network: ${TRAEFIK_NETWORK}
-      # Admin + Übersetzungs-Panel
-      traefik.http.routers.jk-web.rule: Host(`${ADMIN_DOMAIN}`) || Host(`${TRANSLATE_DOMAIN}`)
+      # Admin + Übersetzungs-Panel + Status-Dashboard
+      traefik.http.routers.jk-web.rule: Host(`${ADMIN_DOMAIN}`) || Host(`${TRANSLATE_DOMAIN}`) || Host(`${STATUS_DOMAIN}`)
       traefik.http.routers.jk-web.entrypoints: ${TRAEFIK_ENTRYPOINT}
       traefik.http.routers.jk-web.tls.certresolver: ${TRAEFIK_CERTRESOLVER}
       traefik.http.routers.jk-web.service: jk-web
@@ -42,7 +43,7 @@ services:
       traefik.http.routers.jk-www.service: jk-web
       traefik.http.services.jk-web.loadbalancer.server.port: "80"
       # HTTP → HTTPS
-      traefik.http.routers.jk-web-http.rule: Host(`${WWW_DOMAIN}`) || Host(`${APEX_DOMAIN}`) || Host(`${ADMIN_DOMAIN}`) || Host(`${TRANSLATE_DOMAIN}`)
+      traefik.http.routers.jk-web-http.rule: Host(`${WWW_DOMAIN}`) || Host(`${APEX_DOMAIN}`) || Host(`${ADMIN_DOMAIN}`) || Host(`${TRANSLATE_DOMAIN}`) || Host(`${STATUS_DOMAIN}`)
       traefik.http.routers.jk-web-http.entrypoints: ${TRAEFIK_HTTP_ENTRYPOINT:-web}
       traefik.http.routers.jk-web-http.middlewares: jk-web-https
       traefik.http.middlewares.jk-web-https.redirectscheme.scheme: https
