@@ -20,7 +20,7 @@ enum AppLanguage {
   /// Returns only the languages that should be shown in the language selector
   /// Languages users can pick in the app. The others (ru, es, pl, tr, he)
   /// stay fully supported in code and backend, they are only hidden for now.
-  static List<AppLanguage> get availableLanguages => [de, en, ru];
+  static List<AppLanguage> get availableLanguages => [de, en, ru, pl];
 }
 
 class Translations {
