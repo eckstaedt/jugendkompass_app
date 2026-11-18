@@ -25,7 +25,7 @@ concurrency:
 
 env:
   # Nach der Umstellung Repo-Variable SUPABASE_URL=https://api.jugendkompass.com setzen.
-  SUPABASE_URL: ${{ vars.SUPABASE_URL || 'https://vdcdibvclaulqxfjyzpq.supabase.co' }}
+  SUPABASE_URL: ${{ vars.SUPABASE_URL || 'https://api.jugendkompass.com' }}
   SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
   SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

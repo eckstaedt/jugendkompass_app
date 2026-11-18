@@ -12,7 +12,7 @@ import hashlib, json, os, subprocess, sys, tempfile, urllib.request, urllib.pars
 
 REF = "vdcdibvclaulqxfjyzpq"
 # Ziel-Instanz: im Workflow aus der Repo-Variable SUPABASE_URL (VPS: https://api.jugendkompass.com)
-SB = os.environ.get("SUPABASE_URL", f"https://{REF}.supabase.co").rstrip("/")
+SB = os.environ.get("SUPABASE_URL", "https://api.jugendkompass.com").rstrip("/")
 
 
 def key():

@@ -43,7 +43,7 @@ import urllib.parse
 import urllib.request
 
 PROJECT_REF = "vdcdibvclaulqxfjyzpq"
-SUPABASE_URL = os.environ.get("SUPABASE_URL", f"https://{PROJECT_REF}.supabase.co").rstrip("/")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://api.jugendkompass.com").rstrip("/")
 BUCKET = "posts"
 PREFIX = "image-translations"
 WORKER = "image-translation"
