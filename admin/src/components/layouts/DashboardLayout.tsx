@@ -1,0 +1,110 @@
+
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Sidebar } from './Sidebar';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { ArrowLeftIcon, MenuIcon, GlobeIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { usePreviewLocale } from '@/contexts/PreviewLocaleContext';
+
+type DashboardLayoutProps = {
+  children: React.ReactNode;
+  title: string;
+};
+
+export const DashboardLayout = ({ children, title }: DashboardLayoutProps) => {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { user, loading, isAdmin, adminChecked } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { previewLang } = usePreviewLocale();
+
+  useEffect(() => {
+    const checkMobile = () => {
+      if (window.innerWidth < 768) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (loading || !adminChecked) return;
+    if (!user) {
+      navigate('/login');
+      toast({
+        title: "Zugang verweigert",
+        description: "Bitte melde dich an, um auf das Dashboard zuzugreifen.",
+        variant: "destructive"
+      });
+    } else if (!isAdmin) {
+      navigate('/login');
+      toast({
+        title: "Zugang verweigert",
+        description: "Du benötigst Administratorrechte für diesen Bereich.",
+        variant: "destructive"
+      });
+    }
+  }, [user, loading, isAdmin, adminChecked, navigate, toast]);
+
+  const contentToRender = (loading || !adminChecked) ? (
+    <div className="flex flex-1 items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+    </div>
+  ) : children;
+
+  // Adjusted header height to h-20 for all dashboard pages for consistency
+  return (
+    <div className="flex h-screen overflow-hidden">
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-200 ease-in-out bg-sidebar md:relative ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0 md:w-16'}`}>
+        <Sidebar collapsed={!sidebarOpen} />
+      </div>
+      <div className="flex flex-1 flex-col overflow-y-auto">
+        <header className="sticky top-0 z-10 flex h-20 items-center border-b bg-white dark:bg-background px-4 shadow-sm">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="mr-4 md:hidden"
+          >
+            <MenuIcon className="h-5 w-5" />
+            <span className="sr-only">Menü öffnen</span>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="mr-4 hidden md:flex"
+          >
+            {sidebarOpen ? (
+              <ArrowLeftIcon className="h-5 w-5" />
+            ) : (
+              <MenuIcon className="h-5 w-5" />
+            )}
+            <span className="sr-only">
+              Seitenleiste {sidebarOpen ? 'einklappen' : 'ausklappen'}
+            </span>
+          </Button>
+          <h1 className="text-xl font-semibold">{title}</h1>
+          {previewLang !== 'de' && (
+            <div className="ml-auto flex items-center gap-2 rounded-md bg-amber-100 dark:bg-amber-900/30 px-3 py-1.5 text-xs font-medium text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
+              <GlobeIcon className="h-3.5 w-3.5" />
+              Vorschau: {previewLang === 'en' ? 'Englisch' : previewLang === 'es' ? 'Spanisch' : previewLang === 'ru' ? 'Russisch' : 'Polnisch'}
+            </div>
+          )}
+        </header>
+        <main className="flex-1 p-6">
+          {contentToRender}
+        </main>
+      </div>
+    </div>
+  );
+};
+

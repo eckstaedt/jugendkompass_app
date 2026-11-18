@@ -1,0 +1,10 @@
+UPDATE posts SET id = 'ffffffff-ffff-ffff-ffff-fffffffffffa'::uuid WHERE id = '22b1eb5a-06bf-4e03-8087-1b52786fabfb';
+UPDATE posts SET id = 'ffffffff-ffff-ffff-ffff-fffffffffff9'::uuid WHERE id = 'e7a28c2d-fdbb-4a36-a0f8-8c0949447a52';
+UPDATE posts SET id = 'ffffffff-ffff-ffff-ffff-fffffffffff8'::uuid WHERE id = '5f982c22-717a-45fa-b55c-b8d2d606b32a';
+UPDATE posts SET id = 'ffffffff-ffff-ffff-ffff-fffffffffff7'::uuid WHERE id = '10a18009-59f8-4055-a2ca-6e11d3332fd6';
+UPDATE posts SET id = 'ffffffff-ffff-ffff-ffff-fffffffffff6'::uuid WHERE id = '74fbf4ca-5fe7-4958-9fb5-0e72c5f49794';
+UPDATE posts SET id = 'ffffffff-ffff-ffff-ffff-fffffffffff5'::uuid WHERE id = '53d01331-56c6-4c56-8f16-5ebb3deaa35d';
+UPDATE posts SET id = 'ffffffff-ffff-ffff-ffff-fffffffffff4'::uuid WHERE id = 'd0d52c45-7db2-46e7-9485-d87f2480cb3a';
+UPDATE posts SET id = 'ffffffff-ffff-ffff-ffff-fffffffffff3'::uuid WHERE id = 'c2933688-9b25-4bb8-8e16-64fe1ab6ffe2';
+UPDATE posts SET id = 'ffffffff-ffff-ffff-ffff-fffffffffff2'::uuid WHERE id = '1a8f9307-4953-42ee-9987-9492466e2805';
+UPDATE posts SET id = 'ffffffff-ffff-ffff-ffff-fffffffffff1'::uuid WHERE id = '04b93d77-499c-4c04-bee0-3519fe25aaf5';

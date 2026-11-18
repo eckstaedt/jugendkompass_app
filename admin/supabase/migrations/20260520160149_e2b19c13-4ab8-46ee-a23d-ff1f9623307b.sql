@@ -1,0 +1,1 @@
+ALTER TABLE public.editions ADD COLUMN IF NOT EXISTS release_date date;

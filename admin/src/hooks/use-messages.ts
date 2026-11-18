@@ -1,0 +1,187 @@
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
+import { logActivity } from '@/lib/activity-logger';
+
+export type Message = {
+  id: number;
+  content_id: string | null;
+  created_by: string | null;
+  created_at: string | null;
+  title: string;
+  message: string;
+  image_url: string | null;
+  notification_sent_at: string | null;
+};
+
+import { usePreviewLocale } from '@/contexts/PreviewLocaleContext';
+
+export const useMessages = () => {
+  const { previewLang } = usePreviewLocale();
+  return useQuery({
+    queryKey: ['messages', previewLang],
+    queryFn: async () => {
+      if (previewLang !== 'de') {
+        const { data, error } = await supabase
+          .rpc('get_messages_localized', { lang: previewLang });
+        if (error) throw error;
+        const sorted = [...(data ?? [])].sort((a: any, b: any) =>
+          (b.created_at ?? '').localeCompare(a.created_at ?? '')
+        );
+        return sorted as unknown as Message[];
+      }
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as Message[];
+    },
+  });
+};
+
+export const useCreateMessage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ title, message, imageFile, userId }: { title: string; message: string; imageFile?: File; userId?: string }) => {
+      let image_url = null;
+
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${uuidv4()}.${fileExt}`;
+        const { error: uploadError, data } = await supabase.storage
+          .from('messages')
+          .upload(fileName, imageFile);
+
+        if (uploadError) throw uploadError;
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('messages')
+          .getPublicUrl(fileName);
+          
+        image_url = publicUrl;
+      }
+
+      const { data, error } = await supabase
+        .from('messages')
+        .insert([{ title, message, image_url }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (userId && data?.id) {
+        await logActivity(
+          userId,
+          'message',
+          'create',
+          String(data.id),
+          'Nachricht erstellt'
+        );
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+    },
+  });
+};
+
+export const useUpdateMessage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, title, message, imageFile, userId }: { id: number; title: string; message: string; imageFile?: File; userId?: string }) => {
+      let image_url = undefined;
+
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${uuidv4()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
+          .from('messages')
+          .upload(fileName, imageFile);
+
+        if (uploadError) throw uploadError;
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('messages')
+          .getPublicUrl(fileName);
+          
+        image_url = publicUrl;
+      }
+
+      const { data, error } = await supabase
+        .from('messages')
+        .update({ title: title || null, message, ...(image_url ? { image_url } : {}) })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      if (userId) {
+        await logActivity(
+          userId,
+          'message',
+          'update',
+          String(id),
+          'Nachricht bearbeitet'
+        );
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+    },
+  });
+};
+
+export const useDeleteMessage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, userId }: { id: number; userId?: string }) => {
+      const { error } = await supabase
+        .from('messages')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      if (userId) {
+        await logActivity(
+          userId,
+          'message',
+          'delete',
+          String(id),
+          'Nachricht gelöscht'
+        );
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+    },
+  });
+};
+
+export const useSendMessagePush = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, force }: { id: number; force?: boolean }) => {
+      const { data, error } = await supabase.functions.invoke('dispatch-message-pushes', {
+        body: { message_id: id, force: !!force },
+      });
+      if (error) throw error;
+      return data as { message_id: number; sent: number; total: number };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['messages'] });
+    },
+  });
+};
