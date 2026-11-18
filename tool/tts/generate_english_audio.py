@@ -40,7 +40,7 @@ import urllib.request
 import zlib
 
 PROJECT_REF = "vdcdibvclaulqxfjyzpq"
-SUPABASE_URL = os.environ.get("SUPABASE_URL", f"https://{PROJECT_REF}.supabase.co").rstrip("/")
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://api.jugendkompass.com").rstrip("/")
 BUCKET = "audios"
 LANGUAGE = "en"
 TTS_PREFIX = "tts/en/"
