@@ -1,0 +1,96 @@
+# Prüfung, Web-Build und Web-Deploy
+
+.flutter:
+  image: $ANDROID_IMAGE
+  cache:
+    - key: flutter-$FLUTTER_VERSION
+      paths: [.cache/flutter]
+    - key:
+        files: [pubspec.lock]
+        prefix: pub
+      paths: [.cache/pub]
+  before_script:
+    - source .gitlab/ci/flutter-env.sh
+    - flutter pub get
+
+# Gemeinsame Regel: nie in Aufgaben-Pipelines (Zeitpläne, TASK=…)
+.not_task: &not_task
+  if: $TASK || $CI_PIPELINE_SOURCE == "schedule"
+  when: never
+
+check:flutter:
+  extends: .flutter
+  stage: check
+  rules:
+    - *not_task
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+  script:
+    - flutter analyze --no-fatal-infos --no-fatal-warnings
+    - flutter test --reporter expanded
+
+.web_changes: &web_changes
+  - web/**/*
+  - lib/**/*
+  - assets/**/*
+  - translation-panel/**/*
+  - pubspec.yaml
+  - pubspec.lock
+  - dotenv
+  - .gitlab-ci.yml
+  - .gitlab/ci/**/*
+
+build:web:
+  extends: .flutter
+  stage: build
+  needs: []
+  rules:
+    - *not_task
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes: *web_changes
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes: *web_changes
+  script:
+    # Web-App und Panel immer gegen das Backend auf dem VPS bauen
+    - sed -i "s|^SUPABASE_URL=.*|SUPABASE_URL=${API_URL}|" dotenv
+    - grep -q "^SUPABASE_URL=${API_URL}$" dotenv
+    - flutter build web --release
+    - test -f build/web/api/share.js
+    - test -f build/web/.well-known/apple-app-site-association
+    - rm -f build/web/vercel.json
+    - mkdir -p dist && mv build/web dist/www
+    - mkdir -p dist/translate && cp -R translation-panel/. dist/translate/
+    - rm -f dist/translate/vercel.json dist/translate/README.md
+    - sed -i "s|https://[a-z0-9]*\.supabase\.co|${API_URL}|g" dist/translate/*.js
+    - grep -q "${API_URL}" dist/translate/config.js
+  artifacts:
+    paths: [dist/]
+    expire_in: 1 week
+
+deploy:web:
+  stage: deploy
+  image: alpine:3.22
+  needs: [build:web, check:flutter]
+  resource_group: web-vps
+  environment:
+    name: production/web
+    url: https://www.jugendkompass.com
+  rules:
+    - *not_task
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
+      changes: *web_changes
+  variables:
+    SITES: /docker/jugendkompass/sites
+  before_script:
+    - . .gitlab/ci/ssh-setup.sh
+  script:
+    - rsync -az --delete-after -e "$RSH" dist/www/ "$VPS_SSH_USER@$VPS_SSH_HOST:$SITES/www/"
+    - rsync -az --delete-after -e "$RSH" dist/translate/ "$VPS_SSH_USER@$VPS_SSH_HOST:$SITES/translate/"
+    - apk add --no-cache curl >/dev/null
+    - curl -fsS -o /dev/null https://www.jugendkompass.com/
+    - curl -fsSI https://www.jugendkompass.com/.well-known/apple-app-site-association | grep -qi 'application/json'
+  after_script:
+    - rm -f ~/.ssh/id_deploy

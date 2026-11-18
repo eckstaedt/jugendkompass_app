@@ -1,0 +1,13 @@
+# GitLab Runner (Docker-Executor) für die Linux-Jobs von Jugendkompass.
+#
+# Start:     docker compose up -d
+# Anmelden:  siehe deploy/gitlab/README.md, Abschnitt "Linux-Runner"
+# Konfig:    ./config/config.toml (concurrent = gleichzeitige Jobs)
+services:
+  gitlab-runner:
+    image: gitlab/gitlab-runner:alpine-v18.5.0
+    container_name: jk-gitlab-runner
+    restart: unless-stopped
+    volumes:
+      - ./config:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock

@@ -1,0 +1,206 @@
+# fastlane – Store-Uploads für Jugendkompass (aufgerufen aus .gitlab/ci/stores.yml)
+#
+# Android (Linux, ruby-Image):
+#   fastlane android next_version_code   nächster versionCode → fastlane/android.env
+#   fastlane android internal aab:<pfad> AAB in den Track "internal" hochladen
+#   fastlane android production          diese Version von "internal" nach "production"
+# iOS:
+#   fastlane ios beta                    signierter Build (macOS) → TestFlight
+#   fastlane ios submit_review           TestFlight-Build zur App-Store-Prüfung (läuft auch auf Linux)
+#
+# Zugangsdaten kommen ausschließlich aus CI/CD-Variablen (siehe deploy/gitlab/README.md).
+
+require "json"
+require "tmpdir"
+require "fileutils"
+
+opt_out_usage
+
+PACKAGE_NAME   = ENV.fetch("PACKAGE_NAME", "io.stephanus.jugendkompass")
+BUNDLE_ID      = "io.stephanus.jugendkompass"
+APPLE_TEAM_ID  = "MXM3YWAKPL"
+APP_STORE_ID   = "1559123537"
+ROOT           = File.expand_path("..", __dir__)
+
+def pubspec_version
+  line = File.readlines(File.join(ROOT, "pubspec.yaml")).find { |l| l.start_with?("version:") }
+  name, build = line.split(":", 2).last.strip.split("+")
+  [name, build.to_i]
+end
+
+def require_env(*names)
+  missing = names.reject { |n| ENV[n].to_s.strip != "" }
+  UI.user_error!("CI/CD-Variable(n) fehlen: #{missing.join(', ')}") unless missing.empty?
+end
+
+def write_env(file, values)
+  File.write(File.join(__dir__, file), values.map { |k, v| "#{k}=#{v}\n" }.join)
+end
+
+# ------------------------------------------------------------------ Android
+platform :android do
+  def play_key
+    require_env("PLAY_SERVICE_ACCOUNT_JSON")
+    v = ENV["PLAY_SERVICE_ACCOUNT_JSON"]
+    # File-Variable (Pfad) oder Inhalt
+    File.file?(v) ? { json_key: v } : { json_key_data: v }
+  end
+
+  desc "Nächsten versionCode bestimmen (höchster Code in allen Tracks + 1, mindestens pubspec)"
+  lane :next_version_code do
+    _, pub_build = pubspec_version
+    key = play_key
+    errors = []
+    codes = %w[internal alpha beta production].flat_map do |track|
+      google_play_track_version_codes(package_name: PACKAGE_NAME, track: track, **key)
+    rescue StandardError => e
+      errors << "#{track}: #{e.message}"
+      []
+    end
+    errors.each { |e| UI.important(e) }
+    UI.user_error!("Google Play API nicht erreichbar (Service-Account/Rechte prüfen)") if errors.size == 4
+    code = [codes.max.to_i + 1, pub_build].max
+    UI.success("versionCode #{code} (Play max #{codes.max.inspect}, pubspec #{pub_build})")
+    write_env("android.env", "ANDROID_VERSION_CODE" => code)
+  end
+
+  desc "AAB in den internen Test-Track hochladen"
+  lane :internal do |options|
+    aab = options[:aab] || UI.user_error!("aab:<pfad> fehlt")
+    upload_to_play_store(
+      package_name: PACKAGE_NAME,
+      track: "internal",
+      aab: File.expand_path(aab, ROOT),
+      release_status: "completed",
+      skip_upload_metadata: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      **play_key
+    )
+  end
+
+  desc "Version aus 'internal' nach 'production' übernehmen (PLAY_ROLLOUT, z. B. 0.2 = 20 %)"
+  lane :production do
+    require_env("ANDROID_VERSION_CODE")
+    rollout = ENV["PLAY_ROLLOUT"].to_s.strip
+    staged = !rollout.empty? && rollout.to_f < 1.0
+    upload_to_play_store(
+      package_name: PACKAGE_NAME,
+      track: "internal",
+      track_promote_to: "production",
+      version_code: ENV["ANDROID_VERSION_CODE"].to_i,
+      release_status: staged ? "inProgress" : "completed",
+      rollout: staged ? rollout : nil,
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_metadata: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
+      **play_key
+    )
+  end
+end
+
+# ------------------------------------------------------------------ iOS
+platform :ios do
+  # App Store Connect API-Schlüssel (Rolle "Admin", damit Xcode Zertifikate und
+  # Profile selbst verwalten kann – "cloud-managed signing", keine .p12/Profile im Repo).
+  def asc_key_path
+    require_env("ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_KEY_P8")
+    v = ENV["ASC_KEY_P8"]
+    return v if File.file?(v)
+    path = File.join(Dir.tmpdir, "AuthKey_#{ENV['ASC_KEY_ID']}.p8")
+    File.write(path, v)
+    path
+  end
+
+  def asc_api_key
+    app_store_connect_api_key(
+      key_id: ENV["ASC_KEY_ID"],
+      issuer_id: ENV["ASC_ISSUER_ID"],
+      key_filepath: asc_key_path,
+      duration: 1200,
+      in_house: false
+    )
+  end
+
+  desc "Signierter Build → TestFlight"
+  lane :beta do
+    api_key = asc_api_key
+    key_path = asc_key_path
+    version, pub_build = pubspec_version
+
+    latest = begin
+      latest_testflight_build_number(api_key: api_key, app_identifier: BUNDLE_ID, initial_build_number: 0)
+    rescue StandardError => e
+      UI.important("TestFlight-Buildnummer nicht lesbar: #{e.message}")
+      0
+    end
+    build = [latest.to_i + 1, pub_build].max
+    UI.success("iOS #{version} (#{build}) – TestFlight max #{latest}, pubspec #{pub_build}")
+
+    # Generated.xcconfig + Pods mit Version/Build aus Flutter erzeugen (das Widget liest diese Werte)
+    Dir.chdir(ROOT) do
+      sh("flutter", "build", "ios", "--release", "--config-only",
+         "--build-name=#{version}", "--build-number=#{build}")
+    end
+
+    auth = "-allowProvisioningUpdates " \
+           "-authenticationKeyPath #{key_path} " \
+           "-authenticationKeyID #{ENV['ASC_KEY_ID']} " \
+           "-authenticationKeyIssuerID #{ENV['ASC_ISSUER_ID']}"
+
+    ipa = build_app(
+      workspace: File.join(ROOT, "ios/Runner.xcworkspace"),
+      scheme: "Runner",
+      configuration: "Release",
+      export_method: "app-store",
+      export_team_id: APPLE_TEAM_ID,
+      export_options: { signingStyle: "automatic", teamID: APPLE_TEAM_ID, manageAppVersionAndBuildNumber: false },
+      xcargs: "#{auth} DEVELOPMENT_TEAM=#{APPLE_TEAM_ID}",
+      export_xcargs: auth,
+      output_directory: File.join(ROOT, "dist"),
+      output_name: "jugendkompass-#{version}-#{build}.ipa",
+      clean: true
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      app_identifier: BUNDLE_ID,
+      ipa: ipa,
+      skip_waiting_for_build_processing: true,
+      distribute_external: false
+    )
+
+    write_env("ios.env", "IOS_BUILD_NUMBER" => build, "IOS_VERSION" => version)
+  end
+
+  desc "TestFlight-Build zur App-Store-Prüfung einreichen"
+  lane :submit_review do
+    require_env("IOS_BUILD_NUMBER", "IOS_VERSION")
+    release_notes = ENV["RELEASE_NOTES"].to_s.strip
+    release_notes = "Fehlerbehebungen und Verbesserungen." if release_notes.empty?
+    FileUtils.mkdir_p(File.join(__dir__, "metadata-empty"))
+    deliver(
+      api_key: asc_api_key,
+      app_identifier: BUNDLE_ID,
+      app_version: ENV["IOS_VERSION"],
+      build_number: ENV["IOS_BUILD_NUMBER"],
+      skip_binary_upload: true,
+      # Nur "Neuigkeiten" setzen (Pflicht bei Updates); weitere Metadaten bleiben unverändert
+      skip_metadata: false,
+      metadata_path: File.join(__dir__, "metadata-empty"),
+      ignore_language_directory_validation: true,
+      release_notes: { "default" => release_notes },
+      skip_screenshots: true,
+      skip_app_version_update: false,
+      submit_for_review: true,
+      automatic_release: ENV["IOS_AUTO_RELEASE"] == "true",
+      force: true,
+      run_precheck_before_submit: false,
+      submission_information: { add_id_info_uses_idfa: false }
+    )
+  end
+end

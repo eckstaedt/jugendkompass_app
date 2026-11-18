@@ -1,0 +1,4 @@
+# Zugangsdaten kommen aus CI/CD-Variablen (siehe Fastfile)
+app_identifier("io.stephanus.jugendkompass")
+package_name("io.stephanus.jugendkompass")
+team_id("MXM3YWAKPL")

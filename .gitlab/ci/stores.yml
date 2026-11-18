@@ -1,0 +1,169 @@
+# Store-Releases (Google Play + App Store)
+#
+# Auslöser:
+#   - Tag vX.Y.Z (muss zur version: in pubspec.yaml passen)  → Play "internal" + TestFlight
+#   - "Run pipeline" auf einem Branch mit STORE_BUILD=true      → dasselbe als Testbuild
+# Danach per Klick (manuelle Jobs):
+#   - android:production  → Version aus "internal" nach "production" (PLAY_ROLLOUT, Standard 1.0)
+#   - ios:submit-review   → TestFlight-Build zur App-Store-Prüfung einreichen
+#                           (IOS_AUTO_RELEASE=true: nach Freigabe automatisch veröffentlichen)
+
+.store_rules:
+  rules:
+    - if: $TASK || $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
+    - if: $CI_COMMIT_BRANCH && $STORE_BUILD == "true"
+
+.store_manual_rules:
+  rules:
+    - if: $TASK || $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
+      when: manual
+    - if: $CI_COMMIT_BRANCH && $STORE_BUILD == "true"
+      when: manual
+
+.fastlane_linux:
+  image: $RUBY_IMAGE
+  cache:
+    key:
+      files: [Gemfile.lock]
+      prefix: gems
+    paths: [vendor/ruby]
+  before_script:
+    - bundle config set --local path vendor/ruby
+    - bundle config set --local deployment true
+    - bundle install --jobs 4 --quiet
+
+release:verify:
+  stage: check
+  image: alpine:3.22
+  extends: .store_rules
+  needs: []
+  script:
+    - version=$(sed -nE 's/^version:[[:space:]]*([0-9.]+)\+?.*/\1/p' pubspec.yaml)
+    - echo "pubspec.yaml version $version"
+    - |
+      if [ -n "$CI_COMMIT_TAG" ] && [ "$CI_COMMIT_TAG" != "v$version" ]; then
+        echo "Tag $CI_COMMIT_TAG passt nicht zu pubspec.yaml (v$version)."; exit 1
+      fi
+    - echo "APP_VERSION=$version" > release.env
+  artifacts:
+    reports:
+      dotenv: release.env
+
+# ---------------------------------------------------------------- Android
+
+android:version-code:
+  stage: build
+  extends: [.fastlane_linux, .store_rules]
+  needs: [release:verify]
+  script:
+    - bundle exec fastlane android next_version_code
+  artifacts:
+    reports:
+      dotenv: fastlane/android.env
+
+android:build:
+  stage: build
+  extends: [.flutter, .store_rules]
+  needs:
+    - release:verify
+    - android:version-code
+    - job: check:flutter
+      optional: true
+  variables:
+    GRADLE_USER_HOME: $CI_PROJECT_DIR/.cache/gradle
+  cache:
+    - key: flutter-$FLUTTER_VERSION
+      paths: [.cache/flutter]
+    - key:
+        files: [pubspec.lock]
+        prefix: pub
+      paths: [.cache/pub]
+    - key: gradle
+      paths: [.cache/gradle]
+  script:
+    - |
+      for v in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+        eval "val=\${$v:-}"; [ -n "$val" ] || { echo "CI/CD-Variable $v fehlt."; exit 1; }
+      done
+    # Upload-Keystore (.jks) als base64 (GitLab-Variablen sind Text, keine Binärdateien)
+    - echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
+    - |
+      cat > android/key.properties <<EOF
+      storeFile=upload-keystore.jks
+      storePassword=$ANDROID_KEYSTORE_PASSWORD
+      keyAlias=$ANDROID_KEY_ALIAS
+      keyPassword=$ANDROID_KEY_PASSWORD
+      EOF
+    - flutter build appbundle --release --build-number="$ANDROID_VERSION_CODE"
+    - mkdir -p dist && cp build/app/outputs/bundle/release/app-release.aab "dist/jugendkompass-$APP_VERSION-$ANDROID_VERSION_CODE.aab"
+  after_script:
+    - rm -f android/app/upload-keystore.jks android/key.properties
+  artifacts:
+    paths: [dist/*.aab]
+    expire_in: 30 days
+
+android:internal:
+  stage: store
+  extends: [.fastlane_linux, .store_rules]
+  needs: [android:build, android:version-code, release:verify]
+  resource_group: play-store
+  environment:
+    name: play/internal
+  script:
+    - bundle exec fastlane android internal aab:"$(ls dist/*.aab | head -1)"
+
+android:production:
+  stage: release
+  extends: [.fastlane_linux, .store_manual_rules]
+  needs: [android:internal, android:version-code, release:verify]
+  resource_group: play-store
+  environment:
+    name: play/production
+    url: https://play.google.com/store/apps/details?id=io.stephanus.jugendkompass
+  script:
+    - bundle exec fastlane android production
+
+# ---------------------------------------------------------------- iOS
+
+ios:testflight:
+  stage: store
+  extends: .store_rules
+  tags: [macos]
+  needs:
+    - release:verify
+    - job: check:flutter
+      optional: true
+  resource_group: app-store
+  environment:
+    name: appstore/testflight
+  variables:
+    LANG: en_US.UTF-8
+    LC_ALL: en_US.UTF-8
+    PUB_CACHE: $HOME/.pub-cache
+  before_script:
+    - source .gitlab/ci/flutter-env.sh
+    - flutter pub get
+    - bundle config set --local path vendor/ruby
+    - bundle install --jobs 4 --quiet
+  script:
+    - bundle exec fastlane ios beta
+  artifacts:
+    paths: [dist/*.ipa]
+    reports:
+      dotenv: fastlane/ios.env
+    expire_in: 30 days
+
+ios:submit-review:
+  stage: release
+  extends: [.fastlane_linux, .store_manual_rules]
+  needs: [ios:testflight, release:verify]
+  resource_group: app-store
+  environment:
+    name: appstore/production
+    url: https://apps.apple.com/app/id1559123537
+  script:
+    - bundle exec fastlane ios submit_review

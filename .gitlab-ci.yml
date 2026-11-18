@@ -1,0 +1,60 @@
+# Jugendkompass App – CI/CD auf gitlab.bethaus-speyer.de
+#
+# Überblick (Details, Variablen und Runner: deploy/gitlab/README.md)
+#
+#   Merge Request / Push   → Analyse + Tests, Web-Build
+#   Push auf main          → Web-App + Übersetzungs-Panel auf den VPS (rsync)
+#   Tag vX.Y.Z             → Android: Play "internal"   (automatisch)
+#                            iOS:     TestFlight         (automatisch, macOS-Runner)
+#                            danach per Klick: Play "production" / App-Store-Review
+#   Pipeline-Zeitpläne     → Hintergrund-Aufgaben (Audio, Untertitel, Bilder),
+#                            gesteuert über die Variable TASK
+#
+# Linux-Jobs laufen auf einem Docker-Runner ohne Tag, iOS-Jobs auf einem
+# macOS-Runner mit dem Tag "macos".
+
+workflow:
+  name: "$PIPELINE_NAME"
+  rules:
+    - if: $TASK
+      variables:
+        PIPELINE_NAME: "Aufgabe: $TASK"
+    - if: $CI_COMMIT_TAG
+      variables:
+        PIPELINE_NAME: "Release $CI_COMMIT_TAG"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      variables:
+        PIPELINE_NAME: "MR !$CI_MERGE_REQUEST_IID: $CI_MERGE_REQUEST_TITLE"
+    # Kein doppelter Branch-Pipeline-Lauf, solange ein MR offen ist
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS && $CI_PIPELINE_SOURCE == "push"
+      when: never
+    - if: $CI_COMMIT_BRANCH
+      variables:
+        PIPELINE_NAME: "$CI_COMMIT_BRANCH: $CI_COMMIT_TITLE"
+
+variables:
+  FLUTTER_VERSION: "3.47.9"
+  API_URL: "https://api.jugendkompass.com"
+  PACKAGE_NAME: "io.stephanus.jugendkompass"
+  # Docker-Image für Flutter-Linux-Jobs (Android SDK + JDK 17; Flutter kommt aus flutter-env.sh)
+  ANDROID_IMAGE: "ghcr.io/cirruslabs/android-sdk:36"
+  RUBY_IMAGE: "ruby:3.3-bookworm"
+  PUB_CACHE: "$CI_PROJECT_DIR/.cache/pub"
+  GIT_DEPTH: "20"
+  LANG: "C.UTF-8"
+  LC_ALL: "C.UTF-8"
+  FASTLANE_SKIP_UPDATE_CHECK: "1"
+  FASTLANE_HIDE_CHANGELOG: "1"
+
+stages:
+  - check
+  - build
+  - deploy
+  - store
+  - release
+  - tasks
+
+include:
+  - local: .gitlab/ci/app.yml
+  - local: .gitlab/ci/stores.yml
+  - local: .gitlab/ci/tasks.yml

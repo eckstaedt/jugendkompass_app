@@ -1,0 +1,193 @@
+# Hintergrund-Aufgaben (vorher GitHub-Actions-Zeitpläne)
+#
+# Jede Aufgabe läuft nur in einer Pipeline mit der Variable TASK=<name>:
+#   - Pipeline-Zeitplan (Build → Pipeline schedules), siehe deploy/gitlab/README.md
+#   - oder von Hand: Build → Pipelines → "Run pipeline" mit TASK=<name>
+#
+#   english-audio      Englische KI-Stimme (Kokoro)            stündlich
+#   image-translation  Bildtexte übersetzen (Gemini)           stündlich
+#   russian-audio      Russische KI-Stimme (Piper)             täglich 03:20
+#   polish-audio       Polnische KI-Stimme (Piper)             täglich 03:50
+#   video-subtitles    Untertitel en (Whisper) + ru/pl         täglich 04:40
+#   verse-images       Bilder "Vers des Tages"                 täglich 04:23
+#
+# Benötigt: SUPABASE_SERVICE_ROLE_KEY (masked + protected), für Bilder zusätzlich GEMINI_API_KEY.
+# Die Skripte schreiben direkt in Supabase auf dem VPS (API_URL).
+
+.task:
+  stage: tasks
+  image: python:3.12-bookworm
+  variables:
+    SUPABASE_URL: $API_URL
+    PIP_CACHE_DIR: $CI_PROJECT_DIR/.cache/pip
+    PIP_DISABLE_PIP_VERSION_CHECK: "1"
+    # Die Skripte schreiben "pending=N" in diese Datei (Name stammt aus GitHub Actions)
+    GITHUB_OUTPUT: $CI_PROJECT_DIR/plan.env
+  cache:
+    key: pip-$CI_JOB_NAME_SLUG
+    paths: [.cache/pip]
+  before_script:
+    - '[ -n "$SUPABASE_SERVICE_ROLE_KEY" ] || { echo "CI/CD-Variable SUPABASE_SERVICE_ROLE_KEY fehlt."; exit 1; }'
+    - unset SUPABASE_ACCESS_TOKEN
+    - export SHARD=$(( ${CI_NODE_INDEX:-1} - 1 )) SHARDS=${CI_NODE_TOTAL:-1}
+  interruptible: true
+
+.apt_ffmpeg: &apt_ffmpeg
+  - apt-get update -qq && apt-get install -y -qq ffmpeg >/dev/null
+
+english-audio:
+  extends: .task
+  rules:
+    - if: $TASK == "english-audio"
+  parallel: 4
+  timeout: 75m
+  resource_group: english-audio-$CI_NODE_INDEX
+  variables:
+    TIME_BUDGET_MIN: "55"
+    KOKORO_MODEL: models/kokoro-v1.0.onnx
+    KOKORO_VOICES: models/voices-v1.0.bin
+  cache:
+    - key: pip-english-audio
+      paths: [.cache/pip]
+    - key: kokoro-v1.0
+      paths: [models]
+  script:
+    - PLAN_ONLY=1 python3 tool/tts/generate_english_audio.py
+    - '[ ! -f plan.env ] || . ./plan.env'
+    - '[ "${pending:-0}" != 0 ] || { echo "Nichts zu tun."; exit 0; }'
+    # Wenige neue Audios: ein Job reicht
+    - |
+      if [ "$pending" -le 4 ]; then
+        [ "$SHARD" = 0 ] || { echo "Nur $pending offen – Job 1 übernimmt."; exit 0; }
+        export SHARDS=1
+      fi
+    - |
+      if [ ! -f "$KOKORO_MODEL" ]; then
+        mkdir -p models
+        base=https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0
+        curl -fsSL -o "$KOKORO_MODEL" "$base/kokoro-v1.0.onnx"
+        curl -fsSL -o "$KOKORO_VOICES" "$base/voices-v1.0.bin"
+      fi
+    - *apt_ffmpeg
+    - pip install -q -r tool/tts/requirements.txt
+    - python3 tool/tts/generate_english_audio.py
+
+image-translation:
+  extends: .task
+  rules:
+    - if: $TASK == "image-translation"
+  timeout: 75m
+  resource_group: image-translation
+  variables:
+    LANGUAGES: "en,ru,pl"
+    TIME_BUDGET_MIN: "55"
+    LIMIT: "800"
+  script:
+    - PLAN_ONLY=1 python3 tool/image_translate/translate_images.py
+    - '[ ! -f plan.env ] || . ./plan.env'
+    - '[ "${pending:-0}" != 0 ] || { echo "Nichts zu tun."; exit 0; }'
+    - pip install -q pillow
+    - python3 tool/image_translate/translate_images.py
+
+.piper:
+  extends: .task
+  parallel: 4
+  timeout: 5h 30m
+  variables:
+    TIME_BUDGET_MIN: "300"
+  script:
+    - *apt_ffmpeg
+    - pip install -q piper-tts soundfile numpy
+    - curl -fsSLo "$VOICE.onnx" "$VOICE_BASE/$VOICE.onnx"
+    - curl -fsSLo "$VOICE.onnx.json" "$VOICE_BASE/$VOICE.onnx.json"
+    - python3 "$SCRIPT"
+
+russian-audio:
+  extends: .piper
+  rules:
+    - if: $TASK == "russian-audio"
+  resource_group: russian-audio-$CI_NODE_INDEX
+  variables:
+    VOICE: ru_RU-dmitri-medium
+    VOICE_BASE: https://huggingface.co/rhasspy/piper-voices/resolve/main/ru/ru_RU/dmitri/medium
+    SCRIPT: tool/tts/generate_russian_audio.py
+
+polish-audio:
+  extends: .piper
+  rules:
+    - if: $TASK == "polish-audio"
+  resource_group: polish-audio-$CI_NODE_INDEX
+  variables:
+    VOICE: pl_PL-darkman-medium
+    VOICE_BASE: https://huggingface.co/rhasspy/piper-voices/resolve/main/pl/pl_PL/darkman/medium
+    SCRIPT: tool/tts/generate_polish_audio.py
+
+video-subtitles:
+  extends: .task
+  rules:
+    - if: $TASK == "video-subtitles"
+  # Whisper large-v3 auf CPU ist schwer: 2 parallele Jobs statt 8 wie bei GitHub
+  parallel: 2
+  timeout: 5h 40m
+  resource_group: video-subtitles-$CI_NODE_INDEX
+  variables:
+    WHISPER_MODEL: large-v3
+    HF_HOME: $CI_PROJECT_DIR/.cache/huggingface
+  cache:
+    - key: pip-video-subtitles
+      paths: [.cache/pip]
+    - key: whisper-large-v3
+      paths: [.cache/huggingface]
+  script:
+    - *apt_ffmpeg
+    - pip install -q faster-whisper
+    - python3 tool/subtitles/make_subtitles.py
+
+.subtitle_translate:
+  extends: .task
+  needs: [video-subtitles]
+  timeout: 2h
+  variables:
+    HF_HOME: $CI_PROJECT_DIR/.cache/huggingface
+  cache:
+    - key: pip-subtitle-translate
+      paths: [.cache/pip]
+    - key: opus-mt
+      paths: [.cache/huggingface]
+  script:
+    - pip install -q transformers sentencepiece sacremoses torch --extra-index-url https://download.pytorch.org/whl/cpu
+    - python3 tool/subtitles/translate_subtitles.py
+
+subtitles:russian:
+  extends: .subtitle_translate
+  rules:
+    - if: $TASK == "video-subtitles"
+      when: always
+  variables:
+    SUB_LANG: ru
+
+subtitles:polish:
+  extends: .subtitle_translate
+  rules:
+    - if: $TASK == "video-subtitles"
+      when: always
+  variables:
+    SUB_LANG: pl
+
+verse-images:
+  extends: .task
+  image: mcr.microsoft.com/playwright:v1.49.1-noble
+  rules:
+    - if: $TASK == "verse-images"
+  timeout: 1h
+  resource_group: verse-images
+  variables:
+    DAYS: "45"
+    FROM: ""
+  cache: []
+  script:
+    - cd tool/verse_images
+    - npm install --no-audit --no-fund
+    - |
+      if [ -n "$FROM" ]; then node generate.mjs --days "$DAYS" --from "$FROM"
+      else node generate.mjs --days "$DAYS"; fi

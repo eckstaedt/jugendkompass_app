@@ -222,6 +222,11 @@ ClipRRect(
 - Background workflows (audio, subtitles, images) target `vars.SUPABASE_URL`; set it to the VPS URL at cutover
 - See `supabase.md` for complete schema
 
+### CI/CD (GitLab)
+- Moving from GitHub Actions to GitLab CI on `gitlab.bethaus-speyer.de`: `.gitlab-ci.yml` + `.gitlab/ci/*.yml`, store uploads via `fastlane/Fastfile`
+- Tag `vX.Y.Z` (must match pubspec version) → Play internal + TestFlight; production/review are manual jobs
+- Background tasks run as pipeline schedules with variable `TASK=<name>`; setup and variables: `deploy/gitlab/README.md`
+
 ## Common Pitfalls
 - **Don't forget bottom padding**: Persistent navbar/mini player will cover content. Use `DesignTokens.overlayPaddingBase` or `overlayPaddingWithMiniPlayer`.
 - **Always check brightness**: Use `Theme.of(context).brightness` and `DesignTokens.getX(brightness)` for dark mode compatibility.

@@ -59,3 +59,14 @@ build/
 
 .fvm/
 supabase/.temp/
+
+# fastlane / CI
+/vendor/ruby/
+/.bundle/
+/dist/
+/.cache/
+fastlane/report.xml
+fastlane/README.md
+fastlane/*.env
+fastlane/metadata-empty/
+.gitlab-ci-local/
