@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
-# Kopiert die GitHub-Repos mit allen Branches und Tags nach GitLab.
+# Kopiert das Monorepo (GitHub eckstaedt/jugendkompass_app, Admin steckt in admin/)
+# mit allen Branches und Tags nach GitLab und legt den Branch develop an.
 #
 #   export GITLAB_TOKEN=glpat-…        # Personal Access Token, Scope "api"
-#   export GITHUB_TOKEN=ghp_…          # nur nötig, falls die Repos privat sind (Scope "repo")
+#   export GITHUB_TOKEN=ghp_…          # nur nötig, falls das Repo privat ist (Scope "repo")
 #   bash deploy/gitlab/move-repos.sh
 #
-# Legt die Gruppe GITLAB_GROUP (Standard "jugendkompass") und die Projekte an,
+# Legt die Gruppe GITLAB_GROUP (Standard "jugendkompass") und das Projekt an,
 # falls sie fehlen. Kann gefahrlos mehrfach laufen (aktualisiert nur).
 set -euo pipefail
 
 GITLAB_URL="${GITLAB_URL:-https://gitlab.bethaus-speyer.de}"
 GITLAB_GROUP="${GITLAB_GROUP:-jugendkompass}"
-REPOS=("jugendkompass_app:app" "jugendkompass-admin:admin")   # GitHub-Name:GitLab-Projektpfad
+REPOS=("jugendkompass_app:jugendkompass")   # GitHub-Name:GitLab-Projektpfad
 : "${GITLAB_TOKEN:?GITLAB_TOKEN setzen (Scope api)}"
 
 api() { curl -fsS -H "PRIVATE-TOKEN: $GITLAB_TOKEN" "$@"; }
@@ -42,5 +43,13 @@ for entry in "${REPOS[@]}"; do
   git -C "$work/$gh_name.git" push --quiet --force -o ci.skip \
     "https://oauth2:${GITLAB_TOKEN}@${host}/${GITLAB_GROUP}/${gl_path}.git" \
     'refs/heads/*:refs/heads/*' 'refs/tags/*:refs/tags/*'
+  # develop anlegen (aus main), falls es ihn noch nicht gibt
+  pid=$(urlenc "$GITLAB_GROUP/$gl_path")
+  if ! api "$GITLAB_URL/api/v4/projects/$pid/repository/branches/develop" >/dev/null 2>&1; then
+    git -C "$work/$gh_name.git" push --quiet -o ci.skip \
+      "https://oauth2:${GITLAB_TOKEN}@${host}/${GITLAB_GROUP}/${gl_path}.git" 'refs/heads/main:refs/heads/develop'
+    echo "   Branch develop angelegt"
+  fi
+  api -X PUT "$GITLAB_URL/api/v4/projects/$pid" -d "default_branch=main" >/dev/null
   echo "   ok: $GITLAB_URL/$GITLAB_GROUP/$gl_path"
 done

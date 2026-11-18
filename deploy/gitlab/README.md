@@ -1,57 +1,61 @@
 # Umzug nach GitLab + CI/CD
 
-Ziel: Beide Repos liegen auf `gitlab.bethaus-speyer.de`, GitLab CI ersetzt alle
-GitHub Actions, und Releases gehen per Tag automatisch in die Stores.
+Ziel: Ein Monorepo `jugendkompass/jugendkompass` auf `gitlab.bethaus-speyer.de` (App im Wurzelordner,
+Admin-PWA in `admin/`). GitLab CI ersetzt alle GitHub Actions; jeder Merge auf `develop` oder
+`main` erzeugt automatisch Store-Builds.
 
 | Was | Datei |
 | --- | --- |
-| App-Pipeline | `.gitlab-ci.yml`, `.gitlab/ci/{app,stores,tasks}.yml` |
-| Store-Uploads | `fastlane/Fastfile`, `Gemfile` |
-| Admin-Pipeline | `.gitlab-ci.yml` im Admin-Repo |
-| Repos kopieren | `deploy/gitlab/move-repos.sh` |
+| Pipeline | `.gitlab-ci.yml`, `.gitlab/ci/{app,stores,tasks,admin}.yml` |
+| Store-Uploads | `fastlane/Fastfile`, `Gemfile`; iOS: `ios/ci_scripts/ci_post_clone.sh` (Xcode Cloud) |
+| Repo kopieren | `deploy/gitlab/move-repos.sh` |
 | Linux-Runner | `deploy/gitlab/runner/docker-compose.yml` |
 
 ## Ablauf im Alltag
 
+Arbeit läuft über Feature-Branches → Merge Request nach `develop` → Merge Request `develop` → `main`.
+
 | Auslöser | Was passiert |
 | --- | --- |
-| Merge Request | Flutter-Analyse + Tests, Web-Build (App); Typecheck, Lint, Build (Admin) |
-| Merge/Push auf `main` | Web-App + Übersetzungs-Panel bzw. Admin per rsync auf den VPS |
-| Tag `vX.Y.Z` | Android → Play **internal** (GitLab), iOS → **TestFlight** (Xcode Cloud), beides automatisch |
-| Klick auf `android:production` | dieselbe Version in Play **production** (`PLAY_ROLLOUT=0.2` → 20 % gestaffelt) |
-| Klick auf `ios:submit-review` | neuester TestFlight-Build der Version zur **App-Store-Prüfung** (`RELEASE_NOTES`, `IOS_AUTO_RELEASE=true`) |
+| Merge Request | Flutter-Analyse + Tests, Web-Build; Admin: Typecheck, Lint, Build (jeweils nur bei Änderungen) |
+| Merge auf `develop` | Android → Play **internal**, iOS → **TestFlight intern** (Xcode Cloud) |
+| Merge auf `main` | Android → Play **Closed Testing** (`alpha`), iOS → **TestFlight extern** (Xcode Cloud); Web-App, Panel und Admin per rsync auf den VPS |
+| Klick auf `android:production` (main) | dieselbe Version in Play **production** (`PLAY_ROLLOUT=0.2` → 20 % gestaffelt) |
+| Klick auf `ios:submit-review` (main) | neuester TestFlight-Build der Version zur **App-Store-Prüfung** (`RELEASE_NOTES`, `IOS_AUTO_RELEASE=true`) |
 | Pipeline-Zeitpläne | Hintergrund-Aufgaben (Audio, Untertitel, Bilder) |
 
-Release machen:
+Store-Builds laufen nur, wenn sich App-Code geändert hat (`lib/`, `assets/`, `android/`, `ios/`,
+`pubspec.*`, `dotenv`); ein reiner Admin- oder Doku-Merge baut keine App.
+Von Hand: *Build → Pipelines → Run pipeline* auf `develop` oder `main`.
 
-```bash
-# pubspec.yaml: version: 2.3.8+72   (Build-Nummer darf gleich bleiben, CI zählt selbst hoch)
-git commit -am "release: 2.3.8" && git tag v2.3.8 && git push && git push --tags
-```
+**Versionen**: Der Name kommt aus `version:` in `pubspec.yaml`, die Build-Nummer zählt die Pipeline
+(Android: höchster versionCode in Play + 1) bzw. Xcode Cloud selbst hoch.
+Wichtig: Sobald eine Version im App Store veröffentlicht ist, nimmt Apple keine weiteren Builds
+mit derselben Versionsnummer an. Nach jedem Release also auf `develop` die Version erhöhen
+(z. B. `2.3.8+72` → `2.3.9+72`).
 
-Der Tag muss zur `version:` in `pubspec.yaml` passen, sonst bricht `release:verify` ab.
-Build-Nummern: Android = höchster versionCode in Play + 1 (mindestens die Nummer aus `pubspec.yaml`),
-iOS = fortlaufende Xcode-Cloud-Buildnummer.
-Testbuild ohne Tag: *Build → Pipelines → Run pipeline* auf `main` mit `STORE_BUILD=true`
-(andere Branches sehen die geschützten Store-Variablen nicht).
+Der Play-Track für `main` steht in `PLAY_EXTERNAL_TRACK` (`.gitlab-ci.yml`, Standard `alpha` = geschlossener
+Test; `beta` = offener Test). In der Play Console muss dieser Track eine Testergruppe haben.
 
-## 1. Repos umziehen
+## 1. Repo umziehen
 
 ```bash
 export GITLAB_TOKEN=glpat-…   # GitLab → Preferences → Access tokens, Scope "api"
 bash deploy/gitlab/move-repos.sh
 ```
 
-Legt die private Gruppe `jugendkompass` mit den Projekten `app` und `admin` an und kopiert
-alle Branches und Tags (ohne Pipelines auszulösen). Alternativ geht der GitLab-Import
-„Import project → GitHub“, der auch Issues/PRs übernimmt.
+Legt die private Gruppe `jugendkompass` mit dem Projekt `jugendkompass` an, kopiert alle Branches
+und Tags (ohne Pipelines auszulösen) und legt `develop` an. Das Admin-Repo wird nicht mehr gebraucht:
+seine Historie steckt schon in `admin/`.
 
-Danach in beiden GitLab-Projekten:
+Danach im GitLab-Projekt:
 
-- *Settings → Repository → Protected tags*: `v*` schützen (nur Maintainer).
-  Die Store-Variablen sind „protected“ und stehen damit nur auf `main` und `v*`-Tags zur Verfügung.
+- *Settings → Repository → Protected branches*: `main` und `develop` schützen (Merge nur per MR,
+  Push für niemanden). Die Store-Variablen sind „protected“ und stehen nur auf diesen Branches zur Verfügung.
+- *Settings → Repository → Branch defaults*: Standard-Branch `main`; für neue MRs Ziel `develop`
+  (*Settings → Merge requests → Default target*).
 - *Settings → CI/CD → General pipelines → Timeout*: **6h** (Hintergrund-Aufgaben laufen bis 5,5 h).
-- Lokale Klone umstellen: `git remote set-url origin git@gitlab.bethaus-speyer.de:jugendkompass/app.git`
+- Lokale Klone: `git clone git@gitlab.bethaus-speyer.de:jugendkompass/jugendkompass.git`
 
 ## 2. Runner
 
@@ -63,9 +67,9 @@ und die KI-Stimmen brauchen viel CPU – mindestens 4 Kerne / 8 GB RAM, besser m
 
 ```bash
 mkdir -p /docker/gitlab-runner && cd /docker/gitlab-runner
-cp <app-repo>/deploy/gitlab/runner/docker-compose.yml .
+cp <repo>/deploy/gitlab/runner/docker-compose.yml .
 docker compose up -d
-# Token: GitLab → Gruppe jugendkompass → Build → Runners → New group runner
+# Token: GitLab → Projekt (oder Gruppe) jugendkompass → Settings → CI/CD → Runners → New runner
 #        (Linux, "Run untagged jobs" an) → Token kopieren
 docker exec -it jk-gitlab-runner gitlab-runner register \
   --url https://gitlab.bethaus-speyer.de --token glrt-… \
@@ -80,20 +84,24 @@ Apple baut die App auf eigenen Macs; 25 Stunden im Monat sind im Developer-Progr
 (ein Build dauert ca. 15–20 Minuten). Flutter installiert `ios/ci_scripts/ci_post_clone.sh`
 (gleiche Version wie `FLUTTER_VERSION` in `.gitlab-ci.yml`).
 
-Einmalig, nachdem die Repos auf GitLab liegen:
+Einmalig, nachdem das Repo auf GitLab liegt:
 
 1. **GitLab verbinden**: Xcode → Settings → Accounts → „+“ → *GitLab Self-Managed*,
    URL `https://gitlab.bethaus-speyer.de` (Xcode führt durch die Anmeldung per OAuth-App).
 2. In Xcode `ios/Runner.xcworkspace` öffnen → *Product → Xcode Cloud → Create Workflow*,
-   Produkt „Runner“, Quelle `jugendkompass/app`.
-3. Workflow „Release“:
-   - *Start Conditions*: **Tag Changes**, Tags beginnen mit `v` (Branch-Bedingung entfernen)
-   - *Environment*: Xcode „Latest Release“, macOS „Latest Release“
-   - *Actions*: **Archive** – iOS, Plattform iOS, Distribution **App Store Connect**
-   - *Post-Actions*: **TestFlight Internal Testing** → interne Testergruppe
+   Produkt „Runner“, Quelle `jugendkompass/jugendkompass`.
+3. Zwei Workflows anlegen (beide: Environment Xcode/macOS „Latest Release“,
+   *Actions*: **Archive** – iOS, Distribution **App Store Connect**):
+   - **Develop**: *Start Conditions* → Branch Changes auf `develop` (Dateien: Auto-cancel an);
+     *Post-Actions* → **TestFlight Internal Testing** → interne Gruppe
+   - **Main**: *Start Conditions* → Branch Changes auf `main`;
+     *Post-Actions* → **TestFlight Internal Testing** und **TestFlight External Testing** → externe Gruppe
+     (der erste Build jeder Version geht kurz in Apples Beta-Review)
+   - Optional bei beiden unter *Start Conditions → Files and Folders*: nur bei Änderungen in
+     `lib/`, `assets/`, `ios/`, `pubspec.yaml`, `pubspec.lock`, `dotenv` starten (spart Build-Stunden)
 4. Buildnummer: App Store Connect → App → *Xcode Cloud → Settings → Build Number* →
    „Next Build Number“ auf **72** setzen (höher als die letzte hochgeladene 71).
-5. Probelauf: in App Store Connect beim Workflow *Start Build* auf einem Tag, oder nächster Release-Tag.
+5. Probelauf: in App Store Connect beim Workflow „Develop“ *Start Build*.
 
 Signieren übernimmt Xcode Cloud selbst (automatisches Signing, Team MXM3YWAKPL inkl. Widget und
 Notification-Service). Die Einreichung zur Prüfung startest du danach in GitLab mit `ios:submit-review`
@@ -108,7 +116,7 @@ den Xcode-Cloud-Workflow deaktivieren. Einmalig auf dem Mac:
 xcode-select --install                 # plus aktuelles Xcode aus dem App Store, einmal starten
 brew install gitlab-runner ruby cocoapods
 echo 'export PATH="/opt/homebrew/opt/ruby/bin:$PATH"' >> ~/.zprofile
-# Token: Gruppe → Build → Runners → New group runner, Plattform macOS, Tag "macos",
+# Token: Projekt → Settings → CI/CD → Runners → New runner, Plattform macOS, Tag "macos",
 #        "Run untagged jobs" AUS
 gitlab-runner register --url https://gitlab.bethaus-speyer.de --token glrt-… \
   --executor shell --name jk-mac
@@ -116,11 +124,11 @@ brew services start gitlab-runner
 ```
 
 Der Job `ios:testflight` signiert über den App-Store-Connect-Schlüssel („cloud-managed signing“),
-der Mac muss nur bei Release-Tags laufen.
+der Mac muss nur laufen, wenn auf `develop`/`main` gemergt wird.
 
 ## 3. CI/CD-Variablen
 
-*Gruppe jugendkompass → Settings → CI/CD → Variables* (gelten für App und Admin).
+*Projekt jugendkompass → Settings → CI/CD → Variables*.
 „Masked“ wo möglich, Store-Zugänge zusätzlich „Protected“.
 
 | Name | Typ | Inhalt | Wofür |
@@ -154,7 +162,7 @@ Hinweise:
 
 ## 4. Hintergrund-Aufgaben (Pipeline-Zeitpläne)
 
-*Projekt app → Build → Pipeline schedules → New schedule*, Ziel-Branch `main`,
+*Build → Pipeline schedules → New schedule*, Ziel-Branch `main`,
 Zeitzone Europe/Berlin, je eine Variable `TASK`:
 
 | Beschreibung | Cron | `TASK` |
@@ -173,17 +181,17 @@ Gleiche Aufgaben laufen nie doppelt (`resource_group`).
 
 Reihenfolge, damit nichts doppelt läuft:
 
-1. Runner und Variablen einrichten, Repos kopieren (Schritte 1–3).
-2. In GitLab einen Testlauf: MR öffnen (Prüfung), `Run pipeline` auf `main` (Web-Deploy),
-   `TASK=verse-images` (Hintergrund), `STORE_BUILD=true` (Play internal), Xcode Cloud *Start Build* (TestFlight).
-3. **GitHub Actions abschalten** (sonst laufen Zeitpläne doppelt): je Repo
-   *Settings → Actions → General → Disable actions*.
+1. Runner und Variablen einrichten, Repo kopieren (Schritte 1–3).
+2. Testlauf in GitLab: MR nach `develop` (Prüfung), Merge → Play internal + Xcode Cloud „Develop“,
+   *Run pipeline* mit `TASK=verse-images` (Hintergrund).
+3. **GitHub Actions abschalten** (sonst laufen Zeitpläne und Deploys doppelt): in beiden GitHub-Repos
+   *Settings → Actions → General → Disable actions*. Vercel- und Lovable-Verknüpfung entfernen.
 4. Zeitpläne in GitLab anlegen (Schritt 4).
 5. Server-Quellen umstellen: auf dem VPS in `/docker/jugendkompass-src`
-   `git remote set-url origin git@gitlab.bethaus-speyer.de:jugendkompass/app.git` und den
-   öffentlichen Deploy-Key dort unter *app → Settings → Repository → Deploy keys* (nur lesen) eintragen.
-6. GitHub-Repos archivieren (*Settings → General → Archive*) oder als Spiegel behalten:
-   GitLab *Settings → Repository → Mirroring repositories* → Push-Mirror nach GitHub.
-   Nach dem Umzug die alten GitHub-Secrets löschen.
+   `git remote set-url origin git@gitlab.bethaus-speyer.de:jugendkompass/jugendkompass.git` und den
+   öffentlichen Deploy-Key unter *Settings → Repository → Deploy keys* (nur lesen) eintragen.
+6. Beide GitHub-Repos archivieren (*Settings → General → Archive*) oder das App-Repo als Spiegel behalten:
+   GitLab *Settings → Repository → Mirroring repositories* → Push-Mirror nach GitHub
+   (nötig, wenn Claude weiter direkt am Code mitarbeiten soll). Danach die alten GitHub-Secrets löschen.
 
 Die alten Workflows unter `.github/workflows/` bleiben bis Schritt 3 im Repo und werden danach entfernt.

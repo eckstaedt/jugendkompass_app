@@ -3,7 +3,7 @@
 # Installiert Flutter (feste Version wie in .gitlab-ci.yml), erzeugt die Flutter-Konfiguration
 # mit Version/Build und installiert die Pods.
 #
-# Xcode-Cloud-Umgebungsvariablen: CI_PRIMARY_REPOSITORY_PATH, CI_BUILD_NUMBER, CI_TAG
+# Xcode-Cloud-Umgebungsvariablen: CI_PRIMARY_REPOSITORY_PATH, CI_BUILD_NUMBER, CI_TAG (optional)
 # Anleitung: deploy/gitlab/README.md, Abschnitt "iOS mit Xcode Cloud"
 set -eu
 

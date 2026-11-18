@@ -23,9 +23,21 @@ check:flutter:
   stage: check
   rules:
     - *not_task
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_BRANCH == "develop"
+      changes: &flutter_changes
+        - lib/**/*
+        - test/**/*
+        - assets/**/*
+        - web/**/*
+        - android/**/*
+        - ios/**/*
+        - pubspec.yaml
+        - pubspec.lock
+        - analysis_options.yaml
+        - dotenv
+        - .gitlab-ci.yml
+        - .gitlab/ci/app.yml
   script:
     - flutter analyze --no-fatal-infos --no-fatal-warnings
     - flutter test --reporter expanded
@@ -39,7 +51,7 @@ check:flutter:
   - pubspec.lock
   - dotenv
   - .gitlab-ci.yml
-  - .gitlab/ci/**/*
+  - .gitlab/ci/app.yml
 
 build:web:
   extends: .flutter

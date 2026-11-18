@@ -1,10 +1,10 @@
-# Jugendkompass App – CI/CD auf gitlab.bethaus-speyer.de
+# Jugendkompass (App + Admin) – CI/CD auf gitlab.bethaus-speyer.de
 #
 # Überblick (Details, Variablen und Runner: deploy/gitlab/README.md)
 #
-#   Merge Request / Push   → Analyse + Tests, Web-Build
+#   Merge Request / Push   → Analyse + Tests, Web-Build; Admin (admin/): Typecheck, Lint, Build
 #   Merge auf develop      → Android: Play "internal", iOS: TestFlight intern (Xcode Cloud)
-#   Merge auf main         → Web-App + Übersetzungs-Panel auf den VPS (rsync)
+#   Merge auf main         → Web-App, Übersetzungs-Panel und Admin auf den VPS (rsync)
 #                            Android: Play-Test "alpha", iOS: TestFlight extern (Xcode Cloud)
 #                            danach per Klick: Play "production" / App-Store-Review
 #   Pipeline-Zeitpläne     → Hintergrund-Aufgaben (Audio, Untertitel, Bilder),
@@ -57,3 +57,4 @@ include:
   - local: .gitlab/ci/app.yml
   - local: .gitlab/ci/stores.yml
   - local: .gitlab/ci/tasks.yml
+  - local: .gitlab/ci/admin.yml

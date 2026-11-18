@@ -222,9 +222,11 @@ ClipRRect(
 - Background workflows (audio, subtitles, images) target `vars.SUPABASE_URL`; set it to the VPS URL at cutover
 - See `supabase.md` for complete schema
 
-### CI/CD (GitLab)
-- Moving from GitHub Actions to GitLab CI on `gitlab.bethaus-speyer.de`: `.gitlab-ci.yml` + `.gitlab/ci/*.yml`, store uploads via `fastlane/Fastfile`
-- Tag `vX.Y.Z` (must match pubspec version) → Play internal + TestFlight; production/review are manual jobs
+### CI/CD (GitLab) and monorepo
+- Admin PWA (React/Vite, formerly repo jugendkompass-admin) lives in `admin/`
+- Moving from GitHub to GitLab (`gitlab.bethaus-speyer.de`, project `jugendkompass/jugendkompass`): `.gitlab-ci.yml` + `.gitlab/ci/*.yml`, store uploads via `fastlane/Fastfile`
+- Branches: feature → MR into `develop` → MR into `main`. develop = Play internal + TestFlight internal; main = Play closed testing + TestFlight external + web/admin deploy; production and App Store review are manual jobs on main
+- iOS builds run on Xcode Cloud (`ios/ci_scripts/ci_post_clone.sh`); bump `version:` in pubspec after each store release
 - Background tasks run as pipeline schedules with variable `TASK=<name>`; setup and variables: `deploy/gitlab/README.md`
 
 ## Common Pitfalls

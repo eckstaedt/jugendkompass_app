@@ -1,0 +1,85 @@
+# Admin-PWA (Ordner admin/): Typecheck, Lint, Build, Deploy auf den VPS
+#
+#   MR / develop / main  → Typecheck, Lint (vorerst nur Hinweis), Build – nur wenn admin/ geändert
+#   main                 → rsync nach /docker/jugendkompass/sites/admin
+
+.admin_changes: &admin_changes
+  - admin/**/*
+  - .gitlab/ci/admin.yml
+
+.admin_rules:
+  rules:
+    - if: $TASK || $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      changes: *admin_changes
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_BRANCH == "develop"
+      changes: *admin_changes
+
+.admin_node:
+  extends: .admin_rules
+  image: node:22-bookworm-slim
+  variables:
+    npm_config_cache: $CI_PROJECT_DIR/.cache/npm
+  cache:
+    key:
+      files: [admin/package-lock.json]
+      prefix: npm
+    paths: [.cache/npm]
+  before_script:
+    - cd admin
+    - npm ci --legacy-peer-deps --no-audit --no-fund
+
+admin:typecheck:
+  extends: .admin_node
+  stage: check
+  needs: []
+  script:
+    - npx tsc -p tsconfig.app.json --noEmit
+
+admin:lint:
+  extends: .admin_node
+  stage: check
+  needs: []
+  # ESLint meldet aktuell >100 Altlasten; bis die behoben sind, nur als Hinweis
+  allow_failure: true
+  script:
+    - npx eslint .
+
+admin:build:
+  extends: .admin_node
+  stage: build
+  needs: []
+  script:
+    # Lovable hat die Cloud-URL früher fest in client.ts geschrieben – immer gegen den VPS bauen
+    - sed -i "s|https://[a-z0-9]*\.supabase\.co|${API_URL}|g" src/integrations/supabase/client.ts
+    - grep -q "${API_URL}" src/integrations/supabase/client.ts
+    - VITE_SUPABASE_URL="$API_URL" npm run build
+    - test -f dist/index.html
+  artifacts:
+    paths: [admin/dist/]
+    expire_in: 1 week
+
+admin:deploy:
+  stage: deploy
+  image: alpine:3.22
+  needs: [admin:build, admin:typecheck]
+  resource_group: admin-vps
+  environment:
+    name: production/admin
+    url: https://admin.jugendkompass.com
+  rules:
+    - if: $TASK || $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
+      changes: *admin_changes
+  variables:
+    TARGET: /docker/jugendkompass/sites/admin
+  before_script:
+    - . .gitlab/ci/ssh-setup.sh
+  script:
+    - rsync -az --delete-after -e "$RSH" admin/dist/ "$VPS_SSH_USER@$VPS_SSH_HOST:$TARGET/"
+  after_script:
+    - rm -f ~/.ssh/id_deploy
