@@ -7,9 +7,9 @@
 # Anleitung: deploy/gitlab/README.md, Abschnitt "iOS mit Xcode Cloud"
 set -eu
 
-cd "$CI_PRIMARY_REPOSITORY_PATH"
+cd "$CI_PRIMARY_REPOSITORY_PATH/apps/mobile"
 
-FLUTTER_VERSION=$(sed -nE 's/^  FLUTTER_VERSION: "([^"]+)"/\1/p' .gitlab-ci.yml)
+FLUTTER_VERSION=$(sed -nE 's/^  FLUTTER_VERSION: "([^"]+)"/\1/p' ../../.gitlab-ci.yml)
 APP_VERSION=$(sed -nE 's/^version:[[:space:]]*([0-9.]+)\+?.*/\1/p' pubspec.yaml)
 echo "Flutter $FLUTTER_VERSION, App $APP_VERSION, Build ${CI_BUILD_NUMBER:-?}, Tag ${CI_TAG:-–}"
 

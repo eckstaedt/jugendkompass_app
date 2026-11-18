@@ -1,13 +1,13 @@
 # Umzug nach GitLab + CI/CD
 
-Ziel: Ein Monorepo `jugendkompass/jugendkompass` auf `gitlab.bethaus-speyer.de` (App im Wurzelordner,
-Admin-PWA in `admin/`). GitLab CI ersetzt alle GitHub Actions; jeder Merge auf `develop` oder
+Ziel: Ein Monorepo `jugendkompass/jugendkompass` auf `gitlab.bethaus-speyer.de`
+(`apps/mobile`, `apps/admin`, `apps/translate`, `supabase/`, `tools/`). GitLab CI ersetzt alle GitHub Actions; jeder Merge auf `develop` oder
 `main` erzeugt automatisch Store-Builds.
 
 | Was | Datei |
 | --- | --- |
 | Pipeline | `.gitlab-ci.yml`, `.gitlab/ci/{app,stores,tasks,admin}.yml` |
-| Store-Uploads | `fastlane/Fastfile`, `Gemfile`; iOS: `ios/ci_scripts/ci_post_clone.sh` (Xcode Cloud) |
+| Store-Uploads | `apps/mobile/fastlane/Fastfile`, `apps/mobile/Gemfile`; iOS: `apps/mobile/ios/ci_scripts/ci_post_clone.sh` (Xcode Cloud) |
 | Repo kopieren | `deploy/gitlab/move-repos.sh` |
 | Linux-Runner | `deploy/gitlab/runner/docker-compose.yml` |
 
@@ -24,14 +24,14 @@ Arbeit läuft über Feature-Branches → Merge Request nach `develop` → Merge 
 | Klick auf `ios:submit-review` (main) | neuester TestFlight-Build der Version zur **App-Store-Prüfung** (`RELEASE_NOTES`, `IOS_AUTO_RELEASE=true`) |
 | Pipeline-Zeitpläne | Hintergrund-Aufgaben (Audio, Untertitel, Bilder) |
 
-Store-Builds laufen nur, wenn sich App-Code geändert hat (`lib/`, `assets/`, `android/`, `ios/`,
+Store-Builds laufen nur, wenn sich App-Code in `apps/mobile/` geändert hat (`lib/`, `assets/`, `android/`, `ios/`,
 `pubspec.*`, `dotenv`); ein reiner Admin- oder Doku-Merge baut keine App.
 Von Hand: *Build → Pipelines → Run pipeline* auf `develop` oder `main`.
 
 **Versionen**: Der Name kommt aus `version:` in `pubspec.yaml`, die Build-Nummer zählt die Pipeline
 (Android: höchster versionCode in Play + 1) bzw. Xcode Cloud selbst hoch.
 Wichtig: Sobald eine Version im App Store veröffentlicht ist, nimmt Apple keine weiteren Builds
-mit derselben Versionsnummer an. Nach jedem Release also auf `develop` die Version erhöhen
+mit derselben Versionsnummer an. Nach jedem Release also auf `develop` die Version in `apps/mobile/pubspec.yaml` erhöhen
 (z. B. `2.3.8+72` → `2.3.9+72`).
 
 Der Play-Track für `main` steht in `PLAY_EXTERNAL_TRACK` (`.gitlab-ci.yml`, Standard `alpha` = geschlossener
@@ -44,9 +44,10 @@ export GITLAB_TOKEN=glpat-…   # GitLab → Preferences → Access tokens, Scop
 bash deploy/gitlab/move-repos.sh
 ```
 
-Legt die private Gruppe `jugendkompass` mit dem Projekt `jugendkompass` an, kopiert alle Branches
-und Tags (ohne Pipelines auszulösen) und legt `develop` an. Das Admin-Repo wird nicht mehr gebraucht:
-seine Historie steckt schon in `admin/`.
+Quelle ist das neue GitHub-Repo `eckstaedt/juko` (Monorepo mit der vollen Historie von App und Admin).
+Das Skript legt die private Gruppe `jugendkompass` mit dem Projekt `jugendkompass` an und kopiert alle
+Branches (`main`, `develop`) und Tags, ohne Pipelines auszulösen. Die alten Repos `jugendkompass_app`
+und `jugendkompass-admin` bleiben unverändert und laufen weiter, bis umgeschaltet ist (Schritt 6).
 
 Danach im GitLab-Projekt:
 
@@ -81,14 +82,14 @@ In `config/config.toml` danach `concurrent = 4` setzen (gleichzeitige Jobs).
 ### iOS mit Xcode Cloud (empfohlen)
 
 Apple baut die App auf eigenen Macs; 25 Stunden im Monat sind im Developer-Programm enthalten
-(ein Build dauert ca. 15–20 Minuten). Flutter installiert `ios/ci_scripts/ci_post_clone.sh`
+(ein Build dauert ca. 15–20 Minuten). Flutter installiert `apps/mobile/ios/ci_scripts/ci_post_clone.sh`
 (gleiche Version wie `FLUTTER_VERSION` in `.gitlab-ci.yml`).
 
 Einmalig, nachdem das Repo auf GitLab liegt:
 
 1. **GitLab verbinden**: Xcode → Settings → Accounts → „+“ → *GitLab Self-Managed*,
    URL `https://gitlab.bethaus-speyer.de` (Xcode führt durch die Anmeldung per OAuth-App).
-2. In Xcode `ios/Runner.xcworkspace` öffnen → *Product → Xcode Cloud → Create Workflow*,
+2. In Xcode `apps/mobile/ios/Runner.xcworkspace` öffnen → *Product → Xcode Cloud → Create Workflow*,
    Produkt „Runner“, Quelle `jugendkompass/jugendkompass`.
 3. Zwei Workflows anlegen (beide: Environment Xcode/macOS „Latest Release“,
    *Actions*: **Archive** – iOS, Distribution **App Store Connect**):
@@ -98,7 +99,7 @@ Einmalig, nachdem das Repo auf GitLab liegt:
      *Post-Actions* → **TestFlight Internal Testing** und **TestFlight External Testing** → externe Gruppe
      (der erste Build jeder Version geht kurz in Apples Beta-Review)
    - Optional bei beiden unter *Start Conditions → Files and Folders*: nur bei Änderungen in
-     `lib/`, `assets/`, `ios/`, `pubspec.yaml`, `pubspec.lock`, `dotenv` starten (spart Build-Stunden)
+     `apps/mobile/` starten (spart Build-Stunden, z. B. bei reinen Admin-Änderungen)
 4. Buildnummer: App Store Connect → App → *Xcode Cloud → Settings → Build Number* →
    „Next Build Number“ auf **72** setzen (höher als die letzte hochgeladene 71).
 5. Probelauf: in App Store Connect beim Workflow „Develop“ *Start Build*.
@@ -177,20 +178,38 @@ Zeitzone Europe/Berlin, je eine Variable `TASK`:
 Von Hand: *Build → Pipelines → Run pipeline* mit `TASK=<name>` (z. B. `verse-images` plus `DAYS=90`).
 Gleiche Aufgaben laufen nie doppelt (`resource_group`).
 
-## 5. Umschalten und GitHub abschalten
+## 5. Backend-Deploy (Edge Functions, Migrationen)
+
+Jobs in `.gitlab/ci/backend.yml`, nur auf `main` und nur per Klick:
+- `backend:functions`: geänderte Functions aus `supabase/functions/` (oder `FUNCTIONS="a b"`, `ALL_FUNCTIONS=true`)
+- `backend:migration`: eine Datei, *Run pipeline* auf `main` mit `MIGRATION=supabase/migrations/<datei>.sql`
+
+Einmalig auf dem VPS (als root):
+
+```bash
+install -d -o <deploy-user> /docker/jugendkompass/incoming
+cat > /etc/sudoers.d/jugendkompass-deploy <<'SUDO'
+<deploy-user> ALL=(root) NOPASSWD: /docker/jugendkompass/scripts/apply-functions.sh, /docker/jugendkompass/scripts/apply-migration.sh
+SUDO
+chmod 440 /etc/sudoers.d/jugendkompass-deploy
+```
+
+Vorher die doppelten Functions klären: `supabase/functions-admin-variant/README.md`.
+
+## 6. Umschalten und GitHub abschalten
 
 Reihenfolge, damit nichts doppelt läuft:
 
 1. Runner und Variablen einrichten, Repo kopieren (Schritte 1–3).
 2. Testlauf in GitLab: MR nach `develop` (Prüfung), Merge → Play internal + Xcode Cloud „Develop“,
    *Run pipeline* mit `TASK=verse-images` (Hintergrund).
-3. **GitHub Actions abschalten** (sonst laufen Zeitpläne und Deploys doppelt): in beiden GitHub-Repos
+3. **GitHub Actions abschalten** (sonst laufen Zeitpläne und Deploys doppelt): in den alten GitHub-Repos
    *Settings → Actions → General → Disable actions*. Vercel- und Lovable-Verknüpfung entfernen.
 4. Zeitpläne in GitLab anlegen (Schritt 4).
 5. Server-Quellen umstellen: auf dem VPS in `/docker/jugendkompass-src`
    `git remote set-url origin git@gitlab.bethaus-speyer.de:jugendkompass/jugendkompass.git` und den
    öffentlichen Deploy-Key unter *Settings → Repository → Deploy keys* (nur lesen) eintragen.
-6. Beide GitHub-Repos archivieren (*Settings → General → Archive*) oder das App-Repo als Spiegel behalten:
+6. Die alten GitHub-Repos archivieren (*Settings → General → Archive*); `juko` als Spiegel behalten:
    GitLab *Settings → Repository → Mirroring repositories* → Push-Mirror nach GitHub
    (nötig, wenn Claude weiter direkt am Code mitarbeiten soll). Danach die alten GitHub-Secrets löschen.
 

@@ -91,7 +91,7 @@ server {
     }
 }
 
-# --- Übersetzungs-Panel (wie translation-panel/vercel.json) ---------------------
+# --- Übersetzungs-Panel (wie apps/translate/vercel.json) ---------------------
 server {
     listen 80;
     server_name ${TRANSLATE_DOMAIN};

@@ -6,6 +6,21 @@ Die Jugendkompass App bringt christliche Inhalte direkt auf dein Smartphone. Ega
 
 Bibeltreue und fundierte Artikel helfen dabei, den Glauben im Alltag zu leben, ermutigen und inspirieren. Dazu kommen echte Lebensgeschichten, christliche Impulse, Andachten und weitere Inhalte rund um den persönlichen Glauben.
 
+## 🗂️ Aufbau des Repos
+
+| Ordner | Inhalt |
+| --- | --- |
+| `apps/mobile/` | Flutter-App (iOS, Android, Web inkl. Share-Links) |
+| `apps/admin/` | Admin-PWA (React/Vite) |
+| `apps/translate/` | Übersetzungs-Panel |
+| `supabase/` | Datenbank-Migrationen, Edge Functions, SQL-Skripte |
+| `tools/` | Hintergrund-Aufgaben: KI-Stimmen, Untertitel, Bildübersetzung, Vers-Bilder |
+| `deploy/vps/` | Server (Docker, Supabase, Web) · `deploy/gitlab/` CI/CD, Runner, Umzug |
+| `docs/` | Dokumentation (Schema: `docs/supabase.md`) |
+
+Branches: Feature-Branch → MR nach `develop` (interne Testversionen) → MR nach `main`
+(externe Tests, Web/Admin live). Details: `deploy/gitlab/README.md`.
+
 ---
 
 ## ✨ Features

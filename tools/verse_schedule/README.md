@@ -32,7 +32,7 @@ Neue Verse für den Pool: `insert into verse_pool (verse, reference) values ('�
 
 ## Bilder
 
-`tool/verse_images` + Workflow `.github/workflows/verse-images.yml` erzeugen
+`tools/verse_images` + Workflow `.github/workflows/verse-images.yml` erzeugen
 täglich die Bilder für die nächsten 45 Tage: echtes Naturfoto (261 von Hand
 geprüfte Fotos, nur Natur – keine Menschen, Tiere, Gebäude, Straßen),
 jeden Tag anderes Layout, andere Schriftart (dieselben wie im

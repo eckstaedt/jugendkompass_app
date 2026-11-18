@@ -36,8 +36,8 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-/build/
-/coverage/
+apps/mobile/build/
+apps/mobile/coverage/
 
 # Symbolication related
 app.*.symbols
@@ -46,23 +46,23 @@ app.*.symbols
 app.*.map.json
 
 # Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+apps/mobile/android/app/debug
+apps/mobile/android/app/profile
+apps/mobile/android/app/release
 
 # Local build symlinks
 build/
 .flutter_build/
 
 # FVM Version Cache
-.fvm/supabase/.temp/
+
 
 .fvm/
 supabase/.temp/
 
 # fastlane / CI
-/vendor/ruby/
-/.bundle/
+vendor/ruby/
+.bundle/
 /dist/
 /.cache/
 fastlane/report.xml

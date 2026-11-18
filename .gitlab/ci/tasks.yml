@@ -52,7 +52,7 @@ english-audio:
     - key: kokoro-v1.0
       paths: [models]
   script:
-    - PLAN_ONLY=1 python3 tool/tts/generate_english_audio.py
+    - PLAN_ONLY=1 python3 tools/tts/generate_english_audio.py
     - '[ ! -f plan.env ] || . ./plan.env'
     - '[ "${pending:-0}" != 0 ] || { echo "Nichts zu tun."; exit 0; }'
     # Wenige neue Audios: ein Job reicht
@@ -69,8 +69,8 @@ english-audio:
         curl -fsSL -o "$KOKORO_VOICES" "$base/voices-v1.0.bin"
       fi
     - *apt_ffmpeg
-    - pip install -q -r tool/tts/requirements.txt
-    - python3 tool/tts/generate_english_audio.py
+    - pip install -q -r tools/tts/requirements.txt
+    - python3 tools/tts/generate_english_audio.py
 
 image-translation:
   extends: .task
@@ -83,11 +83,11 @@ image-translation:
     TIME_BUDGET_MIN: "55"
     LIMIT: "800"
   script:
-    - PLAN_ONLY=1 python3 tool/image_translate/translate_images.py
+    - PLAN_ONLY=1 python3 tools/image_translate/translate_images.py
     - '[ ! -f plan.env ] || . ./plan.env'
     - '[ "${pending:-0}" != 0 ] || { echo "Nichts zu tun."; exit 0; }'
     - pip install -q pillow
-    - python3 tool/image_translate/translate_images.py
+    - python3 tools/image_translate/translate_images.py
 
 .piper:
   extends: .task
@@ -110,7 +110,7 @@ russian-audio:
   variables:
     VOICE: ru_RU-dmitri-medium
     VOICE_BASE: https://huggingface.co/rhasspy/piper-voices/resolve/main/ru/ru_RU/dmitri/medium
-    SCRIPT: tool/tts/generate_russian_audio.py
+    SCRIPT: tools/tts/generate_russian_audio.py
 
 polish-audio:
   extends: .piper
@@ -120,7 +120,7 @@ polish-audio:
   variables:
     VOICE: pl_PL-darkman-medium
     VOICE_BASE: https://huggingface.co/rhasspy/piper-voices/resolve/main/pl/pl_PL/darkman/medium
-    SCRIPT: tool/tts/generate_polish_audio.py
+    SCRIPT: tools/tts/generate_polish_audio.py
 
 video-subtitles:
   extends: .task
@@ -141,7 +141,7 @@ video-subtitles:
   script:
     - *apt_ffmpeg
     - pip install -q faster-whisper
-    - python3 tool/subtitles/make_subtitles.py
+    - python3 tools/subtitles/make_subtitles.py
 
 .subtitle_translate:
   extends: .task
@@ -156,7 +156,7 @@ video-subtitles:
       paths: [.cache/huggingface]
   script:
     - pip install -q transformers sentencepiece sacremoses torch --extra-index-url https://download.pytorch.org/whl/cpu
-    - python3 tool/subtitles/translate_subtitles.py
+    - python3 tools/subtitles/translate_subtitles.py
 
 subtitles:russian:
   extends: .subtitle_translate
@@ -186,7 +186,7 @@ verse-images:
     FROM: ""
   cache: []
   script:
-    - cd tool/verse_images
+    - cd tools/verse_images
     - npm install --no-audit --no-fund
     - |
       if [ -n "$FROM" ]; then node generate.mjs --days "$DAYS" --from "$FROM"

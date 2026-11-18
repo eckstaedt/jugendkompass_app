@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Kopiert das Monorepo (GitHub eckstaedt/jugendkompass_app, Admin steckt in admin/)
-# mit allen Branches und Tags nach GitLab und legt den Branch develop an.
+# Kopiert das Monorepo GitHub eckstaedt/juko (App + Admin mit voller Historie) mit allen
+# Branches und Tags nach GitLab. Die alten Repos jugendkompass_app/-admin bleiben unberührt.
 #
 #   export GITLAB_TOKEN=glpat-…        # Personal Access Token, Scope "api"
 #   export GITHUB_TOKEN=ghp_…          # nur nötig, falls das Repo privat ist (Scope "repo")
@@ -12,7 +12,7 @@ set -euo pipefail
 
 GITLAB_URL="${GITLAB_URL:-https://gitlab.bethaus-speyer.de}"
 GITLAB_GROUP="${GITLAB_GROUP:-jugendkompass}"
-REPOS=("jugendkompass_app:jugendkompass")   # GitHub-Name:GitLab-Projektpfad
+REPOS=("juko:jugendkompass")   # GitHub-Name:GitLab-Projektpfad
 : "${GITLAB_TOKEN:?GITLAB_TOKEN setzen (Scope api)}"
 
 api() { curl -fsS -H "PRIVATE-TOKEN: $GITLAB_TOKEN" "$@"; }

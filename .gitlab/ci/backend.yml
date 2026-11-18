@@ -1,0 +1,68 @@
+# Supabase auf dem VPS: Edge Functions und Migrationen (immer per Klick, nur auf main)
+#
+#   backend:functions  → geänderte Functions aus supabase/functions/ übernehmen
+#                        (FUNCTIONS="a b" für bestimmte, ALL_FUNCTIONS=true für alle)
+#   backend:migration  → eine Migration einspielen: MIGRATION=supabase/migrations/<datei>.sql
+#
+# Server-Seite: deploy/vps/scripts/apply-functions.sh und apply-migration.sh, aufgerufen über
+# sudo (einmalige Einrichtung: deploy/gitlab/README.md, Abschnitt "Backend-Deploy").
+
+.backend:
+  stage: deploy
+  image: alpine:3.22
+  resource_group: backend-vps
+  variables:
+    JK_ROOT: /docker/jugendkompass
+    GIT_DEPTH: "0"
+  before_script:
+    - apk add --no-cache git bash >/dev/null
+    - . .gitlab/ci/ssh-setup.sh
+    - export SSH="ssh -i $HOME/.ssh/id_deploy -p ${VPS_SSH_PORT:-22} -o BatchMode=yes $VPS_SSH_USER@$VPS_SSH_HOST"
+  after_script:
+    - rm -f ~/.ssh/id_deploy
+
+backend:functions:
+  extends: .backend
+  environment:
+    name: production/functions
+  rules:
+    - if: $TASK || $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "web"
+      when: manual
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
+      changes: [supabase/functions/**/*]
+      when: manual
+  script:
+    - |
+      if [ "${ALL_FUNCTIONS:-}" = "true" ]; then
+        names=""
+      elif [ -n "${FUNCTIONS:-}" ]; then
+        names="$FUNCTIONS"
+      else
+        names=$(git diff --name-only "${CI_COMMIT_BEFORE_SHA}" "$CI_COMMIT_SHA" -- supabase/functions/ 2>/dev/null \
+          | cut -d/ -f3 | sort -u | grep -v '^_shared$' | tr '\n' ' ')
+        # _shared geändert → alle Functions, die es nutzen, neu ausliefern
+        if git diff --name-only "${CI_COMMIT_BEFORE_SHA}" "$CI_COMMIT_SHA" -- supabase/functions/_shared | grep -q .; then
+          names=""; echo "_shared geändert → alle Functions"
+        elif [ -z "$names" ]; then
+          echo "Keine geänderten Functions gefunden (FUNCTIONS=… oder ALL_FUNCTIONS=true setzen)."; exit 1
+        fi
+      fi
+      echo "Functions: ${names:-alle}"
+    - rsync -az --delete -e "$RSH" --exclude '.env' supabase/functions/ "$VPS_SSH_USER@$VPS_SSH_HOST:$JK_ROOT/incoming/functions/"
+    - $SSH "sudo -n $JK_ROOT/scripts/apply-functions.sh $JK_ROOT/incoming/functions $names"
+
+backend:migration:
+  extends: .backend
+  environment:
+    name: production/database
+  rules:
+    - if: $TASK || $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $MIGRATION
+      when: manual
+  script:
+    - test -f "$MIGRATION" || { echo "$MIGRATION fehlt im Repo."; exit 1; }
+    - rsync -az -e "$RSH" "$MIGRATION" "$VPS_SSH_USER@$VPS_SSH_HOST:$JK_ROOT/incoming/migration.sql"
+    - $SSH "sudo -n $JK_ROOT/scripts/apply-migration.sh $JK_ROOT/incoming/migration.sql"

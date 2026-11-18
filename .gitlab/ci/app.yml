@@ -1,4 +1,4 @@
-# Prüfung, Web-Build und Web-Deploy
+# Flutter-App (apps/mobile) und Übersetzungs-Panel (apps/translate): Prüfung, Web-Build, Web-Deploy
 
 .flutter:
   image: $ANDROID_IMAGE
@@ -6,11 +6,12 @@
     - key: flutter-$FLUTTER_VERSION
       paths: [.cache/flutter]
     - key:
-        files: [pubspec.lock]
+        files: [apps/mobile/pubspec.lock]
         prefix: pub
       paths: [.cache/pub]
   before_script:
     - source .gitlab/ci/flutter-env.sh
+    - cd apps/mobile
     - flutter pub get
 
 # Gemeinsame Regel: nie in Aufgaben-Pipelines (Zeitpläne, TASK=…)
@@ -26,16 +27,16 @@ check:flutter:
     - if: $CI_PIPELINE_SOURCE == "web"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_BRANCH == "develop"
       changes: &flutter_changes
-        - lib/**/*
-        - test/**/*
-        - assets/**/*
-        - web/**/*
-        - android/**/*
-        - ios/**/*
-        - pubspec.yaml
-        - pubspec.lock
-        - analysis_options.yaml
-        - dotenv
+        - apps/mobile/lib/**/*
+        - apps/mobile/test/**/*
+        - apps/mobile/assets/**/*
+        - apps/mobile/web/**/*
+        - apps/mobile/android/**/*
+        - apps/mobile/ios/**/*
+        - apps/mobile/pubspec.yaml
+        - apps/mobile/pubspec.lock
+        - apps/mobile/analysis_options.yaml
+        - apps/mobile/dotenv
         - .gitlab-ci.yml
         - .gitlab/ci/app.yml
   script:
@@ -43,13 +44,13 @@ check:flutter:
     - flutter test --reporter expanded
 
 .web_changes: &web_changes
-  - web/**/*
-  - lib/**/*
-  - assets/**/*
-  - translation-panel/**/*
-  - pubspec.yaml
-  - pubspec.lock
-  - dotenv
+  - apps/mobile/web/**/*
+  - apps/mobile/lib/**/*
+  - apps/mobile/assets/**/*
+  - apps/mobile/pubspec.yaml
+  - apps/mobile/pubspec.lock
+  - apps/mobile/dotenv
+  - apps/translate/**/*
   - .gitlab-ci.yml
   - .gitlab/ci/app.yml
 
@@ -72,8 +73,9 @@ build:web:
     - test -f build/web/api/share.js
     - test -f build/web/.well-known/apple-app-site-association
     - rm -f build/web/vercel.json
-    - mkdir -p dist && mv build/web dist/www
-    - mkdir -p dist/translate && cp -R translation-panel/. dist/translate/
+    - cd "$CI_PROJECT_DIR"
+    - mkdir -p dist && mv apps/mobile/build/web dist/www
+    - mkdir -p dist/translate && cp -R apps/translate/. dist/translate/
     - rm -f dist/translate/vercel.json dist/translate/README.md
     - sed -i "s|https://[a-z0-9]*\.supabase\.co|${API_URL}|g" dist/translate/*.js
     - grep -q "${API_URL}" dist/translate/config.js

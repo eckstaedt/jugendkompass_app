@@ -230,7 +230,7 @@ Analytics tracking für App-Installationen und App-Öffnungen.
 
 **Trigger:** `BEFORE INSERT` → `handle_verse_content()` (erstellt automatisch Content-Eintrag), `trg_verse_of_the_day_pool` (verknüpft mit `verse_pool`)
 
-**Automatische Planung:** immer 10 Jahre im Voraus (`schedule_verses_of_the_day`, pg_cron `verse-schedule-maintenance`). Ein Vers max. 1× pro Kalenderjahr und ≥ 365 Tage Abstand. Details: `tool/verse_schedule/README.md`. Bilder: `image_source_hash` gesetzt = automatisch erzeugt (Workflow `verse-images.yml`), `NULL` = manuell.
+**Automatische Planung:** immer 10 Jahre im Voraus (`schedule_verses_of_the_day`, pg_cron `verse-schedule-maintenance`). Ein Vers max. 1× pro Kalenderjahr und ≥ 365 Tage Abstand. Details: `tools/verse_schedule/README.md`. Bilder: `image_source_hash` gesetzt = automatisch erzeugt (Workflow `verse-images.yml`), `NULL` = manuell.
 
 ### `verse_pool`
 Alle Verse, die die automatische Planung verwenden darf (Verse vor 2026, je Bibelstelle eine Zeile). Spalten: `id`, `verse`, `reference`, `ref_key`, `text_key`, `alt_ref_keys`, `is_active`, `source`. RLS: nur Admins.

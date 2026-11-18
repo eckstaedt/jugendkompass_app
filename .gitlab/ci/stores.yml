@@ -11,14 +11,15 @@
 # Version kommt aus pubspec.yaml, die Build-Nummer zählt die Pipeline selbst hoch.
 
 .app_changes: &app_changes
-  - lib/**/*
-  - assets/**/*
-  - android/**/*
-  - ios/**/*
-  - pubspec.yaml
-  - pubspec.lock
-  - dotenv
-  - fastlane/**/*
+  - apps/mobile/lib/**/*
+  - apps/mobile/assets/**/*
+  - apps/mobile/android/**/*
+  - apps/mobile/ios/**/*
+  - apps/mobile/pubspec.yaml
+  - apps/mobile/pubspec.lock
+  - apps/mobile/dotenv
+  - apps/mobile/fastlane/**/*
+  - apps/mobile/Gemfile.lock
   - .gitlab/ci/stores.yml
 
 .store_rules:
@@ -51,10 +52,11 @@
   image: $RUBY_IMAGE
   cache:
     key:
-      files: [Gemfile.lock]
+      files: [apps/mobile/Gemfile.lock]
       prefix: gems
-    paths: [vendor/ruby]
+    paths: [apps/mobile/vendor/ruby]
   before_script:
+    - cd apps/mobile
     - bundle config set --local path vendor/ruby
     - bundle config set --local deployment true
     - bundle install --jobs 4 --quiet
@@ -65,7 +67,7 @@ release:verify:
   extends: .store_rules
   needs: []
   script:
-    - version=$(sed -nE 's/^version:[[:space:]]*([0-9.]+)\+?.*/\1/p' pubspec.yaml)
+    - version=$(sed -nE 's/^version:[[:space:]]*([0-9.]+)\+?.*/\1/p' apps/mobile/pubspec.yaml)
     - '[ -n "$version" ] || { echo "Keine version: in pubspec.yaml"; exit 1; }'
     - echo "App $version → Play-Track $PLAY_TRACK"
     - echo "APP_VERSION=$version" > release.env
@@ -83,7 +85,7 @@ android:version-code:
     - bundle exec fastlane android next_version_code
   artifacts:
     reports:
-      dotenv: fastlane/android.env
+      dotenv: apps/mobile/fastlane/android.env
 
 android:build:
   stage: build
@@ -99,7 +101,7 @@ android:build:
     - key: flutter-$FLUTTER_VERSION
       paths: [.cache/flutter]
     - key:
-        files: [pubspec.lock]
+        files: [apps/mobile/pubspec.lock]
         prefix: pub
       paths: [.cache/pub]
     - key: gradle
@@ -119,9 +121,10 @@ android:build:
       keyPassword=$ANDROID_KEY_PASSWORD
       EOF
     - flutter build appbundle --release --build-number="$ANDROID_VERSION_CODE"
-    - mkdir -p dist && cp build/app/outputs/bundle/release/app-release.aab "dist/jugendkompass-$APP_VERSION-$ANDROID_VERSION_CODE.aab"
+    - mkdir -p "$CI_PROJECT_DIR/dist"
+    - cp build/app/outputs/bundle/release/app-release.aab "$CI_PROJECT_DIR/dist/jugendkompass-$APP_VERSION-$ANDROID_VERSION_CODE.aab"
   after_script:
-    - rm -f android/app/upload-keystore.jks android/key.properties
+    - rm -f apps/mobile/android/app/upload-keystore.jks apps/mobile/android/key.properties
   artifacts:
     paths: [dist/*.aab]
     expire_in: 30 days
@@ -134,7 +137,7 @@ android:upload:
   environment:
     name: play/$PLAY_TRACK
   script:
-    - bundle exec fastlane android upload track:"$PLAY_TRACK" aab:"$(ls dist/*.aab | head -1)"
+    - bundle exec fastlane android upload track:"$PLAY_TRACK" aab:"$(ls "$CI_PROJECT_DIR"/dist/*.aab | head -1)"
 
 android:production:
   stage: release
@@ -149,7 +152,7 @@ android:production:
 
 # ---------------------------------------------------------------- iOS
 
-# iOS baut standardmäßig Xcode Cloud (ios/ci_scripts/ci_post_clone.sh, Workflows für develop und main).
+# iOS baut standardmäßig Xcode Cloud (apps/mobile/ios/ci_scripts/ci_post_clone.sh, Workflows für develop und main).
 # Dieser Job ist nur die Alternative mit eigenem Mac-Runner: Variable IOS_BUILDER=gitlab-mac setzen.
 ios:testflight:
   stage: store
@@ -171,15 +174,16 @@ ios:testflight:
     PUB_CACHE: $HOME/.pub-cache
   before_script:
     - source .gitlab/ci/flutter-env.sh
+    - cd apps/mobile
     - flutter pub get
     - bundle config set --local path vendor/ruby
     - bundle install --jobs 4 --quiet
   script:
     - bundle exec fastlane ios beta
   artifacts:
-    paths: [dist/*.ipa]
+    paths: [apps/mobile/dist/*.ipa]
     reports:
-      dotenv: fastlane/ios.env
+      dotenv: apps/mobile/fastlane/ios.env
     expire_in: 30 days
 
 ios:submit-review:

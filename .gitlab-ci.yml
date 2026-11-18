@@ -2,11 +2,12 @@
 #
 # Überblick (Details, Variablen und Runner: deploy/gitlab/README.md)
 #
-#   Merge Request / Push   → Analyse + Tests, Web-Build; Admin (admin/): Typecheck, Lint, Build
+#   Merge Request / Push   → Analyse + Tests, Web-Build; Admin: Typecheck, Lint, Build
 #   Merge auf develop      → Android: Play "internal", iOS: TestFlight intern (Xcode Cloud)
 #   Merge auf main         → Web-App, Übersetzungs-Panel und Admin auf den VPS (rsync)
 #                            Android: Play-Test "alpha", iOS: TestFlight extern (Xcode Cloud)
 #                            danach per Klick: Play "production" / App-Store-Review
+#   Klick auf main         → Edge Functions / eine Migration auf den VPS (backend.yml)
 #   Pipeline-Zeitpläne     → Hintergrund-Aufgaben (Audio, Untertitel, Bilder),
 #                            gesteuert über die Variable TASK
 #
@@ -58,3 +59,4 @@ include:
   - local: .gitlab/ci/stores.yml
   - local: .gitlab/ci/tasks.yml
   - local: .gitlab/ci/admin.yml
+  - local: .gitlab/ci/backend.yml

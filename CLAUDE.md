@@ -2,6 +2,18 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Repository Layout (monorepo)
+
+| Path | Content |
+| --- | --- |
+| `apps/mobile/` | Flutter app — **all Flutter paths below (`lib/`, `ios/`, `pubspec.yaml`, …) are relative to this folder**; run `flutter` commands there |
+| `apps/admin/` | Admin PWA (React/Vite, `npm ci --legacy-peer-deps && npm run build`) |
+| `apps/translate/` | Translation panel (static JS) |
+| `supabase/` | Shared migrations, edge functions, SQL scripts (`functions-admin-variant/` = unresolved duplicates) |
+| `tools/` | Background workers (TTS, subtitles, image translation, verse images) |
+| `deploy/vps/`, `deploy/gitlab/` | Server setup; CI/CD + GitLab migration guide |
+| `docs/` | Docs; database schema in `docs/supabase.md` |
+
 ## Project Overview
 
 Jugendkompass is a Flutter mobile app (iOS/Android) providing religious youth content including posts, daily verses, impulses, videos, podcasts, and polls. Backend is Supabase (PostgreSQL + Storage + Edge Functions), state management via Riverpod, navigation via MaterialApp with custom persistent bottom navbar.
@@ -80,7 +92,7 @@ lib/
 ### Supabase Integration
 - Initialized in `main.dart` via `SupabaseService.initialize()`
 - Credentials loaded from `dotenv` file (see `.env`)
-- Database schema documented in `supabase.md` (tables: `users`, `posts`, `impulses`, `verse_of_the_day`, `videos`, `polls`, `content`, etc.)
+- Database schema documented in `docs/supabase.md` (tables: `users`, `posts`, `impulses`, `verse_of_the_day`, `videos`, `polls`, `content`, etc.)
 - RLS policies: admins see all, users see published content + own data
 - Storage buckets: `posts`, `impulses`, `audios`, `videos`, `Ausgaben`, `pdf`, etc.
 - Key functions: `is_admin()`, `increment_poll_votes()`, content triggers auto-create `content` table entries
@@ -112,7 +124,7 @@ lib/
 - Bottom padding for overlays: `overlayPaddingBase` (navbar only) or `overlayPaddingWithMiniPlayer` (navbar + mini player)
 
 ### Localization
-- 7 languages: de (source), en, ru, es, pl, tr, he (RTL). Full docs: `TRANSLATION.md`
+- 7 languages: de (source), en, ru, es, pl, tr, he (RTL). Full docs: `docs/TRANSLATION.md`
 - UI strings: `lib/core/localization/app_translations.dart` + `supplement_translations.dart` (new keys go there, with ALL languages); `test/localization_test.dart` enforces completeness
 - Access via `context.tr('key')` / `context.tr('key', {'param': 'x'})` — use placeholders, never concatenate sentence fragments
 - Database content is translated automatically server-side (Claude worker `process-translation-jobs`, queue `translation_jobs`). In the app, repositories load the German rows and apply translations via `ContentLocalizer` (`lib/data/services/content_localizer.dart`) — never translate content on the client
@@ -164,7 +176,7 @@ All content is unified via the `content` table (UUID FK in `posts`, `impulses`, 
 5. Update `content_feed` view to include new type
 
 ### Working with Supabase
-- Always reference `supabase.md` for table schema and RLS rules
+- Always reference `docs/supabase.md` for table schema and RLS rules
 - Use `SupabaseService.instance.client` to access Supabase client
 - Remember: admins can CRUD all, users see published content only
 - Storage bucket URLs are public; use `getPublicUrl()` for images/audio/video
@@ -220,13 +232,12 @@ ClipRRect(
 - Server setup, migration and cron scripts: `deploy/vps/` (see `deploy/vps/README.md`)
 - Former cloud project `vdcdibvclaulqxfjyzpq` stays only for old app versions; do not deploy there
 - Background workflows (audio, subtitles, images) target `vars.SUPABASE_URL`; set it to the VPS URL at cutover
-- See `supabase.md` for complete schema
+- See `docs/supabase.md` for complete schema
 
-### CI/CD (GitLab) and monorepo
-- Admin PWA (React/Vite, formerly repo jugendkompass-admin) lives in `admin/`
-- Moving from GitHub to GitLab (`gitlab.bethaus-speyer.de`, project `jugendkompass/jugendkompass`): `.gitlab-ci.yml` + `.gitlab/ci/*.yml`, store uploads via `fastlane/Fastfile`
+### CI/CD (GitLab)
+- Moving from GitHub to GitLab (`gitlab.bethaus-speyer.de`, project `jugendkompass/jugendkompass`): `.gitlab-ci.yml` + `.gitlab/ci/*.yml`, store uploads via `apps/mobile/fastlane/Fastfile`
 - Branches: feature → MR into `develop` → MR into `main`. develop = Play internal + TestFlight internal; main = Play closed testing + TestFlight external + web/admin deploy; production and App Store review are manual jobs on main
-- iOS builds run on Xcode Cloud (`ios/ci_scripts/ci_post_clone.sh`); bump `version:` in pubspec after each store release
+- iOS builds run on Xcode Cloud (`apps/mobile/ios/ci_scripts/ci_post_clone.sh`); bump `version:` in pubspec after each store release
 - Background tasks run as pipeline schedules with variable `TASK=<name>`; setup and variables: `deploy/gitlab/README.md`
 
 ## Common Pitfalls
