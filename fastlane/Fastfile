@@ -2,8 +2,8 @@
 #
 # Android (Linux, ruby-Image):
 #   fastlane android next_version_code   nächster versionCode → fastlane/android.env
-#   fastlane android internal aab:<pfad> AAB in den Track "internal" hochladen
-#   fastlane android production          diese Version von "internal" nach "production"
+#   fastlane android upload track:<t> aab:<pfad>   AAB in einen Track hochladen (internal/alpha/beta)
+#   fastlane android production from:<t>           diese Version aus Track <t> nach "production"
 # iOS:
 #   fastlane ios beta                    signierter Build (macOS) → TestFlight (nur ohne Xcode Cloud)
 #   fastlane ios submit_review           TestFlight-Build zur App-Store-Prüfung (läuft auch auf Linux)
@@ -64,12 +64,14 @@ platform :android do
     write_env("android.env", "ANDROID_VERSION_CODE" => code)
   end
 
-  desc "AAB in den internen Test-Track hochladen"
-  lane :internal do |options|
+  desc "AAB in einen Test-Track hochladen (internal, alpha, beta)"
+  lane :upload do |options|
     aab = options[:aab] || UI.user_error!("aab:<pfad> fehlt")
+    track = options[:track].to_s.strip
+    UI.user_error!("Track '#{track}' ist kein Test-Track") unless %w[internal alpha beta].include?(track)
     upload_to_play_store(
       package_name: PACKAGE_NAME,
-      track: "internal",
+      track: track,
       aab: File.expand_path(aab, ROOT),
       release_status: "completed",
       skip_upload_metadata: true,
@@ -80,14 +82,16 @@ platform :android do
     )
   end
 
-  desc "Version aus 'internal' nach 'production' übernehmen (PLAY_ROLLOUT, z. B. 0.2 = 20 %)"
-  lane :production do
+  desc "Version aus einem Test-Track nach 'production' übernehmen (PLAY_ROLLOUT, z. B. 0.2 = 20 %)"
+  lane :production do |options|
     require_env("ANDROID_VERSION_CODE")
+    from = options[:from].to_s.strip
+    from = "alpha" if from.empty?
     rollout = ENV["PLAY_ROLLOUT"].to_s.strip
     staged = !rollout.empty? && rollout.to_f < 1.0
     upload_to_play_store(
       package_name: PACKAGE_NAME,
-      track: "internal",
+      track: from,
       track_promote_to: "production",
       version_code: ENV["ANDROID_VERSION_CODE"].to_i,
       release_status: staged ? "inProgress" : "completed",

@@ -1,28 +1,50 @@
-# Store-Releases (Google Play + App Store)
+# Store-Builds (Google Play + App Store), gesteuert über den Branch
 #
-# Auslöser:
-#   - Tag vX.Y.Z (muss zur version: in pubspec.yaml passen)  → Play "internal"
-#     (iOS: Xcode Cloud baut beim selben Tag und lädt zu TestFlight hoch)
-#   - "Run pipeline" auf einem Branch mit STORE_BUILD=true      → dasselbe als Testbuild
-# Danach per Klick (manuelle Jobs):
-#   - android:production  → Version aus "internal" nach "production" (PLAY_ROLLOUT, Standard 1.0)
-#   - ios:submit-review   → neuesten TestFlight-Build dieser Version zur App-Store-Prüfung einreichen
-#                           (IOS_AUTO_RELEASE=true: nach Freigabe automatisch veröffentlichen)
+#   develop  → bei jedem Merge: Android Play "internal"          | iOS: Xcode Cloud → TestFlight intern
+#   main     → bei jedem Merge: Android Play $PLAY_EXTERNAL_TRACK | iOS: Xcode Cloud → TestFlight extern
+#              danach per Klick:
+#                android:production  → diese Version nach "production" (PLAY_ROLLOUT, z. B. 0.2)
+#                ios:submit-review   → neuesten TestFlight-Build der Version zur App-Store-Prüfung
+#                                      (IOS_AUTO_RELEASE=true: nach Freigabe automatisch veröffentlichen)
+#
+# Gebaut wird nur, wenn sich App-Code geändert hat (oder bei "Run pipeline" von Hand).
+# Version kommt aus pubspec.yaml, die Build-Nummer zählt die Pipeline selbst hoch.
+
+.app_changes: &app_changes
+  - lib/**/*
+  - assets/**/*
+  - android/**/*
+  - ios/**/*
+  - pubspec.yaml
+  - pubspec.lock
+  - dotenv
+  - fastlane/**/*
+  - .gitlab/ci/stores.yml
 
 .store_rules:
   rules:
     - if: $TASK || $CI_PIPELINE_SOURCE == "schedule"
       when: never
-    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
-    - if: $CI_COMMIT_BRANCH && $STORE_BUILD == "true"
+    - if: $CI_COMMIT_BRANCH == "develop" && $CI_PIPELINE_SOURCE == "web"
+      variables: { PLAY_TRACK: internal }
+    - if: $CI_COMMIT_BRANCH == "develop" && $CI_PIPELINE_SOURCE == "push"
+      changes: *app_changes
+      variables: { PLAY_TRACK: internal }
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "web"
+      variables: { PLAY_TRACK: $PLAY_EXTERNAL_TRACK }
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
+      changes: *app_changes
+      variables: { PLAY_TRACK: $PLAY_EXTERNAL_TRACK }
 
-.store_manual_rules:
+# Freigabe für die Öffentlichkeit: nur auf main, nur per Klick
+.release_rules:
   rules:
     - if: $TASK || $CI_PIPELINE_SOURCE == "schedule"
       when: never
-    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "web"
       when: manual
-    - if: $CI_COMMIT_BRANCH && $STORE_BUILD == "true"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
+      changes: *app_changes
       when: manual
 
 .fastlane_linux:
@@ -44,11 +66,8 @@ release:verify:
   needs: []
   script:
     - version=$(sed -nE 's/^version:[[:space:]]*([0-9.]+)\+?.*/\1/p' pubspec.yaml)
-    - echo "pubspec.yaml version $version"
-    - |
-      if [ -n "$CI_COMMIT_TAG" ] && [ "$CI_COMMIT_TAG" != "v$version" ]; then
-        echo "Tag $CI_COMMIT_TAG passt nicht zu pubspec.yaml (v$version)."; exit 1
-      fi
+    - '[ -n "$version" ] || { echo "Keine version: in pubspec.yaml"; exit 1; }'
+    - echo "App $version → Play-Track $PLAY_TRACK"
     - echo "APP_VERSION=$version" > release.env
   artifacts:
     reports:
@@ -107,30 +126,30 @@ android:build:
     paths: [dist/*.aab]
     expire_in: 30 days
 
-android:internal:
+android:upload:
   stage: store
   extends: [.fastlane_linux, .store_rules]
   needs: [android:build, android:version-code, release:verify]
   resource_group: play-store
   environment:
-    name: play/internal
+    name: play/$PLAY_TRACK
   script:
-    - bundle exec fastlane android internal aab:"$(ls dist/*.aab | head -1)"
+    - bundle exec fastlane android upload track:"$PLAY_TRACK" aab:"$(ls dist/*.aab | head -1)"
 
 android:production:
   stage: release
-  extends: [.fastlane_linux, .store_manual_rules]
-  needs: [android:internal, android:version-code, release:verify]
+  extends: [.fastlane_linux, .release_rules]
+  needs: [android:upload, android:version-code, release:verify]
   resource_group: play-store
   environment:
     name: play/production
     url: https://play.google.com/store/apps/details?id=io.stephanus.jugendkompass
   script:
-    - bundle exec fastlane android production
+    - bundle exec fastlane android production from:"$PLAY_EXTERNAL_TRACK"
 
 # ---------------------------------------------------------------- iOS
 
-# iOS baut standardmäßig Xcode Cloud (ios/ci_scripts/ci_post_clone.sh, Start bei Tag v*).
+# iOS baut standardmäßig Xcode Cloud (ios/ci_scripts/ci_post_clone.sh, Workflows für develop und main).
 # Dieser Job ist nur die Alternative mit eigenem Mac-Runner: Variable IOS_BUILDER=gitlab-mac setzen.
 ios:testflight:
   stage: store
@@ -165,7 +184,7 @@ ios:testflight:
 
 ios:submit-review:
   stage: release
-  extends: [.fastlane_linux, .store_manual_rules]
+  extends: [.fastlane_linux, .release_rules]
   needs:
     - release:verify
     - job: ios:testflight

@@ -3,15 +3,15 @@
 # Überblick (Details, Variablen und Runner: deploy/gitlab/README.md)
 #
 #   Merge Request / Push   → Analyse + Tests, Web-Build
-#   Push auf main          → Web-App + Übersetzungs-Panel auf den VPS (rsync)
-#   Tag vX.Y.Z             → Android: Play "internal"   (automatisch)
-#                            iOS:     TestFlight         (automatisch, macOS-Runner)
+#   Merge auf develop      → Android: Play "internal", iOS: TestFlight intern (Xcode Cloud)
+#   Merge auf main         → Web-App + Übersetzungs-Panel auf den VPS (rsync)
+#                            Android: Play-Test "alpha", iOS: TestFlight extern (Xcode Cloud)
 #                            danach per Klick: Play "production" / App-Store-Review
 #   Pipeline-Zeitpläne     → Hintergrund-Aufgaben (Audio, Untertitel, Bilder),
 #                            gesteuert über die Variable TASK
 #
-# Linux-Jobs laufen auf einem Docker-Runner ohne Tag, iOS-Jobs auf einem
-# macOS-Runner mit dem Tag "macos".
+# Linux-Jobs laufen auf einem Docker-Runner ohne Tag. iOS baut Xcode Cloud
+# (optional eigener Mac-Runner mit Tag "macos", siehe stores.yml).
 
 workflow:
   name: "$PIPELINE_NAME"
@@ -19,9 +19,6 @@ workflow:
     - if: $TASK
       variables:
         PIPELINE_NAME: "Aufgabe: $TASK"
-    - if: $CI_COMMIT_TAG
-      variables:
-        PIPELINE_NAME: "Release $CI_COMMIT_TAG"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       variables:
         PIPELINE_NAME: "MR !$CI_MERGE_REQUEST_IID: $CI_MERGE_REQUEST_TITLE"
@@ -36,6 +33,8 @@ variables:
   FLUTTER_VERSION: "3.47.9"
   API_URL: "https://api.jugendkompass.com"
   PACKAGE_NAME: "io.stephanus.jugendkompass"
+  # Play-Track für Builds von main ("alpha" = geschlossener Test, "beta" = offener Test)
+  PLAY_EXTERNAL_TRACK: "alpha"
   # Docker-Image für Flutter-Linux-Jobs (Android SDK + JDK 17; Flutter kommt aus flutter-env.sh)
   ANDROID_IMAGE: "ghcr.io/cirruslabs/android-sdk:36"
   RUBY_IMAGE: "ruby:3.3-bookworm"
