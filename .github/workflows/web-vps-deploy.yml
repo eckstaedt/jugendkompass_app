@@ -13,19 +13,20 @@ name: Web → VPS
 #   VPS_SSH_PORT         Standard 22
 #   VPS_API_URL          Standard https://api.jugendkompass.com
 #
-# Bis zur Umstellung nur manuell starten; danach push-Trigger einkommentieren.
+# Läuft automatisch bei jedem Push auf main (Web-App/Panel geändert) und manuell.
 
 on:
   workflow_dispatch:
-  # push:
-  #   branches: [main]
-  #   paths:
-  #     - "web/**"
-  #     - "lib/**"
-  #     - "assets/**"
-  #     - "translation-panel/**"
-  #     - "pubspec.yaml"
-  #     - ".github/workflows/web-vps-deploy.yml"
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "lib/**"
+      - "assets/**"
+      - "translation-panel/**"
+      - "pubspec.yaml"
+      - "dotenv"
+      - ".github/workflows/web-vps-deploy.yml"
 
 concurrency:
   group: web-vps-deploy
