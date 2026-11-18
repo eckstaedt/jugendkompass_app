@@ -17,9 +17,9 @@ GitHub Actions, und Releases gehen per Tag automatisch in die Stores.
 | --- | --- |
 | Merge Request | Flutter-Analyse + Tests, Web-Build (App); Typecheck, Lint, Build (Admin) |
 | Merge/Push auf `main` | Web-App + Übersetzungs-Panel bzw. Admin per rsync auf den VPS |
-| Tag `vX.Y.Z` | Android → Play **internal**, iOS → **TestFlight** (automatisch) |
+| Tag `vX.Y.Z` | Android → Play **internal** (GitLab), iOS → **TestFlight** (Xcode Cloud), beides automatisch |
 | Klick auf `android:production` | dieselbe Version in Play **production** (`PLAY_ROLLOUT=0.2` → 20 % gestaffelt) |
-| Klick auf `ios:submit-review` | TestFlight-Build zur **App-Store-Prüfung** (`RELEASE_NOTES`, `IOS_AUTO_RELEASE=true`) |
+| Klick auf `ios:submit-review` | neuester TestFlight-Build der Version zur **App-Store-Prüfung** (`RELEASE_NOTES`, `IOS_AUTO_RELEASE=true`) |
 | Pipeline-Zeitpläne | Hintergrund-Aufgaben (Audio, Untertitel, Bilder) |
 
 Release machen:
@@ -30,8 +30,8 @@ git commit -am "release: 2.3.8" && git tag v2.3.8 && git push && git push --tags
 ```
 
 Der Tag muss zur `version:` in `pubspec.yaml` passen, sonst bricht `release:verify` ab.
-Build-Nummern: Android = höchster versionCode in Play + 1, iOS = höchste TestFlight-Nummer + 1
-(jeweils mindestens die Nummer aus `pubspec.yaml`).
+Build-Nummern: Android = höchster versionCode in Play + 1 (mindestens die Nummer aus `pubspec.yaml`),
+iOS = fortlaufende Xcode-Cloud-Buildnummer.
 Testbuild ohne Tag: *Build → Pipelines → Run pipeline* auf `main` mit `STORE_BUILD=true`
 (andere Branches sehen die geschützten Store-Variablen nicht).
 
@@ -74,9 +74,35 @@ docker exec -it jk-gitlab-runner gitlab-runner register \
 
 In `config/config.toml` danach `concurrent = 4` setzen (gleichzeitige Jobs).
 
-### macOS-Runner (iOS)
+### iOS mit Xcode Cloud (empfohlen)
 
-iOS-Builds brauchen Xcode, also einen Mac. Einmalig auf dem Mac:
+Apple baut die App auf eigenen Macs; 25 Stunden im Monat sind im Developer-Programm enthalten
+(ein Build dauert ca. 15–20 Minuten). Flutter installiert `ios/ci_scripts/ci_post_clone.sh`
+(gleiche Version wie `FLUTTER_VERSION` in `.gitlab-ci.yml`).
+
+Einmalig, nachdem die Repos auf GitLab liegen:
+
+1. **GitLab verbinden**: Xcode → Settings → Accounts → „+“ → *GitLab Self-Managed*,
+   URL `https://gitlab.bethaus-speyer.de` (Xcode führt durch die Anmeldung per OAuth-App).
+2. In Xcode `ios/Runner.xcworkspace` öffnen → *Product → Xcode Cloud → Create Workflow*,
+   Produkt „Runner“, Quelle `jugendkompass/app`.
+3. Workflow „Release“:
+   - *Start Conditions*: **Tag Changes**, Tags beginnen mit `v` (Branch-Bedingung entfernen)
+   - *Environment*: Xcode „Latest Release“, macOS „Latest Release“
+   - *Actions*: **Archive** – iOS, Plattform iOS, Distribution **App Store Connect**
+   - *Post-Actions*: **TestFlight Internal Testing** → interne Testergruppe
+4. Buildnummer: App Store Connect → App → *Xcode Cloud → Settings → Build Number* →
+   „Next Build Number“ auf **72** setzen (höher als die letzte hochgeladene 71).
+5. Probelauf: in App Store Connect beim Workflow *Start Build* auf einem Tag, oder nächster Release-Tag.
+
+Signieren übernimmt Xcode Cloud selbst (automatisches Signing, Team MXM3YWAKPL inkl. Widget und
+Notification-Service). Die Einreichung zur Prüfung startest du danach in GitLab mit `ios:submit-review`
+(oder direkt in App Store Connect).
+
+### Alternative: eigener Mac als Runner
+
+Nur falls Xcode Cloud nicht passt. In GitLab die Variable `IOS_BUILDER=gitlab-mac` setzen und
+den Xcode-Cloud-Workflow deaktivieren. Einmalig auf dem Mac:
 
 ```bash
 xcode-select --install                 # plus aktuelles Xcode aus dem App Store, einmal starten
@@ -89,10 +115,8 @@ gitlab-runner register --url https://gitlab.bethaus-speyer.de --token glrt-… \
 brew services start gitlab-runner
 ```
 
-Flutter installiert die Pipeline selbst (Version aus `FLUTTER_VERSION` nach `~/.flutter-sdks`).
-Signieren: Xcode holt Zertifikat und Profile über den App-Store-Connect-Schlüssel
-(„cloud-managed signing“) – keine .p12-Dateien oder Profile auf dem Mac nötig.
-Der Mac muss nur laufen, wenn ein Release-Tag gebaut wird; der Job wartet sonst in der Warteschlange.
+Der Job `ios:testflight` signiert über den App-Store-Connect-Schlüssel („cloud-managed signing“),
+der Mac muss nur bei Release-Tags laufen.
 
 ## 3. CI/CD-Variablen
 
@@ -113,16 +137,17 @@ Der Mac muss nur laufen, wenn ein Release-Tag gebaut wird; der Job wartet sonst 
 | `ANDROID_KEY_ALIAS` | Variable, protected | | Android-Signatur |
 | `ANDROID_KEY_PASSWORD` | Variable, masked, protected | | Android-Signatur |
 | `PLAY_SERVICE_ACCOUNT_JSON` | **File**, protected | JSON des Google-Cloud-Service-Accounts | Play-Upload |
-| `ASC_KEY_ID` | Variable, protected | App Store Connect → Integrations → Key ID | TestFlight/Review |
-| `ASC_ISSUER_ID` | Variable, protected | Issuer ID | TestFlight/Review |
-| `ASC_KEY_P8` | **File**, protected | Inhalt der `AuthKey_XXXX.p8` | TestFlight/Review |
+| `ASC_KEY_ID` | Variable, protected | App Store Connect → Integrations → Key ID | Review-Einreichung |
+| `ASC_ISSUER_ID` | Variable, protected | Issuer ID | Review-Einreichung |
+| `ASC_KEY_P8` | **File**, protected | Inhalt der `AuthKey_XXXX.p8` | Review-Einreichung |
 
 Hinweise:
 - **Play-Service-Account**: Play Console → *Users and permissions* → Service-Account-E-Mail
   einladen, App `Jugendkompass`, Rechte „Releases verwalten“ (inkl. Production) und
   „App-Informationen ansehen“. Der JSON-Schlüssel kommt aus Google Cloud → IAM → Service Accounts.
 - **App-Store-Connect-Schlüssel**: *Users and Access → Integrations → App Store Connect API →
-  Team Keys*, Rolle **Admin** (nur damit darf Xcode Verteilungszertifikate selbst anlegen).
+  Team Keys*, Rolle **App Manager** reicht für die Review-Einreichung (**Admin** nur beim eigenen Mac-Runner,
+  damit Xcode Verteilungszertifikate selbst anlegen darf).
   Wer bei GitHub schon `APP_STORE_CONNECT_*` hatte, kann denselben Schlüssel nehmen.
 - **Optional pro Lauf**: `PLAY_ROLLOUT`, `RELEASE_NOTES`, `IOS_AUTO_RELEASE` beim manuellen
   Job als Variable mitgeben.
@@ -150,7 +175,7 @@ Reihenfolge, damit nichts doppelt läuft:
 
 1. Runner und Variablen einrichten, Repos kopieren (Schritte 1–3).
 2. In GitLab einen Testlauf: MR öffnen (Prüfung), `Run pipeline` auf `main` (Web-Deploy),
-   `TASK=verse-images` (Hintergrund), `STORE_BUILD=true` (Play internal + TestFlight).
+   `TASK=verse-images` (Hintergrund), `STORE_BUILD=true` (Play internal), Xcode Cloud *Start Build* (TestFlight).
 3. **GitHub Actions abschalten** (sonst laufen Zeitpläne doppelt): je Repo
    *Settings → Actions → General → Disable actions*.
 4. Zeitpläne in GitLab anlegen (Schritt 4).

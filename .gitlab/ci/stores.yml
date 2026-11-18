@@ -1,11 +1,12 @@
 # Store-Releases (Google Play + App Store)
 #
 # Auslöser:
-#   - Tag vX.Y.Z (muss zur version: in pubspec.yaml passen)  → Play "internal" + TestFlight
+#   - Tag vX.Y.Z (muss zur version: in pubspec.yaml passen)  → Play "internal"
+#     (iOS: Xcode Cloud baut beim selben Tag und lädt zu TestFlight hoch)
 #   - "Run pipeline" auf einem Branch mit STORE_BUILD=true      → dasselbe als Testbuild
 # Danach per Klick (manuelle Jobs):
 #   - android:production  → Version aus "internal" nach "production" (PLAY_ROLLOUT, Standard 1.0)
-#   - ios:submit-review   → TestFlight-Build zur App-Store-Prüfung einreichen
+#   - ios:submit-review   → neuesten TestFlight-Build dieser Version zur App-Store-Prüfung einreichen
 #                           (IOS_AUTO_RELEASE=true: nach Freigabe automatisch veröffentlichen)
 
 .store_rules:
@@ -129,9 +130,14 @@ android:production:
 
 # ---------------------------------------------------------------- iOS
 
+# iOS baut standardmäßig Xcode Cloud (ios/ci_scripts/ci_post_clone.sh, Start bei Tag v*).
+# Dieser Job ist nur die Alternative mit eigenem Mac-Runner: Variable IOS_BUILDER=gitlab-mac setzen.
 ios:testflight:
   stage: store
-  extends: .store_rules
+  rules:
+    - if: $IOS_BUILDER != "gitlab-mac"
+      when: never
+    - !reference [.store_rules, rules]
   tags: [macos]
   needs:
     - release:verify
@@ -160,7 +166,10 @@ ios:testflight:
 ios:submit-review:
   stage: release
   extends: [.fastlane_linux, .store_manual_rules]
-  needs: [ios:testflight, release:verify]
+  needs:
+    - release:verify
+    - job: ios:testflight
+      optional: true
   resource_group: app-store
   environment:
     name: appstore/production
